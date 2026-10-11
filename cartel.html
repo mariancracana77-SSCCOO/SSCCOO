@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cartel para el tablón · CCOO Calsina Carré</title>
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --rojo: #c4122f; --tinta: #16202e; --suave: #5b6676; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Barlow", sans-serif; color: var(--tinta); background: #e9ecf1; }
+  .barra { display: flex; gap: 10px; justify-content: center; padding: 14px; flex-wrap: wrap; }
+  .barra button, .barra a { font: inherit; font-weight: 700; border: 0; border-radius: 10px; padding: 11px 18px; cursor: pointer; background: var(--rojo); color: #fff; text-decoration: none; }
+  .barra a { background: #fff; color: var(--tinta); border: 1px solid #d9dee7; }
+  .hoja { width: 210mm; min-height: 297mm; margin: 0 auto 30px; background: #fff; padding: 16mm 16mm 12mm; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 4px 24px rgba(0,0,0,.12); }
+  .franja { width: calc(100% + 32mm); margin: -16mm -16mm 10mm; background: var(--rojo); color: #fff; padding: 10mm 16mm; display: flex; align-items: center; gap: 8mm; }
+  .franja img { width: 32mm; height: 32mm; border-radius: 50%; background: #fff; }
+  .franja div { text-align: left; font-family: "Barlow Condensed", sans-serif; }
+  .franja b { display: block; font-size: 15mm; line-height: 1; }
+  .franja span { font-size: 9mm; opacity: .92; }
+  h1 { font-family: "Barlow Condensed", sans-serif; font-size: 17mm; line-height: 1; margin: 2mm 0 4mm; }
+  .sub { font-size: 6mm; color: var(--suave); margin: 0 0 8mm; max-width: 160mm; }
+  .qrs { display: flex; gap: 14mm; justify-content: center; align-items: flex-start; flex-wrap: wrap; }
+  .qr { display: flex; flex-direction: column; align-items: center; gap: 4mm; }
+  .qr .codigo { padding: 5mm; border: 1.2mm solid var(--tinta); border-radius: 6mm; }
+  .qr .codigo svg { display: block; width: 62mm; height: 62mm; }
+  .qr b { font-family: "Barlow Condensed", sans-serif; font-size: 8mm; }
+  .qr small { font-size: 4.2mm; color: var(--suave); word-break: break-all; max-width: 80mm; }
+  .pasos { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; margin-top: 10mm; text-align: left; width: 100%; }
+  .paso { border: 0.6mm solid #d9dee7; border-radius: 5mm; padding: 6mm; }
+  .paso h2 { font-family: "Barlow Condensed", sans-serif; font-size: 8mm; margin: 0 0 3mm; }
+  .paso ol { margin: 0; padding-left: 6mm; font-size: 5mm; line-height: 1.45; }
+  .pie { margin-top: auto; padding-top: 8mm; font-size: 4.2mm; color: var(--suave); }
+  @media print {
+    body { background: #fff; }
+    .barra { display: none; }
+    .hoja { margin: 0; box-shadow: none; }
+    @page { size: A4; margin: 0; }
+  }
+  @media screen and (max-width: 860px) { .hoja { zoom: .45; } }
+</style>
+</head>
+<body>
+<div class="barra">
+  <button onclick="print()">Imprimir cartel</button>
+  <a href="admin.html">Volver al panel</a>
+</div>
+<div class="hoja">
+  <div class="franja"><img src="logo.png" alt=""><div><b>Sección Sindical CCOO</b><span>Calsina Carré</span></div></div>
+  <h1>Toda la información sindical en tu móvil</h1>
+  <p class="sub">Avisos, calendario, convenio, actas y documentos. Escanea el código con la cámara del móvil, instala la app y activa los avisos.</p>
+  <div class="qrs">
+    <div class="qr"><div class="codigo" id="qr-web"></div><b>App de la Sección Sindical</b><small id="url-web"></small></div>
+    <div class="qr" id="caja-tg" style="display:none"><div class="codigo" id="qr-tg"></div><b>Canal de Telegram</b><small id="url-tg"></small></div>
+  </div>
+  <div class="pasos">
+    <div class="paso"><h2>Android</h2><ol><li>Escanea el código y abre el enlace en Chrome.</li><li>Pulsa <b>Instalar</b> (o menú ⋮ → <b>Instalar aplicación</b>).</li><li>Abre la app y pulsa <b>Activar avisos</b>.</li></ol></div>
+    <div class="paso"><h2>iPhone</h2><ol><li>Escanea el código y abre el enlace en Safari.</li><li>Pulsa <b>Compartir</b> → <b>Añadir a pantalla de inicio</b>.</li><li>Abre la app desde el icono y pulsa <b>Activar avisos</b>.</li></ol></div>
+  </div>
+  <div class="pie">Es gratis, no pide datos personales y no hace falta descargar nada de fuera de tu navegador.</div>
+</div>
+<script src="qr.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+  // Código QR generado en el propio navegador (librería qrcode-generator, MIT)
+  const qr = (id, texto) => { const q = qrcode(0, "M"); q.addData(texto); q.make(); document.getElementById(id).innerHTML = q.createSvgTag({ cellSize: 8, margin: 0, scalable: true }); };
+  qr("qr-web", WEB_URL); document.getElementById("url-web").textContent = WEB_URL;
+  sb.from("paginas").select("contenido").eq("slug", "telegram").maybeSingle().then(({ data }) => {
+    const t = (data?.contenido || "").trim();
+    const url = t.startsWith("@") ? "https://t.me/" + t.slice(1) : (t.startsWith("https://t.me/") ? t : "");
+    if (url) { document.getElementById("caja-tg").style.display = ""; qr("qr-tg", url); document.getElementById("url-tg").textContent = url; }
+  });
+</script>
+</body>
+</html>

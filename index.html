@@ -22,7 +22,7 @@
     <div class="nombre">Sección Sindical CCOO</div>
     <div class="sub">Calsina Carré</div>
   </div>
-  <div class="acciones"><a class="btn-cab" href="#info" aria-label="Quiénes somos y contacto" title="Quiénes somos y contacto"><span data-i="info"></span></a></div>
+  <div class="acciones"><button class="btn-cab oculto" id="cab-instalar" aria-label="Instalar la app" title="Instalar la app"><span data-i="descargar"></span></button><a class="btn-cab" href="#info" aria-label="Quiénes somos y contacto" title="Quiénes somos y contacto"><span data-i="info"></span></a></div>
 </header>
 
 <div class="toast" id="toast" role="status"></div>
@@ -35,6 +35,7 @@
       <h1 class="titulo-vista">Hola, compañero/a</h1>
       <p id="txt-inicio"></p>
     </div>
+    <div id="banda-app"></div>
     <div class="inicio-rejilla">
       <div>
         <div id="inicio-destacado"></div>
@@ -46,9 +47,11 @@
         <div id="inicio-fechas"></div>
         <h2 class="titulo-bloque">Accesos rápidos</h2>
         <div class="accesos">
+          <a class="panel acceso" href="#preguntas"><span class="ic" data-ic="pregunta"></span><b>Preguntas</b><small>Las dudas más comunes</small></a>
           <a class="panel acceso" href="#documentos"><span class="ic" data-ic="carpeta"></span><b>Documentos</b><small>PDF, tablas y formularios</small></a>
           <a class="panel acceso" href="#convenio"><span class="ic" data-ic="convenio"></span><b>Convenio</b><small>Tus derechos</small></a>
           <a class="panel acceso" href="#actas"><span class="ic" data-ic="actas"></span><b>Actas</b><small>Reuniones y acuerdos</small></a>
+          <a class="panel acceso" href="#calendario"><span class="ic" data-ic="calendario"></span><b>Calendario</b><small>Asambleas y fechas</small></a>
           <a class="panel acceso" href="#info"><span class="ic" data-ic="correo"></span><b>Contacto</b><small>Habla con nosotros</small></a>
         </div>
       </div>
@@ -64,6 +67,8 @@
         <input id="buscar-avisos" type="search" placeholder="Buscar en los avisos" aria-label="Buscar en los avisos"></div>
     </div>
     <div class="filtros" id="filtros-avisos"></div>
+    <div class="filtro-fechas" id="fechas-avisos"></div>
+    <div class="pestanas-archivo" id="archivo-avisos"></div>
     <div id="lista-avisos"></div>
   </section>
 
@@ -74,7 +79,7 @@
     <div class="cal-rejilla">
       <div class="panel cal">
         <div class="cal-cab">
-          <h2 id="cal-mes"></h2>
+          <label class="cal-mes-btn" title="Ir a otro mes"><h2 id="cal-mes"></h2><span data-i="abajo"></span><input type="month" id="cal-ir" aria-label="Ir a un mes"></label>
           <div class="cal-nav">
             <button class="btn-hoy" id="cal-hoy">Hoy</button>
             <button class="btn-ic" id="cal-ant" aria-label="Mes anterior"></button>
@@ -100,6 +105,7 @@
     <div class="conv-rejilla">
       <div>
         <div class="panel conv-intro" id="conv-intro"></div>
+        <a class="panel banda enlace-faq" href="#preguntas"><span class="ic" data-ic="pregunta"></span><span class="txt"><b>¿Tienes una duda concreta?</b><p>Mira las preguntas frecuentes.</p></span><span data-i="der"></span></a>
         <div class="herramientas">
           <div class="buscador"><svg class="icono p" aria-hidden="true"><use href="#i-buscar"/></svg>
             <input id="buscar-convenio" type="search" placeholder="Buscar: vacaciones, permiso, plus…" aria-label="Buscar en el convenio"></div>
@@ -122,7 +128,20 @@
         <input id="buscar-actas" type="search" placeholder="Buscar en las actas" aria-label="Buscar en las actas"></div>
     </div>
     <div class="filtros" id="filtros-actas"></div>
+    <div class="filtro-fechas" id="fechas-actas"></div>
     <div id="lista-actas"></div>
+  </section>
+
+  <!-- PREGUNTAS -->
+  <section class="vista" id="v-preguntas">
+    <h1 class="titulo-vista">Preguntas frecuentes</h1>
+    <p class="intro-vista">Las dudas que más nos preguntáis. Si no encuentras la tuya, <a href="#info">escríbenos</a>.</p>
+    <div class="herramientas">
+      <div class="buscador"><svg class="icono p" aria-hidden="true"><use href="#i-buscar"/></svg>
+        <input id="buscar-preguntas" type="search" placeholder="Buscar: vacaciones, nómina, turnos…" aria-label="Buscar en las preguntas"></div>
+    </div>
+    <div class="filtros" id="filtros-preguntas"></div>
+    <div id="lista-preguntas"></div>
   </section>
 
   <!-- DOCUMENTOS -->
@@ -134,6 +153,7 @@
         <input id="buscar-docs" type="search" placeholder="Buscar un documento" aria-label="Buscar un documento"></div>
     </div>
     <div class="filtros" id="filtros-docs"></div>
+    <div class="filtro-fechas" id="fechas-docs"></div>
     <div class="lista-documentos" id="lista-documentos"></div>
   </section>
 
@@ -144,14 +164,10 @@
     <div class="info-rejilla">
       <div class="panel"><h2>Nosotros</h2><div id="txt-quienes"></div></div>
       <div class="panel"><h2>Contacto</h2><div id="txt-contacto"></div>
-        <a class="contacto-btn" href="mailto:ssccoo.calsinacarre@gmail.com"></a></div>
+        <a class="contacto-btn" href="mailto:ssccoo.calsinacarre@gmail.com"></a>
+        <div class="canales" id="canales"></div></div>
     </div>
-    <div class="panel instalar-panel">
-      <span class="ic" data-ic="movil"></span>
-      <div><b>Tenla siempre a mano</b>
-        <p id="txt-instalar">En el móvil, abre el menú del navegador y elige «Añadir a pantalla de inicio».</p></div>
-      <button class="btn peq" id="btn-instalar" style="margin-left:auto;display:none">Instalar</button>
-    </div>
+    <div id="banda-app-info" style="margin-top:16px"></div>
   </section>
 
   <footer class="pie">

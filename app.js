@@ -1,7 +1,8 @@
 // ===== Web pública: Sección Sindical CCOO Calsina Carré =====
 const $ = (id) => document.getElementById(id);
-const D = { avisos: [], eventos: [], convenio: [], docs: [], actas: [], paginas: {} };
-const estado = { catAviso: "Todos", catConv: "Todos", tipoActa: "Todos", catDoc: "Todos", mes: new Date(), diaSel: hoyISO() };
+const D = { avisos: [], eventos: [], convenio: [], docs: [], actas: [], preguntas: [], paginas: {} };
+const estado = { catAviso: "Todos", catConv: "Todos", tipoActa: "Todos", catDoc: "Todos", catPreg: "Todos", archivo: false, mes: new Date(), diaSel: hoyISO(),
+  fechas: { avisos: {}, actas: {}, docs: {} } };
 
 // ---------- Iconos fijos ----------
 document.querySelectorAll("[data-i]").forEach(el => el.outerHTML = icono(el.dataset.i));
@@ -10,12 +11,14 @@ $("cal-ant").innerHTML = icono("izq", "p"); $("cal-sig").innerHTML = icono("der"
 document.querySelector(".contacto-btn").innerHTML = icono("correo", "p") + "Escribir a la Sección Sindical";
 
 // ---------- Navegación ----------
-const VISTAS = ["inicio", "avisos", "calendario", "convenio", "actas", "documentos", "info"];
+const VISTAS = ["inicio", "avisos", "calendario", "convenio", "actas", "documentos", "preguntas", "info"];
 function irA() {
-  const v = VISTAS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "inicio";
+  const h = location.hash.slice(1), avisoDirecto = /^aviso-\d+$/.test(h) ? h : null;
+  const v = avisoDirecto ? "avisos" : (VISTAS.includes(h) ? h : "inicio");
+  if (avisoDirecto) setTimeout(() => { const el = $(avisoDirecto); if (el) { el.scrollIntoView({ block: "start" }); el.classList.add("nuevo"); } }, 300);
   document.querySelectorAll(".vista").forEach(s => s.classList.toggle("activa", s.id === "v-" + v));
   document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("activa", b.dataset.v === v));
-  window.scrollTo(0, 0);
+  if (!avisoDirecto) window.scrollTo(0, 0);
 }
 document.querySelectorAll(".nav button").forEach(b => b.onclick = () => { location.hash = b.dataset.v; });
 window.addEventListener("hashchange", irA);
@@ -30,6 +33,32 @@ function pintaFiltros(id, opciones, actual, alElegir) {
     `<button class="filtro ${o === actual ? "activo" : ""}" data-o="${esc(o)}">${esc(o)}</button>`).join("");
   $(id).querySelectorAll("button").forEach(b => b.onclick = () => alElegir(b.dataset.o));
 }
+// Filtro por año / mes / día
+function pintaFechas(id, clave, items, isoDe, repintar) {
+  const f = estado.fechas[clave], anyos = [...new Set(items.map(x => partesFecha(isoDe(x))?.a).filter(Boolean))].sort((a, b) => b - a);
+  if (!items.length) { $(id).innerHTML = ""; return; }
+  const activo = f.a || f.m || f.d;
+  $(id).innerHTML = `<span class="ff-ic">${icono("calendario", "p")}</span>
+    <select data-f="a" aria-label="Año"><option value="">Cualquier año</option>${anyos.map(a => `<option ${f.a == a ? "selected" : ""}>${a}</option>`).join("")}</select>
+    <select data-f="m" aria-label="Mes"><option value="">Cualquier mes</option>${MESES.map((m, i) => `<option value="${i + 1}" ${f.m == i + 1 ? "selected" : ""}>${m.charAt(0).toUpperCase() + m.slice(1)}</option>`).join("")}</select>
+    <input type="date" data-f="d" value="${f.d || ""}" aria-label="Día exacto" title="Día exacto">
+    ${activo ? `<button class="filtro" data-f-quitar>${icono("cerrar", "p")}Quitar fecha</button>` : ""}`;
+  $(id).querySelectorAll("[data-f]").forEach(el => el.onchange = () => {
+    f[el.dataset.f] = el.value;
+    if (el.dataset.f === "d" && el.value) { f.a = ""; f.m = ""; }
+    if (el.dataset.f !== "d" && el.value) f.d = "";
+    repintar();
+  });
+  const q = $(id).querySelector("[data-f-quitar]"); if (q) q.onclick = () => { estado.fechas[clave] = {}; repintar(); };
+}
+function pasaFecha(clave, iso) {
+  const f = estado.fechas[clave], p = partesFecha(iso);
+  if (!f.a && !f.m && !f.d) return true;
+  if (!p) return false;
+  if (f.d) return p.iso === f.d;
+  return (!f.a || p.a == f.a) && (!f.m || p.m == f.m);
+}
+const hayFecha = (clave) => { const f = estado.fechas[clave]; return !!(f.a || f.m || f.d); };
 const usadas = (lista, items, campo) => [...new Set([...nombres(lista), ...items.map(x => x[campo])])].filter(c => items.some(x => x[campo] === c));
 const ordenAvisos = (l) => [...l].sort((a, b) => (b.fijado - a.fijado) || (new Date(b.fecha) - new Date(a.fecha)));
 
@@ -56,6 +85,7 @@ function pintaInicio() {
     ...D.docs.map(x => ({ f: x.fecha, ic: "carpeta", que: "Documento", t: x.titulo, h: "documentos" })),
     ...D.eventos.map(x => ({ f: x.creado, ic: "calendario", que: "Fecha en el calendario", t: x.titulo + " (" + fechaDia(x.fecha).toLocaleDateString("es-ES", { day: "numeric", month: "short" }) + ")", h: "calendario" })),
     ...D.convenio.map(x => ({ f: x.actualizado, ic: "convenio", que: "Convenio", t: x.titulo, h: "convenio" })),
+    ...D.preguntas.map(x => ({ f: x.creado, ic: "pregunta", que: "Pregunta frecuente", t: x.pregunta, h: "preguntas" })),
   ].filter(x => x.f).sort((a, b) => new Date(b.f) - new Date(a.f)).slice(0, 6);
   $("inicio-novedades").innerHTML = nov.length ? nov.map(n => `<a class="novedad" href="#${n.h}">
       <span class="ic">${icono(n.ic, "p")}</span>
@@ -71,14 +101,25 @@ function pintaInicio() {
     </a>`).join("") : vacio("calendario", "No hay fechas próximas.");
 }
 
-// ---------- Avisos ----------
+// ---------- Avisos (actuales y archivo) ----------
+const mesesArchivo = () => { const n = parseInt(D.paginas.archivo_meses ?? "3", 10); return isNaN(n) ? 3 : n; };
+const archivado = (a) => { const n = mesesArchivo(); if (!n || a.fijado) return false; const lim = new Date(); lim.setMonth(lim.getMonth() - n); return new Date(a.fecha) < lim; };
 function pintaAvisos(idNuevo) {
   pintaFiltros("filtros-avisos", usadas("aviso", D.avisos, "categoria"), estado.catAviso, o => { estado.catAviso = o; pintaAvisos(); });
-  const qr = $("buscar-avisos").value.trim(), q = normal(qr);
+  pintaFechas("fechas-avisos", "avisos", D.avisos, a => a.fecha, () => pintaAvisos());
+  const qr = $("buscar-avisos").value.trim(), q = normal(qr), buscando = !!q || hayFecha("avisos");
+  const nArch = D.avisos.filter(archivado).length;
+  $("archivo-avisos").innerHTML = (nArch && !buscando) ? `<button class="filtro ${!estado.archivo ? "activo" : ""}" data-arch="0">Actuales</button>
+      <button class="filtro ${estado.archivo ? "activo" : ""}" data-arch="1">${icono("archivo2", "p")}Archivo (${nArch})</button>` : "";
+  $("archivo-avisos").querySelectorAll("[data-arch]").forEach(b => b.onclick = () => { estado.archivo = b.dataset.arch === "1"; pintaAvisos(); });
   const l = ordenAvisos(D.avisos).filter(a => (estado.catAviso === "Todos" || a.categoria === estado.catAviso) &&
-    (!q || normal(a.titulo + " " + a.contenido).includes(q)));
-  $("lista-avisos").innerHTML = l.length ? l.map(a => tarjetaAviso(a, { nuevo: a.id === idNuevo, resaltar: qr })).join("")
-    : vacio("avisos", q ? "No hay avisos que coincidan con la búsqueda." : "Todavía no hay avisos publicados.");
+    pasaFecha("avisos", a.fecha) &&
+    (buscando || !nArch || archivado(a) === estado.archivo) &&
+    (!q || normal(a.titulo + " " + a.contenido + " " + textoFecha(a.fecha)).includes(q)));
+  $("lista-avisos").innerHTML = (buscando && l.length ? `<p class="fecha-txt">${l.length} aviso${l.length === 1 ? "" : "s"} encontrado${l.length === 1 ? "" : "s"} (incluye el archivo).</p>` : "") +
+    (estado.archivo && !buscando ? `<p class="fecha-txt">Avisos de hace más de ${mesesArchivo()} mes${mesesArchivo() === 1 ? "" : "es"}.</p>` : "") +
+    (l.length ? l.map(a => tarjetaAviso(a, { nuevo: a.id === idNuevo, resaltar: qr })).join("")
+      : vacio("avisos", buscando ? "No hay avisos que coincidan con la búsqueda o la fecha." : "Todavía no hay avisos publicados."));
 }
 $("buscar-avisos").oninput = () => pintaAvisos();
 
@@ -116,6 +157,8 @@ function pintaCalendario() {
 }
 $("cal-ant").onclick = () => { estado.mes = new Date(estado.mes.getFullYear(), estado.mes.getMonth() - 1, 1); pintaCalendario(); };
 $("cal-sig").onclick = () => { estado.mes = new Date(estado.mes.getFullYear(), estado.mes.getMonth() + 1, 1); pintaCalendario(); };
+$("cal-ir").onchange = (e) => { if (!e.target.value) return; const [y, m] = e.target.value.split("-"); estado.mes = new Date(+y, +m - 1, 1); estado.diaSel = `${y}-${m}-01`; pintaCalendario(); };
+document.querySelector(".cal-mes-btn").onclick = (e) => { if (e.target.id !== "cal-ir") { const i = $("cal-ir"); i.value = isoDe(estado.mes).slice(0, 7); try { i.showPicker(); } catch (_) { i.focus(); i.click(); } } };
 $("cal-hoy").onclick = () => { estado.mes = new Date(); estado.diaSel = hoyISO(); pintaCalendario(); };
 
 // ---------- Convenio ----------
@@ -140,10 +183,11 @@ $("buscar-convenio").oninput = () => pintaConvenio();
 // ---------- Actas ----------
 function pintaActas() {
   pintaFiltros("filtros-actas", usadas("acta", D.actas, "tipo"), estado.tipoActa, o => { estado.tipoActa = o; pintaActas(); });
+  pintaFechas("fechas-actas", "actas", D.actas, a => a.fecha, () => pintaActas());
   const qr = $("buscar-actas").value.trim(), q = normal(qr);
-  const l = D.actas.filter(a => (estado.tipoActa === "Todos" || a.tipo === estado.tipoActa) &&
-    (!q || normal(a.titulo + " " + a.resumen + " " + a.acuerdos).includes(q)));
-  if (!l.length) { $("lista-actas").innerHTML = vacio("actas", q ? "No hay actas que coincidan con la búsqueda." : "Todavía no hay actas publicadas."); return; }
+  const l = D.actas.filter(a => (estado.tipoActa === "Todos" || a.tipo === estado.tipoActa) && pasaFecha("actas", a.fecha) &&
+    (!q || normal(a.titulo + " " + a.resumen + " " + a.acuerdos + " " + textoFecha(a.fecha)).includes(q)));
+  if (!l.length) { $("lista-actas").innerHTML = vacio("actas", q || hayFecha("actas") ? "No hay actas que coincidan con la búsqueda o la fecha." : "Todavía no hay actas publicadas."); return; }
   let html = "", anyo = null;
   l.forEach(a => {
     const y = (a.fecha || "").slice(0, 4);
@@ -157,13 +201,24 @@ $("buscar-actas").oninput = () => pintaActas();
 // ---------- Documentos ----------
 function pintaDocumentos() {
   pintaFiltros("filtros-docs", usadas("documento", D.docs, "categoria"), estado.catDoc, o => { estado.catDoc = o; pintaDocumentos(); });
+  pintaFechas("fechas-docs", "docs", D.docs, d => d.fecha, () => pintaDocumentos());
   const q = normal($("buscar-docs").value.trim());
-  const l = D.docs.filter(d => (estado.catDoc === "Todos" || d.categoria === estado.catDoc) &&
-    (!q || normal(d.titulo + " " + d.descripcion + " " + d.nombre_archivo).includes(q)));
+  const l = D.docs.filter(d => (estado.catDoc === "Todos" || d.categoria === estado.catDoc) && pasaFecha("docs", d.fecha) &&
+    (!q || normal(d.titulo + " " + d.descripcion + " " + d.nombre_archivo + " " + textoFecha(d.fecha)).includes(q)));
   $("lista-documentos").innerHTML = l.length ? l.map(docHTML).join("")
-    : vacio("carpeta", q ? "No hay documentos que coincidan con la búsqueda." : "Todavía no hay documentos subidos.");
+    : vacio("carpeta", q || hayFecha("docs") ? "No hay documentos que coincidan con la búsqueda o la fecha." : "Todavía no hay documentos subidos.");
 }
 $("buscar-docs").oninput = () => pintaDocumentos();
+
+// ---------- Preguntas frecuentes ----------
+function pintaPreguntas() {
+  pintaFiltros("filtros-preguntas", usadas("pregunta", D.preguntas, "categoria"), estado.catPreg, o => { estado.catPreg = o; pintaPreguntas(); });
+  const qr = $("buscar-preguntas").value.trim(), q = normal(qr);
+  const l = D.preguntas.filter(p => (estado.catPreg === "Todos" || p.categoria === estado.catPreg) && (!q || normal(p.pregunta + " " + p.respuesta).includes(q)));
+  $("lista-preguntas").innerHTML = l.length ? l.map(p => preguntaHTML(p, qr, !!q)).join("")
+    : vacio("pregunta", q ? "No hay preguntas que coincidan. Escríbenos y te respondemos." : "Todavía no hay preguntas frecuentes.");
+}
+$("buscar-preguntas").oninput = () => pintaPreguntas();
 
 // ---------- Nosotros ----------
 function pintaInfo() {
@@ -174,13 +229,14 @@ function pintaInfo() {
 // ---------- Carga de datos ----------
 async function cargar(idNuevo) {
   await cargarOpciones();
-  const [a, e, c, d, ac, p] = await Promise.all([
+  const [a, e, c, d, ac, p, pr] = await Promise.all([
     sb.from("comunicados").select("*").order("fecha", { ascending: false }).limit(200),
     sb.from("eventos").select("*").order("fecha"),
     sb.from("convenio_secciones").select("*").order("orden").order("id"),
     sb.from("documentos").select("*").order("fecha", { ascending: false }),
     sb.from("actas").select("*").order("fecha", { ascending: false }),
     sb.from("paginas").select("*"),
+    sb.from("preguntas").select("*").order("orden").order("id"),
   ]);
   if (a.error) {
     document.querySelectorAll("#inicio-destacado, #lista-avisos").forEach(el =>
@@ -189,7 +245,9 @@ async function cargar(idNuevo) {
   }
   D.avisos = a.data || []; D.eventos = e.data || []; D.convenio = c.data || []; D.docs = d.data || []; D.actas = ac.data || [];
   D.paginas = Object.fromEntries((p.data || []).map(x => [x.slug, x.contenido]));
-  pintaInicio(); pintaAvisos(idNuevo); pintaCalendario(); pintaConvenio(); pintaActas(); pintaDocumentos(); pintaInfo();
+  D.preguntas = pr.data || [];
+  pintaInicio(); pintaAvisos(idNuevo); pintaCalendario(); pintaConvenio(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaInfo(); pintaCanales();
+  if (/^#aviso-\d+$/.test(location.hash) && !cargar.hecho) { cargar.hecho = true; irA(); }
 }
 cargar();
 
@@ -211,13 +269,125 @@ Object.keys(QUE).forEach(t => canal.on("postgres_changes", { event: "*", schema:
 canal.subscribe();
 document.addEventListener("visibilitychange", () => { if (!document.hidden) cargar(); });
 
-// ---------- Instalar como app ----------
-let promptInst;
-window.addEventListener("beforeinstallprompt", (ev) => {
-  ev.preventDefault(); promptInst = ev;
-  $("btn-instalar").style.display = "inline-flex";
-  $("txt-instalar").textContent = "Instálala en tu móvil y ábrela como una app más.";
+// ---------- Instalar como app y activar avisos ----------
+const ES_IOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const INSTALADA = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const PUSH_OK = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+let promptInst = null, suscrito = false;
+window.addEventListener("beforeinstallprompt", (ev) => { ev.preventDefault(); promptInst = ev; pintaBanda(); });
+window.addEventListener("appinstalled", () => { promptInst = null; pintaBanda(); });
+
+function modal(titulo, html) {
+  const v = document.createElement("div");
+  v.className = "modal-velo";
+  v.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><h2>${titulo}</h2>${html}<div class="botones"><button class="btn">Entendido</button></div></div>`;
+  v.onclick = (e) => { if (e.target === v || e.target.closest(".btn")) v.remove(); };
+  document.body.appendChild(v);
+}
+async function instalar() {
+  if (promptInst) { promptInst.prompt(); await promptInst.userChoice; promptInst = null; pintaBanda(); return; }
+  if (ES_IOS) modal("Instalar en iPhone", `<ol><li>Abre esta página en <b>Safari</b>.</li><li>Pulsa el botón <b>Compartir</b> (el cuadrado con una flecha hacia arriba).</li><li>Elige <b>«Añadir a pantalla de inicio»</b> y pulsa <b>Añadir</b>.</li><li>Abre la app desde el icono nuevo y activa los avisos.</li></ol>`);
+  else modal("Instalar la app", `<ol><li>Abre esta página en <b>Chrome</b>.</li><li>Pulsa el menú <b>⋮</b> (arriba a la derecha).</li><li>Elige <b>«Instalar aplicación»</b> o <b>«Añadir a pantalla de inicio»</b>.</li></ol><p class="fecha-txt">No hace falta descargar nada de fuera: es la propia web, sin avisos de seguridad.</p>`);
+}
+const b64aBytes = (b) => { const p = "=".repeat((4 - b.length % 4) % 4), s = atob((b + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from([...s].map(c => c.charCodeAt(0))); };
+async function activarAvisos() {
+  if (ES_IOS && !INSTALADA()) return modal("Primero, instala la app", "<p>En iPhone, los avisos solo funcionan si la app está instalada.</p><ol><li>Pulsa <b>Compartir</b> en Safari.</li><li>Elige <b>«Añadir a pantalla de inicio»</b>.</li><li>Abre la app desde el icono y pulsa otra vez <b>Activar avisos</b>.</li></ol>");
+  if (!PUSH_OK) return modal("Este navegador no admite avisos", "<p>Prueba a abrir la web con Chrome (Android) o instalarla en el iPhone con Safari.</p>");
+  const perm = await Notification.requestPermission();
+  if (perm !== "granted") return modal("Avisos bloqueados", "<p>Has bloqueado los avisos para esta web. Para activarlos, entra en los ajustes del navegador → Configuración de sitios → Notificaciones, y permite esta página.</p>");
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64aBytes(VAPID_PUBLICA) });
+    const j = sub.toJSON();
+    const { error } = await sb.rpc("suscribir_push", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
+    if (error) throw error;
+    suscrito = true; pintaBanda();
+    avisar("Avisos activados en este móvil", "inicio");
+  } catch (e) { modal("No se han podido activar", `<p>Vuelve a intentarlo en un momento.</p><p class="fecha-txt">${esc(e.message || e)}</p>`); }
+}
+async function desactivarAvisos() {
+  const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
+  if (sub) { await sb.rpc("desuscribir_push", { p_endpoint: sub.endpoint }); await sub.unsubscribe(); }
+  suscrito = false; pintaBanda();
+}
+async function comprobarSuscripcion() {
+  if (!PUSH_OK || Notification.permission !== "granted") return;
+  const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
+  suscrito = !!sub;
+  if (sub) { const j = sub.toJSON(); sb.rpc("suscribir_push", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth }); } // por si se borró
+  pintaBanda();
+}
+function pintaBanda() {
+  const inst = INSTALADA(), puedeInstalar = !inst && (promptInst || ES_IOS || /android/i.test(navigator.userAgent) || true);
+  $("cab-instalar").classList.toggle("oculto", inst);
+  let html = "";
+  if (!inst && !suscrito) html = `<div class="panel banda"><span class="ic">${icono("movil")}</span>
+      <div class="txt"><b>Instala la app y activa los avisos</b><p>Te llegará al móvil cada aviso nuevo, como un mensaje. Sin descargas raras ni avisos de seguridad.</p></div>
+      <div class="botones"><button class="btn" data-acc="instalar">${icono("descargar", "p")}Instalar</button>${!ES_IOS && PUSH_OK ? `<button class="btn sec" data-acc="activar">${icono("campana", "p")}Activar avisos</button>` : ""}</div></div>`;
+  else if (!suscrito) html = `<div class="panel banda"><span class="ic">${icono("campana")}</span>
+      <div class="txt"><b>Activa los avisos en este móvil</b><p>Te llegará una notificación cada vez que se publique algo importante.</p></div>
+      <div class="botones"><button class="btn" data-acc="activar">${icono("campana", "p")}Activar avisos</button></div></div>`;
+  else html = `<div class="panel banda avisos-on"><span class="ic">${icono("check")}</span>
+      <div class="txt"><b>Avisos activados en este móvil</b><p>Te llegará una notificación con cada novedad.</p></div>
+      <div class="botones"><button class="btn sec peq" data-acc="desactivar">Desactivar</button></div></div>`;
+  ["banda-app", "banda-app-info"].forEach(id => $(id).innerHTML = html);
+  document.querySelectorAll("[data-acc]").forEach(b => b.onclick = () => ({ instalar, activar: activarAvisos, desactivar: desactivarAvisos })[b.dataset.acc]());
+}
+$("cab-instalar").onclick = instalar;
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").then(comprobarSuscripcion).catch(() => {});
+pintaBanda();
+
+// ---------- Compartir y calendario (botones de las tarjetas) ----------
+document.addEventListener("click", (ev) => {
+  const c = ev.target.closest("[data-compartir]");
+  if (c) { const a = D.avisos.find(x => x.id == c.dataset.id); if (a) compartir(a.titulo, textoCompartir(a.titulo, a.contenido, "aviso-" + a.id)); return; }
+  const i = ev.target.closest("[data-ics]");
+  if (i) { const e = D.eventos.find(x => x.id == i.dataset.ics); if (e) descargarICS(e); }
 });
-$("btn-instalar").onclick = async () => { if (promptInst) { promptInst.prompt(); await promptInst.userChoice; $("btn-instalar").style.display = "none"; } };
-if (/iphone|ipad/i.test(navigator.userAgent)) $("txt-instalar").textContent = "En iPhone: pulsa Compartir y luego «Añadir a pantalla de inicio».";
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+
+// ---------- Canales (Telegram / WhatsApp) ----------
+function pintaCanales() {
+  const tg = (D.paginas.telegram || "").trim(), wa = (D.paginas.whatsapp || "").trim();
+  const tgUrl = tg.startsWith("@") ? "https://t.me/" + tg.slice(1) : (tg.startsWith("https://t.me/") ? tg : "");
+  $("canales").innerHTML = (tgUrl ? `<a class="canal tg" href="${esc(tgUrl)}" target="_blank" rel="noopener">${icono("telegram", "p")}Canal de Telegram</a>` : "") +
+    (/^https:\/\/(chat\.)?whatsapp\.com\//.test(wa) ? `<a class="canal wa" href="${esc(wa)}" target="_blank" rel="noopener">${icono("whatsapp", "p")}Canal de WhatsApp</a>` : "");
+}
+
+// ---------- Traducir ----------
+document.addEventListener("click", async (ev) => {
+  const btn = ev.target.closest("[data-traducir]");
+  const opc = ev.target.closest("[data-idioma]");
+  document.querySelectorAll(".menu-idiomas").forEach(m => { if (!m.contains(ev.target)) m.remove(); });
+  if (btn) {
+    ev.preventDefault();
+    const caja = btn.parentElement, reg = btn.closest("[data-reg]");
+    if (reg.dataset.idiomaActual) { // volver al original
+      reg.querySelectorAll("[data-campo]").forEach(el => { el.innerHTML = el.dataset.original; el.removeAttribute("dir"); delete el.dataset.original; });
+      delete reg.dataset.idiomaActual; btn.innerHTML = icono("idioma", "p") + "Traducir"; return;
+    }
+    if (caja.querySelector(".menu-idiomas")) return;
+    caja.insertAdjacentHTML("beforeend", `<div class="menu-idiomas" role="menu">${Object.entries(IDIOMAS).map(([k, n]) => `<button role="menuitem" data-idioma="${k}" ${k === "ar" ? 'dir="rtl"' : ""}>${n}</button>`).join("")}</div>`);
+    return;
+  }
+  if (opc) {
+    ev.preventDefault();
+    const reg = opc.closest("[data-reg]"), [tabla, id] = reg.dataset.reg.split(":"), idioma = opc.dataset.idioma;
+    const boton = reg.querySelector("[data-traducir]");
+    opc.closest(".menu-idiomas").remove();
+    boton.innerHTML = icono("idioma", "p") + "Traduciendo…"; boton.disabled = true;
+    try {
+      const { data, error } = await sb.functions.invoke("traducir", { body: { tabla, id: +id, idioma } });
+      if (error || !data?.texto) { let m = "No se ha podido traducir ahora mismo."; try { m = (await error.context.json()).error || m; } catch (_) {} throw new Error(m); }
+      reg.querySelectorAll("[data-campo]").forEach(el => {
+        const t = data.texto[el.dataset.campo]; if (t == null) return;
+        if (el.dataset.original == null) el.dataset.original = el.innerHTML;
+        el.innerHTML = (el.tagName === "H3" || el.hasAttribute("data-plano")) ? esc(t) : textoHTML(t);
+        if (idioma === "ar") el.setAttribute("dir", "rtl"); else el.removeAttribute("dir");
+      });
+      if (reg.tagName === "DETAILS") reg.open = true;
+      reg.dataset.idiomaActual = idioma;
+      boton.innerHTML = icono("idioma", "p") + "Ver en español";
+    } catch (e) { boton.innerHTML = icono("idioma", "p") + "Traducir"; avisar(e.message, location.hash.slice(1) || "inicio"); }
+    boton.disabled = false;
+  }
+});

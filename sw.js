@@ -1,12 +1,31 @@
-// Permite instalar la web como app y abrirla sin conexión (muestra la última versión guardada).
-// Los datos (avisos, calendario…) se piden siempre en directo a Supabase.
-const CACHE = "ccoo-v5";
+// Service worker: permite instalar la web como app, abrirla sin conexión
+// y recibir notificaciones aunque la app esté cerrada.
+const CACHE = "ccoo-v7";
 const BASE = ["./", "index.html", "styles.css", "config.js", "iconos.js", "render.js", "app.js", "logo.png", "icon-192.png", "manifest.json"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(BASE))); self.skipWaiting(); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });
 self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
-  if (e.request.method !== "GET" || url.origin !== location.origin) return;
+  if (e.request.method !== "GET" || url.origin !== location.origin) return; // los datos van siempre en directo
   e.respondWith(fetch(e.request).then(r => { const c = r.clone(); caches.open(CACHE).then(k => k.put(e.request, c)); return r; })
     .catch(() => caches.match(e.request)));
+});
+
+// Notificación recibida
+self.addEventListener("push", e => {
+  let d = {};
+  try { d = e.data.json(); } catch (_) { d = { titulo: "Sección Sindical CCOO", cuerpo: e.data ? e.data.text() : "" }; }
+  e.waitUntil(self.registration.showNotification(d.titulo || "Sección Sindical CCOO", {
+    body: d.cuerpo || "", icon: "icon-192.png", badge: "icon-192.png", tag: d.etiqueta || undefined,
+    data: { url: d.url || "./" }, vibrate: [120, 60, 120],
+  }));
+});
+// Al tocar la notificación: abre la web en la sección correspondiente
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  const destino = e.notification.data && e.notification.data.url || "./";
+  e.waitUntil(clients.matchAll({ type: "window", includeUncontrolled: true }).then(ws => {
+    for (const w of ws) if (w.url.startsWith(self.registration.scope)) { w.navigate(destino); return w.focus(); }
+    return clients.openWindow(destino);
+  }));
 });

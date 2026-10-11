@@ -52,17 +52,21 @@ const etqNuevo = (d) => esNuevo(d) ? `<span class="etq nuevo">${icono("nuevo", "
 
 // ---------- Avisos ----------
 window.tarjetaAviso = (a, { corto = false, nuevo = false, resaltar = "" } = {}) => `
-  <article class="panel aviso ${a.urgente ? "urgente" : ""} ${a.fijado ? "fijado" : ""} ${nuevo ? "nuevo" : ""}">
+  <article class="panel aviso ${a.urgente ? "urgente" : ""} ${a.fijado ? "fijado" : ""} ${nuevo ? "nuevo" : ""}" id="aviso-${a.id}" data-reg="comunicados:${a.id}">
     <div class="cab">
       ${a.urgente ? `<span class="etq urgente">${icono("alerta", "p")}Urgente</span>` : ""}
       ${a.fijado ? `<span class="etq fijado">${icono("fijado", "p")}Fijado</span>` : ""}
       <span class="etq tipo ${claseTipo(a.categoria, "aviso")}">${esc(a.categoria)}</span>
       ${a.urgente ? "" : etqNuevo(a.fecha)}
     </div>
-    <h3>${esc(a.titulo || "Sin título")}</h3>
-    <div class="cuerpo ${corto ? "corto" : ""}">${textoHTML(a.contenido, resaltar)}</div>
+    <h3 data-campo="titulo">${esc(a.titulo || "Sin título")}</h3>
+    <div class="cuerpo ${corto ? "corto" : ""}" data-campo="contenido">${textoHTML(a.contenido, resaltar)}</div>
     ${corto ? (a.adjuntos?.length ? `<div class="fecha-txt" style="margin-top:8px">${icono("clip", "p")} ${a.adjuntos.length} archivo(s) adjunto(s)</div>` : "") : adjuntosHTML(a.adjuntos)}
-    <div class="pie-tarjeta">${fechasHTML(a.fecha, a.actualizado)}</div>
+    <div class="pie-tarjeta">${fechasHTML(a.fecha, a.actualizado)}
+      ${corto ? "" : `<span class="acciones-tarjeta">
+        <a class="accion wa" href="${enlaceWhatsApp(textoCompartir(a.titulo, a.contenido, "aviso-" + a.id))}" target="_blank" rel="noopener">${icono("whatsapp", "p")}WhatsApp</a>
+        <button class="accion" data-compartir="aviso" data-id="${a.id}">${icono("compartir", "p")}Compartir</button>
+        ${botonTraducir()}</span>`}</div>
   </article>`;
 
 // ---------- Calendario ----------
@@ -74,27 +78,31 @@ window.eventoHTML = (e, conCartel) => `<div class="evento">
       ${e.hora ? `<span>${icono("reloj", "p")}${esc(e.hora)}${e.hora_fin ? "–" + esc(e.hora_fin) : ""}</span>` : ""}
       ${e.lugar ? `<span>${icono("lugar", "p")}${esc(e.lugar)}</span>` : ""}
     </div>
-    ${e.descripcion ? `<div>${textoHTML(e.descripcion)}</div>` : ""}</div></div>`;
+    ${e.descripcion ? `<div>${textoHTML(e.descripcion)}</div>` : ""}
+    <div class="acciones-tarjeta" style="margin-top:10px">
+      <button class="accion" data-ics="${e.id}">${icono("calendario", "p")}Añadir a mi calendario</button>
+      <a class="accion wa" href="${enlaceWhatsApp(textoCompartir(e.titulo, fechaDia(e.fecha).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }) + (e.hora ? ", " + e.hora : "") + (e.lugar ? " · " + e.lugar : ""), "calendario"))}" target="_blank" rel="noopener">${icono("whatsapp", "p")}WhatsApp</a>
+    </div></div></div>`;
 
 // ---------- Convenio ----------
-window.apartadoHTML = (s, qr = "", abierto = false) => `<details class="panel apartado" ${abierto ? "open" : ""}>
+window.apartadoHTML = (s, qr = "", abierto = false) => `<details class="panel apartado" ${abierto ? "open" : ""} data-reg="convenio_secciones:${s.id}">
   <summary><div class="txt">
     <div class="meta"><span class="etq tipo ${claseTipo(s.categoria, "convenio")}">${esc(s.categoria)}</span>${s.articulo ? `<span class="etq">${esc(s.articulo)}</span>` : ""}</div>
-    <h3>${esc(s.titulo || "Sin título")}</h3>${s.resumen ? `<div class="res">${esc(s.resumen)}</div>` : ""}</div>
+    <h3 data-campo="titulo">${esc(s.titulo || "Sin título")}</h3>${s.resumen ? `<div class="res" data-campo="resumen" data-plano>${esc(s.resumen)}</div>` : ""}</div>
     ${icono("abajo", "flecha")}</summary>
-  <div class="contenido">${textoHTML(s.contenido, qr)}
-    ${s.actualizado ? `<p class="fechas" style="margin-top:12px">Actualizado ${haceTxt(s.actualizado)}</p>` : ""}</div></details>`;
+  <div class="contenido"><div data-campo="contenido">${textoHTML(s.contenido, qr)}</div>
+    <div class="pie-tarjeta" style="margin-top:12px">${s.actualizado ? `<span class="fechas">Actualizado ${haceTxt(s.actualizado)}</span>` : "<span></span>"}<span class="acciones-tarjeta">${botonTraducir()}</span></div></div></details>`;
 
 // ---------- Actas ----------
-window.actaHTML = (a, qr = "") => `<article class="panel acta">
+window.actaHTML = (a, qr = "") => `<article class="panel acta" data-reg="actas:${a.id}">
   ${a.fecha ? cartel(a.fecha, a.tipo, "acta") : ""}
   <div><div class="cab"><span class="etq tipo ${claseTipo(a.tipo, "acta")}">${esc(a.tipo)}</span>${etqNuevo(a.creado)}</div>
-    <h3>${esc(a.titulo || "Sin título")}</h3>
+    <h3 data-campo="titulo">${esc(a.titulo || "Sin título")}</h3>
     ${a.fecha ? `<div class="fecha-txt">Reunión del ${fechaLarga(a.fecha + "T12:00:00")}</div>` : ""}
-    ${a.resumen ? `<div style="margin-top:8px">${textoHTML(a.resumen, qr)}</div>` : ""}
-    ${a.acuerdos ? `<div class="acuerdos"><b>Acuerdos</b>${textoHTML(a.acuerdos, qr)}</div>` : ""}
+    ${a.resumen ? `<div style="margin-top:8px" data-campo="resumen">${textoHTML(a.resumen, qr)}</div>` : ""}
+    ${a.acuerdos ? `<div class="acuerdos"><b>Acuerdos</b><div data-campo="acuerdos">${textoHTML(a.acuerdos, qr)}</div></div>` : ""}
     ${adjuntosHTML(a.adjuntos)}
-    <div class="pie-tarjeta">${fechasHTML(a.creado, a.actualizado)}</div>
+    <div class="pie-tarjeta">${fechasHTML(a.creado, a.actualizado)}<span class="acciones-tarjeta">${botonTraducir()}</span></div>
   </div></article>`;
 
 // ---------- Documentos ----------
@@ -110,4 +118,34 @@ window.docHTML = (d) => {
     </span>
     <span class="abrir">${icono("pdf", "p")}<span>Abrir</span></span>
   </a>`;
+};
+
+// ---------- Preguntas frecuentes ----------
+window.preguntaHTML = (p, qr = "", abierta = false) => `<details class="panel apartado pregunta" ${abierta ? "open" : ""} data-reg="preguntas:${p.id}">
+  <summary><div class="txt">
+    <div class="meta"><span class="etq tipo ${claseTipo(p.categoria, "pregunta")}">${esc(p.categoria)}</span></div>
+    <h3 data-campo="pregunta">${esc(p.pregunta || "Sin pregunta")}</h3></div>
+    ${icono("abajo", "flecha")}</summary>
+  <div class="contenido"><div data-campo="respuesta">${textoHTML(p.respuesta, qr)}</div>
+    <div class="pie-tarjeta" style="margin-top:12px">${p.actualizado ? `<span class="fechas">Actualizado ${haceTxt(p.actualizado)}</span>` : "<span></span>"}<span class="acciones-tarjeta">${botonTraducir()}</span></div></div></details>`;
+
+// ---------- Traducir ----------
+window.IDIOMAS = { ca: "Català", en: "English", ro: "Română", ar: "العربية", fr: "Français", pt: "Português" };
+window.botonTraducir = () => `<span class="traducir"><button class="accion" data-traducir aria-haspopup="true">${icono("idioma", "p")}Traducir</button></span>`;
+
+// ---------- Fechas para buscar ----------
+const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+window.MESES = MESES;
+window.textoFecha = (iso) => {
+  if (!iso) return "";
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? fechaDia(iso) : new Date(iso);
+  const dd = d.getDate(), mm = d.getMonth() + 1, yy = d.getFullYear(), p = (n) => String(n).padStart(2, "0");
+  return [`${dd}/${mm}/${yy}`, `${p(dd)}/${p(mm)}/${yy}`, `${dd}/${mm}`, `${p(dd)}/${p(mm)}`, `${dd}-${mm}-${yy}`, `${p(dd)}-${p(mm)}-${yy}`,
+    `${dd} de ${MESES[mm - 1]} de ${yy}`, `${dd} de ${MESES[mm - 1]}`, `${MESES[mm - 1]} ${yy}`, `${MESES[mm - 1]} de ${yy}`].join(" ");
+};
+// Partes de una fecha (año, mes, día) en hora de Madrid
+window.partesFecha = (iso) => {
+  if (!iso) return null;
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? fechaDia(iso) : new Date(iso);
+  return { a: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate(), iso: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` };
 };
