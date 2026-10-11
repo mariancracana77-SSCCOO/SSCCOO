@@ -1,42 +1,40 @@
 # Web Sección Sindical CCOO Calsina Carré
 
-## Archivos
-- `index.html` — la web que ven los trabajadores (Comunicados, Convenio, Calendario, Quiénes somos, Contacto)
-- `admin.html` — panel para publicar (solo entra ssccoo.calsinacarre@gmail.com)
-- `styles.css`, `config.js`, `manifest.json`, `sw.js`, `logo.png`, `icon-*.png` — no hace falta tocarlos
+- Web para los trabajadores: https://mariancracana77-ssccoo.github.io/SSCCOO/
+- Panel para publicar: https://mariancracana77-ssccoo.github.io/SSCCOO/admin.html
 
-## 1. Subirla a GitHub Pages (igual que Mochila)
-1. En GitHub Desktop: File → New repository → nombre `ccoo-calsina`.
-2. Copia TODOS estos archivos dentro de la carpeta del repositorio.
-3. Commit → Publish repository (desmarca "Keep this code private").
-4. En github.com → el repositorio → Settings → Pages → Branch: `main` / `(root)` → Save.
-5. En 1-2 minutos estará en: `https://TUUSUARIO.github.io/ccoo-calsina/`
+## Qué tiene la web
+- **Inicio**: el aviso más importante (urgente o fijado), últimos avisos, próximas fechas y accesos rápidos.
+- **Avisos**: todos los comunicados, con buscador y filtro por categoría. Los urgentes salen en rojo y los fijados arriba.
+- **Calendario**: vista de mes con un color por tipo (asamblea, reunión, negociación, elecciones, festivo). Al tocar un día se ve lo que hay.
+- **Convenio**: apartados que se abren al tocarlos, con buscador y filtro, y la lista de documentos PDF al lado.
+- **Actas**: agrupadas por año, con resumen, acuerdos y el PDF del acta completa.
+- **Nosotros**: quiénes somos y contacto.
 
-## 2. Configurar Supabase (una sola vez, 1 minuto)
-En supabase.com → proyecto **ccoo-calsina-carre** → Authentication → URL Configuration:
-- **Site URL:** `https://TUUSUARIO.github.io/ccoo-calsina/admin.html`
-- **Redirect URLs:** añade `https://TUUSUARIO.github.io/ccoo-calsina/admin.html`
+Si alguien tiene la web abierta cuando se publica un aviso, le aparece un mensaje al momento.
 
-(Sirve para que los enlaces de "confirmar cuenta" y "he olvidado la contraseña" lleven al panel.)
+## Cómo publica tu padre
+Entra en `admin.html`. Arriba hay una pestaña por sección: Avisos, Calendario, Convenio, Actas, Documentos y Textos.
+En cada una: rellena el formulario y pulsa **Publicar**. En la lista de la derecha (abajo en el móvil) puede **editar** o **borrar** lo que ya está publicado.
 
-## 3. Crear la cuenta de tu padre
-1. Abre `.../admin.html`.
-2. Email: ssccoo.calsinacarre@gmail.com, escribe una contraseña (mín. 8 caracteres) → **Crear cuenta**.
-3. Abre el email de confirmación que llega a ese Gmail y pulsa el enlace.
-4. Vuelve a `admin.html` → **Entrar**. Ya puede publicar.
+Para dar formato al texto:
+- Línea en blanco entre párrafos.
+- Empezar una línea con `- ` para hacer una lista.
+- `**así**` para poner negrita.
 
-Si otra persona se crea una cuenta, puede entrar pero **no puede publicar nada**: solo los emails de la tabla `admins` pueden.
+## Archivos (no hace falta tocarlos)
+`index.html`, `app.js` (web) · `admin.html`, `admin.js` (panel) · `styles.css` · `config.js` (conexión con Supabase) · `iconos.js` · `manifest.json`, `sw.js` (para instalarla como app) · `logo.png`, `icon-*.png` · `.nojekyll`
 
-## Añadir otro delegado que pueda publicar
-Supabase → Table Editor → tabla `admins` → Insert row → su email.
+## Ajustes (todo desde el panel, sin tocar código)
+En la pestaña **Ajustes** del panel se pueden añadir, renombrar, ordenar, cambiar de color y quitar las categorías y tipos de todas las secciones (filtros de avisos, tipos de acta, tipos del calendario, categorías del convenio y de documentos).
 
-## Difundirla
-- Enlace por el email de la sección y por el canal de WhatsApp/Telegram.
-- Un QR en el tablón (cualquier generador de QR gratuito con el enlace).
-- En el móvil: Chrome → "Instalar app" / iPhone Safari → Compartir → "Añadir a pantalla de inicio".
-
-## Tiempo real
-Si alguien tiene la web abierta cuando se publica un comunicado, le aparece un aviso "🔔 Nuevo comunicado" sin recargar. Para notificaciones con la app cerrada, usar el canal de WhatsApp/Telegram con el enlace.
+También se añade o se quita a otros delegados que puedan publicar. La persona añadida entra en `admin.html` y pulsa «Primera vez: crear la cuenta».
 
 ## Gratis
-Plan gratuito de Supabase y GitHub Pages. Ojo: Supabase **pausa los proyectos gratuitos si pasan 7 días sin ninguna visita**; con uso normal no pasará, y si pasa se reactiva desde el panel de Supabase.
+Supabase (plan gratuito) y GitHub Pages. Supabase pausa los proyectos gratuitos si pasan 7 días sin ninguna visita; si pasa, se reactiva desde el panel de Supabase.
+
+## Asistente de actas (gratis)
+En el panel, pestaña **Actas**: pega las notas de la reunión y pulsa **Generar acta**. Rellena título, tipo, fecha, resumen y acuerdos; se revisa y se pulsa **Publicar**. Nunca publica solo.
+
+Usa la IA gratuita de Google (Gemini). La clave se crea gratis en https://aistudio.google.com (botón «Get API key») y se guarda en Supabase → Edge Functions → Secrets con el nombre `GEMINI_API_KEY`.
+Ojo: en el plan gratuito Google puede usar lo que se le envía para mejorar sus productos, así que no conviene poner nombres ni datos personales ni información confidencial de la empresa. Tiene un límite de usos diario, de sobra para unas cuantas actas.

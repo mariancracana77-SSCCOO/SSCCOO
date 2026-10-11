@@ -4,154 +4,161 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sección Sindical CCOO Calsina Carré</title>
-<meta name="description" content="Comunicados, convenio y calendario de la Sección Sindical CCOO Calsina Carré">
-<meta name="theme-color" content="#d4001a">
+<meta name="description" content="Avisos, calendario, convenio y actas de la Sección Sindical CCOO Calsina Carré">
+<meta name="theme-color" content="#c4122f">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<header class="top">
-  <img src="logo.png" alt="Logo">
+
+<header class="cabecera">
+  <img src="logo.png" alt="Logo de la Sección Sindical CCOO Calsina Carré">
   <div>
-    <div class="t1">Sección Sindical CCOO</div>
-    <div class="t2">Calsina Carré</div>
+    <div class="nombre">Sección Sindical CCOO</div>
+    <div class="sub">Calsina Carré</div>
   </div>
 </header>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status"></div>
 
-<main>
-  <button class="instalar" id="btnInstalar">📲 Instalar en el móvil</button>
+<main class="contenedor">
 
-  <section class="vista activa" id="v-comunicados">
-    <h2>Comunicados</h2>
-    <div id="lista-comunicados"><p class="vacio">Cargando…</p></div>
+  <!-- INICIO -->
+  <section class="vista" id="v-inicio">
+    <div class="saludo">
+      <h1 class="titulo-vista">Hola, compañero/a</h1>
+      <p id="txt-inicio"></p>
+    </div>
+    <div class="inicio-rejilla">
+      <div>
+        <div id="inicio-destacado"></div>
+        <h2 class="titulo-bloque">Últimos avisos <a href="#avisos">Ver todos</a></h2>
+        <div id="inicio-avisos"></div>
+      </div>
+      <div>
+        <h2 class="titulo-bloque" style="margin-top:0">Próximas fechas <a href="#calendario">Calendario</a></h2>
+        <div id="inicio-fechas"></div>
+        <h2 class="titulo-bloque">Accesos rápidos</h2>
+        <div class="accesos">
+          <a class="panel acceso" href="#convenio" style="text-decoration:none;color:inherit"><span class="ic"></span><b>Convenio</b><small>Tus derechos</small></a>
+          <a class="panel acceso" href="#actas" style="text-decoration:none;color:inherit"><span class="ic"></span><b>Actas</b><small>Reuniones y acuerdos</small></a>
+          <a class="panel acceso" href="#calendario" style="text-decoration:none;color:inherit"><span class="ic"></span><b>Calendario</b><small>Fechas clave</small></a>
+          <a class="panel acceso" href="#info" style="text-decoration:none;color:inherit"><span class="ic"></span><b>Contacto</b><small>Habla con nosotros</small></a>
+        </div>
+      </div>
+    </div>
   </section>
 
-  <section class="vista" id="v-convenio">
-    <h2>Convenio y documentos</h2>
-    <div class="card" id="txt-convenio"></div>
-    <div id="lista-documentos"></div>
+  <!-- AVISOS -->
+  <section class="vista" id="v-avisos">
+    <h1 class="titulo-vista">Avisos</h1>
+    <p class="intro-vista">Comunicados de la Sección Sindical, del más reciente al más antiguo.</p>
+    <div class="herramientas">
+      <div class="buscador"><svg class="icono p" aria-hidden="true"><use href="#i-buscar"/></svg>
+        <input id="buscar-avisos" type="search" placeholder="Buscar en los avisos" aria-label="Buscar en los avisos"></div>
+    </div>
+    <div class="filtros" id="filtros-avisos"></div>
+    <div id="lista-avisos"></div>
   </section>
 
+  <!-- CALENDARIO -->
   <section class="vista" id="v-calendario">
-    <h2>Calendario</h2>
-    <div id="lista-eventos"><p class="vacio">Cargando…</p></div>
+    <h1 class="titulo-vista">Calendario</h1>
+    <p class="intro-vista">Asambleas, reuniones, negociaciones y festivos. Toca un día para ver lo que hay.</p>
+    <div class="cal-rejilla">
+      <div class="panel cal">
+        <div class="cal-cab">
+          <h2 id="cal-mes"></h2>
+          <div class="cal-nav">
+            <button class="btn-hoy" id="cal-hoy">Hoy</button>
+            <button class="btn-ic" id="cal-ant" aria-label="Mes anterior"></button>
+            <button class="btn-ic" id="cal-sig" aria-label="Mes siguiente"></button>
+          </div>
+        </div>
+        <div class="semana"><div>L</div><div>M</div><div>X</div><div>J</div><div>V</div><div>S</div><div>D</div></div>
+        <div class="dias" id="cal-dias"></div>
+        <div class="leyenda" id="cal-leyenda"></div>
+      </div>
+      <div>
+        <div class="panel dia-detalle" id="cal-detalle"></div>
+        <h2 class="titulo-bloque">Próximas fechas</h2>
+        <div class="panel dia-detalle" id="cal-proximas"></div>
+      </div>
+    </div>
   </section>
 
-  <section class="vista" id="v-quienes">
-    <h2>Quiénes somos</h2>
-    <div class="card" id="txt-quienes"></div>
+  <!-- CONVENIO -->
+  <section class="vista" id="v-convenio">
+    <h1 class="titulo-vista">Convenio</h1>
+    <p class="intro-vista">Lo más importante del convenio explicado por apartados. Toca uno para leerlo entero.</p>
+    <div class="conv-rejilla">
+      <div>
+        <div class="panel conv-intro" id="conv-intro"></div>
+        <div class="herramientas">
+          <div class="buscador"><svg class="icono p" aria-hidden="true"><use href="#i-buscar"/></svg>
+            <input id="buscar-convenio" type="search" placeholder="Buscar: vacaciones, permiso, plus…" aria-label="Buscar en el convenio"></div>
+        </div>
+        <div class="filtros" id="filtros-convenio"></div>
+        <div id="lista-convenio"></div>
+      </div>
+      <aside class="lateral">
+        <div class="panel"><h3>Documentos</h3><div id="lista-docs"></div></div>
+      </aside>
+    </div>
   </section>
 
-  <section class="vista" id="v-contacto">
-    <h2>Contacto</h2>
-    <div class="card" id="txt-contacto"></div>
-    <a class="pdf" href="mailto:ssccoo.calsinacarre@gmail.com">✉️ Escribir a la Sección Sindical</a>
+  <!-- ACTAS -->
+  <section class="vista" id="v-actas">
+    <h1 class="titulo-vista">Actas</h1>
+    <p class="intro-vista">Resumen y acuerdos de cada reunión. El acta completa está en el PDF.</p>
+    <div class="herramientas">
+      <div class="buscador"><svg class="icono p" aria-hidden="true"><use href="#i-buscar"/></svg>
+        <input id="buscar-actas" type="search" placeholder="Buscar en las actas" aria-label="Buscar en las actas"></div>
+    </div>
+    <div class="filtros" id="filtros-actas"></div>
+    <div id="lista-actas"></div>
   </section>
 
-  <footer>
-    Web informativa de la Sección Sindical CCOO Calsina Carré.<br>
-    No recoge datos personales ni usa cookies de seguimiento.<br>
-    <a href="admin.html">Acceso admin</a>
+  <!-- INFO -->
+  <section class="vista" id="v-info">
+    <h1 class="titulo-vista">Quiénes somos</h1>
+    <p class="intro-vista">La Sección Sindical de CCOO en Calsina Carré.</p>
+    <div class="info-rejilla">
+      <div class="panel"><h2>Nosotros</h2><div id="txt-quienes"></div></div>
+      <div class="panel"><h2>Contacto</h2><div id="txt-contacto"></div>
+        <a class="contacto-btn" href="mailto:ssccoo.calsinacarre@gmail.com"></a></div>
+    </div>
+    <div class="panel instalar-panel">
+      <span class="ic"></span>
+      <div><b>Tenla siempre a mano</b>
+        <p id="txt-instalar">En el móvil, abre el menú del navegador y elige «Añadir a pantalla de inicio».</p></div>
+      <button class="btn peq" id="btn-instalar" style="margin-left:auto;display:none">Instalar</button>
+    </div>
+  </section>
+
+  <footer class="pie">
+    Web informativa de la Sección Sindical CCOO Calsina Carré. No recoge datos personales ni usa cookies de seguimiento.<br>
+    <a href="admin.html">Acceso para publicar</a>
   </footer>
 </main>
 
-<nav class="tabs">
-  <button data-v="comunicados" class="activa"><span class="ico">📢</span>Comunicados</button>
-  <button data-v="convenio"><span class="ico">📄</span>Convenio</button>
-  <button data-v="calendario"><span class="ico">📅</span>Calendario</button>
-  <button data-v="quienes"><span class="ico">👥</span>Quiénes</button>
-  <button data-v="contacto"><span class="ico">✉️</span>Contacto</button>
+<nav class="nav" aria-label="Secciones">
+  <button data-v="inicio"><span data-i="inicio"></span>Inicio</button>
+  <button data-v="avisos"><span data-i="avisos"></span>Avisos</button>
+  <button data-v="calendario"><span data-i="calendario"></span>Calendario</button>
+  <button data-v="convenio"><span data-i="convenio"></span>Convenio</button>
+  <button data-v="actas"><span data-i="actas"></span>Actas</button>
+  <button data-v="info"><span data-i="grupo"></span>Nosotros</button>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="iconos.js"></script>
 <script src="config.js"></script>
-<script>
-// --- Pestañas ---
-function irA(v) {
-  document.querySelectorAll(".vista").forEach(s => s.classList.toggle("activa", s.id === "v-" + v));
-  document.querySelectorAll("nav.tabs button").forEach(b => b.classList.toggle("activa", b.dataset.v === v));
-  history.replaceState(null, "", "#" + v);
-  window.scrollTo(0, 0);
-}
-document.querySelectorAll("nav.tabs button").forEach(b => b.onclick = () => irA(b.dataset.v));
-if (location.hash) irA(location.hash.slice(1));
-
-// --- Comunicados ---
-function tarjetaComunicado(c, nuevo) {
-  return `<article class="card ${c.urgente ? "urgente" : ""} ${nuevo ? "nuevo" : ""}">
-    <div class="meta">
-      ${c.urgente ? '<span class="chip urgente">URGENTE</span>' : ""}
-      <span class="chip">${esc(c.categoria)}</span>
-      <span>${fechaLarga(c.fecha)}</span>
-    </div>
-    <h3>${esc(c.titulo)}</h3>
-    <div>${textoHTML(c.contenido)}</div>
-    ${c.pdf_url ? `<a class="pdf" href="${esc(c.pdf_url)}" target="_blank" rel="noopener">📎 Ver PDF adjunto</a>` : ""}
-  </article>`;
-}
-async function cargarComunicados(idNuevo) {
-  const { data, error } = await sb.from("comunicados").select("*").order("fecha", { ascending: false }).limit(100);
-  const el = document.getElementById("lista-comunicados");
-  if (error) { el.innerHTML = '<p class="vacio">No se han podido cargar los comunicados. Revisa tu conexión.</p>'; return; }
-  el.innerHTML = data.length ? data.map(c => tarjetaComunicado(c, c.id === idNuevo)).join("") : '<p class="vacio">Todavía no hay comunicados.</p>';
-}
-
-// --- Calendario ---
-async function cargarEventos() {
-  const { data, error } = await sb.from("eventos").select("*").order("fecha");
-  const el = document.getElementById("lista-eventos");
-  if (error) { el.innerHTML = '<p class="vacio">No se ha podido cargar el calendario.</p>'; return; }
-  const hoy = new Date().toISOString().slice(0, 10);
-  const proximos = data.filter(e => e.fecha >= hoy), pasados = data.filter(e => e.fecha < hoy).reverse().slice(0, 5);
-  const t = (e, pas) => {
-    const d = new Date(e.fecha + "T12:00:00");
-    return `<div class="card evento ${pas ? "pasado" : ""}">
-      <div class="dia"><b>${d.getDate()}</b><span>${d.toLocaleDateString("es-ES", { month: "short" })}</span></div>
-      <div><h3>${esc(e.titulo)}</h3>
-        <div class="meta">${e.hora ? "🕒 " + esc(e.hora) : ""} ${e.lugar ? "📍 " + esc(e.lugar) : ""}</div>
-        ${e.descripcion ? `<div>${textoHTML(e.descripcion)}</div>` : ""}</div></div>`;
-  };
-  el.innerHTML = (proximos.length ? proximos.map(e => t(e)).join("") : '<p class="vacio">No hay fechas próximas.</p>')
-    + (pasados.length ? '<h3 style="margin-top:24px">Pasados</h3>' + pasados.map(e => t(e, true)).join("") : "");
-}
-
-// --- Páginas fijas y documentos ---
-async function cargarPaginas() {
-  const { data } = await sb.from("paginas").select("*");
-  (data || []).forEach(p => { const el = document.getElementById("txt-" + p.slug); if (el) el.innerHTML = textoHTML(p.contenido); });
-  const { data: docs } = await sb.from("documentos").select("*").order("fecha", { ascending: false });
-  document.getElementById("lista-documentos").innerHTML = (docs || []).map(d =>
-    `<div class="card"><h3>${esc(d.titulo)}</h3><div class="meta">${fechaLarga(d.fecha)}</div>
-     <a class="pdf" href="${esc(d.url)}" target="_blank" rel="noopener">📄 Abrir PDF</a></div>`).join("");
-}
-
-// --- Tiempo real: aviso cuando se publica algo nuevo ---
-const toast = document.getElementById("toast");
-sb.channel("comunicados-live")
-  .on("postgres_changes", { event: "*", schema: "public", table: "comunicados" }, (p) => {
-    cargarComunicados(p.new?.id);
-    if (p.eventType === "INSERT") {
-      toast.textContent = "🔔 Nuevo comunicado: " + (p.new.titulo || "");
-      toast.classList.add("ver");
-      toast.onclick = () => { irA("comunicados"); toast.classList.remove("ver"); };
-      setTimeout(() => toast.classList.remove("ver"), 8000);
-    }
-  }).subscribe();
-// al volver a abrir la app, refrescar
-document.addEventListener("visibilitychange", () => { if (!document.hidden) { cargarComunicados(); cargarEventos(); } });
-
-cargarComunicados(); cargarEventos(); cargarPaginas();
-
-// --- Instalar como app ---
-let promptInstalar;
-const btnInst = document.getElementById("btnInstalar");
-window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); promptInstalar = e; btnInst.style.display = "block"; });
-btnInst.onclick = async () => { if (promptInstalar) { promptInstalar.prompt(); await promptInstalar.userChoice; btnInst.style.display = "none"; } };
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
-</script>
+<script src="app.js"></script>
 </body>
 </html>
