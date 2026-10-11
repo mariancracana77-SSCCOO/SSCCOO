@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Panel de publicación · CCOO Calsina Carré</title>
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#c4122f">
@@ -11,61 +11,20 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
-<style>
-  body { padding: 0 !important; }
-  .cabecera { position: sticky !important; height: auto !important; }
-  .contenedor { padding-top: 18px !important; }
-  .login { max-width: 440px; margin: 30px auto; padding: 26px; }
-  .login h1 { font-size: 1.9rem; margin-bottom: 6px; }
-  .login p { color: var(--suave); margin: 0 0 6px; }
-  .enlaces-login { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
-  .enlaces-login button { background: none; border: 0; color: var(--azul); cursor: pointer; padding: 0; font-weight: 600; }
-  .pestanas { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 4px 0 18px; padding-bottom: 4px; }
-  .pestanas::-webkit-scrollbar { display: none; }
-  .pestanas button { display: inline-flex; gap: 8px; align-items: center; border: 1px solid var(--linea); background: var(--tarjeta); border-radius: 12px; padding: 10px 14px; cursor: pointer; font-weight: 600; white-space: nowrap; }
-  .pestanas button.activa { background: var(--tinta); color: var(--tarjeta); border-color: var(--tinta); }
-  .zona { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
-  .zona > * { min-width: 0; }
-  @media (min-width: 960px) { .zona { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; } .zona .formulario { position: sticky; top: 90px; } }
-  .formulario { padding: 22px; }
-  .formulario h2 { font-size: 1.6rem; display: flex; align-items: center; gap: 10px; }
-  .formulario .modo { font-family: var(--texto); font-size: .8rem; font-weight: 600; background: var(--ambar-suave); color: #8a5d00; padding: 2px 10px; border-radius: 99px; }
-  .ayuda { color: var(--suave); font-size: .88rem; margin: 6px 0 0; }
-  .pdf-actual { font-size: .9rem; margin-top: 6px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .lista h2 { font-size: 1.35rem; margin-bottom: 10px; }
-  .item { padding: 14px 16px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center; }
-  .item .txt { flex: 1; min-width: 0; }
-  .item b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .item .sub { color: var(--suave); font-size: .86rem; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 3px; }
-  .item .acc { display: flex; gap: 6px; }
-  .barra { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
-  .barra .quien { color: var(--suave); font-size: .92rem; display: inline-flex; gap: 8px; align-items: center; }
-  .formato { background: var(--fondo); border-radius: var(--radio); padding: 10px 14px; font-size: .88rem; color: var(--suave); margin-top: 8px; }
-  .fila-op { display: grid; grid-template-columns: 118px 1fr auto; gap: 8px; align-items: center; margin-bottom: 8px; }
-  .fila-op.nueva { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--linea); }
-  .fila-op .acc { display: flex; gap: 4px; }
-  .fila-op .btn.peq { padding: 8px; margin: 0; }
-  .fila-op .btn.sec.peq:has(svg + *) { padding: 8px 12px; }
-  .sel-color { padding: 9px 8px; font-weight: 600; background: var(--cs); color: var(--c); border-color: transparent; }
-  @media (max-width: 520px) { .fila-op { grid-template-columns: 1fr auto; } .fila-op .sel-color { grid-column: 1 / -1; } .fila-op.nueva { grid-template-columns: 1fr auto; } }
-  .asistente { background: var(--azul-suave); border-radius: var(--radio); padding: 16px; margin-bottom: 22px; }
-  .asistente h3 { font-size: 1.3rem; display: flex; gap: 8px; align-items: center; color: var(--azul); }
-  .asistente textarea { margin-top: 10px; }
-  .btn.azul { background: var(--azul); } .btn.azul:hover { background: #163c78; }
-  .formato code { background: var(--tarjeta); padding: 1px 6px; border-radius: 4px; }
-</style>
+<link rel="stylesheet" href="admin.css">
 </head>
-<body>
+<body class="admin">
 <header class="cabecera">
   <img src="logo.png" alt="Logo">
   <div><div class="nombre">Panel de publicación</div><div class="sub">Sección Sindical CCOO Calsina Carré</div></div>
-  <div class="acciones"><a class="btn-cab" href="index.html" id="ver-web" title="Ver la web" aria-label="Ver la web"></a></div>
+  <div class="acciones"><a class="btn-cab" href="index.html" target="_blank" id="ver-web" title="Ver la web como un trabajador" aria-label="Ver la web"></a></div>
 </header>
 
-<main class="contenedor">
+<div class="toast" id="toast" role="status"></div>
 
-  <!-- ENTRAR -->
-  <section class="panel login oculto" id="s-login">
+<!-- ENTRAR -->
+<main class="contenedor solo-login oculto" id="s-login">
+  <section class="panel login">
     <h1>Entrar</h1>
     <p>Solo para publicar. Los trabajadores no necesitan cuenta.</p>
     <label for="email">Email</label><input id="email" type="email" value="ssccoo.calsinacarre@gmail.com" autocomplete="username">
@@ -77,31 +36,59 @@
     </div>
     <div class="msg" id="m-login"></div>
   </section>
+</main>
 
-  <!-- NUEVA CONTRASEÑA -->
-  <section class="panel login oculto" id="s-recuperar">
+<main class="contenedor solo-login oculto" id="s-recuperar">
+  <section class="panel login">
     <h1>Nueva contraseña</h1>
     <label for="nueva">Escribe la nueva contraseña <small>(mínimo 8 caracteres)</small></label>
     <input id="nueva" type="password" autocomplete="new-password">
     <div class="botones"><button class="btn" id="b-nueva">Guardar contraseña</button></div>
     <div class="msg" id="m-rec"></div>
   </section>
-
-  <!-- PANEL -->
-  <section class="oculto" id="s-panel">
-    <div class="barra">
-      <span class="quien" id="quien"></span>
-      <button class="btn sec peq" id="b-salir"></button>
-    </div>
-    <div class="panel vacio oculto" id="no-admin" style="margin:12px 0">Esta cuenta no tiene permiso para publicar. Pide a la Sección Sindical que añada tu email.</div>
-    <nav class="pestanas" id="pestanas"></nav>
-    <div id="zona"></div>
-  </section>
 </main>
+
+<!-- PANEL -->
+<div class="oculto" id="s-panel">
+  <nav class="nav" id="nav-admin" aria-label="Secciones del panel"></nav>
+  <main class="contenedor" id="zona"></main>
+  <button class="fab oculto" id="fab" aria-label="Nuevo"></button>
+</div>
+
+<!-- Hoja "Más" (móvil) -->
+<div class="velo oculto" id="velo-mas"></div>
+<div class="hoja oculto" id="hoja-mas" role="dialog" aria-label="Más secciones"></div>
+
+<!-- EDITOR -->
+<div class="velo oculto" id="velo-ed"></div>
+<section class="editor oculto" id="editor" role="dialog" aria-modal="true" aria-labelledby="ed-titulo">
+  <div class="ed-cab">
+    <button class="btn-ic" id="ed-cerrar" aria-label="Cerrar"></button>
+    <div class="ed-quees"><small id="ed-modo"></small><b id="ed-titulo"></b></div>
+  </div>
+  <div class="ed-pestanas" role="tablist">
+    <button role="tab" class="activa" data-p="form">Escribir</button>
+    <button role="tab" data-p="previa">Vista previa</button>
+  </div>
+  <div class="ed-cuerpo">
+    <div class="ed-form" id="ed-form"></div>
+    <div class="ed-previa" id="ed-previa-col">
+      <div class="previa-cab"><span id="previa-icono"></span>Así lo verán los trabajadores</div>
+      <div id="ed-previa"></div>
+    </div>
+  </div>
+  <div class="ed-pie">
+    <button class="btn peligro" id="ed-borrar"></button>
+    <span class="msg" id="ed-msg"></span>
+    <button class="btn sec" id="ed-cancelar">Cancelar</button>
+    <button class="btn" id="ed-guardar"></button>
+  </div>
+</section>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="iconos.js"></script>
 <script src="config.js"></script>
+<script src="render.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>

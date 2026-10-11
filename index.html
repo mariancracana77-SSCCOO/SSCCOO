@@ -22,6 +22,7 @@
     <div class="nombre">Sección Sindical CCOO</div>
     <div class="sub">Calsina Carré</div>
   </div>
+  <div class="acciones"><a class="btn-cab" href="#info" aria-label="Quiénes somos y contacto" title="Quiénes somos y contacto"><span data-i="info"></span></a></div>
 </header>
 
 <div class="toast" id="toast" role="status"></div>
@@ -37,18 +38,18 @@
     <div class="inicio-rejilla">
       <div>
         <div id="inicio-destacado"></div>
-        <h2 class="titulo-bloque">Últimos avisos <a href="#avisos">Ver todos</a></h2>
-        <div id="inicio-avisos"></div>
+        <h2 class="titulo-bloque">Novedades</h2>
+        <div class="panel novedades" id="inicio-novedades"></div>
       </div>
       <div>
         <h2 class="titulo-bloque" style="margin-top:0">Próximas fechas <a href="#calendario">Calendario</a></h2>
         <div id="inicio-fechas"></div>
         <h2 class="titulo-bloque">Accesos rápidos</h2>
         <div class="accesos">
-          <a class="panel acceso" href="#convenio" style="text-decoration:none;color:inherit"><span class="ic"></span><b>Convenio</b><small>Tus derechos</small></a>
-          <a class="panel acceso" href="#actas" style="text-decoration:none;color:inherit"><span class="ic"></span><b>Actas</b><small>Reuniones y acuerdos</small></a>
-          <a class="panel acceso" href="#calendario" style="text-decoration:none;color:inherit"><span class="ic"></span><b>Calendario</b><small>Fechas clave</small></a>
-          <a class="panel acceso" href="#info" style="text-decoration:none;color:inherit"><span class="ic"></span><b>Contacto</b><small>Habla con nosotros</small></a>
+          <a class="panel acceso" href="#documentos"><span class="ic" data-ic="carpeta"></span><b>Documentos</b><small>PDF, tablas y formularios</small></a>
+          <a class="panel acceso" href="#convenio"><span class="ic" data-ic="convenio"></span><b>Convenio</b><small>Tus derechos</small></a>
+          <a class="panel acceso" href="#actas"><span class="ic" data-ic="actas"></span><b>Actas</b><small>Reuniones y acuerdos</small></a>
+          <a class="panel acceso" href="#info"><span class="ic" data-ic="correo"></span><b>Contacto</b><small>Habla con nosotros</small></a>
         </div>
       </div>
     </div>
@@ -124,6 +125,18 @@
     <div id="lista-actas"></div>
   </section>
 
+  <!-- DOCUMENTOS -->
+  <section class="vista" id="v-documentos">
+    <h1 class="titulo-vista">Documentos</h1>
+    <p class="intro-vista">Convenio, tablas salariales, calendario laboral, formularios… Toca uno para abrirlo o descargarlo.</p>
+    <div class="herramientas">
+      <div class="buscador"><svg class="icono p" aria-hidden="true"><use href="#i-buscar"/></svg>
+        <input id="buscar-docs" type="search" placeholder="Buscar un documento" aria-label="Buscar un documento"></div>
+    </div>
+    <div class="filtros" id="filtros-docs"></div>
+    <div class="lista-documentos" id="lista-documentos"></div>
+  </section>
+
   <!-- INFO -->
   <section class="vista" id="v-info">
     <h1 class="titulo-vista">Quiénes somos</h1>
@@ -134,7 +147,7 @@
         <a class="contacto-btn" href="mailto:ssccoo.calsinacarre@gmail.com"></a></div>
     </div>
     <div class="panel instalar-panel">
-      <span class="ic"></span>
+      <span class="ic" data-ic="movil"></span>
       <div><b>Tenla siempre a mano</b>
         <p id="txt-instalar">En el móvil, abre el menú del navegador y elige «Añadir a pantalla de inicio».</p></div>
       <button class="btn peq" id="btn-instalar" style="margin-left:auto;display:none">Instalar</button>
@@ -153,12 +166,13 @@
   <button data-v="calendario"><span data-i="calendario"></span>Calendario</button>
   <button data-v="convenio"><span data-i="convenio"></span>Convenio</button>
   <button data-v="actas"><span data-i="actas"></span>Actas</button>
-  <button data-v="info"><span data-i="grupo"></span>Nosotros</button>
+  <button data-v="documentos"><span data-i="carpeta"></span>Documentos</button>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="iconos.js"></script>
 <script src="config.js"></script>
+<script src="render.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

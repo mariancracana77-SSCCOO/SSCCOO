@@ -40,11 +40,15 @@ window.textoHTML = (s, resaltar) => {
     }
     return h;
   };
+  // Agrupa las líneas: las que empiezan por "- " forman listas; el resto, párrafos.
+  const esLista = (l) => /^\s*[-•*]\s+/.test(l);
   return String(s ?? "").trim().split(/\n\s*\n/).map(bloque => {
-    const ls = bloque.split("\n");
-    if (ls.every(l => /^\s*[-•*]\s+/.test(l)))
-      return "<ul>" + ls.map(l => "<li>" + linea(l.replace(/^\s*[-•*]\s+/, "")) + "</li>").join("") + "</ul>";
-    return "<p>" + ls.map(linea).join("<br>") + "</p>";
+    const out = []; let lista = [], texto = [];
+    const cerrarTexto = () => { if (texto.length) out.push("<p>" + texto.map(linea).join("<br>") + "</p>"); texto = []; };
+    const cerrarLista = () => { if (lista.length) out.push("<ul>" + lista.map(l => "<li>" + linea(l.replace(/^\s*[-•*]\s+/, "")) + "</li>").join("") + "</ul>"); lista = []; };
+    bloque.split("\n").forEach(l => { if (esLista(l)) { cerrarTexto(); lista.push(l); } else { cerrarLista(); texto.push(l); } });
+    cerrarTexto(); cerrarLista();
+    return out.join("");
   }).join("");
 };
 
