@@ -194,3 +194,10 @@ body.admin { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
 .desde-plantilla select { flex: 1; min-width: 180px; width: auto; }
 .aviso-copia { width: 100%; text-align: left; cursor: pointer; border-color: var(--ambar); margin: 4px 0 6px; }
 .aviso-copia .ic { background: var(--ambar-suave); color: #8a5d00; }
+
+.indice-ajustes { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.indice-ajustes a { display: inline-flex; gap: 6px; align-items: center; padding: 8px 14px; border-radius: 99px; border: 1px solid var(--linea); background: var(--tarjeta); color: var(--tinta); text-decoration: none; font-weight: 600; font-size: .9rem; }
+.indice-ajustes a:hover { border-color: var(--rojo); color: var(--rojo); }
+.tarjeta-ajuste, #ajuste-listas { scroll-margin-top: 90px; }
+.rejilla-ajustes > .tarjeta-ajuste { margin-bottom: 0; }
+@media (min-width: 1100px) { .rejilla-ajustes { grid-template-columns: 1fr 1fr; } }

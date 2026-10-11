@@ -57,3 +57,12 @@ Ojo: en el plan gratuito Google puede usar lo que se le envía para mejorar sus 
 - **Plantillas**: panel → Plantillas. Al crear un aviso nuevo, «Empezar desde una plantilla». Lo que va entre [corchetes] es lo que hay que rellenar (el panel avisa si se queda alguno).
 - **Traducir**: botón en avisos, actas, preguntas y convenio. Catalán, inglés, rumano, árabe, francés y portugués. Usa la IA gratuita de Google y guarda cada traducción para no repetirla.
 - **Copia de seguridad**: panel → Ajustes → «Descargar copia con archivos» (ZIP con todo) o «Solo los textos». El panel recuerda hacerla si pasa más de un mes.
+
+## Actualizar la web (importante)
+Cada vez que se cambie algún archivo, hay que subir el número de versión en **tres** sitios para que los móviles cojan la versión nueva:
+1. `config.js` → `window.VERSION_WEB = "8"`
+2. `sw.js` → `const VERSION = "8"`
+3. En `index.html`, `admin.html` y `cartel.html`, los `?v=8` de los archivos .js y .css.
+La versión que está viendo cada uno sale al pie de la web y en el panel (Ajustes y menú «Más»).
+
+Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración → Configuración de sitios → Todos los sitios → mariancracana77-ssccoo.github.io → Borrar y restablecer.

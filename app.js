@@ -8,6 +8,7 @@ const estado = { catAviso: "Todos", catConv: "Todos", tipoActa: "Todos", catDoc:
 document.querySelectorAll("[data-i]").forEach(el => el.outerHTML = icono(el.dataset.i));
 document.querySelectorAll("[data-ic]").forEach(el => el.innerHTML = icono(el.dataset.ic));
 $("cal-ant").innerHTML = icono("izq", "p"); $("cal-sig").innerHTML = icono("der", "p");
+$("version-web").textContent = "Versión " + VERSION_WEB;
 document.querySelector(".contacto-btn").innerHTML = icono("correo", "p") + "Escribir a la Sección Sindical";
 
 // ---------- Navegación ----------
@@ -334,7 +335,7 @@ function pintaBanda() {
   document.querySelectorAll("[data-acc]").forEach(b => b.onclick = () => ({ instalar, activar: activarAvisos, desactivar: desactivarAvisos })[b.dataset.acc]());
 }
 $("cab-instalar").onclick = instalar;
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").then(comprobarSuscripcion).catch(() => {});
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").then(r => { r.update(); return comprobarSuscripcion(); }).catch(() => {});
 pintaBanda();
 
 // ---------- Compartir y calendario (botones de las tarjetas) ----------

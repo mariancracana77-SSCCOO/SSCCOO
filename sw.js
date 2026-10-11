@@ -1,13 +1,15 @@
 // Service worker: permite instalar la web como app, abrirla sin conexión
 // y recibir notificaciones aunque la app esté cerrada.
-const CACHE = "ccoo-v7";
-const BASE = ["./", "index.html", "styles.css", "config.js", "iconos.js", "render.js", "app.js", "logo.png", "icon-192.png", "manifest.json"];
+const VERSION = "8"; // súbelo en cada actualización
+const CACHE = "ccoo-v" + VERSION;
+const BASE = ["./", "index.html", "logo.png", "icon-192.png", "manifest.json", ...["styles.css", "config.js", "iconos.js", "render.js", "app.js"].map(f => f + "?v=" + VERSION)];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(BASE))); self.skipWaiting(); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });
 self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== location.origin) return; // los datos van siempre en directo
-  e.respondWith(fetch(e.request).then(r => { const c = r.clone(); caches.open(CACHE).then(k => k.put(e.request, c)); return r; })
+  const pagina = e.request.mode === "navigate" || url.pathname.endsWith(".html") || url.pathname.endsWith("/");
+  e.respondWith(fetch(pagina ? new Request(e.request, { cache: "no-store" }) : e.request).then(r => { const c = r.clone(); caches.open(CACHE).then(k => k.put(e.request, c)); return r; })
     .catch(() => caches.match(e.request)));
 });
 

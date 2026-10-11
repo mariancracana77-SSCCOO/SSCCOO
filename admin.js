@@ -171,19 +171,23 @@ function pintaNav() {
     Object.keys(PAGINAS).map(k => b(k, EN_MOVIL.includes(k) ? "" : "solo-pc")).join("") +
     `<button class="solo-movil ${EN_MOVIL.includes(actual) ? "" : "activa"}" id="b-mas">${icono("menu")}Más</button>
      <div class="sep solo-pc"></div>
-     <div class="quien">${esc(window.MI_EMAIL || "")}</div>
+     <div class="quien">${esc(window.MI_EMAIL || "")}<br>Versión ${VERSION_WEB}</div>
+     ${INSTALADA_A() ? "" : `<button class="solo-pc" id="b-instalar-pc">${icono("descargar")}Instalar la app</button>`}
      <button class="solo-pc" id="b-salir">${icono("salir")}Salir</button>`;
   $("nav-admin").querySelectorAll("[data-p]").forEach(x => x.onclick = () => abrir(x.dataset.p));
   $("b-mas").onclick = abrirMas;
   $("b-salir").onclick = salir;
+  if ($("b-instalar-pc")) $("b-instalar-pc").onclick = instalarApp;
 }
 function abrirMas() {
   $("hoja-mas").innerHTML = Object.keys(PAGINAS).filter(k => !EN_MOVIL.includes(k)).map(k =>
     `<button data-p="${k}">${icono(PAGINAS[k].icono)}${PAGINAS[k].nombre}</button>`).join("") +
-    `<a href="index.html" target="_blank">${icono("ver")}Ver la web</a><button id="m-salir">${icono("salir")}Salir (${esc(window.MI_EMAIL || "")})</button>`;
+    (INSTALADA_A() ? "" : `<button id="m-instalar">${icono("descargar")}Instalar la app</button>`) +
+    `<a href="index.html" target="_blank">${icono("ver")}Ver la web</a><button id="m-salir">${icono("salir")}Salir (${esc(window.MI_EMAIL || "")})</button><p class="fecha-txt" style="text-align:center;margin:6px 0 0">Versión ${VERSION_WEB}</p>`;
   ["velo-mas", "hoja-mas"].forEach(i => $(i).classList.remove("oculto"));
   $("hoja-mas").querySelectorAll("[data-p]").forEach(x => x.onclick = () => { cerrarMas(); abrir(x.dataset.p); });
   $("m-salir").onclick = () => { cerrarMas(); salir(); };
+  if ($("m-instalar")) $("m-instalar").onclick = () => { cerrarMas(); instalarApp(); };
 }
 const cerrarMas = () => ["velo-mas", "hoja-mas"].forEach(i => $(i).classList.add("oculto"));
 $("velo-mas").onclick = cerrarMas;
@@ -211,10 +215,12 @@ async function pintaResumen() {
       <button class="panel rapido" data-ir="ajustes"><span class="ic">${icono("telegram")}</span><span><b>Telegram y avisos</b><small>Canales y cartel QR</small></span></button>
     </div>
     <div id="recordatorio-copia"></div>
+    <div id="banda-instalar"></div>
     <h2 class="titulo-bloque">Lo último que has publicado</h2>
     <div class="cuentas" id="cuentas"></div>
     <div class="lista-adm" id="ultimos"><p class="fecha-txt">Cargando…</p></div>`;
   $("zona").querySelectorAll("[data-n]").forEach(b => b.onclick = () => abrirEditor(b.dataset.n));
+  pintaBandaInstalar();
   $("zona").querySelector("[data-ir]").onclick = () => { abrir("ajustes"); setTimeout(() => $("ajuste-canales")?.scrollIntoView({ behavior: "smooth" }), 400); };
   sb.from("paginas").select("contenido").eq("slug", "ultima_copia").maybeSingle().then(({ data }) => {
     const f = data?.contenido, dias = f ? (Date.now() - new Date(f)) / 86400000 : Infinity;
@@ -647,18 +653,16 @@ async function pintaAjustes() {
   const todas = window.OPC_FILAS || [];
   filasLista = {};
   Object.keys(LISTAS).forEach(k => filasLista[k] = todas.filter(o => o.lista === k).map(o => ({ ...o, original: o.nombre })));
-  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Ajustes</h1><p>Filtros, tipos y colores de cada sección, y quién puede publicar.</p></div></div>
+  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Ajustes</h1><p>Canales y avisos, copia de seguridad, archivo, filtros de cada sección y quién puede publicar. Versión ${VERSION_WEB}.</p></div></div>
+  <nav class="indice-ajustes">
+    <a href="#ajuste-canales">${icono("telegram", "p")}Telegram y WhatsApp</a>
+    <a href="#ajuste-copia">${icono("copia", "p")}Copia de seguridad</a>
+    <a href="#ajuste-archivo">${icono("archivo2", "p")}Archivo</a>
+    <a href="#ajuste-admins">${icono("admin", "p")}Quién publica</a>
+    <a href="#ajuste-listas">${icono("filtro", "p")}Filtros y categorías</a>
+  </nav>
   <div class="rejilla-ajustes">
-    <div>${Object.entries(LISTAS).map(([k, L]) => `
-      <div class="panel tarjeta-ajuste">
-        <h2>${L.l}</h2><p class="ayuda">${L.ayuda} Si cambias un nombre, se cambia también en todo lo ya publicado.</p>
-        <div id="lst-${k}" style="margin-top:12px"></div>
-        <div class="fila-op nueva">${selColor("gris", `nc-${k}`)}<input id="nn-${k}" placeholder="Nueva opción" aria-label="Nueva opción">
-          <button class="btn sec peq" data-anadir="${k}">${icono("mas", "p")}Añadir</button></div>
-        <div class="botones"><button class="btn" data-guardar="${k}">${icono("check", "p")}Guardar cambios</button></div>
-        <div class="msg" id="m-${k}"></div>
-      </div>`).join("")}</div>
-    <div><div class="panel tarjeta-ajuste" id="ajuste-canales">
+    <div class="panel tarjeta-ajuste" id="ajuste-canales">
       <h2>Avisos y canales</h2>
       <div class="estado-canales" id="estado-canales"><p class="fecha-txt">Comprobando…</p></div>
       <h3 class="sub-ajuste">${icono("telegram", "p")}Canal de Telegram (automático)</h3>
@@ -682,14 +686,14 @@ async function pintaAjustes() {
         <button class="btn sec" id="b-copia-datos">${icono("descargar", "p")}Solo los textos</button></div>
       <div class="msg" id="m-copia"></div>
     </div>
-    <div class="panel tarjeta-ajuste">
+    <div class="panel tarjeta-ajuste" id="ajuste-archivo">
       <h2>Archivo de avisos</h2>
       <p class="ayuda">Los avisos antiguos pasan a la pestaña «Archivo» de la web para que la lista no se llene. Los fijados nunca se archivan.</p>
       <label for="meses-archivo">Archivar los avisos de hace más de…</label>
       <select id="meses-archivo">${[[1, "1 mes"], [2, "2 meses"], [3, "3 meses"], [6, "6 meses"], [12, "1 año"], [0, "Nunca"]].map(([v, t]) => `<option value="${v}">${t}</option>`).join("")}</select>
       <div class="msg" id="m-archivo"></div>
     </div>
-    <div class="panel tarjeta-ajuste">
+    <div class="panel tarjeta-ajuste" id="ajuste-admins">
       <h2>Quién puede publicar</h2>
       <p class="ayuda">Añade el email de otro delegado. Después, esa persona entra en esta página y pulsa «Primera vez: crear la cuenta».</p>
       <div id="lista-admins" style="margin-top:12px"><p class="fecha-txt">Cargando…</p></div>
@@ -697,8 +701,19 @@ async function pintaAjustes() {
         <input id="nuevo-admin" type="email" placeholder="email@ejemplo.com" aria-label="Email del nuevo delegado">
         <button class="btn sec peq" id="b-admin">${icono("mas", "p")}Añadir</button></div>
       <div class="msg" id="m-admins"></div>
-    </div></div>
-  </div>`;
+    </div>
+  </div>
+  <h2 class="titulo-bloque" id="ajuste-listas">Filtros y categorías de cada sección</h2>
+  <div class="rejilla-ajustes">${Object.entries(LISTAS).map(([k, L]) => `
+      <div class="panel tarjeta-ajuste">
+        <h2>${L.l}</h2><p class="ayuda">${L.ayuda} Si cambias un nombre, se cambia también en todo lo ya publicado.</p>
+        <div id="lst-${k}" style="margin-top:12px"></div>
+        <div class="fila-op nueva">${selColor("gris", `nc-${k}`)}<input id="nn-${k}" placeholder="Nueva opción" aria-label="Nueva opción">
+          <button class="btn sec peq" data-anadir="${k}">${icono("mas", "p")}Añadir</button></div>
+        <div class="botones"><button class="btn" data-guardar="${k}">${icono("check", "p")}Guardar cambios</button></div>
+        <div class="msg" id="m-${k}"></div>
+      </div>`).join("")}</div>`;
+  document.querySelectorAll(".indice-ajustes a").forEach(l => l.onclick = (e) => { e.preventDefault(); $(l.getAttribute("href").slice(1))?.scrollIntoView({ behavior: "smooth", block: "start" }); });
   Object.keys(LISTAS).forEach(pintaLista);
   document.querySelectorAll("[data-anadir]").forEach(b => b.onclick = () => {
     const k = b.dataset.anadir, n = $("nn-" + k).value.trim();
@@ -959,4 +974,25 @@ async function hacerCopia(conArchivos) {
     $("ultima-copia").innerHTML = "Última copia: <b>ahora mismo</b>.";
   } catch (e) { msg("m-copia", "No se ha podido hacer la copia: " + (e.message || e)); }
   b1.disabled = b2.disabled = false;
+}
+
+// Mantener la app al día también en el panel
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").then(r => r.update()).catch(() => {});
+
+// ---------- Instalar la app (también desde el panel) ----------
+let PROMPT_INST = null;
+const ES_IOS_A = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const INSTALADA_A = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); PROMPT_INST = e; if (actual === "resumen" && $("banda-instalar")) pintaBandaInstalar(); });
+async function instalarApp() {
+  if (PROMPT_INST) { PROMPT_INST.prompt(); await PROMPT_INST.userChoice; PROMPT_INST = null; pintaBandaInstalar(); return; }
+  if (ES_IOS_A) modalAdm("Instalar en iPhone", `<ol><li>Abre esta página en <b>Safari</b>.</li><li>Pulsa <b>Compartir</b> (el cuadrado con la flecha).</li><li>Elige <b>«Añadir a pantalla de inicio»</b> y pulsa <b>Añadir</b>.</li></ol><p class="fecha-txt">La app abre la web; para publicar, toca «Acceso para publicar» al final de la página.</p>`);
+  else modalAdm("Instalar la app", `<ol><li>Abre esta página en <b>Chrome</b>.</li><li>Pulsa el menú <b>⋮</b> (arriba a la derecha).</li><li>Elige <b>«Instalar aplicación»</b> o <b>«Añadir a pantalla de inicio»</b>.</li></ol><p class="fecha-txt">No es un archivo descargado: no sale ningún aviso de seguridad. Para publicar desde la app, toca «Acceso para publicar» al final de la página.</p>`);
+}
+function pintaBandaInstalar() {
+  const z = $("banda-instalar"); if (!z) return;
+  z.innerHTML = INSTALADA_A() ? "" : `<div class="panel banda"><span class="ic">${icono("movil")}</span>
+    <span class="txt"><b>Instala la app en tu móvil</b><p>Tendrás la web y el panel a un toque, con el logo en la pantalla de inicio.</p></span>
+    <span class="botones"><button class="btn" id="b-instalar-adm">${icono("descargar", "p")}Instalar</button></span></div>`;
+  if ($("b-instalar-adm")) $("b-instalar-adm").onclick = instalarApp;
 }
