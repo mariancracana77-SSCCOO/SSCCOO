@@ -1,6 +1,6 @@
 // Service worker: permite instalar la web como app, abrirla sin conexión
 // y recibir notificaciones aunque la app esté cerrada.
-const VERSION = "14"; // súbelo en cada actualización
+const VERSION = "15"; // súbelo en cada actualización
 const CACHE = "ccoo-v" + VERSION;
 const BASE = ["./", "index.html", "logo.png", "icon-192.png", "manifest.json", ...["styles.css", "config.js", "iconos.js", "render.js", "app.js"].map(f => f + "?v=" + VERSION)];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(BASE))); self.skipWaiting(); });

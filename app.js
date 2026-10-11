@@ -383,7 +383,7 @@ async function activarAvisos() {
 function guardarEndpoint(nuevo) {
   try {
     const viejo = localStorage.getItem("ccoo-push");
-    if (viejo && viejo !== nuevo) sb.rpc("desuscribir_push", { p_endpoint: viejo });
+    if (viejo && viejo !== nuevo) sb.rpc("desuscribir_push", { p_endpoint: viejo }).then(() => {}, () => {});
     localStorage.setItem("ccoo-push", nuevo);
   } catch (_) {}
 }
@@ -397,7 +397,7 @@ async function comprobarSuscripcion() {
   if (!PUSH_OK || Notification.permission !== "granted") return;
   const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
   suscrito = !!sub;
-  if (sub) { const j = sub.toJSON(); sb.rpc("suscribir_push", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth }); guardarEndpoint(j.endpoint); } // por si se borró
+  if (sub) { const j = sub.toJSON(); sb.rpc("suscribir_push", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth }).then(() => {}, () => {}); guardarEndpoint(j.endpoint); } // por si se borró
   pintaBanda();
 }
 function pintaBanda() {
@@ -523,6 +523,6 @@ $("buscar-todo").oninput = buscarTodo;
     sessionStorage.setItem("ccoo-contada", "1");
     const clave = "ccoo-dia-" + hoyISO(), nuevo = !localStorage.getItem(clave);
     if (nuevo) { Object.keys(localStorage).filter(k => k.startsWith("ccoo-dia-")).forEach(k => localStorage.removeItem(k)); localStorage.setItem(clave, "1"); }
-    sb.rpc("contar_visita", { p_nuevo: nuevo });
-  } catch (_) { sb.rpc("contar_visita", { p_nuevo: false }); }
+    sb.rpc("contar_visita", { p_nuevo: nuevo }).then(() => {}, () => {});
+  } catch (_) { sb.rpc("contar_visita", { p_nuevo: false }).then(() => {}, () => {}); }
 })();

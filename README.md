@@ -99,3 +99,7 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 ## Versión 14
 - Filtro de fechas (año, mes, día exacto) reordenado en recuadros bien alineados, en la web y en el panel: ya no se superponen ni se salen de la pantalla en móviles pequeños.
 - Los correos y enlaces largos (por ejemplo en «Nosotros») bajan de línea en vez de empujar la pantalla hacia un lado.
+
+## Versión 15
+- Arreglado el contador de visitas del día (no se enviaba).
+- Arreglado el borrado de suscripciones antiguas de avisos (evita duplicados).

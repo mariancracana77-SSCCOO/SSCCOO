@@ -62,9 +62,9 @@
   </div>
   <div class="pie">Es gratis, no pide datos personales y no hace falta descargar nada de fuera de tu navegador.</div>
 </div>
-<script src="qr.js?v=14"></script>
+<script src="qr.js?v=15"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js?v=14"></script>
+<script src="config.js?v=15"></script>
 <script>
   // Código QR generado en el propio navegador (librería qrcode-generator, MIT)
   const qr = (id, texto) => { const q = qrcode(0, "M"); q.addData(texto); q.make(); document.getElementById(id).innerHTML = q.createSvgTag({ cellSize: 8, margin: 0, scalable: true }); };
