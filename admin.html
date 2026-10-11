@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Panel de publicación · CCOO Calsina Carré</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#c4122f">
+<link rel="icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>try{var L=JSON.parse(localStorage.getItem("ccoo-lectura")||"{}"),h=document.documentElement;if(L.letra&&L.letra!=="normal")h.setAttribute("data-letra",L.letra);if(L.contraste==="alto")h.setAttribute("data-contraste","alto");if(L.tema&&L.tema!=="auto")h.setAttribute("data-theme",L.tema)}catch(e){}</script>
+<link rel="stylesheet" href="styles.css?v=11">
+<link rel="stylesheet" href="admin.css?v=11">
+</head>
+<body class="admin">
+<header class="cabecera">
+  <img src="logo.png" alt="Logo">
+  <div><div class="nombre">Panel de publicación</div><div class="sub">Sección Sindical CCOO Calsina Carré</div></div>
+  <div class="acciones"><button class="btn-cab aa" onclick="abrirLectura()" aria-label="Tamaño de letra y colores" title="Tamaño de letra y colores">Aa</button><a class="btn-cab" href="index.html" target="_blank" id="ver-web" title="Ver la web como un trabajador" aria-label="Ver la web"></a></div>
+</header>
+
+<div class="toast" id="toast" role="status"></div>
+
+<!-- ENTRAR -->
+<main class="contenedor solo-login oculto" id="s-login">
+  <section class="panel login">
+    <h1>Entrar</h1>
+    <p>Solo para publicar. Los trabajadores no necesitan cuenta.</p>
+    <label for="email">Email</label><input id="email" type="email" value="ssccoo.calsinacarre@gmail.com" autocomplete="username">
+    <label for="pass">Contraseña</label><input id="pass" type="password" autocomplete="current-password">
+    <div class="botones"><button class="btn" id="b-entrar" style="flex:1">Entrar</button></div>
+    <div class="enlaces-login">
+      <button id="b-registro">Primera vez: crear la cuenta</button>
+      <button id="b-olvido">He olvidado la contraseña</button>
+    </div>
+    <div class="msg" id="m-login"></div>
+  </section>
+</main>
+
+<main class="contenedor solo-login oculto" id="s-recuperar">
+  <section class="panel login">
+    <h1>Nueva contraseña</h1>
+    <label for="nueva">Escribe la nueva contraseña <small>(mínimo 8 caracteres)</small></label>
+    <input id="nueva" type="password" autocomplete="new-password">
+    <div class="botones"><button class="btn" id="b-nueva">Guardar contraseña</button></div>
+    <div class="msg" id="m-rec"></div>
+  </section>
+</main>
+
+<!-- PANEL -->
+<div class="oculto" id="s-panel">
+  <nav class="nav" id="nav-admin" aria-label="Secciones del panel"></nav>
+  <main class="contenedor" id="zona"></main>
+  <button class="fab oculto" id="fab" aria-label="Nuevo"></button>
+</div>
+
+<!-- Hoja "Más" (móvil) -->
+<div class="velo oculto" id="velo-mas"></div>
+<div class="hoja oculto" id="hoja-mas" role="dialog" aria-label="Más secciones"></div>
+
+<!-- EDITOR -->
+<div class="velo oculto" id="velo-ed"></div>
+<section class="editor oculto" id="editor" role="dialog" aria-modal="true" aria-labelledby="ed-titulo">
+  <div class="ed-cab">
+    <button class="btn-ic" id="ed-cerrar" aria-label="Cerrar"></button>
+    <div class="ed-quees"><small id="ed-modo"></small><b id="ed-titulo"></b></div>
+  </div>
+  <div class="ed-pestanas" role="tablist">
+    <button role="tab" class="activa" data-p="form">Escribir</button>
+    <button role="tab" data-p="previa">Vista previa</button>
+  </div>
+  <div class="ed-cuerpo">
+    <div class="ed-form" id="ed-form"></div>
+    <div class="ed-previa" id="ed-previa-col">
+      <div class="previa-cab"><span id="previa-icono"></span>Así lo verán los trabajadores</div>
+      <div id="ed-previa"></div>
+    </div>
+  </div>
+  <div class="ed-pie">
+    <button class="btn peligro" id="ed-borrar"></button>
+    <button class="btn sec" id="ed-duplicar"></button>
+    <span class="msg" id="ed-msg"></span>
+    <button class="btn sec" id="ed-cancelar">Cancelar</button>
+    <button class="btn" id="ed-guardar"></button>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="iconos.js?v=11"></script>
+<script src="config.js?v=11"></script>
+<script src="render.js?v=11"></script>
+<script src="admin.js?v=11"></script>
+</body>
+</html>
