@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel admin · CCOO Calsina Carré</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#d4001a">
+<link rel="icon" href="icon-192.png">
+<link rel="stylesheet" href="styles.css">
+<style> body { padding-bottom: 20px; } </style>
+</head>
+<body>
+<header class="top">
+  <img src="logo.png" alt="Logo">
+  <div><div class="t1">Panel de publicación</div><div class="t2">Sección Sindical CCOO Calsina Carré</div></div>
+</header>
+
+<main>
+  <!-- LOGIN -->
+  <section id="login" class="card" style="display:none">
+    <h2>Entrar</h2>
+    <label>Email</label><input id="email" type="email" value="ssccoo.calsinacarre@gmail.com" autocomplete="username">
+    <label>Contraseña</label><input id="pass" type="password" autocomplete="current-password">
+    <div class="fila">
+      <button class="btn" id="bEntrar">Entrar</button>
+      <button class="btn sec" id="bRegistro">Crear cuenta (solo la 1ª vez)</button>
+    </div>
+    <button class="btn sec peq" id="bOlvido">He olvidado la contraseña</button>
+    <div class="msg" id="mLogin"></div>
+  </section>
+
+  <!-- NUEVA CONTRASEÑA (tras el email de recuperación) -->
+  <section id="recuperar" class="card" style="display:none">
+    <h2>Nueva contraseña</h2>
+    <label>Escribe la nueva contraseña</label><input id="nuevaPass" type="password" autocomplete="new-password">
+    <button class="btn" id="bNuevaPass">Guardar</button>
+    <div class="msg" id="mRec"></div>
+  </section>
+
+  <!-- PANEL -->
+  <section id="panel" style="display:none">
+    <div class="meta" style="justify-content:space-between;margin-bottom:10px">
+      <span id="quien"></span>
+      <span><a href="index.html">Ver la web</a> · <a href="#" id="bSalir">Salir</a></span>
+    </div>
+    <div class="card msg err" id="noAdmin" style="display:none">Esta cuenta no tiene permiso para publicar.</div>
+
+    <div class="card">
+      <h2>📢 Nuevo comunicado</h2>
+      <label>Título</label><input id="cTitulo" maxlength="150">
+      <div class="fila">
+        <div><label>Categoría</label>
+          <select id="cCat"><option>General</option><option>Asamblea</option><option>Convenio</option><option>Nóminas</option><option>Vacaciones</option><option>Salud laboral</option><option>Formación</option></select></div>
+      </div>
+      <label>Texto</label><textarea id="cTexto" placeholder="Escribe aquí el comunicado. Los enlaces (https://...) se convierten en clicables."></textarea>
+      <label>PDF adjunto (opcional)</label><input id="cPdf" type="file" accept="application/pdf">
+      <label class="check"><input id="cUrg" type="checkbox"> Marcar como URGENTE</label>
+      <button class="btn" id="bPublicar">Publicar</button>
+      <div class="msg" id="mCom"></div>
+    </div>
+
+    <div class="card">
+      <h2>📅 Nueva fecha en el calendario</h2>
+      <label>Título</label><input id="eTitulo" placeholder="Ej: Asamblea de trabajadores">
+      <div class="fila">
+        <div><label>Fecha</label><input id="eFecha" type="date"></div>
+        <div><label>Hora (opcional)</label><input id="eHora" placeholder="10:00"></div>
+      </div>
+      <label>Lugar (opcional)</label><input id="eLugar">
+      <label>Descripción (opcional)</label><textarea id="eDesc" style="min-height:80px"></textarea>
+      <button class="btn" id="bEvento">Añadir fecha</button>
+      <div class="msg" id="mEv"></div>
+    </div>
+
+    <div class="card">
+      <h2>📄 Subir documento (Convenio)</h2>
+      <label>Nombre del documento</label><input id="dTitulo" placeholder="Ej: Convenio colectivo 2025-2027">
+      <label>Archivo PDF (máx. 10 MB)</label><input id="dPdf" type="file" accept="application/pdf">
+      <button class="btn" id="bDoc">Subir</button>
+      <div class="msg" id="mDoc"></div>
+    </div>
+
+    <div class="card">
+      <h2>✏️ Textos de las secciones</h2>
+      <label>Sección</label>
+      <select id="pSlug"><option value="convenio">Convenio (texto de arriba)</option><option value="quienes">Quiénes somos</option><option value="contacto">Contacto</option></select>
+      <label>Texto</label><textarea id="pTexto"></textarea>
+      <button class="btn" id="bPagina">Guardar texto</button>
+      <div class="msg" id="mPag"></div>
+    </div>
+
+    <h2>Publicado</h2>
+    <h3>Comunicados</h3><div class="lista-admin" id="lCom"></div>
+    <h3>Calendario</h3><div class="lista-admin" id="lEv"></div>
+    <h3>Documentos</h3><div class="lista-admin" id="lDoc"></div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const msg = (id, t, ok) => { $(id).textContent = t; $(id).className = "msg " + (ok ? "ok" : "err"); };
+const aqui = location.origin + location.pathname;
+let paginas = {};
+
+function mostrar(seccion) { ["login", "recuperar", "panel"].forEach(s => $(s).style.display = s === seccion ? "block" : "none"); }
+
+// --- Sesión ---
+sb.auth.onAuthStateChange(async (ev, sesion) => {
+  if (ev === "PASSWORD_RECOVERY") return mostrar("recuperar");
+  if (sesion) {
+    mostrar("panel");
+    $("quien").textContent = "Conectado: " + sesion.user.email;
+    const { data } = await sb.rpc("is_admin");
+    $("noAdmin").style.display = data ? "none" : "block";
+    cargarTodo();
+  } else mostrar("login");
+});
+
+$("bEntrar").onclick = async () => {
+  const { error } = await sb.auth.signInWithPassword({ email: $("email").value.trim(), password: $("pass").value });
+  if (error) msg("mLogin", error.message.includes("confirmed") ? "Falta confirmar la cuenta: abre el email que te ha llegado." : "Email o contraseña incorrectos.");
+};
+$("bRegistro").onclick = async () => {
+  if ($("pass").value.length < 8) return msg("mLogin", "La contraseña debe tener al menos 8 caracteres.");
+  const { error } = await sb.auth.signUp({ email: $("email").value.trim(), password: $("pass").value, options: { emailRedirectTo: aqui } });
+  error ? msg("mLogin", error.message) : msg("mLogin", "Cuenta creada. Revisa el email y pulsa el enlace de confirmación; luego vuelve aquí y entra.", true);
+};
+$("bOlvido").onclick = async () => {
+  const { error } = await sb.auth.resetPasswordForEmail($("email").value.trim(), { redirectTo: aqui });
+  error ? msg("mLogin", error.message) : msg("mLogin", "Te hemos enviado un email para cambiar la contraseña.", true);
+};
+$("bNuevaPass").onclick = async () => {
+  if ($("nuevaPass").value.length < 8) return msg("mRec", "Mínimo 8 caracteres.");
+  const { error } = await sb.auth.updateUser({ password: $("nuevaPass").value });
+  error ? msg("mRec", error.message) : (msg("mRec", "Contraseña cambiada.", true), setTimeout(() => location.reload(), 1200));
+};
+$("bSalir").onclick = async (e) => { e.preventDefault(); await sb.auth.signOut(); };
+
+// --- Subir PDF ---
+async function subirPdf(file) {
+  if (file.size > 10 * 1024 * 1024) throw new Error("El PDF pesa más de 10 MB.");
+  const nombre = Date.now() + "-" + file.name.normalize("NFD").replace(/[^\w.-]+/g, "_");
+  const { error } = await sb.storage.from("documentos").upload(nombre, file, { contentType: "application/pdf" });
+  if (error) throw error;
+  return sb.storage.from("documentos").getPublicUrl(nombre).data.publicUrl;
+}
+async function borrarPdf(url) {
+  if (!url) return;
+  const nombre = decodeURIComponent(url.split("/documentos/")[1] || "");
+  if (nombre) await sb.storage.from("documentos").remove([nombre]);
+}
+
+// --- Comunicados ---
+$("bPublicar").onclick = async () => {
+  const titulo = $("cTitulo").value.trim();
+  if (!titulo) return msg("mCom", "Pon un título.");
+  $("bPublicar").disabled = true; msg("mCom", "Publicando…", true);
+  try {
+    let pdf_url = null;
+    if ($("cPdf").files[0]) pdf_url = await subirPdf($("cPdf").files[0]);
+    const { error } = await sb.from("comunicados").insert({ titulo, contenido: $("cTexto").value.trim(), categoria: $("cCat").value, urgente: $("cUrg").checked, pdf_url });
+    if (error) throw error;
+    ["cTitulo", "cTexto", "cPdf"].forEach(i => $(i).value = ""); $("cUrg").checked = false;
+    msg("mCom", "✅ Publicado. Ya lo ve todo el mundo.", true); cargarTodo();
+  } catch (e) { msg("mCom", "Error: " + e.message); }
+  $("bPublicar").disabled = false;
+};
+
+// --- Eventos ---
+$("bEvento").onclick = async () => {
+  if (!$("eTitulo").value.trim() || !$("eFecha").value) return msg("mEv", "Pon título y fecha.");
+  const { error } = await sb.from("eventos").insert({ titulo: $("eTitulo").value.trim(), fecha: $("eFecha").value, hora: $("eHora").value.trim() || null, lugar: $("eLugar").value.trim() || null, descripcion: $("eDesc").value.trim() });
+  if (error) return msg("mEv", "Error: " + error.message);
+  ["eTitulo", "eFecha", "eHora", "eLugar", "eDesc"].forEach(i => $(i).value = "");
+  msg("mEv", "✅ Fecha añadida.", true); cargarTodo();
+};
+
+// --- Documentos ---
+$("bDoc").onclick = async () => {
+  if (!$("dTitulo").value.trim() || !$("dPdf").files[0]) return msg("mDoc", "Pon un nombre y elige el PDF.");
+  msg("mDoc", "Subiendo…", true);
+  try {
+    const url = await subirPdf($("dPdf").files[0]);
+    const { error } = await sb.from("documentos").insert({ titulo: $("dTitulo").value.trim(), url });
+    if (error) throw error;
+    $("dTitulo").value = ""; $("dPdf").value = "";
+    msg("mDoc", "✅ Documento subido.", true); cargarTodo();
+  } catch (e) { msg("mDoc", "Error: " + e.message); }
+};
+
+// --- Textos de secciones ---
+$("pSlug").onchange = () => $("pTexto").value = paginas[$("pSlug").value] || "";
+$("bPagina").onclick = async () => {
+  const { error } = await sb.from("paginas").upsert({ slug: $("pSlug").value, contenido: $("pTexto").value, actualizado: new Date().toISOString() });
+  error ? msg("mPag", "Error: " + error.message) : (msg("mPag", "✅ Guardado.", true), cargarTodo());
+};
+
+// --- Listados con botón borrar ---
+async function borrar(tabla, id, url) {
+  if (!confirm("¿Seguro que quieres borrarlo? No se puede deshacer.")) return;
+  const { error } = await sb.from(tabla).delete().eq("id", id);
+  if (error) return alert("Error: " + error.message);
+  await borrarPdf(url); cargarTodo();
+}
+const fila = (titulo, sub, tabla, id, url) =>
+  `<div class="card"><div><b>${esc(titulo)}</b><div class="meta">${esc(sub)}</div></div>
+   <button class="btn sec peq" onclick='borrar("${tabla}", ${id}, ${JSON.stringify(url || "")})'>Borrar</button></div>`;
+
+async function cargarTodo() {
+  const [c, e, d, p] = await Promise.all([
+    sb.from("comunicados").select("*").order("fecha", { ascending: false }),
+    sb.from("eventos").select("*").order("fecha", { ascending: false }),
+    sb.from("documentos").select("*").order("fecha", { ascending: false }),
+    sb.from("paginas").select("*"),
+  ]);
+  $("lCom").innerHTML = (c.data || []).map(x => fila(x.titulo, fechaLarga(x.fecha) + (x.urgente ? " · URGENTE" : ""), "comunicados", x.id, x.pdf_url)).join("") || '<p class="vacio">Nada todavía.</p>';
+  $("lEv").innerHTML = (e.data || []).map(x => fila(x.titulo, fechaLarga(x.fecha + "T12:00:00"), "eventos", x.id)).join("") || '<p class="vacio">Nada todavía.</p>';
+  $("lDoc").innerHTML = (d.data || []).map(x => fila(x.titulo, fechaLarga(x.fecha), "documentos", x.id, x.url)).join("") || '<p class="vacio">Nada todavía.</p>';
+  paginas = Object.fromEntries((p.data || []).map(x => [x.slug, x.contenido]));
+  $("pTexto").value = paginas[$("pSlug").value] || "";
+}
+</script>
+</body>
+</html>
