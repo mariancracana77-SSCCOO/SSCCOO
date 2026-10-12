@@ -366,3 +366,44 @@ body.admin { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
 html[data-contraste="alto"] .fila-h .barra, html[data-contraste="alto"] .col-s .col { outline: 1px solid var(--tinta); }
 @media (min-width: 1100px) { .estadisticas { grid-template-columns: 1fr 1fr; align-items: start; } .estadisticas .graf:first-child { grid-row: auto; } }
 @media (max-width: 699px) { .col-s .et { display: none; } .col-s:first-child .et, .col-s:last-child .et { display: block; } .col-s:last-child .et { right: 0; } .col-s:first-child .et { left: 0; } }
+
+/* ===== Vista previa en todos los canales ===== */
+.canales-previa { display: grid; gap: 14px; }
+.tabs-canal { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; background: var(--tarjeta); border: 1px solid var(--linea); border-radius: 12px; padding: 4px; }
+.tabs-canal button { border: 0; background: none; border-radius: 9px; padding: 10px 4px; font: inherit; font-weight: 700; font-size: .92rem; color: var(--suave); cursor: pointer; min-height: 44px; }
+.tabs-canal button[aria-selected="true"] { background: var(--asfalto); color: #fff; }
+:root[data-theme="dark"] .tabs-canal button[aria-selected="true"] { background: var(--tinta); color: var(--fondo); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tabs-canal button[aria-selected="true"] { background: var(--tinta); color: var(--fondo); } }
+.canal-p { display: none; }
+.canal-p.activo { display: block; }
+.canal-p h4 { margin: 0 0 8px; font-size: .85rem; text-transform: uppercase; letter-spacing: .08em; color: var(--suave); font-family: var(--texto); }
+@media (min-width: 1000px) { .tabs-canal { display: none; } .canal-p { display: block; } }
+.aviso-corte { background: var(--ambar-suave); border-left: 5px solid var(--ambar-rotulo); border-radius: 8px; padding: 10px 12px; }
+.aviso-corte p { display: flex; gap: 8px; align-items: flex-start; margin: 0; font-size: .92rem; }
+.aviso-corte p + p { margin-top: 6px; }
+.aviso-corte .icono { color: #8a5d00; flex: none; margin-top: 2px; }
+:root[data-theme="dark"] .aviso-corte .icono { color: var(--ambar-rotulo); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .aviso-corte .icono { color: var(--ambar-rotulo); } }
+#aviso-titulo.corte { color: #9a5b00; font-weight: 700; }
+:root[data-theme="dark"] #aviso-titulo.corte { color: var(--ambar-rotulo); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #aviso-titulo.corte { color: var(--ambar-rotulo); } }
+/* Notificación del móvil */
+.notif { display: flex; gap: 12px; align-items: flex-start; max-width: 380px; background: #2b2f36; color: #fff; border-radius: 18px; padding: 12px 14px; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+.notif img { width: 36px; height: 36px; border-radius: 50%; background: #fff; flex: none; }
+.notif-txt { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.notif-txt small { color: #b9bec6; font-size: .78rem; }
+.notif-txt b { font-size: .98rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 290px; }
+.notif-txt b.corta { box-shadow: inset 0 -2px 0 var(--ambar-rotulo); }
+.notif-txt span { font-size: .9rem; color: #e3e6ea; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* Chats */
+.chat { border-radius: 14px; padding: 14px; max-width: 420px; }
+.chat .burbuja { border-radius: 4px 14px 14px 14px; padding: 10px 12px; font-size: .95rem; line-height: 1.45; overflow-wrap: anywhere; box-shadow: 0 1px 1px rgba(0,0,0,.12); }
+.chat.tg { background: #c9dbe8; }
+.chat.tg .burbuja { background: #fff; color: #111; }
+.tg-boton { margin-top: 4px; background: rgba(255,255,255,.75); color: #2a6fb0; text-align: center; font-weight: 700; font-size: .9rem; border-radius: 8px; padding: 8px; }
+.chat.wa { background: #e7ddd3; }
+.chat.wa .burbuja { background: #d9fdd3; color: #111; border-radius: 14px 4px 14px 14px; margin-left: auto; }
+.proxima-vez { display: flex; gap: 8px; align-items: flex-start; background: var(--azul-suave); border-radius: 10px; padding: 10px 12px; margin: 0 0 14px; }
+.proxima-vez .icono { color: var(--azul); flex: none; margin-top: 2px; }
+.tabs-canal button { white-space: nowrap; overflow-wrap: normal; word-break: keep-all; }
+@media (max-width: 400px) { .tabs-canal button { font-size: .82rem; padding: 10px 2px; } }

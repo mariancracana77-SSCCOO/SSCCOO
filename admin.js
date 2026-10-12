@@ -29,7 +29,7 @@ const SECCIONES = {
       { checks: [{ k: "urgente", l: "Urgente: sale en rojo y arriba del todo en Inicio" }, { k: "fijado", l: "Fijar arriba de la lista de avisos" }, { k: "notificar", l: "Avisar en los móviles y en el canal de Telegram", def: true, soloNuevo: true }] },
       { k: "publicar_en", l: "Programar la publicación", t: "datetime-local", opc: true, ayuda: "Déjalo vacío para publicar ahora. Si pones día y hora, se publicará y avisará solo en ese momento." },
     ],
-    previa: (x) => tarjetaAviso(x),
+    previa: (x) => previaCanales(x),
     extracto: (x) => x.contenido, chips: (x) => [x.publicar_en && new Date(x.publicar_en) > new Date() ? "Programado: " + new Date(x.publicar_en).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : null, x.categoria, x.urgente && "Urgente", x.fijado && "Fijado"], fechas: (x) => [x.fecha, x.actualizado],
   },
   calendario: {
@@ -209,6 +209,7 @@ let PAGINAS = {};
 function construirPaginas() {
   const base = Object.keys(SECCIONES).filter(k => !/^ap\d+$/.test(k) && k !== "apartados" && !SECCIONES[k].oculta), i = base.indexOf("actas") + 1;
   base.splice(base.indexOf("convenio") + 1, 0, "calculadoras");
+  if (base.includes("recurrentes")) { base.splice(base.indexOf("recurrentes"), 1); base.splice(base.indexOf("plantillas") + 1, 0, "recurrentes"); }
   const orden = [...base.slice(0, i), ...APARTADOS.map(a => "ap" + a.id), ...base.slice(i), "apartados"];
   PAGINAS = { resumen: { nombre: "Inicio", icono: "resumen" }, ...Object.fromEntries(orden.map(k => [k, k === "calculadoras" ? { nombre: "Calculadoras", icono: "reloj" } : { nombre: SECCIONES[k].nombre, icono: SECCIONES[k].icono }])),
     buzon: { nombre: "Buzón anónimo", icono: "correo" }, textos: { nombre: "Textos", icono: "texto" }, ajustes: { nombre: "Ajustes", icono: "ajustes" } };
@@ -421,13 +422,14 @@ async function pintaSeccion(k) {
   if (k === "calendario" && VISTA_CAL.modo === "mes") return pintaCalAdm();
   $("zona").innerHTML = `<div class="sec-cab">
       <div><h1>${s.nombre}</h1><p id="cuenta">${s.intro}</p></div>
-      <button class="btn btn-nuevo" id="b-nuevo">${icono("mas", "p")}${s.nuevo}</button>
+      <div class="botones" style="margin:0">${k === "avisos" ? `<button class="btn sec" id="b-recurrentes">${icono("reloj2", "p")}Avisos que se repiten</button>` : ""}<button class="btn btn-nuevo" id="b-nuevo">${icono("mas", "p")}${s.nuevo}</button></div>
     </div>
     ${k === "calendario" ? cambioVistaCal() : ""}
     <div class="herramientas"><div class="buscador">${icono("buscar", "p")}<input id="buscar" type="search" placeholder="Buscar en ${s.nombre.toLowerCase()} (también fechas: 12/10, octubre…)" aria-label="Buscar"></div></div>
     ${FECHA_DE[k] ? `<div class="filtro-fechas" id="fechas-adm"></div>` : ""}
     <div class="lista-adm" id="lista"><p class="fecha-txt">Cargando…</p></div>`;
   $("b-nuevo").onclick = () => abrirEditor(k);
+  if ($("b-recurrentes")) $("b-recurrentes").onclick = () => abrir("recurrentes");
   enlazarVistaCal();
   try { await Promise.all([cargarDatos(k), TABLAS_LEIDAS.includes(s.tabla) ? cargarLecturas() : null]); } catch (e) { $("lista").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
   const ff = FILTRO_ADM[k] ||= {};
@@ -469,7 +471,7 @@ function validarArchivo(f) {
 let ED = null; // { k, orig, pendientes:[File], existentes:[adj], quitar:[url], sucio }
 function campoHTML(c, v) {
   const id = "f-" + c.k, opc = c.opc ? " <small>(opcional)</small>" : "", ayuda = c.ayuda ? `<p class="ayuda">${c.ayuda}</p>` : "";
-  if (c.t === "select" && c.ops) return `<label for="${id}">${c.l}</label><select id="${id}">${c.ops.map(([val, txt]) => `<option value="${esc(val)}" ${val === v ? "selected" : ""}>${esc(txt)}</option>`).join("")}</select>${ayuda}`;
+  if (c.t === "select" && c.ops) return `<label for="${id}">${c.l}</label><select id="${id}">${c.ops.map(([val, txt]) => `<option value="${esc(val)}" ${String(val) === String(v) ? "selected" : ""}>${esc(txt)}</option>`).join("")}</select>${ayuda}`;
   if (c.t === "select") {
     const ops = nombres(c.lista); if (v && !ops.includes(v)) ops.push(v);
     return `<label for="${id}">${c.l}</label><select id="${id}">${ops.map(o => `<option ${o === v ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>
@@ -517,9 +519,9 @@ function abrirEditor(k, orig = null, preset = {}) {
     (s.asistente && !orig ? asistenteHTML() : "") +
     (s.asistente && !orig ? `<div class="separador">Revisa el acta y publícala</div>` : "") +
     s.campos.map(c => {
-      if (c.fila) return `<div class="fila">${c.fila.map(f => `<div>${campoHTML(f, x[f.k] ?? def[f.k])}</div>`).join("")}</div>`;
+      if (c.fila) return `<div class="fila">${c.fila.map(f => `<div${f.si ? ` data-si="${f.si}"` : ""}>${campoHTML(f, x[f.k] ?? def[f.k] ?? f.def)}</div>`).join("")}</div>`;
       if (c.checks) { const v = c.checks.filter(ch => !(ch.soloNuevo && orig)); return v.length ? `<div class="grupo-check">${v.map(ch => `<label class="check"><input type="checkbox" id="f-${ch.k}" ${(orig ? x[ch.k] : (x[ch.k] ?? ch.def)) ? "checked" : ""}>${ch.l}</label>`).join("")}</div>` : ""; }
-      return campoHTML(c, x[c.k] ?? def[c.k]);
+      return c.si ? `<div data-si="${c.si}">${campoHTML(c, x[c.k] ?? def[c.k] ?? c.def)}</div>` : campoHTML(c, x[c.k] ?? def[c.k] ?? c.def);
     }).join("");
 
   // archivos
@@ -575,6 +577,7 @@ function leerFormulario() {
     const el = $("f-" + c.k); if (!el) continue;
     if (c.t === "check") fila[c.k] = el.checked;
     else if (c.t === "datetime-local") fila[c.k] = el.value ? new Date(el.value).toISOString() : null;
+    else if (c.num) fila[c.k] = parseInt(el.value, 10) || 1;
     else if (c.t === "number") fila[c.k] = c.dec ? (parseFloat(String(el.value).replace(",", ".")) || 0) : parseInt(el.value || "0", 10);
     else { const v = el.value.trim(); fila[c.k] = v || (c.opc ? null : ""); }
   }
@@ -589,6 +592,9 @@ function actualizarPrevia() {
   if (ED.k === "calendario" || s.filtro) x.fecha = f.fecha || hoyISO();
   $("ed-titulo").textContent = (s.tituloDe ? s.tituloDe(f) : f.titulo) || (ED.orig ? "Sin título" : "Sin título todavía");
   $("ed-previa").innerHTML = s.previa(x);
+  $("ed-previa").querySelectorAll("[data-canal]").forEach(b => b.onclick = () => { PREVIA_CANAL = b.dataset.canal; actualizarPrevia(); });
+  aplicarCondiciones();
+  if (["avisos", "recurrentes"].includes(ED.k)) avisoTitulo(f);
   $("ed-previa").querySelectorAll("a").forEach(a => a.onclick = (e) => { if (a.getAttribute("href") === "#" || a.href.startsWith("blob:")) e.preventDefault(); });
 }
 function cambiarPestana(p) {
@@ -657,7 +663,7 @@ $("ed-guardar").onclick = async () => {
     if (editado || s.oculta) return aviso(editado ? "Cambios guardados. Ya se ven en la web." : "Guardado. Ya se ve en la web.");
     // Avisar a los móviles y a Telegram
     let res = null;
-    if (fila.notificar !== false && k !== "apartados" && !s.oculta) {
+    if (fila.notificar !== false && k !== "apartados" && k !== "recurrentes" && !s.oculta) {
       const r = await sb.functions.invoke("notificar", { body: { modo: "publicado", tabla: s.tabla, id: guardado.id } }).catch(() => null);
       res = r?.data || null;
     }
@@ -793,6 +799,92 @@ async function generarActa() {
   } catch (e) { msg("m-ia", e.message); }
   btn.disabled = false;
 }
+
+// ---------- Vista previa en todos los canales (avisos) ----------
+// Recorta igual que la función «notificar» del servidor, para que lo que se ve aquí sea lo que llega.
+let PREVIA_CANAL = "web";
+const LIM_TIT_NOTIF = 45; // letras que se suelen ver del título de una notificación en el móvil
+const recortaCanal = (t, n) => { t = String(t || "").replace(/\*\*/g, "").replace(/\s+/g, " ").trim(); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
+const tituloNotif = (x) => (x.urgente ? "URGENTE: " : "Nuevo aviso: ") + (x.titulo || "Sin título");
+function previaCanales(x) {
+  const tit = tituloNotif(x), corta = tit.length > LIM_TIT_NOTIF, nAdj = (x.adjuntos || []).length, largo = recortaCanal(x.contenido, 100000);
+  const tg = recortaCanal(x.contenido, 700) + (nAdj ? `\n\nArchivos adjuntos: ${nAdj}` : "");
+  const wa = textoCompartir((x.urgente ? "URGENTE: " : "") + (x.titulo || ""), x.contenido, x.id ? "aviso-" + x.id : "avisos");
+  const notas = [];
+  if (corta) notas.push(`El título se cortará en la notificación del móvil: se ven unas ${LIM_TIT_NOTIF} letras y tiene ${tit.length} (contando «${x.urgente ? "URGENTE: " : "Nuevo aviso: "}»).`);
+  if (largo.length > 140) notas.push("El texto se corta en la notificación; se lee entero al abrirla.");
+  if (x.notificar === false) notas.push("La casilla de avisar está desmarcada: no llegará a los móviles ni a Telegram.");
+  if (x.publicar_en && new Date(x.publicar_en) > new Date()) notas.push("Está programado: la notificación y Telegram llegarán cuando se publique.");
+  const canal = (k, nom, html) => `<section class="canal-p ${PREVIA_CANAL === k ? "activo" : ""}"><h4>${nom}</h4>${html}</section>`;
+  return `<div class="canales-previa">
+    ${notas.length ? `<div class="aviso-corte" role="status">${notas.map(n => `<p>${icono("alerta", "p")}<span>${esc(n)}</span></p>`).join("")}</div>` : ""}
+    <div class="tabs-canal" role="tablist" aria-label="Ver cómo queda en">${[["web", "Web"], ["movil", "Móvil"], ["telegram", "Telegram"], ["whatsapp", "WhatsApp"]].map(([k, n]) =>
+      `<button type="button" role="tab" data-canal="${k}" aria-selected="${PREVIA_CANAL === k}">${n}</button>`).join("")}</div>
+    ${canal("web", "En la web", tarjetaAviso({ ...x, id: x.id || 0 }))}
+    ${canal("movil", "Notificación en el móvil", `<div class="notif"><img src="icon-192.png" alt=""><div class="notif-txt"><small>CCOO Calsina Carré · ahora</small><b class="${corta ? "corta" : ""}">${esc(tit)}</b><span>${esc(recortaCanal(x.contenido, 140))}</span></div></div>`)}
+    ${canal("telegram", "Canal de Telegram", `<div class="chat tg"><div class="burbuja"><b>${esc(tit)}</b>${tg.trim() ? "<br><br>" + esc(tg).replace(/\n/g, "<br>") : ""}</div><div class="tg-boton">Abrir en la web</div></div>`)}
+    ${canal("whatsapp", "WhatsApp (lo envías tú con el botón)", `<div class="chat wa"><div class="burbuja">${esc(wa).replace(/\*([^*\n]+)\*/g, "<b>$1</b>").replace(/\n/g, "<br>")}</div></div>`)}
+  </div>`;
+}
+// Aviso bajo el título mientras se escribe
+function avisoTitulo(f) {
+  const campo = $("f-titulo"); if (!campo) return;
+  let p = $("aviso-titulo"); if (!p) { campo.insertAdjacentHTML("afterend", `<p class="ayuda" id="aviso-titulo" aria-live="polite"></p>`); p = $("aviso-titulo"); }
+  const n = tituloNotif(f).length;
+  p.className = "ayuda" + (n > LIM_TIT_NOTIF ? " corte" : "");
+  p.textContent = n > LIM_TIT_NOTIF ? `Demasiado largo para la notificación del móvil: se cortará. Prueba a dejarlo en ${LIM_TIT_NOTIF - (n - (f.titulo || "").length)} letras o menos (ahora ${(f.titulo || "").length}).` : `${(f.titulo || "").length} letras: se leerá entero en la notificación.`;
+}
+// Campos que solo se ven según otra opción (data-si="campo:valor1,valor2")
+function aplicarCondiciones() {
+  document.querySelectorAll("#ed-form [data-si]").forEach(d => {
+    const [campo, vals] = d.dataset.si.split(":"), el = $("f-" + campo);
+    d.classList.toggle("oculto", !!el && !vals.split(",").includes(el.value));
+  });
+}
+
+// ---------- Avisos que se repiten solos ----------
+const DIAS_SEMANA = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
+const horaCorta = (h) => String(h || "09:00").slice(0, 5);
+function frecTxt(x) {
+  if (x.frecuencia === "semanal") return `Cada ${DIAS_SEMANA[(x.dia_semana || 1) - 1]} a las ${horaCorta(x.hora)}`;
+  if (x.frecuencia === "anual") return `Cada ${x.dia_mes || 1} de ${MESES[(x.mes || 1) - 1]} a las ${horaCorta(x.hora)}`;
+  return `El día ${x.dia_mes || 1} de cada mes a las ${horaCorta(x.hora)}`;
+}
+// Próxima vez que se publicará (misma regla que la función publicar_recurrentes del servidor)
+function proximaVez(x) {
+  if (x.activo === false) return "pausado, no se publicará";
+  const ahora = new Date(), [hh, mm] = horaCorta(x.hora).split(":").map(Number), hoyIso = isoLocal(ahora);
+  for (let i = 0; i < 400; i++) {
+    const d = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + i), ultimo = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    const toca = x.frecuencia === "semanal" ? ((d.getDay() + 6) % 7) + 1 === Number(x.dia_semana || 1)
+      : x.frecuencia === "anual" ? d.getMonth() + 1 === Number(x.mes || 1) && d.getDate() === Math.min(Number(x.dia_mes || 1), ultimo)
+      : d.getDate() === Math.min(Number(x.dia_mes || 1), ultimo);
+    if (!toca) continue;
+    if (i === 0 && (x.ultima_publicacion === hoyIso || ahora.getHours() * 60 + ahora.getMinutes() > hh * 60 + mm + 9)) continue; // hoy ya pasó o ya salió
+    return d.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) + " a las " + horaCorta(x.hora);
+  }
+  return "—";
+}
+SECCIONES.recurrentes = {
+  nombre: "Avisos que se repiten", icono: "reloj2", tabla: "avisos_recurrentes", orden: ["id", false], uno: "aviso que se repite", nuevo: "Nuevo aviso que se repite", lista: "aviso", campoColor: "categoria",
+  intro: "Avisos que se publican solos cada semana, cada mes o cada año, a la hora que elijas. Por ejemplo: «Recuerda entregar la hoja de horas», el día 25 de cada mes.",
+  campos: [
+    { k: "titulo", l: "Título", t: "text", req: true, ph: "Ej: Recuerda entregar la hoja de horas" },
+    { k: "categoria", l: "Categoría", t: "select", lista: "aviso" },
+    { k: "contenido", l: "Texto del aviso", t: "textarea", formato: true },
+    { k: "frecuencia", l: "Cada cuánto se publica", t: "select", ops: [["mensual", "Cada mes"], ["semanal", "Cada semana"], ["anual", "Cada año"]], def: "mensual" },
+    { fila: [
+      { k: "dia_mes", l: "Día del mes", t: "select", num: true, ops: Array.from({ length: 31 }, (_, i) => [i + 1, String(i + 1)]), def: 1, si: "frecuencia:mensual,anual" },
+      { k: "mes", l: "Mes", t: "select", num: true, ops: MESES.map((m, i) => [i + 1, m.charAt(0).toUpperCase() + m.slice(1)]), def: 1, si: "frecuencia:anual" },
+      { k: "dia_semana", l: "Día de la semana", t: "select", num: true, ops: DIAS_SEMANA.map((d, i) => [i + 1, d.charAt(0).toUpperCase() + d.slice(1)]), def: 1, si: "frecuencia:semanal" },
+      { k: "hora", l: "Hora", t: "time", def: "09:00" },
+    ] },
+    { checks: [{ k: "activo", l: "Activo (desmárcalo para pausarlo sin borrarlo)", def: true }, { k: "urgente", l: "Urgente: sale en rojo y arriba del todo" }, { k: "notificar", l: "Avisar en los móviles y en Telegram cada vez", def: true }] },
+  ],
+  ayuda: "Si eliges el día 31 y el mes tiene menos días, se publica el último día del mes.",
+  previa: (x) => `<p class="proxima-vez">${icono("reloj2", "p")}<span>${esc(frecTxt(x))}.<br><b>Próxima vez: ${esc(proximaVez(x))}</b></span></p>` + previaCanales({ ...x, fecha: new Date().toISOString(), id: 0 }),
+  extracto: (x) => x.contenido, chips: (x) => [frecTxt(x), x.activo === false ? "Pausado" : "Activo", x.ultima_publicacion && "Última vez: " + fechaLarga(x.ultima_publicacion + "T12:00:00")], fechas: (x) => [x.creado, x.actualizado],
+};
 
 // ---------- Calculadoras (valores que usa «Calcula» en la web) ----------
 const AJUSTES_CALC = [
@@ -1070,6 +1162,7 @@ function textoDe(k, x) {
   return textoCompartir(x.titulo, "", "");
 }
 function trasPublicar(k, x, res) {
+  if (k === "recurrentes") return aviso("Guardado. Se publicará solo: " + frecTxt(x).toLowerCase() + ".");
   if (k === "convenio" || k === "apartados") return aviso(k === "apartados" ? "Apartado guardado. Ya sale en el menú del panel y como pestaña en la web." : "Publicado. Ya se ve en la web.");
   const programado = x.publicar_en && new Date(x.publicar_en) > new Date();
   const lineas = [];
@@ -1183,7 +1276,7 @@ async function prepararPlantillas() {
 }
 
 // ---------- Copia de seguridad y archivo ----------
-const TABLAS_COPIA = ["comunicados", "eventos", "convenio_secciones", "actas", "documentos", "preguntas", "plantillas", "apartados", "publicaciones", "buzon", "calc_permisos", "calc_categorias", "calc_ajustes", "paginas", "opciones", "admins"];
+const TABLAS_COPIA = ["comunicados", "eventos", "convenio_secciones", "actas", "documentos", "preguntas", "plantillas", "apartados", "publicaciones", "buzon", "avisos_recurrentes", "calc_permisos", "calc_categorias", "calc_ajustes", "paginas", "opciones", "admins"];
 async function prepararCopiaYArchivo() {
   const { data } = await sb.from("paginas").select("slug, contenido, actualizado").in("slug", ["archivo_meses", "ultima_copia"]);
   const p = Object.fromEntries((data || []).map(x => [x.slug, x]));
@@ -1274,7 +1367,7 @@ async function pintaCalAdm() {
   const s = SECCIONES.calendario;
   $("zona").innerHTML = `<div class="sec-cab">
       <div><h1>Calendario</h1><p>Toca un día para ver lo que hay o añadir una fecha. También salen los avisos programados y las actas.</p></div>
-      <button class="btn btn-nuevo" id="b-nuevo">${icono("mas", "p")}${s.nuevo}</button>
+      <div class="botones" style="margin:0">${k === "avisos" ? `<button class="btn sec" id="b-recurrentes">${icono("reloj2", "p")}Avisos que se repiten</button>` : ""}<button class="btn btn-nuevo" id="b-nuevo">${icono("mas", "p")}${s.nuevo}</button></div>
     </div>
     ${cambioVistaCal()}
     <div class="cal-rejilla cal-adm">

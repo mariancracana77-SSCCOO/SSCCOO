@@ -168,3 +168,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
   - **Secciones más visitadas** en los últimos 30 días.
 - En las listas del panel (Avisos, Actas, Documentos, apartados) sale «Leído N veces» en cada elemento.
 - **Todo es anónimo**: solo se suma 1 en un contador. Un aviso cuenta como leído si se ve en pantalla al menos 2 segundos, y un documento cuando se abre. Cada cosa se cuenta una sola vez por visita.
+
+### Fase 6: vista previa en todos los canales y avisos que se repiten
+- Al escribir un aviso, la **vista previa** enseña a la vez cómo quedará **en la web, en la notificación del móvil, en el canal de Telegram y en WhatsApp**. En el móvil van en pestañas y en el PC, una debajo de otra. Recorta igual que la función que envía los avisos, así que lo que se ve es lo que llega.
+- **Avisa si el título se va a cortar** en la notificación del móvil (se ven unas 45 letras), justo debajo del título y en la vista previa. También avisa si el texto se corta, si la casilla de avisar está desmarcada o si está programado.
+- **Avisos que se repiten**, en el panel en *Avisos que se repiten*, o con el botón que hay en Avisos: cada semana, cada mes o cada año, a la hora que se elija, con *Activo* para pausarlos. Ejemplo: «Recuerda entregar la hoja de horas», el día 25 de cada mes a las 9:00. Muestra cuándo será la próxima vez.
+- Los publica la tarea programada de la función `notificar` (cada 10 minutos). Salen como un aviso normal y se avisa en los móviles y en Telegram. No se repiten aunque la tarea pase varias veces el mismo día. Si se elige el día 31 y el mes tiene menos días, sale el último día del mes.
