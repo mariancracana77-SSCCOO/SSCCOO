@@ -15,8 +15,9 @@ document.querySelector(".contacto-btn").innerHTML = icono("correo", "p") + "Escr
 const VISTAS = ["inicio", "avisos", "calendario", "convenio", "actas", "documentos", "preguntas", "info", "buscar", "legal"];
 function irA() {
   const h = location.hash.slice(1), avisoDirecto = /^aviso-\d+$/.test(h) ? h : null;
-  const legal = h === "aviso-legal" || h === "privacidad" ? h : null;
-  const v = avisoDirecto ? "avisos" : legal ? "legal" : (VISTAS.includes(h) ? h : "inicio");
+  const legal = h === "aviso-legal" || h === "privacidad" ? h : null, aDelegados = h === "delegados";
+  const v = avisoDirecto ? "avisos" : legal ? "legal" : aDelegados ? "info" : (VISTAS.includes(h) ? h : "inicio");
+  if (aDelegados) setTimeout(() => ($("lista-delegados").children.length ? $("tit-delegados") : $("txt-contacto"))?.scrollIntoView({ block: "start" }), 50);
   if (legal) setTimeout(() => $("leg-" + legal)?.scrollIntoView({ block: "start" }), 50);
   if (avisoDirecto) setTimeout(() => { const el = $(avisoDirecto); if (el) { el.scrollIntoView({ block: "start" }); el.classList.add("nuevo"); } }, 300);
   document.querySelectorAll(".vista").forEach(s => s.classList.toggle("activa", s.id === "v-" + v));
@@ -24,7 +25,7 @@ function irA() {
     const on = b.dataset.v === v; b.classList.toggle("activa", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current");
     if (on) b.scrollIntoView({ inline: "center", block: "nearest" });
   });
-  if (!avisoDirecto && !legal) window.scrollTo(0, 0);
+  if (!avisoDirecto && !legal && !aDelegados) window.scrollTo(0, 0);
   if (v === "buscar") setTimeout(() => $("buscar-todo").focus(), 100);
 }
 
@@ -71,85 +72,81 @@ const ordenAvisos = (l) => [...l].sort((a, b) => (b.fijado - a.fijado) || (new D
 
 // ---------- Inicio ----------
 const MES_CORTO = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-// Cabecera de la portada: saludo, resumen de la semana y la próxima cita
-function pintaSaludo(urg) {
-  const ahora = new Date(), h = ahora.getHours(), hoy = hoyISO(), DIA = 86400000;
-  const saludo = h < 6 ? "Buenas noches" : h < 14 ? "Buenos días" : h < 21 ? "Buenas tardes" : "Buenas noches";
-  const fechaHoy = ahora.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" });
-  const semana = (f) => f && ahora - new Date(f) < 7 * DIA;
-  const nAv = D.avisos.filter(a => semana(a.fecha)).length, nAc = D.actas.filter(a => semana(a.creado)).length, nDo = D.docs.filter(d => semana(d.fecha)).length;
-  const lim = new Date(ahora.getTime() + 7 * DIA).toISOString().slice(0, 10);
-  const prox = D.eventos.filter(e => e.fecha >= hoy).sort((a, b) => (a.fecha + (a.hora || "")).localeCompare(b.fecha + (b.hora || "")));
-  const nFe = prox.filter(e => e.fecha <= lim).length;
-  const plural = (n, s, p) => n + " " + (n === 1 ? s : p);
-  const partes = [nAv && plural(nAv, "aviso nuevo", "avisos nuevos"), nAc && plural(nAc, "acta", "actas"), nDo && plural(nDo, "documento", "documentos"), nFe && plural(nFe, "cita en los próximos 7 días", "citas en los próximos 7 días")].filter(Boolean);
-  const resumen = partes.length ? "Esta semana: " + (partes.length > 1 ? partes.slice(0, -1).join(", ") + " y " + partes.at(-1) : partes[0]) + "." : "Esta semana está tranquila. Aquí verás lo nuevo en cuanto se publique.";
-  const e = prox[0];
-  let cita = "";
-  if (e) {
-    const d = fechaDia(e.fecha), dias = Math.round((d - fechaDia(hoy)) / DIA);
-    const cuando = dias === 0 ? "Hoy" : dias === 1 ? "Mañana" : dias < 7 ? "Este " + d.toLocaleDateString("es-ES", { weekday: "long" }) : "Dentro de " + dias + " días";
-    cita = `<div class="prox-cita">
-      <span class="dia-grande"><b>${d.getDate()}</b>${MES_CORTO[d.getMonth()]}</span>
-      <span class="prox-txt"><small>Próxima cita · ${cuando}${e.hora ? (esTodoElDia(e) ? ", todo el día" : ", " + e.hora.slice(0, 5)) : ""}</small>
-        <a class="prox-tit" href="#calendario" data-dia="${e.fecha}">${esc(e.titulo)}</a>
-        ${e.lugar ? `<span class="prox-lugar">${icono("lugar", "p")}${esc(e.lugar)}</span>` : ""}
-        <button class="prox-ics" data-ics="${e.id}">${icono("calendario", "p")}Añadir a mi calendario</button></span>
-    </div>`;
-  }
-  $("inicio-saludo").innerHTML = `<section class="saludo">
-      <p class="saludo-fecha">${fechaHoy.charAt(0).toUpperCase() + fechaHoy.slice(1)}</p>
-      <h2 class="saludo-tit">${saludo}</h2>
-      <p class="saludo-res">${resumen}</p>${cita}
-    </section>`;
-  const l = $("inicio-saludo").querySelector("[data-dia]");
-  if (l) l.onclick = () => { const d = fechaDia(l.dataset.dia); estado.mes = new Date(d.getFullYear(), d.getMonth(), 1); estado.diaSel = l.dataset.dia; pintaCalendario(); };
-  // Accesos rápidos
-  const acc = [["convenio", "convenio", "Convenio", "Tus derechos", "c-morado"], ["actas", "actas", "Actas", "Lo acordado", "c-ambar"], ["documentos", "carpeta", "Docs", "PDF y formularios", "c-rojo"], ["preguntas", "pregunta", "Dudas", "Respuestas", "c-azul"]];
-  $("inicio-accesos").innerHTML = `<nav class="accesos-tablon" aria-label="Accesos rápidos">${acc.map(([v, ic, t, s, c]) =>
-    `<a href="#${v}" class="${c}"><span class="ic">${icono(ic)}</span><b>${t}</b><small>${s}</small></a>`).join("")}</nav>`;
-}
+const DIA_CORTO = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+// Última visita de este móvil (solo se guarda aquí, en el navegador). Sirve para marcar lo nuevo.
+const ULTIMA = (() => { try { const v = +localStorage.getItem("ccoo-ultima-visita"); return v || Date.now() - 7 * 86400000; } catch (_) { return Date.now() - 7 * 86400000; } })();
+const guardaVisita = () => { try { localStorage.setItem("ccoo-ultima-visita", String(Date.now())); } catch (_) {} };
+addEventListener("pagehide", guardaVisita);
+document.addEventListener("visibilitychange", () => { if (document.hidden) guardaVisita(); });
+const esDesdeUltima = (f) => f && new Date(f).getTime() > ULTIMA;
+// «Hoy · 19:00», «Mañana · todo el día», «Sáb 18 oct · 19:00»
+const cuandoEvento = (e) => {
+  const d = fechaDia(e.fecha), dias = Math.round((d - fechaDia(hoyISO())) / 86400000);
+  const dia = dias === 0 ? "Hoy" : dias === 1 ? "Mañana" : may(DIA_CORTO[d.getDay()]) + " " + d.getDate() + " " + MES_CORTO[d.getMonth()];
+  return dia + (e.hora ? " · " + horaEvento(e).toLowerCase() : "");
+};
+const resumenPlano = (t, n) => { const r = String(t || "").replace(/\*\*/g, "").replace(/^\s*(?:[-*•]|\d+[.)])\s+/gm, "").replace(/\s+/g, " ").trim(); return r.length > n ? r.slice(0, n).replace(/\s+\S*$/, "") + "…" : r; };
+const irADia = (iso) => { const d = fechaDia(iso); estado.mes = new Date(d.getFullYear(), d.getMonth(), 1); estado.diaSel = iso; pintaCalendario(); };
 
 function pintaInicio() {
   $("txt-inicio").textContent = D.paginas.inicio || "";
   const hoy = hoyISO(), ahora = Date.now(), DIA = 86400000;
-  // Urgente (de los últimos 14 días) arriba del todo, en rojo
   const urg = ordenAvisos(D.avisos).find(a => a.urgente && ahora - new Date(a.fecha) < 14 * DIA);
-  $("inicio-destacado").innerHTML = urg ? `<a class="tarjeta-urgente" href="#aviso-${urg.id}">
-      <span class="etq-urg">${icono("alerta", "p")}Urgente · ${haceTxt(urg.fecha)}</span>
-      <span class="tit">${esc(urg.titulo)}</span>
-      <span class="txt">${esc(String(urg.contenido || "").replace(/\*\*/g, "").replace(/^\s*(?:[-*•]|\d+[.)])\s+/gm, "").replace(/\s+/g, " ").slice(0, 140))}${(urg.contenido || "").length > 140 ? "…" : ""}</span>
-    </a>` : "";
-  pintaSaludo(urg);
-  // Todo junto, por fecha de publicación
+  const prox = D.eventos.filter(e => e.fecha >= hoy).sort((a, b) => (a.fecha + (a.hora || "")).localeCompare(b.fecha + (b.hora || "")));
+  // Rótulo: lo urgente; si no hay, la próxima cita; si no, «todo en orden»
+  let rot;
+  if (urg) rot = `<a class="rotulo" href="#aviso-${urg.id}"><span class="rot-tipo urgente">${icono("alerta", "p")}Urgente</span>
+      <span class="rot-l1">${esc(urg.titulo)}</span><span class="rot-l2">${esc(resumenPlano(urg.contenido, 110))}</span>
+      <span class="rot-ir">Ver el aviso completo${icono("der", "p")}</span></a>`;
+  else if (prox[0]) { const e = prox[0];
+    rot = `<a class="rotulo" href="#calendario" data-dia="${e.fecha}"><span class="rot-tipo">Próxima cita</span>
+      <span class="rot-l1">${esc(e.titulo)}</span><span class="rot-l2">${esc(cuandoEvento(e))}${e.lugar ? " · " + esc(e.lugar) : ""}</span>
+      <span class="rot-ir">Ver en el calendario${icono("der", "p")}</span></a>`; }
+  else rot = `<div class="rotulo"><span class="rot-tipo">Sin avisos urgentes</span><span class="rot-l1">Todo en orden</span><span class="rot-l2">Aquí verás lo importante en cuanto se publique.</span></div>`;
+  $("inicio-rotulo").innerHTML = rot;
+  // Todo lo publicado, por fecha
   const ICONOS = { aviso: ["avisos", "c-verde"], fecha: ["calendario", "c-azul"], acta: ["actas", "c-ambar"], doc: ["carpeta", "c-rojo"], conv: ["convenio", "c-morado"], preg: ["pregunta", "c-gris"] };
-  const diaTxt = (iso) => fechaDia(iso).toLocaleDateString("es-ES", { weekday: "long", day: "numeric" });
   const items = [
-    ...D.avisos.filter(a => a !== urg).map(a => ({ f: a.fecha, k: "aviso", que: "Aviso" + (a.fijado ? " · fijado" : ""), t: a.titulo, s: String(a.contenido || "").replace(/\*\*/g, "").replace(/^\s*(?:[-*•]|\d+[.)])\s+/gm, "").replace(/\s+/g, " ").slice(0, 90), h: "#aviso-" + a.id, adj: (a.adjuntos || []).length })),
-    ...D.eventos.filter(e => e.fecha >= hoy).map(e => ({ f: e.creado, k: "fecha", que: "Fecha · " + diaTxt(e.fecha) + (e.hora ? ", " + horaEvento(e).toLowerCase() : ""), t: e.titulo, s: e.lugar || "", h: "#calendario", dia: e.fecha })),
-    ...D.actas.map(a => ({ f: a.creado, k: "acta", que: "Acta" + (a.fecha ? " · " + fechaDia(a.fecha).toLocaleDateString("es-ES", { day: "numeric", month: "long" }) : ""), t: a.titulo, s: a.acuerdos ? (a.acuerdos.split("\n").filter(l => l.trim()).length + " acuerdo(s)") : (a.resumen || "").slice(0, 90), h: "#actas" })),
+    ...D.avisos.filter(a => a !== urg).map(a => ({ f: a.fecha, k: "aviso", que: "Aviso" + (a.fijado ? " · fijado" : ""), t: a.titulo, s: resumenPlano(a.contenido, 90), h: "#aviso-" + a.id, adj: (a.adjuntos || []).length })),
+    ...D.eventos.filter(e => e.fecha >= hoy).map(e => ({ f: e.creado, k: "fecha", que: "Fecha · " + cuandoEvento(e), t: e.titulo, s: e.lugar || "", h: "#calendario", dia: e.fecha })),
+    ...D.actas.map(a => ({ f: a.creado, k: "acta", que: "Acta" + (a.fecha ? " · " + fechaDia(a.fecha).toLocaleDateString("es-ES", { day: "numeric", month: "long" }) : ""), t: a.titulo, s: a.acuerdos ? (a.acuerdos.split("\n").filter(l => l.trim()).length + " acuerdo(s)") : resumenPlano(a.resumen, 90), h: "#actas" })),
     ...D.docs.map(d => ({ f: d.fecha, k: "doc", que: "Documento · " + tipoArchivo(d.tipo_archivo, d.nombre_archivo).txt, t: d.titulo, s: d.descripcion || "", url: d.url })),
     ...D.convenio.filter(c => ahora - new Date(c.actualizado) < 30 * DIA).map(c => ({ f: c.actualizado, k: "conv", que: "Convenio · actualizado", t: c.titulo, s: c.resumen || "", h: "#convenio" })),
     ...D.preguntas.filter(q => ahora - new Date(q.creado) < 30 * DIA).map(q => ({ f: q.creado, k: "preg", que: "Pregunta frecuente", t: q.pregunta, s: "", h: "#preguntas" })),
   ].filter(x => x.f).sort((a, b) => new Date(b.f) - new Date(a.f));
+  const nNuevas = items.filter(x => esDesdeUltima(x.f)).length + (urg && esDesdeUltima(urg.fecha) ? 1 : 0);
+  $("inicio-novedades").innerHTML = nNuevas
+    ? `<button class="novedades-tira" id="ir-ultimo"><span class="n">${nNuevas}</span><span>${nNuevas === 1 ? "novedad" : "novedades"} desde tu última visita</span>${icono("abajo", "p")}</button>`
+    : `<p class="novedades-tira al-dia">${icono("check", "p")}<span>Estás al día: nada nuevo desde tu última visita.</span></p>`;
+  if ($("ir-ultimo")) $("ir-ultimo").onclick = () => $("lo-ultimo").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  // Próximas paradas
+  $("inicio-paradas").innerHTML = `<h2 class="tit-seccion">Próximas paradas <a href="#calendario">Ver todas</a></h2>` + (prox.length
+    ? `<ol class="ruta">${prox.slice(0, 3).map(e => `<li class="${e.fecha === hoy ? "hoy" : ""}"><a href="#calendario" data-dia="${e.fecha}">
+        <span class="cuando">${esc(cuandoEvento(e))}</span><b>${esc(e.titulo)}</b>${e.lugar ? `<small>${icono("lugar", "p")}${esc(e.lugar)}</small>` : ""}</a></li>`).join("")}</ol>`
+    : `<p class="ruta-vacia">No hay fechas próximas.</p>`);
+  // Lo último
+  const max = estado.feedMax || 20;
   const grupo = (f) => { const d = (ahora - new Date(f)) / DIA; return d < 1 && partesFecha(f).iso === hoy ? "Hoy" : d < 7 ? "Esta semana" : d < 31 ? "Este mes" : "Antes"; };
-  const max = estado.feedMax || 25;
-  let html = "", g = null;
+  let html = `<h2 class="tit-seccion">Lo último${nNuevas ? ` <span>${nNuevas} sin ver</span>` : ""}</h2>`, g = null;
   items.slice(0, max).forEach(x => {
     const gr = grupo(x.f);
-    if (gr !== g) { html += `<h2 class="grupo-tablon">${gr}</h2>`; g = gr; }
+    if (gr !== g) { html += `<h3 class="grupo-tablon">${gr}</h3>`; g = gr; }
     const [ic, cl] = ICONOS[x.k];
     const attrs = x.url ? `href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener"` : `href="${x.h}"${x.dia ? ` data-dia="${x.dia}"` : ""}`;
-    html += `<a class="item-tablon" ${attrs}>
-      ${x.dia ? `<span class="ic dia ${cl}"><b>${fechaDia(x.dia).getDate()}</b>${MES_CORTO[fechaDia(x.dia).getMonth()]}</span>` : `<span class="ic ${cl}">${icono(ic, "p")}</span>`}
-      <span class="txt"><small class="${cl}"><span class="tipo">${esc(x.que)}</span> · ${haceTxt(x.f)}${esNuevo(x.f) ? ' <span class="punto-nuevo" title="Nuevo"></span>' : ""}</small>
+    html += `<a class="item-tablon ${esDesdeUltima(x.f) ? "es-nuevo" : ""}" ${attrs}>
+      <span class="ic ${cl}">${icono(ic, "p")}</span>
+      <span class="txt"><small>${esDesdeUltima(x.f) ? '<span class="marca-nuevo">Nuevo</span>' : ""}<span>${esc(x.que)} · ${haceTxt(x.f)}</span></small>
         <b>${esc(x.t || "Sin título")}</b>${x.s ? `<span class="res">${esc(x.s)}</span>` : ""}${x.adj ? `<span class="res adj">${icono("clip", "p")} ${x.adj} archivo(s)</span>` : ""}</span>
     </a>`;
   });
   if (items.length > max) html += `<button class="btn sec ver-mas" id="ver-mas">Ver más</button>`;
-  $("inicio-feed").innerHTML = items.length ? html : vacio("avisos", "Todavía no hay nada publicado.");
-  $("inicio-feed").querySelectorAll("[data-dia]").forEach(l => l.onclick = () => { const d = fechaDia(l.dataset.dia); estado.mes = new Date(d.getFullYear(), d.getMonth(), 1); estado.diaSel = l.dataset.dia; pintaCalendario(); });
-  if ($("ver-mas")) $("ver-mas").onclick = () => { estado.feedMax = max + 25; pintaInicio(); };
+  $("inicio-feed").innerHTML = items.length ? html : html + vacio("avisos", "Todavía no hay nada publicado.");
+  if ($("ver-mas")) $("ver-mas").onclick = () => { estado.feedMax = max + 20; pintaInicio(); };
+  // Accesos
+  const acc = [["avisos", "avisos", "Avisos"], ["convenio", "convenio", "Convenio"], ["calendario", "calendario", "Fechas"], ["actas", "actas", "Actas"], ["documentos", "carpeta", "Documentos"], ["preguntas", "pregunta", "Dudas"]];
+  $("inicio-accesos").innerHTML = `<h2 class="tit-seccion">Ir a</h2><nav class="accesos-tablon" aria-label="Accesos rápidos">${acc.map(([v, ic, t]) =>
+    `<a href="#${v}">${icono(ic)}<b>${t}</b></a>`).join("")}</nav>`;
+  document.querySelectorAll("#v-inicio [data-dia]").forEach(l => l.onclick = () => irADia(l.dataset.dia));
 }
 
 // ---------- Avisos (actuales y archivo) ----------
@@ -204,7 +201,15 @@ function pintaCalendario() {
   $("cal-detalle").innerHTML = `<h3>${may(fechaDia(estado.diaSel).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }))}</h3>` +
     (sel.length ? sel.map(e => eventoHTML(e)).join("") : `<p class="fecha-txt" style="margin:0">No hay nada programado este día.</p>`);
   const prox = D.eventos.filter(e => e.fecha >= hoy).slice(0, 6);
-  $("cal-proximas").innerHTML = prox.length ? prox.map(e => eventoHTML(e, true)).join("") : `<p class="fecha-txt" style="margin:0">No hay fechas próximas.</p>`;
+  // Próximas fechas como un panel de salidas: día y hora en ámbar, qué y dónde en blanco
+  $("cal-proximas").innerHTML = prox.length ? `<div class="tablero-cab" aria-hidden="true"><span>Día</span><span>Qué y dónde</span></div>` + prox.map(e => {
+    const d = fechaDia(e.fecha), dias = Math.round((d - fechaDia(hoy)) / 86400000);
+    const dia = dias === 0 ? "Hoy" : dias === 1 ? "Mañana" : may(DIA_CORTO[d.getDay()]) + " " + d.getDate();
+    const sub = (dias <= 1 ? d.getDate() + " " + MES_CORTO[d.getMonth()] : MES_CORTO[d.getMonth()]) + (e.hora ? " · " + (esTodoElDia(e) ? "todo el día" : e.hora.slice(0, 5)) : "");
+    return `<button class="fila-tablero ${claseTipo(e.tipo, "evento")}" data-dia="${e.fecha}"><span class="t-dia">${esc(dia)}<small>${esc(sub)}</small></span>
+      <span class="t-que"><span class="t-tipo">${esc(e.tipo)}</span><b>${esc(e.titulo || "Sin título")}</b>${e.lugar ? `<span class="t-lugar">${esc(e.lugar)}</span>` : ""}</span></button>`;
+  }).join("") : `<p class="fecha-txt" style="margin:0;padding:16px">No hay fechas próximas.</p>`;
+  $("cal-proximas").querySelectorAll("[data-dia]").forEach(b => b.onclick = () => { irADia(b.dataset.dia); $("cal-detalle").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); });
 }
 $("cal-ant").onclick = () => { estado.mes = new Date(estado.mes.getFullYear(), estado.mes.getMonth() - 1, 1); pintaCalendario(); };
 $("cal-sig").onclick = () => { estado.mes = new Date(estado.mes.getFullYear(), estado.mes.getMonth() + 1, 1); pintaCalendario(); };
@@ -298,7 +303,7 @@ async function cargar(idNuevo) {
     sb.from("enlaces").select("*").order("orden").order("id"),
   ]);
   if (a.error) {
-    document.querySelectorAll("#inicio-destacado, #lista-avisos").forEach(el =>
+    document.querySelectorAll("#inicio-rotulo, #lista-avisos").forEach(el =>
       el.innerHTML = vacio("alerta", "No se ha podido conectar. Comprueba tu conexión a internet y vuelve a abrir la página."));
     return;
   }
@@ -407,14 +412,12 @@ async function comprobarSuscripcion() {
 function pintaBanda() {
   const inst = INSTALADA();
   $("cab-instalar").classList.toggle("oculto", inst);
-  // Barra fija de abajo
+  // Barra fija de abajo: hablar con un delegado (lo principal) y la campana de avisos
   const iosSinInstalar = ES_IOS && !inst;
-  const botonAvisos = suscrito
-    ? `<button class="accion-baja on" data-acc="estado">${icono("check", "p")}Avisos activados</button>`
-    : iosSinInstalar
-      ? `<button class="accion-baja principal" data-acc="instalar">${icono("descargar", "p")}Instalar la app</button>`
-      : `<button class="accion-baja principal" data-acc="activar">${icono("campana", "p")}Activar avisos</button>`;
-  $("barra-acciones").innerHTML = botonAvisos + `<a class="accion-baja" href="#info">${icono("correo", "p")}Contacto</a>`;
+  const campana = suscrito
+    ? `<button class="accion-baja campana on" data-acc="estado" aria-label="Avisos activados en este móvil" title="Avisos activados">${icono("check")}<span>Avisos</span></button>`
+    : `<button class="accion-baja campana" data-acc="${iosSinInstalar ? "instalar" : "activar"}" aria-label="${iosSinInstalar ? "Instalar la app para recibir avisos" : "Activar avisos en este móvil"}" title="Activar avisos">${icono("campana")}<span>Avisos</span></button>`;
+  $("barra-acciones").innerHTML = `<a class="accion-baja principal" href="#delegados">${icono("telefono")}Hablar con un delegado</a>` + campana;
   // Sugerencia de instalar (solo si no está instalada), arriba del tablón
   const banda = inst ? "" : `<div class="banda-instalar"><span class="ic">${icono("movil", "p")}</span>
       <span class="txt"><b>Tenla como una app</b> con su icono en el móvil.</span>

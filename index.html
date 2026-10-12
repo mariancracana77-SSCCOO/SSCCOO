@@ -22,8 +22,8 @@
   <div class="cab-fila">
     <img src="logo.png" alt="Logo de la Sección Sindical CCOO Calsina Carré">
     <div class="cab-titulo">
-      <span class="nombre">Tablón sindical</span>
-      <span class="sub">CCOO · Calsina Carré</span>
+      <span class="nombre">CCOO Calsina Carré</span>
+      <span class="sub">Sección Sindical</span>
     </div>
     <div class="cab-acciones">
       <button class="btn-tab oculto" id="cab-instalar" aria-label="Instalar la app" title="Instalar la app"><span data-i="descargar"></span></button>
@@ -32,11 +32,11 @@
     </div>
   </div>
   <nav class="pestanas-web" aria-label="Secciones">
-    <a href="#inicio" data-v="inicio">Todo</a>
+    <a href="#inicio" data-v="inicio">Inicio</a>
     <a href="#avisos" data-v="avisos">Avisos</a>
     <a href="#calendario" data-v="calendario">Fechas</a>
     <a href="#actas" data-v="actas">Actas</a>
-    <a href="#documentos" data-v="documentos">Docs</a>
+    <a href="#documentos" data-v="documentos">Documentos</a>
     <a href="#convenio" data-v="convenio">Convenio</a>
     <a href="#preguntas" data-v="preguntas">Dudas</a>
     <a href="#info" data-v="info">Nosotros</a>
@@ -51,13 +51,13 @@
   <section class="vista" id="v-inicio">
     <h1 class="sr-only">Tablón: lo último de la Sección Sindical</h1>
     <div class="portada">
-      <div id="inicio-saludo"></div>
-      <div id="inicio-destacado"></div>
-      <aside class="portada-lateral" aria-label="Más secciones">
-        <div id="inicio-accesos"></div>
-        <div id="banda-app"></div>
+      <div class="zona-rotulo"><div id="inicio-rotulo"></div><div id="inicio-novedades"></div></div>
+      <aside class="portada-lateral" aria-label="Próximas fechas y accesos">
+        <section class="paradas" id="inicio-paradas"></section>
+        <div class="ir-a" id="inicio-accesos"></div>
+        <div class="banda-app" id="banda-app"></div>
       </aside>
-      <div id="inicio-feed"><p class="fecha-txt">Cargando…</p></div>
+      <section class="lo-ultimo" id="lo-ultimo"><div id="inicio-feed"><p class="fecha-txt">Cargando…</p></div></section>
       <p class="intro-tablon" id="txt-inicio"></p>
     </div>
   </section>
@@ -97,7 +97,7 @@
       <div>
         <div class="panel dia-detalle" id="cal-detalle"></div>
         <h2 class="titulo-bloque">Próximas fechas</h2>
-        <div class="panel dia-detalle" id="cal-proximas"></div>
+        <div class="tablero" id="cal-proximas"></div>
       </div>
     </div>
   </section>
