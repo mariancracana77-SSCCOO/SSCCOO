@@ -91,7 +91,7 @@ function pintaSaludo(urg) {
     const cuando = dias === 0 ? "Hoy" : dias === 1 ? "Mañana" : dias < 7 ? "Este " + d.toLocaleDateString("es-ES", { weekday: "long" }) : "Dentro de " + dias + " días";
     cita = `<div class="prox-cita">
       <span class="dia-grande"><b>${d.getDate()}</b>${MES_CORTO[d.getMonth()]}</span>
-      <span class="prox-txt"><small>Próxima cita · ${cuando}${e.hora ? ", " + e.hora.slice(0, 5) : ""}</small>
+      <span class="prox-txt"><small>Próxima cita · ${cuando}${e.hora ? (esTodoElDia(e) ? ", todo el día" : ", " + e.hora.slice(0, 5)) : ""}</small>
         <a class="prox-tit" href="#calendario" data-dia="${e.fecha}">${esc(e.titulo)}</a>
         ${e.lugar ? `<span class="prox-lugar">${icono("lugar", "p")}${esc(e.lugar)}</span>` : ""}
         <button class="prox-ics" data-ics="${e.id}">${icono("calendario", "p")}Añadir a mi calendario</button></span>
@@ -126,7 +126,7 @@ function pintaInicio() {
   const diaTxt = (iso) => fechaDia(iso).toLocaleDateString("es-ES", { weekday: "long", day: "numeric" });
   const items = [
     ...D.avisos.filter(a => a !== urg).map(a => ({ f: a.fecha, k: "aviso", que: "Aviso" + (a.fijado ? " · fijado" : ""), t: a.titulo, s: String(a.contenido || "").replace(/\*\*/g, "").replace(/^\s*(?:[-*•]|\d+[.)])\s+/gm, "").replace(/\s+/g, " ").slice(0, 90), h: "#aviso-" + a.id, adj: (a.adjuntos || []).length })),
-    ...D.eventos.filter(e => e.fecha >= hoy).map(e => ({ f: e.creado, k: "fecha", que: "Fecha · " + diaTxt(e.fecha) + (e.hora ? ", " + e.hora : ""), t: e.titulo, s: e.lugar || "", h: "#calendario", dia: e.fecha })),
+    ...D.eventos.filter(e => e.fecha >= hoy).map(e => ({ f: e.creado, k: "fecha", que: "Fecha · " + diaTxt(e.fecha) + (e.hora ? ", " + horaEvento(e).toLowerCase() : ""), t: e.titulo, s: e.lugar || "", h: "#calendario", dia: e.fecha })),
     ...D.actas.map(a => ({ f: a.creado, k: "acta", que: "Acta" + (a.fecha ? " · " + fechaDia(a.fecha).toLocaleDateString("es-ES", { day: "numeric", month: "long" }) : ""), t: a.titulo, s: a.acuerdos ? (a.acuerdos.split("\n").filter(l => l.trim()).length + " acuerdo(s)") : (a.resumen || "").slice(0, 90), h: "#actas" })),
     ...D.docs.map(d => ({ f: d.fecha, k: "doc", que: "Documento · " + tipoArchivo(d.tipo_archivo, d.nombre_archivo).txt, t: d.titulo, s: d.descripcion || "", url: d.url })),
     ...D.convenio.filter(c => ahora - new Date(c.actualizado) < 30 * DIA).map(c => ({ f: c.actualizado, k: "conv", que: "Convenio · actualizado", t: c.titulo, s: c.resumen || "", h: "#convenio" })),
@@ -143,7 +143,7 @@ function pintaInicio() {
     html += `<a class="item-tablon" ${attrs}>
       ${x.dia ? `<span class="ic dia ${cl}"><b>${fechaDia(x.dia).getDate()}</b>${MES_CORTO[fechaDia(x.dia).getMonth()]}</span>` : `<span class="ic ${cl}">${icono(ic, "p")}</span>`}
       <span class="txt"><small class="${cl}"><span class="tipo">${esc(x.que)}</span> · ${haceTxt(x.f)}${esNuevo(x.f) ? ' <span class="punto-nuevo" title="Nuevo"></span>' : ""}</small>
-        <b>${esc(x.t || "Sin título")}</b>${x.s ? `<span class="res">${esc(x.s)}</span>` : ""}${x.adj ? `<span class="res">${icono("clip", "p")} ${x.adj} archivo(s)</span>` : ""}</span>
+        <b>${esc(x.t || "Sin título")}</b>${x.s ? `<span class="res">${esc(x.s)}</span>` : ""}${x.adj ? `<span class="res adj">${icono("clip", "p")} ${x.adj} archivo(s)</span>` : ""}</span>
     </a>`;
   });
   if (items.length > max) html += `<button class="btn sec ver-mas" id="ver-mas">Ver más</button>`;
@@ -178,7 +178,7 @@ $("buscar-avisos").oninput = () => pintaAvisos();
 const isoDe = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 function pintaCalendario() {
   const m = estado.mes, ini = new Date(m.getFullYear(), m.getMonth(), 1);
-  $("cal-mes").textContent = may(ini.toLocaleDateString("es-ES", { month: "long", year: "numeric" }));
+  $("cal-mes").textContent = may(ini.toLocaleDateString("es-ES", { month: "long" })) + " " + ini.getFullYear();
   const desfase = (ini.getDay() + 6) % 7, hoy = hoyISO(), porDia = {};
   D.eventos.forEach(e => (porDia[e.fecha] ||= []).push(e));
   let html = "";
@@ -497,7 +497,7 @@ function buscarTodo() {
   const pasa = (...t) => normal(t.join(" ")).includes(q);
   const grupos = [
     ["Avisos", "avisos", D.avisos.filter(a => pasa(a.titulo, a.contenido, textoFecha(a.fecha))).map(a => ({ h: "aviso-" + a.id, t: a.titulo, s: fechaLarga(a.fecha) }))],
-    ["Calendario", "calendario", D.eventos.filter(e => pasa(e.titulo, e.descripcion, e.lugar, e.tipo, textoFecha(e.fecha))).map(e => ({ h: "calendario", t: e.titulo, s: fechaLarga(e.fecha + "T12:00:00") + (e.hora ? " · " + e.hora : ""), dia: e.fecha }))],
+    ["Calendario", "calendario", D.eventos.filter(e => pasa(e.titulo, e.descripcion, e.lugar, e.tipo, textoFecha(e.fecha))).map(e => ({ h: "calendario", t: e.titulo, s: fechaLarga(e.fecha + "T12:00:00") + (e.hora ? " · " + horaEvento(e).toLowerCase() : ""), dia: e.fecha }))],
     ["Convenio", "convenio", D.convenio.filter(s => pasa(s.titulo, s.resumen, s.contenido, s.articulo)).map(s => ({ h: "convenio", t: s.titulo, s: s.resumen || s.categoria, q: qr }))],
     ["Preguntas frecuentes", "pregunta", D.preguntas.filter(x => pasa(x.pregunta, x.respuesta)).map(x => ({ h: "preguntas", t: x.pregunta, s: x.categoria, q: qr }))],
     ["Actas", "actas", D.actas.filter(a => pasa(a.titulo, a.resumen, a.acuerdos, a.tipo, textoFecha(a.fecha))).map(a => ({ h: "actas", t: a.titulo, s: a.fecha ? fechaLarga(a.fecha + "T12:00:00") : a.tipo, q: qr }))],

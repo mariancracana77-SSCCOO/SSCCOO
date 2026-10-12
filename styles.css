@@ -607,3 +607,69 @@ body { overflow-wrap: break-word; }
 p, a, li, dd, td { overflow-wrap: anywhere; }
 .cal-nav { flex-wrap: wrap; justify-content: flex-end; }
 .texto-legal { margin-bottom: 14px; } .texto-legal h1 { font-size: 1.6rem; margin-bottom: 10px; } body.publica #v-legal { max-width: 760px; margin: 0 auto; }
+
+/* ====== Versión 17: retoques de diseño ====== */
+/* Pestañas: se nota que se pueden deslizar (degradado en los bordes) */
+@media (max-width: 760px) {
+  .pestanas-web { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%); padding-right: 28px; }
+}
+.pestanas-web a { transition: color .15s, border-color .15s; }
+
+/* Tarjetas del tablón: un poco de relieve y resumen cortado con puntos suspensivos */
+.item-tablon { box-shadow: var(--sombra); transition: border-color .15s, transform .15s, box-shadow .15s; }
+.item-tablon:hover { transform: translateY(-1px); }
+.item-tablon .res { display: block; }
+.item-tablon .res.adj { display: flex; }
+.accesos-tablon a { box-shadow: var(--sombra); transition: border-color .15s, transform .15s; }
+.accesos-tablon a:hover { transform: translateY(-1px); }
+.tarjeta-urgente { box-shadow: 0 6px 18px rgba(196, 18, 47, .22); }
+@media (prefers-reduced-motion: reduce) { .item-tablon, .accesos-tablon a { transition: none; } .item-tablon:hover, .accesos-tablon a:hover { transform: none; } }
+
+/* Próxima cita en modo oscuro: sin recuadro blanco que deslumbre */
+:root[data-theme="dark"] .prox-cita { background: #222d3a; color: var(--tinta); }
+:root[data-theme="dark"] .saludo a.prox-tit { color: var(--tinta); }
+:root[data-theme="dark"] .prox-lugar { color: var(--suave); }
+:root[data-theme="dark"] .prox-txt small { color: #ff6b81; }
+:root[data-theme="dark"] .prox-ics { color: #7fa8e8; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .prox-cita { background: #222d3a; color: var(--tinta); }
+  :root:not([data-theme="light"]) .saludo a.prox-tit { color: var(--tinta); }
+  :root:not([data-theme="light"]) .prox-lugar { color: var(--suave); }
+  :root:not([data-theme="light"]) .prox-txt small { color: #ff6b81; }
+  :root:not([data-theme="light"]) .prox-ics { color: #7fa8e8; }
+}
+
+/* Portada en PC: tablón a la izquierda y accesos fijos a la derecha */
+@media (min-width: 1000px) {
+  body.publica #v-inicio { max-width: 1060px; }
+  .portada { display: grid; grid-template-columns: minmax(0, 1fr) 300px; column-gap: 22px; align-items: start; }
+  .portada > * { grid-column: 1; }
+  .portada > .portada-lateral { grid-column: 2; grid-row: 1 / span 5; position: sticky; top: 124px; }
+  .portada-lateral .accesos-tablon { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .portada-lateral .accesos-tablon a { padding: 14px 12px; }
+  .portada-lateral .banda-instalar { flex-wrap: wrap; }
+  .portada-lateral .banda-instalar .btn { width: 100%; justify-content: center; }
+}
+
+/* Calendario: el mes y las flechas caben en una sola fila en el móvil */
+.cal-cab { gap: 8px; }
+.cal-nav { flex-wrap: nowrap; align-items: center; }
+.cal-mes-btn { min-width: 0; }
+.cal-mes-btn h2 { white-space: nowrap; }
+@media (max-width: 420px) { .cal-cab h2 { font-size: 1.45rem; } }
+.dia-detalle h3 { font-family: var(--cond); }
+
+/* Botones de las tarjetas: ordenados en fila y repartidos a lo ancho en el móvil */
+.acciones-evento { margin-top: 10px; }
+.accion { justify-content: center; transition: border-color .15s, background .15s; }
+.accion:hover { background: var(--fondo); }
+@media (max-width: 560px) {
+  .pie-tarjeta .acciones-tarjeta, .acciones-evento, .delegado .acciones-tarjeta { display: flex; width: 100%; }
+  .pie-tarjeta .acciones-tarjeta > *, .acciones-evento > *, .delegado .acciones-tarjeta > * { flex: 1 1 auto; }
+  .pie-tarjeta .acciones-tarjeta .traducir .accion { width: 100%; }
+}
+
+/* Títulos de sección con una raya roja de acento */
+.titulo-vista { position: relative; padding-bottom: 8px; }
+.titulo-vista::after { content: ""; position: absolute; left: 0; bottom: 0; width: 44px; height: 4px; border-radius: 2px; background: var(--rojo); }
+.grupo-tablon { text-transform: uppercase; letter-spacing: .06em; font-size: .75rem; }

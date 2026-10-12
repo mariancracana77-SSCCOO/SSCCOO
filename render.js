@@ -70,18 +70,21 @@ window.tarjetaAviso = (a, { corto = false, nuevo = false, resaltar = "" } = {}) 
   </article>`;
 
 // ---------- Calendario ----------
+// Hora de un evento en texto: "Todo el día" si va de 00:00 a 23:59 (festivos)
+window.esTodoElDia = (e) => !!e.hora && e.hora.slice(0, 5) === "00:00" && (!e.hora_fin || e.hora_fin.slice(0, 5) >= "23:59");
+window.horaEvento = (e) => !e.hora ? "" : esTodoElDia(e) ? "Todo el día" : e.hora.slice(0, 5) + (e.hora_fin ? "–" + e.hora_fin.slice(0, 5) : "");
 window.eventoHTML = (e, conCartel) => `<div class="evento">
   ${conCartel ? cartel(e.fecha, e.tipo, "evento") : ""}
   <div><span class="etq tipo ${claseTipo(e.tipo, "evento")}">${esc(e.tipo)}</span>
     <h4>${esc(e.titulo || "Sin título")}</h4>
     <div class="info">
-      ${e.hora ? `<span>${icono("reloj", "p")}${esc(e.hora)}${e.hora_fin ? "–" + esc(e.hora_fin) : ""}</span>` : ""}
+      ${e.hora ? `<span>${icono("reloj", "p")}${esc(horaEvento(e))}</span>` : ""}
       ${e.lugar ? `<span>${icono("lugar", "p")}${esc(e.lugar)}</span>` : ""}
     </div>
     ${e.descripcion ? `<div>${textoHTML(e.descripcion)}</div>` : ""}
-    <div class="acciones-tarjeta" style="margin-top:10px">
+    <div class="acciones-tarjeta acciones-evento">
       <button class="accion" data-ics="${e.id}">${icono("calendario", "p")}Añadir a mi calendario</button>
-      <a class="accion wa" href="${enlaceWhatsApp(textoCompartir(e.titulo, fechaDia(e.fecha).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }) + (e.hora ? ", " + e.hora : "") + (e.lugar ? " · " + e.lugar : ""), "calendario"))}" target="_blank" rel="noopener">${icono("whatsapp", "p")}WhatsApp</a>
+      <a class="accion wa" href="${enlaceWhatsApp(textoCompartir(e.titulo, fechaDia(e.fecha).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }) + (e.hora ? ", " + horaEvento(e).toLowerCase() : "") + (e.lugar ? " · " + e.lugar : ""), "calendario"))}" target="_blank" rel="noopener">${icono("whatsapp", "p")}WhatsApp</a>
     </div></div></div>`;
 
 // ---------- Convenio ----------

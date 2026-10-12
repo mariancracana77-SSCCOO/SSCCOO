@@ -12,9 +12,9 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link rel="stylesheet" href="fuentes.css?v=16">
-<script src="lectura.js?v=16"></script>
-<link rel="stylesheet" href="styles.css?v=16">
+<link rel="stylesheet" href="fuentes.css?v=17">
+<script src="lectura.js?v=17"></script>
+<link rel="stylesheet" href="styles.css?v=17">
 </head>
 <body class="publica">
 
@@ -50,12 +50,16 @@
   <!-- TODO (tablón) -->
   <section class="vista" id="v-inicio">
     <h1 class="sr-only">Tablón: lo último de la Sección Sindical</h1>
-    <div id="inicio-saludo"></div>
-    <div id="inicio-destacado"></div>
-    <div id="inicio-accesos"></div>
-    <div id="banda-app"></div>
-    <div id="inicio-feed"><p class="fecha-txt">Cargando…</p></div>
-    <p class="intro-tablon" id="txt-inicio"></p>
+    <div class="portada">
+      <div id="inicio-saludo"></div>
+      <div id="inicio-destacado"></div>
+      <aside class="portada-lateral" aria-label="Más secciones">
+        <div id="inicio-accesos"></div>
+        <div id="banda-app"></div>
+      </aside>
+      <div id="inicio-feed"><p class="fecha-txt">Cargando…</p></div>
+      <p class="intro-tablon" id="txt-inicio"></p>
+    </div>
   </section>
 
   <!-- AVISOS -->
@@ -198,10 +202,10 @@
 
 <div class="barra-acciones" id="barra-acciones"></div>
 
-<script src="lib/supabase.js?v=16"></script>
-<script src="iconos.js?v=16"></script>
-<script src="config.js?v=16"></script>
-<script src="render.js?v=16"></script>
-<script src="app.js?v=16"></script>
+<script src="lib/supabase.js?v=17"></script>
+<script src="iconos.js?v=17"></script>
+<script src="config.js?v=17"></script>
+<script src="render.js?v=17"></script>
+<script src="app.js?v=17"></script>
 </body>
 </html>
