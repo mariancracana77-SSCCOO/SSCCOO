@@ -5,7 +5,7 @@ const msg = (id, t, ok) => { const el = $(id); if (!el) return; el.textContent =
 const MAX_MB = 20;
 $("ver-web").innerHTML = icono("ver", "p");
 $("ed-cerrar").innerHTML = icono("cerrar", "p");
-$("fab").innerHTML = icono("mas");
+$("fab").innerHTML = icono("mas") + "<span>Nuevo</span>";
 $("previa-icono").innerHTML = icono("ver", "p");
 
 function aviso(texto, error) {
@@ -310,8 +310,8 @@ $("velo-mas").onclick = cerrarMas;
 
 function abrir(k) {
   actual = k; history.replaceState(null, "", "#" + k); pintaNav(); window.scrollTo(0, 0);
-  $("fab").classList.toggle("oculto", !SECCIONES[k]);
-  if (SECCIONES[k]) { $("fab").onclick = () => abrirEditor(k); $("fab").setAttribute("aria-label", SECCIONES[k].nuevo); }
+  $("fab").classList.remove("oculto");
+  $("fab").onclick = abrirHojaNuevo; $("fab").setAttribute("aria-label", "Nuevo: elegir qué crear");
   if (!window.ES_ADMIN) { $("zona").innerHTML = `<div class="panel vacio">${icono("alerta")}Esta cuenta (${esc(window.MI_EMAIL)}) no tiene permiso para publicar. Pide a la Sección Sindical que añada tu email en Ajustes.</div>`; return; }
   if (k === "resumen") pintaResumen();
   else if (k === "buzon") pintaBuzon();
@@ -415,6 +415,90 @@ function itemHTML(k, x, conSeccion) {
     ${icono("der", "chevron")}
   </button>`;
 }
+// ---------- Reordenar arrastrando (ratón o dedo) y con el teclado ----------
+const REORDENABLE = (k) => SECCIONES[k]?.orden?.[0] === "orden";
+// Envuelve cada elemento con un asa para arrastrarlo y botones para subir/bajar
+const filaOrden = (k, x) => `<div class="fila-orden" data-id="${x.id}">
+  <span class="asa" role="button" tabindex="0" aria-label="Arrastrar para cambiar el orden de «${esc((SECCIONES[k].tituloDe ? SECCIONES[k].tituloDe(x) : x.titulo) || "")}». También con las flechas del teclado.">${icono("arrastrar")}</span>
+  ${itemHTML(k, x)}</div>`;
+function hacerOrdenable(cont, k) {
+  const filas = () => [...cont.querySelectorAll(":scope > .fila-orden")];
+  const guardar = async () => {
+    const ids = filas().map(f => +f.dataset.id), cambios = [];
+    ids.forEach((id, i) => { const x = datos[k].find(d => d.id === id); if (x && x.orden !== i + 1) { x.orden = i + 1; cambios.push(sb.from(SECCIONES[k].tabla).update({ orden: i + 1 }).eq("id", id)); } });
+    if (!cambios.length) return;
+    const r = await Promise.all(cambios), e = r.find(x => x.error);
+    datos[k].sort((a, b) => a.orden - b.orden);
+    aviso(e ? "No se ha podido guardar el orden: " + e.error.message : "Orden guardado. Ya se ve así en la web.", !!e);
+  };
+  filas().forEach(f => {
+    const asa = f.querySelector(".asa");
+    asa.onpointerdown = (e) => {
+      if (e.button > 0) return;
+      e.preventDefault(); f.classList.add("arrastrando");
+      const id = e.pointerId;
+      // Se escucha en toda la página: al mover la fila en la lista, el navegador deja de mandar los movimientos al asa
+      const mover = (ev) => {
+        if (ev.pointerId !== id) return;
+        if (ev.clientY < 90) scrollBy(0, -14); else if (ev.clientY > innerHeight - 110) scrollBy(0, 14);
+        const sobre = document.elementFromPoint(ev.clientX, ev.clientY)?.closest(".fila-orden");
+        if (!sobre || sobre === f || sobre.parentElement !== cont) return;
+        const r = sobre.getBoundingClientRect();
+        cont.insertBefore(f, ev.clientY < r.top + r.height / 2 ? sobre : sobre.nextSibling);
+      };
+      const soltar = (ev) => {
+        if (ev.pointerId !== id) return;
+        removeEventListener("pointermove", mover); removeEventListener("pointerup", soltar); removeEventListener("pointercancel", soltar);
+        f.classList.remove("arrastrando"); guardar();
+      };
+      addEventListener("pointermove", mover); addEventListener("pointerup", soltar); addEventListener("pointercancel", soltar);
+    };
+    asa.onkeydown = (e) => {
+      if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+      e.preventDefault();
+      const otro = e.key === "ArrowUp" ? f.previousElementSibling : f.nextElementSibling;
+      if (!otro?.classList.contains("fila-orden")) return;
+      cont.insertBefore(f, e.key === "ArrowUp" ? otro : otro.nextSibling); asa.focus(); guardar();
+    };
+  });
+}
+
+// ---------- Borrador guardado solo (por si se cierra la app sin querer) ----------
+const claveBorrador = () => ED && `ccoo-borrador-${ED.k}-${ED.orig?.id ?? "nuevo"}`;
+function guardarBorrador() {
+  if (!ED?.sucio) return;
+  const campos = {};
+  $("ed-form").querySelectorAll("[id^='f-']:not([type=file])").forEach(el => campos[el.id] = el.type === "checkbox" ? el.checked : el.value);
+  try { localStorage.setItem(claveBorrador(), JSON.stringify({ t: Date.now(), campos })); } catch (_) {}
+}
+const quitarBorrador = () => { try { if (ED) localStorage.removeItem(claveBorrador()); } catch (_) {} };
+setInterval(guardarBorrador, 4000);
+document.addEventListener("visibilitychange", () => { if (document.hidden) guardarBorrador(); });
+function ofrecerBorrador() {
+  let b = null; try { b = JSON.parse(localStorage.getItem(claveBorrador()) || "null"); } catch (_) {}
+  if (!b || (ED.orig?.actualizado && new Date(ED.orig.actualizado).getTime() > b.t)) return;
+  $("ed-form").insertAdjacentHTML("afterbegin", `<div class="borrador" id="borrador"><p>${icono("reloj", "p")}<span>Tienes un borrador sin guardar de ${esc(haceTxt(b.t))}. ¿Lo recuperas? <small>(Los archivos hay que volver a elegirlos.)</small></span></p>
+    <div class="botones"><button class="btn" type="button" id="b-borrador-si">Recuperar el borrador</button><button class="btn sec" type="button" id="b-borrador-no">Descartar</button></div></div>`);
+  $("b-borrador-si").onclick = () => {
+    Object.entries(b.campos).forEach(([id, v]) => { const el = $(id); if (!el) return; if (el.type === "checkbox") el.checked = v; else el.value = v; });
+    $("borrador").remove(); ED.sucio = true; actualizarPrevia(); aviso("Borrador recuperado.");
+  };
+  $("b-borrador-no").onclick = () => { quitarBorrador(); $("borrador").remove(); };
+}
+
+// ---------- Botón «+ Nuevo»: pregunta qué crear ----------
+function abrirHojaNuevo() {
+  const orden = Object.keys(PAGINAS).filter(k => SECCIONES[k] && !SECCIONES[k].oculta);
+  if (SECCIONES[actual] && !SECCIONES[actual].oculta) orden.splice(orden.indexOf(actual), 1), orden.unshift(actual);
+  $("hoja-mas").innerHTML = `<p class="hoja-tit">¿Qué quieres crear?</p>` + orden.map(k =>
+    `<button data-nuevo="${k}" class="${k === actual ? "actual" : ""}">${icono(SECCIONES[k].icono)}${esc({ convenio: "Nuevo apartado del convenio", apartados: "Nuevo apartado de la web" }[k] || SECCIONES[k].nuevo)}</button>`).join("") +
+    `<button id="h-calc">${icono("reloj")}Permiso o precio de las calculadoras</button>`;
+  ["velo-mas", "hoja-mas"].forEach(i => $(i).classList.remove("oculto"));
+  $("hoja-mas").querySelectorAll("[data-nuevo]").forEach(b => b.onclick = () => { cerrarMas(); abrirEditor(b.dataset.nuevo); });
+  $("h-calc").onclick = () => { cerrarMas(); abrir("calculadoras"); };
+  $("hoja-mas").querySelector("button")?.focus();
+}
+
 function enlazarItems(cont) {
   cont.querySelectorAll(".item-adm").forEach(b => b.onclick = () => abrirEditor(b.dataset.k, datos[b.dataset.k].find(x => x.id == b.dataset.id)));
 }
@@ -439,9 +523,13 @@ async function pintaSeccion(k) {
     const q = $("buscar").value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const l = datos[k].filter(x => pasaFechaAdm(ff, FECHA_DE[k]?.(x)) &&
       (!q || (JSON.stringify(x) + " " + textoFecha(FECHA_DE[k]?.(x))).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)));
-    $("lista").innerHTML = l.length ? l.map(x => itemHTML(k, x)).join("") :
+    const ordenable = REORDENABLE(k) && !q && l.length > 1;
+    if (!ordenable) $("ayuda-orden")?.remove();
+    if (ordenable && !$("ayuda-orden")) $("lista").insertAdjacentHTML("beforebegin", `<p class="ayuda" id="ayuda-orden">${icono("arrastrar", "p")} Para cambiar el orden, arrastra desde las rayas de la izquierda (con el dedo o el ratón).</p>`);
+    $("lista").innerHTML = l.length ? (ordenable ? l.map(x => filaOrden(k, x)).join("") : l.map(x => itemHTML(k, x)).join("")) :
       `<div class="panel vacio">${icono(s.icono)}${q || ff.a || ff.m || ff.d ? "Nada coincide con la búsqueda o la fecha." : `Todavía no hay nada. Pulsa «${s.nuevo}» para empezar.`}</div>`;
     enlazarItems($("lista"));
+    if (ordenable) hacerOrdenable($("lista"), k);
   };
   $("buscar").oninput = pinta; pinta();
 }
@@ -532,6 +620,7 @@ function abrirEditor(k, orig = null, preset = {}) {
     el.addEventListener("input", () => { ED.sucio = true; actualizarPrevia(); });
     el.addEventListener("change", () => { ED.sucio = true; actualizarPrevia(); });
   });
+  ofrecerBorrador();
   if (s.asistente && !orig) prepararAsistente();
   if (k === "avisos" && !orig) prepararPlantillas();
   actualizarPrevia();
@@ -554,7 +643,8 @@ function prepararArchivos(c) {
   input.onchange = () => añadir(input.files);
   dz.ondragover = (e) => { e.preventDefault(); dz.classList.add("encima"); };
   dz.ondragleave = () => dz.classList.remove("encima");
-  dz.ondrop = (e) => { e.preventDefault(); dz.classList.remove("encima"); añadir(e.dataTransfer.files); };
+  dz.ondrop = (e) => { e.preventDefault(); e.stopPropagation(); dz.classList.remove("encima"); $("editor").classList.remove("soltando"); añadir(e.dataTransfer.files); };
+  ED.añadir = añadir; // para soltar archivos en cualquier parte del editor o pegarlos
   pintaArchivos(c);
 }
 function pintaArchivos(c) {
@@ -604,16 +694,21 @@ function cambiarPestana(p) {
 }
 document.querySelectorAll(".ed-pestanas button").forEach(b => b.onclick = () => cambiarPestana(b.dataset.p));
 
-async function confirmarSalida() { return !ED || !ED.sucio || confirm("Tienes cambios sin guardar. ¿Salir sin guardar?"); }
+async function confirmarSalida() { return !ED || !ED.sucio || confirm("Tienes cambios sin guardar. ¿Salir sin guardar? (Se perderá el borrador.)"); }
 async function cerrarEditor(desdeAtras) {
   if (!ED) return;
   if (!(await confirmarSalida())) { if (desdeAtras) history.pushState({ editor: 1 }, ""); return; }
+  if (ED.sucio) quitarBorrador(); // ha dicho «salir sin guardar»
   ED.pendientes.forEach(p => p.vista && URL.revokeObjectURL(p.vista));
   ED = null; BUZON_A_PREGUNTA = null;
   ["velo-ed", "editor"].forEach(i => $(i).classList.add("oculto"));
   document.body.style.overflow = "";
   if (!desdeAtras && history.state?.editor) history.back();
 }
+$("editor").addEventListener("dragover", (e) => { if (!ED?.añadir || !e.dataTransfer?.types?.includes("Files")) return; e.preventDefault(); $("editor").classList.add("soltando"); });
+$("editor").addEventListener("dragleave", (e) => { if (!e.relatedTarget || !$("editor").contains(e.relatedTarget)) $("editor").classList.remove("soltando"); });
+$("editor").addEventListener("drop", (e) => { if (!ED?.añadir) return; e.preventDefault(); $("editor").classList.remove("soltando"); if (e.dataTransfer.files.length) { cambiarPestana("form"); ED.añadir(e.dataTransfer.files); } });
+document.addEventListener("paste", (e) => { if (!ED?.añadir) return; const f = [...(e.clipboardData?.files || [])]; if (f.length) { e.preventDefault(); ED.añadir(f); aviso(f.length === 1 ? "Archivo pegado." : f.length + " archivos pegados."); } });
 $("ed-cerrar").onclick = () => cerrarEditor();
 $("ed-cancelar").onclick = () => cerrarEditor();
 $("velo-ed").onclick = () => cerrarEditor();
@@ -658,7 +753,7 @@ $("ed-guardar").onclick = async () => {
     if (ED.k === "preguntas" && BUZON_A_PREGUNTA) { await sb.from("buzon").update({ archivado: true, leido: true }).eq("id", BUZON_A_PREGUNTA); BUZON_A_PREGUNTA = null; contarBuzon().then(pintaNav); }
     // Los archivos quitados se conservan: así se pueden recuperar desde el Historial. Se limpian en Ajustes.
     const editado = !!ED.orig, k = ED.k;
-    ED.sucio = false; await cerrarEditor();
+    quitarBorrador(); ED.sucio = false; await cerrarEditor();
     if (k === "apartados") { await cargarApartados(); pintaNav(); }
     abrir(["resumen", "calendario"].includes(actual) ? actual : (s.volver || k));
     if (editado || s.oculta) return aviso(editado ? "Cambios guardados. Ya se ven en la web." : "Guardado. Ya se ve en la web.");
@@ -999,9 +1094,10 @@ async function pintaCalculadoras() {
     const { error } = await sb.from("calc_ajustes").upsert(filas);
     msg("ca-msg", error ? "No se ha podido guardar: " + error.message : "Guardado. Ya se usa en la web.", !error);
   };
-  $("lista-permisos").innerHTML = datos.permisos.length ? datos.permisos.map(x => itemHTML("permisos", x)).join("") : `<div class="panel vacio">${icono("convenio")}Todavía no hay permisos.</div>`;
-  $("lista-categorias").innerHTML = datos.categorias.length ? datos.categorias.map(x => itemHTML("categorias", x)).join("") : `<div class="panel vacio">${icono("reloj")}Todavía no hay precios. Pulsa «Añadir categoría».</div>`;
+  $("lista-permisos").innerHTML = datos.permisos.length ? datos.permisos.map(x => filaOrden("permisos", x)).join("") : `<div class="panel vacio">${icono("convenio")}Todavía no hay permisos.</div>`;
+  $("lista-categorias").innerHTML = datos.categorias.length ? datos.categorias.map(x => filaOrden("categorias", x)).join("") : `<div class="panel vacio">${icono("reloj")}Todavía no hay precios. Pulsa «Añadir categoría».</div>`;
   enlazarItems($("lista-permisos")); enlazarItems($("lista-categorias"));
+  hacerOrdenable($("lista-permisos"), "permisos"); hacerOrdenable($("lista-categorias"), "categorias");
 }
 
 // ---------- Buzón anónimo ----------

@@ -183,3 +183,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
   - **Deshacer (quitarlo)**, para algo creado por error.
 - Ahora, al borrar algo, **sus archivos se conservan** para poder recuperarlo con sus fotos y PDF. En **Ajustes > Archivos sin usar** se quitan los que ya no usa nada y tienen más de 30 días.
 - Los avisos de «¿Borrar…?» ya no dicen «no se puede deshacer»: dicen que se puede recuperar en «Historial».
+
+### Fase 8: panel más rápido en el móvil
+- **Botón flotante «+ Nuevo»** en todas las páginas del panel (en el móvil). Pregunta *«¿Qué quieres crear?»* con la lista de todo (aviso, fecha, publicación en el Comité, acta, documento…). Lo de la sección en la que estás sale primero.
+- **Reordenar arrastrando**, con el dedo o el ratón, desde las tres rayas de la izquierda: apartados del convenio, preguntas, plantillas, delegados, enlaces, apartados de la web, permisos y precios de las calculadoras. Si se lleva al borde de la pantalla, baja sola. También funciona con el teclado (flechas arriba y abajo). Se guarda solo y el historial no se llena con cada cambio de orden.
+- **Archivos**: ahora se pueden soltar en cualquier parte del editor (sale «Suelta aquí para añadir los archivos») o **pegar** con Ctrl+V una foto copiada.
+- **Borrador guardado solo**: mientras se escribe, cada 4 segundos y al cambiar de app, se guarda un borrador en el propio móvil. Si la app se cierra sin querer, al volver a abrir ese editor sale *«Tienes un borrador sin guardar… ¿Lo recuperas?»*. Los archivos hay que volver a elegirlos. Al publicar, o al salir diciendo «salir sin guardar», el borrador se borra.
