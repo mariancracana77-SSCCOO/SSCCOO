@@ -160,3 +160,11 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Recuadros grises de carga** mientras llegan los datos, en vez de una pantalla vacía.
 - En el móvil, **desliza hacia abajo** desde arriba del todo para actualizar sin recargar la página.
 - Las animaciones son mínimas y se quitan si el móvil tiene activado «reducir movimiento».
+
+### Fase 5: estadísticas en el panel
+- En el **Inicio del panel**, apartado nuevo **«Estadísticas»** con tres gráficas propias, sin librerías de fuera. Cada una muestra el dato al pasar el ratón o el dedo y se puede **ver como tabla**:
+  - **Lo más leído**: veces que se ha abierto cada aviso, acta, documento o publicación de un apartado.
+  - **Móviles con avisos activados**, por semana. Se apunta cada noche con una tarea programada. Las semanas anteriores a hoy son una estimación.
+  - **Secciones más visitadas** en los últimos 30 días.
+- En las listas del panel (Avisos, Actas, Documentos, apartados) sale «Leído N veces» en cada elemento.
+- **Todo es anónimo**: solo se suma 1 en un contador. Un aviso cuenta como leído si se ve en pantalla al menos 2 segundos, y un documento cuando se abre. Cada cosa se cuenta una sola vez por visita.

@@ -31,6 +31,7 @@ function irA() {
   if (!avisoDirecto && !legal && !aDelegados) window.scrollTo(0, 0);
   const sec = ap ? "ap-" + ap : v;
   if (sec !== "inicio") { marcaVisto(sec); if (cargar.listo) pintaContadores(); }
+  contarUnaVez("s:" + sec, () => sb.rpc("contar_seccion", { p_seccion: sec }));
   if (v === "buscar") setTimeout(() => $("buscar-todo").focus(), 100);
 }
 
@@ -139,7 +140,7 @@ function pintaInicio() {
     ...D.avisos.filter(a => a !== urg).map(a => ({ f: a.fecha, k: "aviso", que: "Aviso" + (a.fijado ? " · fijado" : ""), t: a.titulo, s: resumenPlano(a.contenido, 90), h: "#aviso-" + a.id, adj: (a.adjuntos || []).length })),
     ...D.eventos.filter(e => e.fecha >= hoy).map(e => ({ f: e.creado, k: "fecha", que: "Fecha · " + cuandoEvento(e), t: e.titulo, s: e.lugar || "", h: "#calendario", dia: e.fecha })),
     ...D.actas.map(a => ({ f: a.creado, k: "acta", que: "Acta" + (a.fecha ? " · " + fechaDia(a.fecha).toLocaleDateString("es-ES", { day: "numeric", month: "long" }) : ""), t: a.titulo, s: a.acuerdos ? (a.acuerdos.split("\n").filter(l => l.trim()).length + " acuerdo(s)") : resumenPlano(a.resumen, 90), h: "#actas" })),
-    ...D.docs.map(d => ({ f: d.fecha, k: "doc", que: "Documento · " + tipoArchivo(d.tipo_archivo, d.nombre_archivo).txt, t: d.titulo, s: d.descripcion || "", url: d.url })),
+    ...D.docs.map(d => ({ f: d.fecha, k: "doc", que: "Documento · " + tipoArchivo(d.tipo_archivo, d.nombre_archivo).txt, t: d.titulo, s: d.descripcion || "", url: d.url, id: d.id })),
     ...D.publicaciones.map(x => { const ap = D.apartados.find(y => y.id === x.apartado_id); return ap && { f: x.creado, k: "pub", ic: ap.icono, que: ap.titulo, t: x.titulo, s: (x.adjuntos || []).length ? (x.adjuntos.length + " archivo(s)") : resumenPlano(x.contenido, 90), h: "#ap-" + ap.slug }; }).filter(Boolean),
     ...D.convenio.filter(c => ahora - new Date(c.actualizado) < 30 * DIA).map(c => ({ f: c.actualizado, k: "conv", que: "Convenio · actualizado", t: c.titulo, s: c.resumen || "", h: "#convenio" })),
     ...D.preguntas.filter(q => ahora - new Date(q.creado) < 30 * DIA).map(q => ({ f: q.creado, k: "preg", que: "Pregunta frecuente", t: q.pregunta, s: "", h: "#preguntas" })),
@@ -162,7 +163,7 @@ function pintaInicio() {
     const gr = grupo(x.f);
     if (gr !== g) { html += `<h3 class="grupo-tablon">${gr}</h3>`; g = gr; }
     const [icDef, cl] = ICONOS[x.k], ic = x.ic || icDef;
-    const attrs = x.url ? `href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener"` : `href="${x.h}"${x.dia ? ` data-dia="${x.dia}"` : ""}`;
+    const attrs = x.url ? `href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener" data-abre="documentos:${x.id}"` : `href="${x.h}"${x.dia ? ` data-dia="${x.dia}"` : ""}`;
     html += `<a class="item-tablon ${esDesdeUltima(x.f) ? "es-nuevo" : ""}" ${attrs}>
       <span class="ic ${cl}">${icono(ic, "p")}</span>
       <span class="txt"><small>${esDesdeUltima(x.f) ? '<span class="marca-nuevo">Nuevo</span>' : ""}<span>${esc(x.que)} · ${haceTxt(x.f)}</span></small>
@@ -760,6 +761,29 @@ function buscarTodo() {
   });
 }
 $("buscar-todo").oninput = buscarTodo;
+
+// ---------- Estadísticas anónimas: secciones visitadas y lo que se lee ----------
+// Solo se suma 1 en el servidor; aquí se recuerda (en esta visita) qué se ha contado ya, para no contarlo dos veces.
+function contarUnaVez(clave, enviar) {
+  try {
+    const hechos = JSON.parse(sessionStorage.getItem("ccoo-contado") || "[]");
+    if (hechos.includes(clave)) return;
+    hechos.push(clave); sessionStorage.setItem("ccoo-contado", JSON.stringify(hechos.slice(-300)));
+  } catch (_) {}
+  enviar().then(() => {}, () => {});
+}
+const contarLectura = (ref) => { const [t, id] = ref.split(":"); if (+id) contarUnaVez("l:" + ref, () => sb.rpc("contar_lectura", { p_tabla: t, p_id: +id })); };
+// Un aviso, acta o publicación cuenta como leído si se ve en pantalla al menos 2 segundos
+const ESPERAS = new Map();
+const vigia = "IntersectionObserver" in window ? new IntersectionObserver((entradas) => entradas.forEach(en => {
+  const ref = en.target.dataset.lectura;
+  const visto = en.isIntersecting && (en.intersectionRatio >= 0.5 || en.intersectionRect.height >= innerHeight * 0.4); // los avisos largos no caben enteros
+  if (visto) { if (!ESPERAS.has(en.target)) ESPERAS.set(en.target, setTimeout(() => { contarLectura(ref); vigia.unobserve(en.target); }, 2000)); }
+  else { clearTimeout(ESPERAS.get(en.target)); ESPERAS.delete(en.target); }
+}), { threshold: [0, 0.1, 0.25, 0.5] }) : null;
+const vigilar = () => vigia && document.querySelectorAll("[data-lectura]:not([data-vigilado])").forEach(el => { el.dataset.vigilado = "1"; vigia.observe(el); });
+new MutationObserver(vigilar).observe(document.querySelector("main"), { childList: true, subtree: true });
+document.addEventListener("click", (ev) => { const a = ev.target.closest("[data-abre]"); if (a) contarLectura(a.dataset.abre); });
 
 // ---------- Contador anónimo de visitas ----------
 // Solo suma 1 a las visitas del día (y 1 a «móviles distintos» la primera vez de hoy en este móvil).

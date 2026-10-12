@@ -336,6 +336,12 @@ async function pintaResumen() {
     <div id="banda-instalar"></div>
     <h2 class="titulo-bloque">Visitas a la web</h2>
     <div class="panel visitas" id="visitas"><p class="fecha-txt">Cargando…</p></div>
+    <h2 class="titulo-bloque">Estadísticas</h2>
+    <div class="estadisticas">
+      <section class="panel graf"><h3>Lo más leído</h3><p class="fecha-txt">Veces que se ha abierto cada cosa en la web. Anónimo: no se sabe quién.</p><div id="est-leido"><p class="fecha-txt">Cargando…</p></div></section>
+      <section class="panel graf"><h3>Móviles con avisos activados</h3><p class="fecha-txt">Por semana.</p><div id="est-suscritos"><p class="fecha-txt">Cargando…</p></div></section>
+      <section class="panel graf"><h3>Secciones más visitadas</h3><p class="fecha-txt">Últimos 30 días.</p><div id="est-secciones"><p class="fecha-txt">Cargando…</p></div></section>
+    </div>
     <div class="resumen-rejilla">
       <div><h2 class="titulo-bloque">Próximos 14 días <a href="#" id="ir-cal">Ver calendario</a></h2><div class="panel proximos" id="proximos"><p class="fecha-txt">Cargando…</p></div></div>
       <div><h2 class="titulo-bloque">Avisos programados</h2><div class="panel proximos" id="programados"><p class="fecha-txt">Cargando…</p></div></div>
@@ -365,6 +371,7 @@ async function pintaResumen() {
   $("ultimos").innerHTML = todos.length ? todos.map(({ k, x }) => itemHTML(k, x, true)).join("") : `<div class="panel vacio">${icono("avisos")}Todavía no has publicado nada.</div>`;
   enlazarItems($("ultimos"));
   pintaVisitas();
+  pintaEstadisticas();
   // Próximos días y programados
   $("ir-cal").onclick = (e) => { e.preventDefault(); VISTA_CAL.modo = "mes"; abrir("calendario"); };
   const hoy = hoyISO(), lim = isoLocal(new Date(Date.now() + 14 * 86400000));
@@ -393,7 +400,8 @@ async function cargarDatos(k) {
 }
 function itemHTML(k, x, conSeccion) {
   const s = SECCIONES[k], [pub, act] = s.fechas(x), nAdj = (x.adjuntos || []).length;
-  const chips = [conSeccion ? s.nombre : null, ...s.chips(x)].filter(Boolean);
+  const nl = TABLAS_LEIDAS.includes(s.tabla) ? LECTURAS[s.tabla + ":" + x.id] : 0;
+  const chips = [conSeccion ? s.nombre : null, ...s.chips(x), nl ? "Leído " + vecesTxt(nl) : null].filter(Boolean);
   return `<button class="item-adm ${claseTipo(x[s.campoColor], s.lista)}" data-k="${k}" data-id="${x.id}">
     <span class="barra-color"></span>
     <span class="txt">
@@ -421,7 +429,7 @@ async function pintaSeccion(k) {
     <div class="lista-adm" id="lista"><p class="fecha-txt">Cargando…</p></div>`;
   $("b-nuevo").onclick = () => abrirEditor(k);
   enlazarVistaCal();
-  try { await cargarDatos(k); } catch (e) { $("lista").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
+  try { await Promise.all([cargarDatos(k), TABLAS_LEIDAS.includes(s.tabla) ? cargarLecturas() : null]); } catch (e) { $("lista").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
   const ff = FILTRO_ADM[k] ||= {};
   const pinta = () => {
     if (FECHA_DE[k]) pintaFechasAdm(datos[k], k, ff, pinta);
@@ -1355,6 +1363,59 @@ $("ed-duplicar").onclick = async () => {
   abrirEditor(k, null, x);
   if (ED) { ED.existentes = []; msg("ed-msg", "Copia lista: cambia lo que haga falta (por ejemplo la fecha) y publica.", true); }
 };
+
+// ---------- Estadísticas (anónimas) ----------
+let LECTURAS = {};
+const TABLAS_LEIDAS = ["comunicados", "actas", "documentos", "publicaciones"];
+async function cargarLecturas() {
+  const { data } = await sb.from("lecturas").select("*");
+  LECTURAS = Object.fromEntries((data || []).map(r => [r.tabla + ":" + r.item_id, r.total]));
+}
+const vecesTxt = (n) => n + (n === 1 ? " vez" : " veces");
+// Barras horizontales (una sola serie): nombre a la izquierda, valor al final de la barra
+function barrasH(filas, unidad) {
+  const max = Math.max(1, ...filas.map(f => f.n));
+  return `<div class="graf-h" role="list">${filas.map(f => `<div class="fila-h" role="listitem" tabindex="0" data-tip="${esc(f.et)}: ${f.n} ${unidad}">
+      <span class="et">${esc(f.et)}${f.sub ? ` <small>${esc(f.sub)}</small>` : ""}</span>
+      <span class="pista"><span class="barra" style="width:${Math.max(2, Math.round(f.n / max * 100))}%"></span><b>${f.n}</b></span></div>`).join("")}</div>`;
+}
+const tablaDatos = (cab, filas) => `<details class="tabla-datos"><summary>Ver como tabla</summary><table><thead><tr>${cab.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead>
+  <tbody>${filas.map(f => `<tr>${f.map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></details>`;
+async function pintaEstadisticas() {
+  const hace30 = isoLocal(new Date(Date.now() - 29 * 86400000));
+  const [lec, sec, sem] = await Promise.all([
+    sb.from("lecturas").select("*").order("total", { ascending: false }).limit(300),
+    sb.from("visitas_seccion").select("*").gte("dia", hace30),
+    sb.from("suscritos_semana").select("*").order("semana", { ascending: false }).limit(12),
+  ]);
+  if (!$("est-leido")) return;
+  // Lo más leído: título de cada cosa según su tabla
+  const titulos = {}, TIPO = { comunicados: "Aviso", actas: "Acta", documentos: "Documento" };
+  (datos.avisos || []).forEach(x => titulos["comunicados:" + x.id] = [x.titulo, "Aviso"]);
+  (datos.actas || []).forEach(x => titulos["actas:" + x.id] = [x.titulo, "Acta"]);
+  (datos.documentos || []).forEach(x => titulos["documentos:" + x.id] = [x.titulo, "Documento"]);
+  APARTADOS.forEach(a => (datos["ap" + a.id] || []).forEach(x => titulos["publicaciones:" + x.id] = [x.titulo, a.titulo]));
+  LECTURAS = Object.fromEntries((lec.data || []).map(r => [r.tabla + ":" + r.item_id, r.total]));
+  const leidas = (lec.data || []).map(r => ({ k: r.tabla + ":" + r.item_id, n: r.total })).filter(r => titulos[r.k]).slice(0, 8)
+    .map(r => ({ et: titulos[r.k][0] || "Sin título", sub: titulos[r.k][1] || TIPO[r.k.split(":")[0]], n: r.n }));
+  $("est-leido").innerHTML = leidas.length ? barrasH(leidas, "veces") + tablaDatos(["Qué", "Tipo", "Veces"], leidas.map(f => [f.et, f.sub, f.n]))
+    : `<p class="vacio-graf">Todavía no hay lecturas. Se cuentan desde esta versión de la web.</p>`;
+  // Móviles con avisos por semana (columnas)
+  const semanas = (sem.data || []).slice().reverse();
+  if (semanas.length) {
+    const max = Math.max(1, ...semanas.map(x => x.n)), et = (d) => { const f = fechaDia(d); return f.getDate() + " " + MESES[f.getMonth()].slice(0, 3); };
+    $("est-suscritos").innerHTML = `<div class="graf-col" role="list">${semanas.map((x, i) => `<div class="col-s" role="listitem" tabindex="0" data-tip="Semana del ${et(x.semana)}: ${x.n} móviles">
+        <span class="valor ${i === semanas.length - 1 ? "ver" : ""}">${x.n}</span><span class="col" style="height:${Math.max(2, Math.round(x.n / max * 100))}%"></span><span class="et">${et(x.semana)}</span></div>`).join("")}</div>` +
+      tablaDatos(["Semana del", "Móviles"], semanas.map(x => [et(x.semana), x.n]));
+  } else $("est-suscritos").innerHTML = `<p class="vacio-graf">Todavía no hay datos. Se apunta cada noche.</p>`;
+  // Secciones más visitadas
+  const NOM = { inicio: "Inicio", avisos: "Avisos", calendario: "Fechas", convenio: "Convenio", calcula: "Calcula", actas: "Actas", documentos: "Documentos", preguntas: "Dudas", info: "Nosotros", buscar: "Buscar", legal: "Aviso legal y privacidad" };
+  APARTADOS.forEach(a => NOM["ap-" + a.slug] = a.titulo);
+  const suma = {}; (sec.data || []).forEach(r => suma[r.seccion] = (suma[r.seccion] || 0) + r.n);
+  const secs = Object.entries(suma).map(([k, n]) => ({ et: NOM[k] || k, n })).sort((a, b) => b.n - a.n).slice(0, 10);
+  $("est-secciones").innerHTML = secs.length ? barrasH(secs, "visitas") + tablaDatos(["Sección", "Visitas"], secs.map(f => [f.et, f.n]))
+    : `<p class="vacio-graf">Todavía no hay visitas apuntadas. Se cuentan desde esta versión de la web.</p>`;
+}
 
 // ---------- Visitas (anónimas) ----------
 async function pintaVisitas() {

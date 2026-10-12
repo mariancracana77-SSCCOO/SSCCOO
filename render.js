@@ -52,7 +52,7 @@ const etqNuevo = (d) => esNuevo(d) ? `<span class="etq nuevo">${icono("nuevo", "
 
 // ---------- Avisos ----------
 window.tarjetaAviso = (a, { corto = false, nuevo = false, resaltar = "" } = {}) => `
-  <article class="panel aviso ${a.urgente ? "urgente" : ""} ${a.fijado ? "fijado" : ""} ${nuevo ? "nuevo" : ""}" id="aviso-${a.id}" data-reg="comunicados:${a.id}">
+  <article class="panel aviso ${a.urgente ? "urgente" : ""} ${a.fijado ? "fijado" : ""} ${nuevo ? "nuevo" : ""}" id="aviso-${a.id}" data-reg="comunicados:${a.id}" data-lectura="comunicados:${a.id}">
     <div class="cab">
       ${a.urgente ? `<span class="etq urgente">${icono("alerta", "p")}Urgente</span>` : ""}
       ${a.fijado ? `<span class="etq fijado">${icono("fijado", "p")}Fijado</span>` : ""}
@@ -97,7 +97,7 @@ window.apartadoHTML = (s, qr = "", abierto = false) => `<details class="panel ap
     <div class="pie-tarjeta" style="margin-top:12px">${s.actualizado ? `<span class="fechas">Actualizado ${haceTxt(s.actualizado)}</span>` : "<span></span>"}<span class="acciones-tarjeta">${botonTraducir()}</span></div></div></details>`;
 
 // ---------- Actas ----------
-window.actaHTML = (a, qr = "") => `<article class="panel acta" data-reg="actas:${a.id}">
+window.actaHTML = (a, qr = "") => `<article class="panel acta" data-reg="actas:${a.id}" data-lectura="actas:${a.id}">
   ${a.fecha ? cartel(a.fecha, a.tipo, "acta") : ""}
   <div><div class="cab"><span class="etq tipo ${claseTipo(a.tipo, "acta")}">${esc(a.tipo)}</span>${etqNuevo(a.creado)}</div>
     <h3 data-campo="titulo">${esc(a.titulo || "Sin título")}</h3>
@@ -111,7 +111,7 @@ window.actaHTML = (a, qr = "") => `<article class="panel acta" data-reg="actas:$
 // ---------- Documentos ----------
 window.docHTML = (d) => {
   const t = tipoArchivo(d.tipo_archivo, d.nombre_archivo || d.url);
-  return `<a class="panel documento" href="${esc(urlSegura(d.url || "#"))}" target="_blank" rel="noopener">
+  return `<a class="panel documento" href="${esc(urlSegura(d.url || "#"))}" target="_blank" rel="noopener" data-abre="documentos:${d.id}">
     <span class="ic ${t.ic}">${icono(t.ic)}</span>
     <span class="txt">
       <span class="cab"><span class="etq tipo ${claseTipo(d.categoria, "documento")}">${esc(d.categoria)}</span>${etqNuevo(d.fecha)}</span>
@@ -129,7 +129,7 @@ window.esImagen = (a) => (a.tipo || "").startsWith("image/") && !/hei[cf]/.test(
 window.publicacionHTML = (x, qr = "") => {
   const adj = x.adjuntos || [], fotos = adj.filter(esImagen), docs = adj.filter(a => !esImagen(a));
   const d = x.fecha ? fechaDia(x.fecha) : null, src = (u) => /^blob:/.test(u || "") ? u : urlSegura(u); // blob: solo en la vista previa del panel
-  return `<article class="panel publicacion" id="pub-${x.id}">
+  return `<article class="panel publicacion" id="pub-${x.id}" data-lectura="publicaciones:${x.id}">
     ${d ? `<div class="pub-fecha"><b>${d.getDate()}</b>${MESES[d.getMonth()].slice(0, 3)}</div>` : ""}
     <div class="pub-cuerpo">
       <h3>${esc(x.titulo || "Sin título")}</h3>
