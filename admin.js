@@ -41,10 +41,10 @@ const SECCIONES = {
       { fila: [{ k: "hora", l: "Hora de inicio", t: "time", opc: true }, { k: "hora_fin", l: "Hora de fin", t: "time", opc: true }] },
       { k: "lugar", l: "Lugar", t: "text", opc: true, ph: "Ej: Comedor de la nave 2" },
       { k: "descripcion", l: "Descripción", t: "textarea", opc: true, corto: true },
-      { checks: [{ k: "notificar", l: "Avisar en los móviles y en el canal de Telegram", def: true, soloNuevo: true }] },
+      { checks: [{ k: "importante", l: "Cita importante: sale en la portada con cuenta atrás" }, { k: "notificar", l: "Avisar en los móviles y en el canal de Telegram", def: true, soloNuevo: true }] },
     ],
     previa: (x) => `<div class="panel dia-detalle">${x.fecha ? `<h3>${fechaDia(x.fecha).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}</h3>` : ""}${eventoHTML(x, true)}</div>`,
-    extracto: (x) => [x.hora, x.lugar].filter(Boolean).join(" · "), chips: (x) => [x.fecha && fechaLarga(x.fecha + "T12:00:00"), x.tipo], fechas: (x) => [x.creado, x.actualizado],
+    extracto: (x) => [x.hora, x.lugar].filter(Boolean).join(" · "), chips: (x) => [x.fecha && fechaLarga(x.fecha + "T12:00:00"), x.tipo, x.importante && "Importante: cuenta atrás"], fechas: (x) => [x.creado, x.actualizado],
   },
   convenio: {
     nombre: "Convenio", icono: "convenio", tabla: "convenio_secciones", orden: ["orden", true], uno: "apartado", nuevo: "Nuevo apartado", lista: "convenio", campoColor: "categoria",

@@ -43,6 +43,7 @@
     <a href="#info" data-v="info">Nosotros</a>
   </nav>
   <div class="banda-novedad oculto" id="banda-novedad" role="status" aria-live="polite"></div>
+  <div class="tirar" id="tirar" aria-live="polite"><span class="tirar-ic" data-i="abajo"></span><span class="txt"></span></div>
 </header>
 
 <div class="toast" id="toast" role="status"></div>
@@ -53,13 +54,14 @@
   <section class="vista" id="v-inicio">
     <h1 class="sr-only">Tablón: lo último de la Sección Sindical</h1>
     <div class="portada">
-      <div class="zona-rotulo"><div id="inicio-rotulo"></div><div id="inicio-novedades"></div></div>
+      <div class="zona-rotulo"><div id="inicio-rotulo"><div class="esq esq-rotulo" aria-hidden="true"></div><span class="sr-only">Cargando…</span></div><div id="cuenta-atras"></div><div id="inicio-novedades"></div></div>
       <aside class="portada-lateral" aria-label="Próximas fechas y accesos">
-        <section class="paradas" id="inicio-paradas"></section>
+        <section class="paradas" id="inicio-paradas"><div class="esq esq-titulo" aria-hidden="true"></div><div class="esq esq-linea" aria-hidden="true"></div><div class="esq esq-linea" aria-hidden="true"></div></section>
+        <section class="sabias" id="sabias-que"></section>
         <div class="ir-a" id="inicio-accesos"></div>
         <div class="banda-app" id="banda-app"></div>
       </aside>
-      <section class="lo-ultimo" id="lo-ultimo"><div id="inicio-feed"><p class="fecha-txt">Cargando…</p></div></section>
+      <section class="lo-ultimo" id="lo-ultimo"><div id="inicio-feed"><div class="esq esq-titulo" aria-hidden="true"></div><div class="esq esq-tarjeta" aria-hidden="true"></div><div class="esq esq-tarjeta" aria-hidden="true"></div><div class="esq esq-tarjeta" aria-hidden="true"></div></div></section>
       <p class="intro-tablon" id="txt-inicio"></p>
     </div>
   </section>
@@ -75,7 +77,7 @@
     <div class="filtros" id="filtros-avisos"></div>
     <div class="filtro-fechas" id="fechas-avisos"></div>
     <div class="pestanas-archivo" id="archivo-avisos"></div>
-    <div id="lista-avisos"></div>
+    <div id="lista-avisos"><div class="esq esq-tarjeta" aria-hidden="true"></div><div class="esq esq-tarjeta" aria-hidden="true"></div></div>
   </section>
 
   <!-- CALENDARIO -->
@@ -117,7 +119,7 @@
             <input id="buscar-convenio" type="search" placeholder="Buscar: vacaciones, permiso, plus…" aria-label="Buscar en el convenio"></div>
         </div>
         <div class="filtros" id="filtros-convenio"></div>
-        <div id="lista-convenio"></div>
+        <div id="lista-convenio"><div class="esq esq-tarjeta" aria-hidden="true"></div><div class="esq esq-tarjeta" aria-hidden="true"></div></div>
       </div>
       <aside class="lateral">
         <div class="panel"><h3>Documentos</h3><div id="lista-docs"></div></div>
@@ -148,7 +150,7 @@
     </div>
     <div class="filtros" id="filtros-actas"></div>
     <div class="filtro-fechas" id="fechas-actas"></div>
-    <div id="lista-actas"></div>
+    <div id="lista-actas"><div class="esq esq-tarjeta" aria-hidden="true"></div><div class="esq esq-tarjeta" aria-hidden="true"></div></div>
   </section>
 
   <!-- APARTADO (los crea el admin desde el panel: Comité de empresa, etc.) -->
@@ -160,7 +162,7 @@
         <input id="buscar-ap" type="search" placeholder="Buscar en este apartado" aria-label="Buscar en este apartado"></div>
     </div>
     <div class="filtro-fechas" id="fechas-ap"></div>
-    <div id="lista-ap"></div>
+    <div id="lista-ap"><div class="esq esq-tarjeta" aria-hidden="true"></div><div class="esq esq-tarjeta" aria-hidden="true"></div></div>
   </section>
 
   <!-- BUSCAR EN TODO -->
@@ -183,7 +185,7 @@
         <input id="buscar-preguntas" type="search" placeholder="Buscar: vacaciones, nómina, turnos…" aria-label="Buscar en las preguntas"></div>
     </div>
     <div class="filtros" id="filtros-preguntas"></div>
-    <div id="lista-preguntas"></div>
+    <div id="lista-preguntas"><div class="esq esq-tarjeta" aria-hidden="true"></div><div class="esq esq-tarjeta" aria-hidden="true"></div></div>
 
     <section class="panel buzon" id="buzon" aria-labelledby="buzon-tit">
       <h2 id="buzon-tit">Buzón anónimo</h2>
@@ -213,7 +215,7 @@
     </div>
     <div class="filtros" id="filtros-docs"></div>
     <div class="filtro-fechas" id="fechas-docs"></div>
-    <div class="lista-documentos" id="lista-documentos"></div>
+    <div class="lista-documentos" id="lista-documentos"><div class="esq esq-tarjeta" aria-hidden="true"></div><div class="esq esq-tarjeta" aria-hidden="true"></div></div>
   </section>
 
   <!-- INFO -->

@@ -887,3 +887,48 @@ html[data-contraste="alto"] .resultado-calc { border-color: #fff; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .si-no input:checked + span { background: var(--tinta); color: var(--fondo); } }
 .si-no input:focus-visible + span { outline: 3px solid var(--azul); outline-offset: 2px; }
 #v-calcula .aviso-datos { margin-bottom: 14px; }
+
+/* --- Fase 4: portada más viva --- */
+html { overscroll-behavior-y: contain; } /* el gesto de actualizar lo hace la web, sin recargar */
+.cuenta-atras { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: #232931; color: #fff; text-decoration: none; border-left: 5px solid var(--ambar-rotulo); }
+.cuenta-atras:hover { background: #2c333c; }
+.ca-txt { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.ca-txt small { color: #c9ced4; font-size: .85rem; }
+.ca-txt b { font-size: 1.05rem; line-height: 1.2; color: #fff; }
+.ca-cifras { display: flex; gap: 6px; flex: none; }
+.ca-bloque { display: flex; flex-direction: column; align-items: center; min-width: 58px; padding: 6px 6px 5px; background: var(--rotulo); border: 1px solid var(--rotulo-borde); border-radius: 8px; }
+.ca-bloque b { font-family: var(--cond); font-size: 2rem; line-height: 1; color: var(--ambar-rotulo); }
+.ca-bloque small { font-size: .72rem; color: var(--ambar-claro); text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
+.ca-ahora { font-family: var(--cond); font-weight: 700; font-size: 1.3rem; text-transform: uppercase; color: var(--ambar-rotulo); }
+@media (max-width: 360px) { .ca-bloque { min-width: 50px; } .ca-bloque b { font-size: 1.7rem; } }
+
+.sabias { order: 3; }
+.lo-ultimo { order: 4; } .ir-a { order: 5; } .banda-app { order: 6; } .intro-tablon { order: 7; }
+.sabias-tarjeta { background: var(--tarjeta); border: 1px solid var(--linea); border-left: 5px solid var(--rojo); border-radius: 12px; padding: 14px 16px; }
+.sabias-tarjeta b { display: block; font-family: var(--cond); font-size: 1.3rem; line-height: 1.15; text-transform: uppercase; letter-spacing: .02em; }
+.sabias-tarjeta p { margin: 6px 0 8px; }
+.sabias-tarjeta a { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; color: var(--rojo); text-decoration: none; min-height: 44px; }
+:root[data-theme="dark"] .sabias-tarjeta a { color: #ff8193; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sabias-tarjeta a { color: #ff8193; } }
+.sabias:empty { display: none; }
+
+/* Esqueletos de carga: recuadros grises con un brillo suave mientras llegan los datos */
+.esq { border-radius: 12px; background: linear-gradient(90deg, var(--linea) 25%, var(--fondo) 50%, var(--linea) 75%); background-size: 200% 100%; animation: brillo 1.5s ease-in-out infinite; }
+.esq-rotulo { height: 190px; background-image: linear-gradient(90deg, #1c2128 25%, #2a3038 50%, #1c2128 75%); }
+.esq-titulo { height: 16px; width: 40%; margin: 26px 0 14px; border-radius: 6px; }
+.esq-linea { height: 54px; margin-bottom: 12px; }
+.esq-tarjeta { height: 92px; margin-bottom: 10px; }
+.lista-documentos .esq-tarjeta { margin: 0; }
+@keyframes brillo { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .esq { animation: none; } }
+
+/* Desliza hacia abajo para actualizar */
+.tirar { display: flex; align-items: center; justify-content: center; gap: 8px; height: 0; overflow: hidden; background: var(--fondo); color: var(--tinta); font-weight: 700; font-size: .95rem; transition: height .15s; }
+.tirar.ver { height: calc(var(--tirar, 0px) * .5); min-height: 0; }
+.tirar.cargando { height: 48px; }
+.tirar .icono { transition: transform .2s; }
+.tirar.listo .icono { transform: rotate(180deg); }
+.tirar.cargando .icono { animation: girar 1s linear infinite; }
+@keyframes girar { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .tirar, .tirar .icono { transition: none; } .tirar.cargando .icono { animation: none; } }
+.tirar.ver { height: max(44px, calc(var(--tirar, 0px) * .5)); }

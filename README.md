@@ -153,3 +153,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
   - **Horas extra**: por categoría, con horas normales y en festivo. Da el importe bruto.
 - En el panel, página **«Calculadoras»**: días de vacaciones, notas y aviso, lista de permisos (añadir, cambiar, ocultar) y precios de las horas extra por categoría. **Nada está fijo en el código.**
 - Valores de partida: los **mínimos del Estatuto de los Trabajadores** (30 días de vacaciones y permisos del art. 37). **Hay que revisarlos con el convenio.** Los precios de las horas extra están vacíos hasta que se pongan.
+
+### Fase 4: portada más viva
+- **Cuenta atrás** en la portada hasta la próxima cita marcada como importante. En el panel, al crear o editar una fecha, se marca la casilla *«Cita importante: sale en la portada con cuenta atrás»*. Muestra días y horas, o horas y minutos el último día, y se actualiza cada minuto.
+- **«Sabías que…»**: cada día sale un apartado distinto del convenio (el mismo para todos ese día), con un enlace para leerlo entero.
+- **Recuadros grises de carga** mientras llegan los datos, en vez de una pantalla vacía.
+- En el móvil, **desliza hacia abajo** desde arriba del todo para actualizar sin recargar la página.
+- Las animaciones son mínimas y se quitan si el móvil tiene activado «reducir movimiento».

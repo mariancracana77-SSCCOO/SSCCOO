@@ -176,7 +176,41 @@ function pintaInicio() {
   const acc = [["avisos", "avisos", "Avisos"], ...D.apartados.map(a => ["ap-" + a.slug, a.icono || "carpeta", a.titulo]), ["convenio", "convenio", "Convenio"], ["calcula", "reloj", "Calcula"], ["calendario", "calendario", "Fechas"], ["actas", "actas", "Actas"], ["documentos", "carpeta", "Documentos"], ["preguntas", "pregunta", "Dudas"]];
   $("inicio-accesos").innerHTML = `<h2 class="tit-seccion">Ir a</h2><nav class="accesos-tablon" aria-label="Accesos rápidos">${acc.map(([v, ic, t]) =>
     `<a href="#${esc(v)}">${icono(esc(ic))}<b>${esc(t)}</b></a>`).join("")}</nav>`;
+  pintaCuentaAtras(urg ? null : prox[0]);
+  pintaSabias();
   document.querySelectorAll("#v-inicio [data-dia]").forEach(l => l.onclick = () => irADia(l.dataset.dia));
+}
+
+// Cuenta atrás hasta la próxima cita marcada como importante (se actualiza cada minuto; sin segundos para que no distraiga)
+const inicioDe = (e) => { const d = fechaDia(e.fecha); if (e.hora && !esTodoElDia(e)) { const [h, m] = e.hora.split(":"); d.setHours(+h, +m || 0, 0, 0); } return d; };
+const finDe = (e) => { const d = fechaDia(e.fecha); if (e.hora_fin && !esTodoElDia(e)) { const [h, m] = e.hora_fin.split(":"); d.setHours(+h, +m || 0, 0, 0); } else d.setHours(23, 59, 59, 0); return d; };
+function pintaCuentaAtras(enRotulo) {
+  clearInterval(pintaCuentaAtras.t);
+  const ahora = new Date(), e = D.eventos.filter(x => x.importante && finDe(x) > ahora).sort((a, b) => inicioDe(a) - inicioDe(b))[0];
+  if (!e) { $("cuenta-atras").innerHTML = ""; return; }
+  const ms = inicioDe(e) - ahora, min = Math.floor(ms / 60000), dias = Math.floor(min / 1440), horas = Math.floor((min % 1440) / 60), mins = min % 60;
+  const bloque = (n, t) => `<span class="ca-bloque"><b>${n}</b><small>${t}</small></span>`;
+  const cifras = ms <= 0 ? `<span class="ca-ahora">${esTodoElDia(e) || !e.hora ? "Es hoy" : "Está pasando ahora"}</span>`
+    : dias > 0 ? bloque(dias, dias === 1 ? "día" : "días") + bloque(horas, horas === 1 ? "hora" : "horas")
+    : bloque(horas, horas === 1 ? "hora" : "horas") + bloque(mins, "min");
+  const mismo = enRotulo && enRotulo.id === e.id;
+  $("cuenta-atras").innerHTML = `<a class="cuenta-atras" href="#calendario" data-dia="${e.fecha}" aria-label="${ms > 0 ? "Faltan " + (dias ? dias + " días y " : "") + horas + " horas para " : ""}${esc(e.titulo)}">
+    <span class="ca-txt"><small>${ms > 0 ? "Faltan" : "Cita importante"}</small>${mismo ? "" : `<b>${esc(e.titulo)}</b>`}<small>${esc(cuandoEvento(e))}${e.lugar ? " · " + esc(e.lugar) : ""}</small></span>
+    <span class="ca-cifras" aria-hidden="true">${cifras}</span></a>`;
+  $("cuenta-atras").querySelector("[data-dia]").onclick = () => irADia(e.fecha);
+  pintaCuentaAtras.t = setInterval(() => pintaCuentaAtras(enRotulo), 60000);
+}
+
+// «Sabías que…»: un apartado del convenio distinto cada día (el mismo para todos ese día)
+function pintaSabias() {
+  const l = D.convenio.filter(c => c.titulo && (c.resumen || c.contenido));
+  if (!l.length) { $("sabias-que").innerHTML = ""; return; }
+  const hoy = new Date(), dia = Math.floor((Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()) - Date.UTC(hoy.getFullYear(), 0, 0)) / 86400000);
+  const c = l[(dia + hoy.getFullYear()) % l.length];
+  $("sabias-que").innerHTML = `<h2 class="tit-seccion">Sabías que…</h2><div class="sabias-tarjeta">
+    <b>${esc(c.titulo)}</b><p>${esc(c.resumen || resumenPlano(c.contenido, 170))}</p>
+    <a href="#convenio" id="sabias-leer">Leer en el convenio ${icono("der", "p")}</a></div>`;
+  $("sabias-leer").onclick = () => { $("buscar-convenio").value = c.titulo; pintaConvenio(); };
 }
 
 // ---------- Avisos (actuales y archivo) ----------
@@ -510,6 +544,33 @@ Object.keys(QUE).forEach(t => canal.on("postgres_changes", { event: "*", schema:
 }));
 canal.subscribe();
 document.addEventListener("visibilitychange", () => { if (!document.hidden) cargar(); });
+
+// ---------- Desliza hacia abajo para actualizar (móvil) ----------
+(function () {
+  if (!("ontouchstart" in window)) return;
+  const ind = $("tirar"), txt = ind.querySelector(".txt"), UMBRAL = 80;
+  let y0 = null, x0 = 0, dy = 0, ocupado = false;
+  const quitar = () => { ind.classList.remove("ver", "listo", "cargando"); ind.style.removeProperty("--tirar"); };
+  addEventListener("touchstart", (e) => {
+    y0 = (scrollY <= 0 && e.touches.length === 1 && !ocupado && !document.querySelector(".modal-velo")) ? e.touches[0].clientY : null;
+    x0 = e.touches[0].clientX; dy = 0;
+  }, { passive: true });
+  addEventListener("touchmove", (e) => {
+    if (y0 == null) return;
+    dy = e.touches[0].clientY - y0;
+    if (dy <= 0 || scrollY > 0 || Math.abs(e.touches[0].clientX - x0) > dy) { dy = 0; quitar(); return; } // gesto hacia los lados: no es para actualizar
+    ind.classList.add("ver"); ind.style.setProperty("--tirar", Math.min(dy, 120) + "px");
+    ind.classList.toggle("listo", dy > UMBRAL);
+    txt.textContent = dy > UMBRAL ? "Suelta para actualizar" : "Desliza para actualizar";
+  }, { passive: true });
+  addEventListener("touchend", async () => {
+    if (y0 == null) return; y0 = null;
+    if (dy <= UMBRAL) { quitar(); return; }
+    ocupado = true; ind.classList.add("cargando"); txt.textContent = "Actualizando…";
+    try { await cargar(); txt.textContent = "Actualizado"; } catch (_) { txt.textContent = "No se ha podido actualizar"; }
+    setTimeout(() => { quitar(); ocupado = false; }, 800);
+  });
+})();
 
 // ---------- Instalar como app y activar avisos ----------
 const ES_IOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
