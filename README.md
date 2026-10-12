@@ -131,7 +131,7 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
-## Versión 19 (en preparación)
+## Versión 19: ocho mejoras grandes (novedades en directo, buzón, calculadoras, portada viva, estadísticas, canales, historial y panel móvil)
 ### Fase 1: novedades en directo
 - Si se publica algo (aviso, fecha, acta, documento o algo en un apartado) mientras alguien tiene la web abierta, aparece arriba una banda amarilla **«Hay 1 novedad · Ver»**. Al pulsarla se muestra lo nuevo sin recargar la página. Los cambios y borrados se actualizan solos, sin avisar.
 - **Contador pequeño en cada pestaña** con lo nuevo desde la última visita de ese móvil. Desaparece al entrar en la pestaña. Se guarda solo en el propio móvil.
@@ -189,3 +189,8 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Reordenar arrastrando**, con el dedo o el ratón, desde las tres rayas de la izquierda: apartados del convenio, preguntas, plantillas, delegados, enlaces, apartados de la web, permisos y precios de las calculadoras. Si se lleva al borde de la pantalla, baja sola. También funciona con el teclado (flechas arriba y abajo). Se guarda solo y el historial no se llena con cada cambio de orden.
 - **Archivos**: ahora se pueden soltar en cualquier parte del editor (sale «Suelta aquí para añadir los archivos») o **pegar** con Ctrl+V una foto copiada.
 - **Borrador guardado solo**: mientras se escribe, cada 4 segundos y al cambiar de app, se guarda un borrador en el propio móvil. Si la app se cierra sin querer, al volver a abrir ese editor sale *«Tienes un borrador sin guardar… ¿Lo recuperas?»*. Los archivos hay que volver a elegirlos. Al publicar, o al salir diciendo «salir sin guardar», el borrador se borra.
+
+### Cierre de la versión 19
+- Versión subida en los 3 sitios (`?v=19` en los HTML, `VERSION_WEB` en `config.js`, `VERSION` en `sw.js`).
+- **Pendiente de revisar antes de usarlo con la plantilla**: los valores de «Calcula» son los mínimos del Estatuto de los Trabajadores, no los del convenio de Girona. Revisarlos en el panel, en «Calculadoras». Los precios de las horas extra están vacíos: hasta que se pongan, esa calculadora no sale.
+- Sigue pendiente completar la entidad de CCOO responsable y su NIF en Textos > Aviso legal y Privacidad.

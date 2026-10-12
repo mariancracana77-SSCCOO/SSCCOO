@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, GitHub Pages, con `.nojekyll`)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **18**
+- Versión actual: **19**
 
 ## Reglas del proyecto (no negociables)
 - Responder siempre en **español**, claro y sin tecnicismos innecesarios.
@@ -79,8 +79,8 @@ Playwright con Chromium (sin `playwright install`), servidor local `python3 -m h
 - Desde este entorno no se llega a Supabase por HTTP (proxy). Para probar una edge function: `net.http_post(...)` por SQL y leer `net._http_response`.
 
 ## Pendiente / ideas
+- **Revisar los valores de «Calcula»** en el panel (Calculadoras): ahora son los mínimos del Estatuto, no los del convenio de Girona. Los precios de horas extra están vacíos (esa calculadora no sale hasta que se pongan).
 - Importar el historial del canal de Telegram «Tablon anuncios CCOO-Calsina Carre» (exportación JSON de Telegram Desktop) repartiéndolo por la web. Importar con `notificar = false`.
-- Las 8 fases pedidas: novedades en directo, buzón anónimo, calculadoras, portada viva, estadísticas, vista previa en canales y avisos recurrentes, historial y deshacer, panel más rápido en el móvil.
 - Completar en Textos > Aviso legal y Privacidad la entidad de CCOO responsable y su NIF (que lo revise el servicio jurídico de CCOO).
 - Actualizar la guía del panel (Claude Docs) con capturas del diseño nuevo.
 - Borrar el evento de prueba «zz prueba interna».
