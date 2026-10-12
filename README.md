@@ -174,3 +174,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Avisa si el título se va a cortar** en la notificación del móvil (se ven unas 45 letras), justo debajo del título y en la vista previa. También avisa si el texto se corta, si la casilla de avisar está desmarcada o si está programado.
 - **Avisos que se repiten**, en el panel en *Avisos que se repiten*, o con el botón que hay en Avisos: cada semana, cada mes o cada año, a la hora que se elija, con *Activo* para pausarlos. Ejemplo: «Recuerda entregar la hoja de horas», el día 25 de cada mes a las 9:00. Muestra cuándo será la próxima vez.
 - Los publica la tarea programada de la función `notificar` (cada 10 minutos). Salen como un aviso normal y se avisa en los móviles y en Telegram. No se repiten aunque la tarea pase varias veces el mismo día. Si se elige el día 31 y el mes tiene menos días, sale el último día del mes.
+
+### Fase 7: historial y deshacer
+- En la base de datos se apunta **cada cambio**: quién (el email del administrador), qué (aviso, fecha, acta…), qué registro, si se creó, cambió o borró, cuándo y la **versión anterior**. Los cambios automáticos, como la marca de «ya avisado», no se apuntan. Se guarda un año.
+- En el panel, sección **«Historial»** con filtros por tipo y por acción. En los cambios se puede ver qué campo cambió y cómo estaba. Cada línea tiene su botón:
+  - **Recuperar**, para algo borrado.
+  - **Volver a como estaba**, para un cambio.
+  - **Deshacer (quitarlo)**, para algo creado por error.
+- Ahora, al borrar algo, **sus archivos se conservan** para poder recuperarlo con sus fotos y PDF. En **Ajustes > Archivos sin usar** se quitan los que ya no usa nada y tienen más de 30 días.
+- Los avisos de «¿Borrar…?» ya no dicen «no se puede deshacer»: dicen que se puede recuperar en «Historial».

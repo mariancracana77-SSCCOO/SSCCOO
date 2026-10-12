@@ -407,3 +407,25 @@ html[data-contraste="alto"] .fila-h .barra, html[data-contraste="alto"] .col-s .
 .proxima-vez .icono { color: var(--azul); flex: none; margin-top: 2px; }
 .tabs-canal button { white-space: nowrap; overflow-wrap: normal; word-break: keep-all; }
 @media (max-width: 400px) { .tabs-canal button { font-size: .82rem; padding: 10px 2px; } }
+
+/* ===== Historial ===== */
+.filtros-hist { margin-bottom: 14px; }
+.filtros-hist label { margin-top: 0; }
+.cambio { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 14px; }
+.cambio .ic-cambio { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--azul-suave); color: var(--azul); }
+.cambio.borrar .ic-cambio { background: var(--rojo-suave); color: var(--rojo); }
+.cambio.crear .ic-cambio { background: var(--verde-suave); color: var(--verde); }
+:root[data-theme="dark"] .cambio .ic-cambio { color: #8fb3ff; } :root[data-theme="dark"] .cambio.borrar .ic-cambio { color: #ff8193; } :root[data-theme="dark"] .cambio.crear .ic-cambio { color: #5fd08f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cambio .ic-cambio { color: #8fb3ff; } :root:not([data-theme="light"]) .cambio.borrar .ic-cambio { color: #ff8193; } :root:not([data-theme="light"]) .cambio.crear .ic-cambio { color: #5fd08f; } }
+.cambio .que { margin: 0; overflow-wrap: anywhere; }
+.cambio .que b:first-child { font-weight: 700; }
+.detalle-cambio { margin-top: 6px; }
+.detalle-cambio summary { cursor: pointer; font-weight: 700; color: var(--azul); min-height: 36px; display: flex; align-items: center; }
+:root[data-theme="dark"] .detalle-cambio summary { color: #8fb3ff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .detalle-cambio summary { color: #8fb3ff; } }
+.detalle-cambio ul { margin: 6px 0 0; padding-left: 18px; font-size: .92rem; }
+.detalle-cambio li { margin: 4px 0; overflow-wrap: anywhere; }
+.detalle-cambio del { color: var(--suave); }
+.detalle-cambio ins { text-decoration: none; font-weight: 700; }
+.cambio .btn { white-space: nowrap; }
+@media (max-width: 560px) { .cambio { grid-template-columns: auto minmax(0, 1fr); } .cambio .btn { grid-column: 1 / -1; width: 100%; min-height: 46px; } }

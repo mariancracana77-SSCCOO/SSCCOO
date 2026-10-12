@@ -212,7 +212,7 @@ function construirPaginas() {
   if (base.includes("recurrentes")) { base.splice(base.indexOf("recurrentes"), 1); base.splice(base.indexOf("plantillas") + 1, 0, "recurrentes"); }
   const orden = [...base.slice(0, i), ...APARTADOS.map(a => "ap" + a.id), ...base.slice(i), "apartados"];
   PAGINAS = { resumen: { nombre: "Inicio", icono: "resumen" }, ...Object.fromEntries(orden.map(k => [k, k === "calculadoras" ? { nombre: "Calculadoras", icono: "reloj" } : { nombre: SECCIONES[k].nombre, icono: SECCIONES[k].icono }])),
-    buzon: { nombre: "Buzón anónimo", icono: "correo" }, textos: { nombre: "Textos", icono: "texto" }, ajustes: { nombre: "Ajustes", icono: "ajustes" } };
+    buzon: { nombre: "Buzón anónimo", icono: "correo" }, historial: { nombre: "Historial", icono: "reloj" }, textos: { nombre: "Textos", icono: "texto" }, ajustes: { nombre: "Ajustes", icono: "ajustes" } };
 }
 construirPaginas();
 const EN_MOVIL = ["resumen", "avisos", "calendario", "actas"];
@@ -316,6 +316,7 @@ function abrir(k) {
   if (k === "resumen") pintaResumen();
   else if (k === "buzon") pintaBuzon();
   else if (k === "calculadoras") pintaCalculadoras();
+  else if (k === "historial") pintaHistorial();
   else if (k === "textos") pintaTextos();
   else if (k === "ajustes") pintaAjustes();
   else pintaSeccion(k);
@@ -655,7 +656,7 @@ $("ed-guardar").onclick = async () => {
     const { data: guardado, error } = await q;
     if (error) throw error;
     if (ED.k === "preguntas" && BUZON_A_PREGUNTA) { await sb.from("buzon").update({ archivado: true, leido: true }).eq("id", BUZON_A_PREGUNTA); BUZON_A_PREGUNTA = null; contarBuzon().then(pintaNav); }
-    await borrarArchivos(ED.quitar);
+    // Los archivos quitados se conservan: así se pueden recuperar desde el Historial. Se limpian en Ajustes.
     const editado = !!ED.orig, k = ED.k;
     ED.sucio = false; await cerrarEditor();
     if (k === "apartados") { await cargarApartados(); pintaNav(); }
@@ -678,13 +679,13 @@ $("ed-borrar").onclick = async () => {
   let archivosApartado = [];
   if (ED.k === "apartados") {
     const { data: pubs } = await sb.from("publicaciones").select("adjuntos").eq("apartado_id", x.id);
-    if ((pubs || []).length && !confirm(`El apartado «${x.titulo}» tiene ${pubs.length} publicación(es). Si lo borras, se borrarán también con sus fotos y documentos. Si solo quieres que no se vea, desmarca «Se ve en la web». ¿Borrar todo?`)) return;
+    if ((pubs || []).length && !confirm(`El apartado «${x.titulo}» tiene ${pubs.length} publicación(es). Si lo borras, se borrarán también. Si solo quieres que no se vea, desmarca «Se ve en la web». ¿Borrar todo?`)) return;
     archivosApartado = (pubs || []).flatMap(p => (p.adjuntos || []).map(a => a.url));
   }
-  if (!confirm(`¿Borrar «${(s.tituloDe ? s.tituloDe(x) : x.titulo)}»? Desaparecerá de la web y no se puede deshacer.`)) return;
+  if (!confirm(`¿Borrar «${(s.tituloDe ? s.tituloDe(x) : x.titulo)}»? Desaparecerá de la web. Si te equivocas, puedes recuperarlo en «Historial».`)) return;
   const { error } = await sb.from(s.tabla).delete().eq("id", x.id);
   if (error) return msg("ed-msg", "No se ha podido borrar: " + error.message);
-  await borrarArchivos([...(x.adjuntos || []).map(a => a.url), x.url, x.pdf_url, ...archivosApartado]);
+  // Los archivos se conservan para poder recuperarlo desde el Historial (se limpian en Ajustes > Archivos sin usar).
   ED.sucio = false; const k = ED.k; await cerrarEditor();
   if (k === "apartados") { await cargarApartados(); pintaNav(); }
   aviso("Borrado."); abrir(["resumen", "calendario"].includes(actual) ? actual : (s.volver || k));
@@ -886,6 +887,92 @@ SECCIONES.recurrentes = {
   extracto: (x) => x.contenido, chips: (x) => [frecTxt(x), x.activo === false ? "Pausado" : "Activo", x.ultima_publicacion && "Última vez: " + fechaLarga(x.ultima_publicacion + "T12:00:00")], fechas: (x) => [x.creado, x.actualizado],
 };
 
+// ---------- Historial y deshacer ----------
+const NOMBRE_TABLA = { comunicados: "el aviso", eventos: "la fecha", convenio_secciones: "el apartado del convenio", actas: "el acta", documentos: "el documento",
+  preguntas: "la pregunta frecuente", plantillas: "la plantilla", delegados: "el delegado", enlaces: "el enlace", apartados: "el apartado de la web",
+  publicaciones: "la publicación", opciones: "la opción de lista", calc_permisos: "el permiso de la calculadora", calc_categorias: "el precio de horas extra",
+  avisos_recurrentes: "el aviso que se repite", buzon: "el mensaje del buzón", paginas: "el texto", calc_ajustes: "el ajuste de la calculadora", admins: "el administrador" };
+const VERBO = { crear: "creó", cambiar: "cambió", borrar: "borró" };
+const BOTON_DESHACER = { borrar: "Recuperar", cambiar: "Volver a como estaba", crear: "Deshacer (quitarlo)" };
+const CAMPOS_NOMBRE = { titulo: "Título", contenido: "Texto", categoria: "Categoría", urgente: "Urgente", fijado: "Fijado", adjuntos: "Archivos", fecha: "Fecha", hora: "Hora", hora_fin: "Hora de fin",
+  lugar: "Lugar", descripcion: "Descripción", tipo: "Tipo", resumen: "Resumen", acuerdos: "Acuerdos", pregunta: "Pregunta", respuesta: "Respuesta", nombre: "Nombre", cargo: "Cargo",
+  telefono: "Teléfono", email: "Email", url: "Dirección", orden: "Posición", visible: "Se ve en la web", publicado: "Publicado", publicar_en: "Programado", importante: "Importante",
+  leido: "Leído", archivado: "Archivado", valor: "Valor", dias: "Días", unidad: "Unidad", precio_extra: "Precio hora extra", precio_extra_festiva: "Precio festivo", activo: "Activo" };
+const nombreDe = (r) => r && (r.titulo || r.nombre || r.pregunta || (r.texto && r.texto.slice(0, 60)) || r.slug || r.clave || r.email || r.id);
+const valorTxt = (v) => v == null || v === "" ? "(vacío)" : Array.isArray(v) ? v.length + (v.length === 1 ? " archivo" : " archivos") : typeof v === "boolean" ? (v ? "Sí" : "No") : String(v).length > 140 ? String(v).slice(0, 139) + "…" : String(v);
+const FILTRO_HIST = { tabla: "", accion: "", max: 60 };
+async function pintaHistorial() {
+  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Historial</h1><p>Todo lo que se ha creado, cambiado o borrado en el panel durante el último año: quién, qué y cuándo. Si algo se borró o cambió por error, pulsa el botón para deshacerlo.</p></div></div>
+    <div class="fila filtros-hist">
+      <div><label for="h-tabla">Qué</label><select id="h-tabla"><option value="">Todo</option>${Object.entries(NOMBRE_TABLA).map(([k, n]) => `<option value="${k}" ${FILTRO_HIST.tabla === k ? "selected" : ""}>${mayus(n.replace(/^(el|la) /, ""))}</option>`).join("")}</select></div>
+      <div><label for="h-accion">Qué se hizo</label><select id="h-accion"><option value="">Todo</option>${[["borrar", "Borrados"], ["cambiar", "Cambios"], ["crear", "Creados"]].map(([k, n]) => `<option value="${k}" ${FILTRO_HIST.accion === k ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+    </div>
+    <div class="lista-adm" id="lista-hist"><p class="fecha-txt">Cargando…</p></div>`;
+  ["h-tabla", "h-accion"].forEach(id => $(id).onchange = () => { FILTRO_HIST.tabla = $("h-tabla").value; FILTRO_HIST.accion = $("h-accion").value; FILTRO_HIST.max = 60; pintaHistorial(); });
+  let q = sb.from("historial").select("*").order("cuando", { ascending: false }).order("id", { ascending: false }).limit(FILTRO_HIST.max + 1);
+  if (FILTRO_HIST.tabla) q = q.eq("tabla", FILTRO_HIST.tabla);
+  if (FILTRO_HIST.accion) q = q.eq("accion", FILTRO_HIST.accion);
+  const { data, error } = await q;
+  if (error) { $("lista-hist").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(error.message)}</p>`; return; }
+  const l = data.slice(0, FILTRO_HIST.max);
+  $("lista-hist").innerHTML = l.length ? l.map(h => {
+    const reg = h.despues || h.antes, quien = h.email || "La web (automático)";
+    const cambios = h.accion === "cambiar" ? Object.keys(h.despues || {}).filter(c => !["actualizado", "notificado", "ultima_publicacion", "id"].includes(c) && JSON.stringify(h.antes?.[c]) !== JSON.stringify(h.despues?.[c])) : [];
+    return `<article class="panel cambio ${h.accion}">
+      <span class="ic-cambio">${icono(h.accion === "crear" ? "mas" : h.accion === "borrar" ? "borrar" : "editar", "p")}</span>
+      <div class="txt"><p class="que"><b>${esc(quien)}</b> ${VERBO[h.accion]} ${esc(NOMBRE_TABLA[h.tabla] || h.tabla)} <b>«${esc(String(nombreDe(reg) ?? ""))}»</b></p>
+        <small class="fecha-txt">${esc(haceTxt(h.cuando))} · ${new Date(h.cuando).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</small>
+        ${cambios.length ? `<details class="detalle-cambio"><summary>Ver qué cambió (${cambios.length})</summary><ul>${cambios.map(c => `<li><b>${esc(CAMPOS_NOMBRE[c] || c)}:</b> <del>${esc(valorTxt(h.antes?.[c]))}</del> → <ins>${esc(valorTxt(h.despues?.[c]))}</ins></li>`).join("")}</ul></details>` : ""}
+      </div>
+      <button class="btn ${h.accion === "borrar" ? "" : "sec"} peq" data-deshacer="${h.id}">${icono(h.accion === "borrar" ? "subir" : "izq", "p")}${BOTON_DESHACER[h.accion]}</button>
+    </article>`;
+  }).join("") + (data.length > FILTRO_HIST.max ? `<button class="btn sec ver-mas" id="h-mas">Ver más</button>` : "")
+    : `<div class="panel vacio">${icono("reloj")}Todavía no hay cambios apuntados.</div>`;
+  if ($("h-mas")) $("h-mas").onclick = () => { FILTRO_HIST.max += 60; pintaHistorial(); };
+  $("lista-hist").querySelectorAll("[data-deshacer]").forEach(b => b.onclick = async () => {
+    const h = data.find(x => x.id == b.dataset.deshacer), nom = String(nombreDe(h.despues || h.antes) ?? "");
+    const pregunta = h.accion === "borrar" ? `¿Recuperar ${NOMBRE_TABLA[h.tabla]} «${nom}»? Volverá a salir en la web.`
+      : h.accion === "cambiar" ? `¿Dejar ${NOMBRE_TABLA[h.tabla]} «${nom}» como estaba antes de este cambio? Se perderán los cambios que se hicieron en ese momento.`
+      : `¿Quitar ${NOMBRE_TABLA[h.tabla]} «${nom}» que se creó?${h.tabla === "apartados" ? " Se quitarán también sus publicaciones." : ""}`;
+    if (!confirm(pregunta)) return;
+    b.disabled = true;
+    const { data: r, error: e } = await sb.rpc("recuperar_cambio", { p_id: h.id });
+    if (e) { b.disabled = false; return aviso(e.message || "No se ha podido.", true); }
+    aviso(r || "Hecho.");
+    if (["apartados"].includes(h.tabla)) { await cargarApartados(); }
+    pintaHistorial();
+  });
+}
+
+// Quita del almacenamiento los archivos que ya no usa nada (ni la web ni los últimos 90 días del Historial) y tienen más de 30 días
+async function limpiarArchivos() {
+  const b = $("b-limpiar"); b.disabled = true; msg("m-limpiar", "Buscando…", true);
+  try {
+    const objetos = [];
+    for (let desde = 0; ; desde += 1000) {
+      const { data, error } = await sb.storage.from("documentos").list("", { limit: 1000, offset: desde, sortBy: { column: "created_at", order: "asc" } });
+      if (error) throw error;
+      objetos.push(...(data || []).filter(o => o.id)); if (!data || data.length < 1000) break;
+    }
+    const hace90 = new Date(Date.now() - 90 * 86400000).toISOString();
+    const usados = await Promise.all([
+      sb.from("comunicados").select("adjuntos, pdf_url"), sb.from("actas").select("adjuntos, pdf_url"), sb.from("documentos").select("url"),
+      sb.from("publicaciones").select("adjuntos"), sb.from("historial").select("antes, despues").gte("cuando", hace90),
+    ]);
+    const err = usados.find(r => r.error); if (err) throw err.error;
+    const texto = JSON.stringify(usados.map(r => r.data));
+    const viejos = Date.now() - 30 * 86400000;
+    const sobran = objetos.filter(o => new Date(o.created_at).getTime() < viejos && !texto.includes(o.name) && !texto.includes(encodeURIComponent(o.name)));
+    if (!sobran.length) { msg("m-limpiar", "No hay archivos sin usar. Todo en orden.", true); return; }
+    const mb = sobran.reduce((n, o) => n + (o.metadata?.size || 0), 0) / 1048576;
+    if (!confirm(`Hay ${sobran.length} archivo(s) sin usar (${mb.toFixed(1).replace(".", ",")} MB). ¿Quitarlos? No se podrán recuperar.`)) { msg("m-limpiar", ""); return; }
+    const { error } = await sb.storage.from("documentos").remove(sobran.map(o => o.name));
+    if (error) throw error;
+    msg("m-limpiar", `Hecho: se han quitado ${sobran.length} archivo(s).`, true);
+  } catch (e) { msg("m-limpiar", "No se ha podido: " + (e.message || e)); }
+  finally { b.disabled = false; }
+}
+
 // ---------- Calculadoras (valores que usa «Calcula» en la web) ----------
 const AJUSTES_CALC = [
   ["vac_dias", "Días de vacaciones al año", "number"], ["vac_unidad", "Unidad de las vacaciones", "unidad"],
@@ -1035,6 +1122,12 @@ async function pintaAjustes() {
         <button class="btn sec" id="b-copia-datos">${icono("descargar", "p")}Solo los textos</button></div>
       <div class="msg" id="m-copia"></div>
     </div>
+    <div class="panel tarjeta-ajuste" id="ajuste-limpiar">
+      <h2>Archivos sin usar</h2>
+      <p class="ayuda">Al borrar algo, sus archivos se guardan un tiempo para poder recuperarlo desde «Historial». Aquí se quitan los que ya no usa nada y tienen más de 30 días, para no llenar el espacio gratuito.</p>
+      <div class="botones" style="margin-top:10px"><button class="btn sec" id="b-limpiar">${icono("borrar", "p")}Buscar archivos sin usar</button></div>
+      <div class="msg" id="m-limpiar"></div>
+    </div>
     <div class="panel tarjeta-ajuste" id="ajuste-archivo">
       <h2>Archivo de avisos</h2>
       <p class="ayuda">Los avisos antiguos pasan a la pestaña «Archivo» de la web para que la lista no se llene. Los fijados nunca se archivan.</p>
@@ -1074,6 +1167,7 @@ async function pintaAjustes() {
   document.querySelectorAll("[data-guardar]").forEach(b => b.onclick = () => guardarLista(b.dataset.guardar));
   document.querySelectorAll("[id^=nn-]").forEach(i => i.onkeydown = (e) => { if (e.key === "Enter") document.querySelector(`[data-anadir="${i.id.slice(3)}"]`).click(); });
   cargarAdmins(); cargarCanales(); prepararCopiaYArchivo();
+  $("b-limpiar").onclick = limpiarArchivos;
 }
 function selColor(v, id) {
   return `<select ${id ? `id="${id}"` : ""} class="sel-color c-${v}" aria-label="Color">
