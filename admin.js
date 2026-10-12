@@ -138,12 +138,51 @@ const SECCIONES = {
     extracto: (x) => x.descripcion || x.url, chips: (x) => [x.url && x.url.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]], fechas: (x) => [null, x.actualizado],
   },
 };
-const PAGINAS = {
-  resumen: { nombre: "Inicio", icono: "resumen" },
-  ...Object.fromEntries(Object.entries(SECCIONES).map(([k, s]) => [k, { nombre: s.nombre, icono: s.icono }])),
-  textos: { nombre: "Textos", icono: "texto" },
-  ajustes: { nombre: "Ajustes", icono: "ajustes" },
+// Apartados nuevos de la web (Comité de empresa, etc.): los crea el admin y cada uno tiene su lista de publicaciones
+const ICONOS_AP = [["grupo", "Personas"], ["carpeta", "Carpeta"], ["camara", "Cámara de fotos"], ["imagen", "Foto"], ["actas", "Hoja"], ["convenio", "Libro"], ["avisos", "Altavoz"], ["calendario", "Calendario"], ["pregunta", "Pregunta"], ["alerta", "Atención"], ["archivo2", "Archivo"]];
+SECCIONES.apartados = {
+  nombre: "Apartados de la web", icono: "carpeta", tabla: "apartados", orden: ["orden", true], uno: "apartado", nuevo: "Nuevo apartado", lista: "aviso", campoColor: "_",
+  intro: "Secciones nuevas de la web, como «Comité de empresa». Cada una sale como una pestaña y aquí en el panel tiene su propia lista para publicar fotos, documentos y textos.",
+  campos: [
+    { k: "titulo", l: "Nombre del apartado", t: "text", req: true, ph: "Ej: Comité de empresa", ayuda: "Corto: es lo que sale en la pestaña de la web." },
+    { k: "descripcion", l: "Explicación corta", t: "text", opc: true, ph: "Ej: Fotos, documentos y novedades del comité." },
+    { k: "icono", l: "Dibujo", t: "select", ops: ICONOS_AP },
+    { k: "orden", l: "Posición", t: "number", ayuda: "1 sale primero, 2 después…" },
+    { checks: [{ k: "visible", l: "Se ve en la web (desmárcalo para prepararlo sin que se vea)", def: true }] },
+  ],
+  previa: (x) => `<div class="accesos-tablon" style="max-width:360px"><a href="#">${icono(x.icono || "carpeta")}<b>${esc(x.titulo || "Sin nombre")}</b></a></div><p class="ayuda">${esc(x.descripcion || "")}</p>`,
+  extracto: (x) => x.descripcion, chips: (x) => [x.visible === false ? "Oculto" : "Se ve en la web", "Posición " + x.orden], fechas: (x) => [x.creado, x.actualizado],
 };
+// Una sección del panel por cada apartado
+const seccionApartado = (a) => ({
+  nombre: a.titulo, icono: a.icono || "carpeta", tabla: "publicaciones", filtro: { apartado_id: a.id }, orden: ["fecha", false], uno: "publicación", nuevo: "Publicar en " + a.titulo, lista: "aviso", campoColor: "_",
+  intro: (a.descripcion ? a.descripcion + " " : "") + "Lo que publiques aquí sale en la web, ordenado por año y mes.",
+  campos: [
+    { k: "titulo", l: "Título", t: "text", req: true, ph: "Ej: Reunión con la empresa por el parking" },
+    { k: "fecha", l: "Fecha", t: "date", req: true, ayuda: "El día de la reunión, la foto o el documento. Sirve para ordenarlo por año y mes." },
+    { k: "contenido", l: "Texto", t: "textarea", opc: true, formato: true },
+    { k: "adjuntos", l: "Fotos y documentos", t: "archivos", opc: true },
+    { checks: [{ k: "notificar", l: "Avisar en los móviles y en el canal de Telegram", def: true, soloNuevo: true }] },
+  ],
+  previa: (x) => publicacionHTML(x),
+  extracto: (x) => x.contenido, chips: (x) => [x.fecha && fechaLarga(x.fecha + "T12:00:00")], fechas: (x) => [x.creado, x.actualizado],
+});
+let APARTADOS = [];
+async function cargarApartados() {
+  Object.keys(SECCIONES).filter(k => /^ap\d+$/.test(k)).forEach(k => { delete SECCIONES[k]; delete FECHA_DE[k]; });
+  const { data } = await sb.from("apartados").select("*").order("orden").order("id");
+  APARTADOS = data || [];
+  APARTADOS.forEach(a => { SECCIONES["ap" + a.id] = seccionApartado(a); FECHA_DE["ap" + a.id] = x => x.fecha; });
+  construirPaginas();
+}
+let PAGINAS = {};
+function construirPaginas() {
+  const base = Object.keys(SECCIONES).filter(k => !/^ap\d+$/.test(k) && k !== "apartados"), i = base.indexOf("actas") + 1;
+  const orden = [...base.slice(0, i), ...APARTADOS.map(a => "ap" + a.id), ...base.slice(i), "apartados"];
+  PAGINAS = { resumen: { nombre: "Inicio", icono: "resumen" }, ...Object.fromEntries(orden.map(k => [k, { nombre: SECCIONES[k].nombre, icono: SECCIONES[k].icono }])),
+    textos: { nombre: "Textos", icono: "texto" }, ajustes: { nombre: "Ajustes", icono: "ajustes" } };
+}
+construirPaginas();
 const EN_MOVIL = ["resumen", "avisos", "calendario", "actas"];
 let actual = "resumen", datos = {};
 
@@ -164,6 +203,7 @@ async function iniciar() {
   const { data } = await sb.rpc("is_admin");
   window.ES_ADMIN = !!data;
   await cargarOpciones();
+  await cargarApartados();
   pintaNav();
   const h = location.hash.slice(1);
   abrir(PAGINAS[h] ? h : "resumen");
@@ -210,7 +250,7 @@ const salir = async () => { if (await confirmarSalida()) { await sb.auth.signOut
 function pintaNav() {
   const b = (k, extra = "") => `<button data-p="${k}" class="${k === actual ? "activa" : ""} ${extra}">${icono(PAGINAS[k].icono)}${PAGINAS[k].nombre}</button>`;
   $("nav-admin").innerHTML =
-    Object.keys(PAGINAS).map(k => (["preguntas", "textos"].includes(k) ? `<div class="sep solo-pc"></div>` : "") + b(k, EN_MOVIL.includes(k) ? "" : "solo-pc")).join("") +
+    Object.keys(PAGINAS).map(k => (["preguntas", "apartados", "textos"].includes(k) ? `<div class="sep solo-pc"></div>` : "") + b(k, EN_MOVIL.includes(k) ? "" : "solo-pc")).join("") +
     `<button class="solo-movil ${EN_MOVIL.includes(actual) ? "" : "activa"}" id="b-mas">${icono("menu")}Más</button>
      <div class="sep solo-pc"></div>
      <div class="quien">${esc(window.MI_EMAIL || "")}<br>Versión ${VERSION_WEB}</div>
@@ -303,7 +343,9 @@ async function pintaResumen() {
 // ---------- Listas ----------
 async function cargarDatos(k) {
   const s = SECCIONES[k];
-  const { data, error } = await sb.from(s.tabla).select("*").order(s.orden[0], { ascending: s.orden[1] }).order("id", { ascending: false });
+  let q = sb.from(s.tabla).select("*");
+  Object.entries(s.filtro || {}).forEach(([c, v]) => { q = q.eq(c, v); });
+  const { data, error } = await q.order(s.orden[0], { ascending: s.orden[1] }).order("id", { ascending: false });
   if (error) throw error;
   datos[k] = data || [];
   return datos[k];
@@ -378,6 +420,7 @@ function validarArchivo(f) {
 let ED = null; // { k, orig, pendientes:[File], existentes:[adj], quitar:[url], sucio }
 function campoHTML(c, v) {
   const id = "f-" + c.k, opc = c.opc ? " <small>(opcional)</small>" : "", ayuda = c.ayuda ? `<p class="ayuda">${c.ayuda}</p>` : "";
+  if (c.t === "select" && c.ops) return `<label for="${id}">${c.l}</label><select id="${id}">${c.ops.map(([val, txt]) => `<option value="${esc(val)}" ${val === v ? "selected" : ""}>${esc(txt)}</option>`).join("")}</select>${ayuda}`;
   if (c.t === "select") {
     const ops = nombres(c.lista); if (v && !ops.includes(v)) ops.push(v);
     return `<label for="${id}">${c.l}</label><select id="${id}">${ops.map(o => `<option ${o === v ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>
@@ -407,7 +450,7 @@ function abrirEditor(k, orig = null, preset = {}) {
   if (actual !== k && actual !== "resumen" && actual !== "calendario") abrir(k);
   const x = orig || {};
   ED = { k, orig, pendientes: [], existentes: orig ? (s.campos.some(c => c.t === "archivos") ? [...(orig.adjuntos || [])] : (orig.url ? [{ nombre: orig.nombre_archivo || "Archivo", url: orig.url, tipo: orig.tipo_archivo, tamano: orig.tamano }] : [])) : [], quitar: [], sucio: false };
-  const def = { orden: Math.max(0, ...(datos[k] || []).map(d => d.orden || 0)) + 1, fecha: k === "calendario" ? hoyISO() : undefined, ...preset };
+  const def = { orden: Math.max(0, ...(datos[k] || []).map(d => d.orden || 0)) + 1, fecha: k === "calendario" || s.filtro ? hoyISO() : undefined, ...preset };
   $("ed-modo").innerHTML = orig ? `${icono("editar", "p")}Editando ${s.uno}` : `${icono("mas", "p")}${s.nuevo}`;
   $("ed-modo").className = orig ? "editando" : "";
   $("ed-titulo").textContent = orig ? ((s.tituloDe ? s.tituloDe(orig) : orig.titulo) || "Sin título") : "Sin título todavía";
@@ -494,7 +537,7 @@ function actualizarPrevia() {
   const adj = [...ED.existentes, ...ED.pendientes.filter(p => !p.error).map(p => ({ nombre: p.file.name, url: p.vista || "#", tipo: mimeDe(p.file), tamano: p.file.size }))];
   const x = { ...(ED.orig || {}), ...f, adjuntos: adj, fecha: f.fecha || ED.orig?.fecha || ahora, creado: ED.orig?.creado || ahora, actualizado: ED.orig ? ahora : null };
   if (ED.k === "documentos") { x.fecha = ED.orig?.fecha || ahora; const a = adj[0]; Object.assign(x, a ? { url: a.url, nombre_archivo: a.nombre, tipo_archivo: a.tipo, tamano: a.tamano } : {}); }
-  if (ED.k === "calendario") x.fecha = f.fecha || hoyISO();
+  if (ED.k === "calendario" || s.filtro) x.fecha = f.fecha || hoyISO();
   $("ed-titulo").textContent = (s.tituloDe ? s.tituloDe(f) : f.titulo) || (ED.orig ? "Sin título" : "Sin título todavía");
   $("ed-previa").innerHTML = s.previa(x);
   $("ed-previa").querySelectorAll("a").forEach(a => a.onclick = (e) => { if (a.getAttribute("href") === "#" || a.href.startsWith("blob:")) e.preventDefault(); });
@@ -529,6 +572,15 @@ $("ed-guardar").onclick = async () => {
   }
   if (["avisos"].includes(ED.k) && /\[[^\]]{1,30}\]/.test((fila.titulo || "") + (fila.contenido || "")) && !confirm("El aviso todavía tiene partes entre [corchetes] sin rellenar. ¿Publicar igualmente?")) return;
   if (ED.k === "enlaces" && fila.url && !/^https?:\/\//.test(fila.url)) fila.url = "https://" + fila.url;
+  if (s.filtro) Object.assign(fila, s.filtro);
+  if (ED.k === "apartados") {
+    fila.descripcion = fila.descripcion || "";
+    if (!ED.orig) { // dirección de la pestaña: #ap-comite-de-empresa (no cambia aunque luego se cambie el nombre)
+      let base = fila.titulo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 36) || "apartado", slug = base, n = 2;
+      while ((datos.apartados || []).some(a => a.slug === slug)) slug = base + "-" + n++;
+      fila.slug = slug;
+    }
+  }
   const malos = ED.pendientes.filter(p => p.error);
   if (malos.length) { cambiarPestana("form"); return msg("ed-msg", "Quita los archivos marcados en rojo antes de guardar."); }
   if (ED.k === "documentos" && !ED.existentes.length && !ED.pendientes.length) { cambiarPestana("form"); return msg("ed-msg", "Falta elegir el archivo."); }
@@ -550,11 +602,12 @@ $("ed-guardar").onclick = async () => {
     await borrarArchivos(ED.quitar);
     const editado = !!ED.orig, k = ED.k;
     ED.sucio = false; await cerrarEditor();
+    if (k === "apartados") { await cargarApartados(); pintaNav(); }
     abrir(["resumen", "calendario"].includes(actual) ? actual : k);
     if (editado) return aviso("Cambios guardados. Ya se ven en la web.");
     // Avisar a los móviles y a Telegram
     let res = null;
-    if (fila.notificar !== false) {
+    if (fila.notificar !== false && k !== "apartados") {
       const r = await sb.functions.invoke("notificar", { body: { modo: "publicado", tabla: s.tabla, id: guardado.id } }).catch(() => null);
       res = r?.data || null;
     }
@@ -566,11 +619,18 @@ $("ed-guardar").onclick = async () => {
 };
 $("ed-borrar").onclick = async () => {
   const s = SECCIONES[ED.k], x = ED.orig;
+  let archivosApartado = [];
+  if (ED.k === "apartados") {
+    const { data: pubs } = await sb.from("publicaciones").select("adjuntos").eq("apartado_id", x.id);
+    if ((pubs || []).length && !confirm(`El apartado «${x.titulo}» tiene ${pubs.length} publicación(es). Si lo borras, se borrarán también con sus fotos y documentos. Si solo quieres que no se vea, desmarca «Se ve en la web». ¿Borrar todo?`)) return;
+    archivosApartado = (pubs || []).flatMap(p => (p.adjuntos || []).map(a => a.url));
+  }
   if (!confirm(`¿Borrar «${(s.tituloDe ? s.tituloDe(x) : x.titulo)}»? Desaparecerá de la web y no se puede deshacer.`)) return;
   const { error } = await sb.from(s.tabla).delete().eq("id", x.id);
   if (error) return msg("ed-msg", "No se ha podido borrar: " + error.message);
-  await borrarArchivos([...(x.adjuntos || []).map(a => a.url), x.url, x.pdf_url]);
+  await borrarArchivos([...(x.adjuntos || []).map(a => a.url), x.url, x.pdf_url, ...archivosApartado]);
   ED.sucio = false; const k = ED.k; await cerrarEditor();
+  if (k === "apartados") { await cargarApartados(); pintaNav(); }
   aviso("Borrado."); abrir(["resumen", "calendario"].includes(actual) ? actual : k);
 };
 
@@ -880,11 +940,12 @@ function textoDe(k, x) {
   if (k === "avisos") return textoCompartir((x.urgente ? "URGENTE: " : "") + x.titulo, x.contenido, "aviso-" + x.id);
   if (k === "actas") return textoCompartir("Nueva acta: " + x.titulo, x.resumen || "", "actas");
   if (k === "documentos") return textoCompartir("Nuevo documento: " + x.titulo, x.descripcion || "Ya disponible en la web.", "documentos");
+  if (/^ap\d+$/.test(k)) { const ap = APARTADOS.find(a => "ap" + a.id === k); return textoCompartir(x.titulo, x.contenido || "", ap ? "ap-" + ap.slug : ""); }
   if (k === "calendario") return textoCompartir(x.titulo, fechaDia(x.fecha).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }) + (x.hora ? ", " + x.hora : "") + (x.lugar ? " · " + x.lugar : ""), "calendario");
   return textoCompartir(x.titulo, "", "");
 }
 function trasPublicar(k, x, res) {
-  if (k === "convenio") return aviso("Publicado. Ya se ve en la web.");
+  if (k === "convenio" || k === "apartados") return aviso(k === "apartados" ? "Apartado guardado. Ya sale en el menú del panel y como pestaña en la web." : "Publicado. Ya se ve en la web.");
   const programado = x.publicar_en && new Date(x.publicar_en) > new Date();
   const lineas = [];
   if (programado) lineas.push(`${icono("reloj", "p")} Se publicará el <b>${new Date(x.publicar_en).toLocaleString("es-ES", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}</b>, y entonces se avisará.`);
@@ -957,18 +1018,19 @@ async function cargarCanales() {
 // ---------- Filtro por fecha en las listas del panel ----------
 const FECHA_DE = { avisos: x => x.fecha, calendario: x => x.fecha, actas: x => x.fecha, documentos: x => x.fecha };
 const FILTRO_ADM = {};
+// Botones de año y, dentro del año, de mes (con cuántos hay), igual que en la web
 function pintaFechasAdm(items, k, f, repintar) {
-  const anyos = [...new Set(items.map(x => partesFecha(FECHA_DE[k](x))?.a).filter(Boolean))].sort((a, b) => b - a);
-  const activo = f.a || f.m || f.d;
-  $("fechas-adm").innerHTML = items.length ? `<span class="ff-ic">${icono("calendario", "p")}</span>
-    <select data-f="a" aria-label="Año"><option value="">Cualquier año</option>${anyos.map(a => `<option ${f.a == a ? "selected" : ""}>${a}</option>`).join("")}</select>
-    <select data-f="m" aria-label="Mes"><option value="">Cualquier mes</option>${MESES.map((m, i) => `<option value="${i + 1}" ${f.m == i + 1 ? "selected" : ""}>${m.charAt(0).toUpperCase() + m.slice(1)}</option>`).join("")}</select>
-    <input type="date" data-f="d" value="${f.d || ""}" aria-label="Día exacto">
-    ${activo ? `<button class="filtro" data-f-quitar>${icono("cerrar", "p")}Quitar fecha</button>` : ""}` : "";
-  $("fechas-adm").querySelectorAll("[data-f]").forEach(el => el.onchange = () => {
-    f[el.dataset.f] = el.value; if (el.dataset.f === "d" && el.value) { f.a = ""; f.m = ""; } if (el.dataset.f !== "d" && el.value) f.d = ""; repintar();
-  });
-  const q = $("fechas-adm").querySelector("[data-f-quitar]"); if (q) q.onclick = () => { f.a = f.m = f.d = ""; repintar(); };
+  const partes = items.map(x => partesFecha(FECHA_DE[k](x))).filter(Boolean), anyos = [...new Set(partes.map(p => p.a))].sort((a, b) => b - a);
+  if (!partes.length) { $("fechas-adm").innerHTML = ""; return; }
+  const boton = (dato, valor, texto, activo, n) => `<button class="filtro ${activo ? "activo" : ""}" data-${dato}="${valor}">${texto}${n != null ? ` <span class="cuenta">${n}</span>` : ""}</button>`;
+  let html = `<div class="fila-anyos" role="group" aria-label="Año">${boton("a", "", "Todos", !f.a)}${anyos.map(a => boton("a", a, a, f.a == a, partes.filter(p => p.a === a).length)).join("")}</div>`;
+  if (f.a) {
+    const meses = [...new Set(partes.filter(p => p.a == f.a).map(p => p.m))].sort((a, b) => b - a);
+    html += `<div class="fila-meses" role="group" aria-label="Mes">${boton("m", "", "Todo " + f.a, !f.m)}${meses.map(m => boton("m", m, mayus(MESES[m - 1]), f.m == m, partes.filter(p => p.a == f.a && p.m === m).length)).join("")}</div>`;
+  }
+  $("fechas-adm").innerHTML = html;
+  $("fechas-adm").querySelectorAll("[data-a]").forEach(el => el.onclick = () => { f.a = el.dataset.a; f.m = ""; f.d = ""; repintar(); });
+  $("fechas-adm").querySelectorAll("[data-m]").forEach(el => el.onclick = () => { f.m = el.dataset.m; repintar(); });
 }
 function pasaFechaAdm(f, iso) {
   if (!f.a && !f.m && !f.d) return true;
@@ -996,7 +1058,7 @@ async function prepararPlantillas() {
 }
 
 // ---------- Copia de seguridad y archivo ----------
-const TABLAS_COPIA = ["comunicados", "eventos", "convenio_secciones", "actas", "documentos", "preguntas", "plantillas", "paginas", "opciones", "admins"];
+const TABLAS_COPIA = ["comunicados", "eventos", "convenio_secciones", "actas", "documentos", "preguntas", "plantillas", "apartados", "publicaciones", "paginas", "opciones", "admins"];
 async function prepararCopiaYArchivo() {
   const { data } = await sb.from("paginas").select("slug, contenido, actualizado").in("slug", ["archivo_meses", "ultima_copia"]);
   const p = Object.fromEntries((data || []).map(x => [x.slug, x]));

@@ -123,6 +123,23 @@ window.docHTML = (d) => {
   </a>`;
 };
 
+// ---------- Apartados (Comité de empresa, etc.) ----------
+// Una publicación: fecha, título, texto, galería de fotos y documentos
+window.esImagen = (a) => (a.tipo || "").startsWith("image/") && !/hei[cf]/.test(a.tipo);
+window.publicacionHTML = (x, qr = "") => {
+  const adj = x.adjuntos || [], fotos = adj.filter(esImagen), docs = adj.filter(a => !esImagen(a));
+  const d = x.fecha ? fechaDia(x.fecha) : null, src = (u) => /^blob:/.test(u || "") ? u : urlSegura(u); // blob: solo en la vista previa del panel
+  return `<article class="panel publicacion" id="pub-${x.id}">
+    ${d ? `<div class="pub-fecha"><b>${d.getDate()}</b>${MESES[d.getMonth()].slice(0, 3)}</div>` : ""}
+    <div class="pub-cuerpo">
+      <h3>${esc(x.titulo || "Sin título")}</h3>
+      ${d ? `<div class="fecha-txt">${fechaLarga(x.fecha + "T12:00:00")}</div>` : ""}
+      ${x.contenido ? `<div class="pub-texto">${textoHTML(x.contenido, qr)}</div>` : ""}
+      ${fotos.length ? `<div class="galeria ${fotos.length === 1 ? "una" : ""}">${fotos.map(f => `<a href="${esc(src(f.url))}" target="_blank" rel="noopener" aria-label="Ver la foto ${esc(f.nombre || "")} en grande"><img src="${esc(src(f.url))}" alt="" loading="lazy"></a>`).join("")}</div>` : ""}
+      ${adjuntosHTML(docs)}
+    </div></article>`;
+};
+
 // ---------- Preguntas frecuentes ----------
 window.preguntaHTML = (p, qr = "", abierta = false) => `<details class="panel apartado pregunta" ${abierta ? "open" : ""} data-reg="preguntas:${p.id}">
   <summary><div class="txt">

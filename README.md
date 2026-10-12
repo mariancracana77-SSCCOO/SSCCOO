@@ -112,3 +112,21 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Librerías y fuentes alojadas en la propia web: no dependen de servidores externos y no avisan a Google de cada visita.
 - Nuevos archivos: `lectura.js`, `cartel.js`, `fuentes.css`, carpetas `lib/` y `fuentes/`. **Súbelos también a GitHub.**
 - `CLAUDE.md`: contexto para seguir el proyecto con Claude Code.
+
+## Versión 18: diseño «Rótulo de línea» y apartados nuevos
+- **Diseño nuevo**, inspirado en los rótulos de los autobuses y en los paneles de salidas:
+  - Cabecera oscura con pestañas grandes.
+  - Lo urgente sale arriba como un **rótulo ámbar**. Si no hay nada urgente, sale la próxima cita.
+  - «**N novedades desde tu última visita**»: cada móvil recuerda cuándo entró por última vez y marca lo nuevo con la etiqueta «Nuevo». No se envía nada a ningún sitio.
+  - **Próximas paradas**: las próximas fechas sobre una línea roja, como un mapa de ruta.
+  - En el calendario, las próximas fechas salen como un **panel de salidas**.
+  - Abajo, siempre a mano: **«Hablar con un delegado»** y la campana de avisos.
+  - Letra nueva **Atkinson Hyperlegible**, pensada para leer bien con poca visión y alojada en la propia web. Letra base más grande.
+- **Apartados que crea el admin desde el panel**: en «Apartados de la web» se crean secciones nuevas.
+  - Ya está creado **«Comité de empresa»**.
+  - Cada apartado sale como una pestaña en la web y tiene su propia lista en el panel para publicar texto, fotos y documentos, con su fecha.
+  - Las fotos se ven en galería.
+  - Al publicar se avisa en los móviles y en Telegram, igual que con los avisos.
+- **Clasificación por año y mes**: en Avisos, Actas, Documentos y los apartados, los desplegables de fecha se cambian por botones de año y, dentro de cada año, de mes, con cuántos hay. Las listas van separadas por meses («Octubre de 2026»). En el panel, igual.
+- Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
+- Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**

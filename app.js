@@ -1,8 +1,8 @@
 // ===== Web pública: Sección Sindical CCOO Calsina Carré =====
 const $ = (id) => document.getElementById(id);
-const D = { avisos: [], eventos: [], convenio: [], docs: [], actas: [], preguntas: [], delegados: [], enlaces: [], paginas: {} };
+const D = { avisos: [], eventos: [], convenio: [], docs: [], actas: [], preguntas: [], delegados: [], enlaces: [], apartados: [], publicaciones: [], paginas: {} };
 const estado = { catAviso: "Todos", catConv: "Todos", tipoActa: "Todos", catDoc: "Todos", catPreg: "Todos", archivo: false, mes: new Date(), diaSel: hoyISO(),
-  fechas: { avisos: {}, actas: {}, docs: {} } };
+  fechas: { avisos: {}, actas: {}, docs: {}, ap: {} }, ap: null };
 
 // ---------- Iconos fijos ----------
 document.querySelectorAll("[data-i]").forEach(el => el.outerHTML = icono(el.dataset.i));
@@ -16,13 +16,16 @@ const VISTAS = ["inicio", "avisos", "calendario", "convenio", "actas", "document
 function irA() {
   const h = location.hash.slice(1), avisoDirecto = /^aviso-\d+$/.test(h) ? h : null;
   const legal = h === "aviso-legal" || h === "privacidad" ? h : null, aDelegados = h === "delegados";
-  const v = avisoDirecto ? "avisos" : legal ? "legal" : aDelegados ? "info" : (VISTAS.includes(h) ? h : "inicio");
+  const ap = /^ap-[a-z0-9-]+$/.test(h) ? h.slice(3) : null;
+  if (ap && ap !== estado.ap) { estado.ap = ap; estado.fechas.ap = {}; if ($("buscar-ap")) $("buscar-ap").value = ""; }
+  const v = avisoDirecto ? "avisos" : legal ? "legal" : aDelegados ? "info" : ap ? "apartado" : (VISTAS.includes(h) ? h : "inicio");
+  if (ap) pintaApartado();
   if (aDelegados) setTimeout(() => ($("lista-delegados").children.length ? $("tit-delegados") : $("txt-contacto"))?.scrollIntoView({ block: "start" }), 50);
   if (legal) setTimeout(() => $("leg-" + legal)?.scrollIntoView({ block: "start" }), 50);
   if (avisoDirecto) setTimeout(() => { const el = $(avisoDirecto); if (el) { el.scrollIntoView({ block: "start" }); el.classList.add("nuevo"); } }, 300);
   document.querySelectorAll(".vista").forEach(s => s.classList.toggle("activa", s.id === "v-" + v));
   document.querySelectorAll(".pestanas-web a").forEach(b => {
-    const on = b.dataset.v === v; b.classList.toggle("activa", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current");
+    const on = b.dataset.v === (ap ? "ap-" + ap : v); b.classList.toggle("activa", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current");
     if (on) b.scrollIntoView({ inline: "center", block: "nearest" });
   });
   if (!avisoDirecto && !legal && !aDelegados) window.scrollTo(0, 0);
@@ -41,23 +44,31 @@ function pintaFiltros(id, opciones, actual, alElegir) {
     `<button class="filtro ${o === actual ? "activo" : ""}" data-o="${esc(o)}">${esc(o)}</button>`).join("");
   $(id).querySelectorAll("button").forEach(b => b.onclick = () => alElegir(b.dataset.o));
 }
-// Filtro por año / mes / día
+// Clasificación por año y mes: botones con los años que tienen algo y, dentro de un año, sus meses (con cuántos hay)
 function pintaFechas(id, clave, items, isoDe, repintar) {
-  const f = estado.fechas[clave], anyos = [...new Set(items.map(x => partesFecha(isoDe(x))?.a).filter(Boolean))].sort((a, b) => b - a);
-  if (!items.length) { $(id).innerHTML = ""; return; }
-  const activo = f.a || f.m || f.d;
-  $(id).innerHTML = `<span class="ff-ic">${icono("calendario", "p")}</span>
-    <select data-f="a" aria-label="Año"><option value="">Cualquier año</option>${anyos.map(a => `<option ${f.a == a ? "selected" : ""}>${a}</option>`).join("")}</select>
-    <select data-f="m" aria-label="Mes"><option value="">Cualquier mes</option>${MESES.map((m, i) => `<option value="${i + 1}" ${f.m == i + 1 ? "selected" : ""}>${m.charAt(0).toUpperCase() + m.slice(1)}</option>`).join("")}</select>
-    <input type="date" data-f="d" value="${f.d || ""}" aria-label="Día exacto" title="Día exacto">
-    ${activo ? `<button class="filtro" data-f-quitar>${icono("cerrar", "p")}Quitar fecha</button>` : ""}`;
-  $(id).querySelectorAll("[data-f]").forEach(el => el.onchange = () => {
-    f[el.dataset.f] = el.value;
-    if (el.dataset.f === "d" && el.value) { f.a = ""; f.m = ""; }
-    if (el.dataset.f !== "d" && el.value) f.d = "";
-    repintar();
+  const f = estado.fechas[clave], partes = items.map(x => partesFecha(isoDe(x))).filter(Boolean);
+  const anyos = [...new Set(partes.map(p => p.a))].sort((a, b) => b - a);
+  if (anyos.length < 2 && partes.length < 6) { $(id).innerHTML = ""; return; } // con muy poco no hace falta
+  const boton = (dato, valor, texto, activo, n) => `<button class="filtro ${activo ? "activo" : ""}" data-${dato}="${valor}">${texto}${n != null ? ` <span class="cuenta">${n}</span>` : ""}</button>`;
+  let html = `<div class="fila-anyos" role="group" aria-label="Año">${boton("a", "", "Todos", !f.a)}${anyos.map(a => boton("a", a, a, f.a == a, partes.filter(p => p.a === a).length)).join("")}</div>`;
+  if (f.a) {
+    const meses = [...new Set(partes.filter(p => p.a == f.a).map(p => p.m))].sort((a, b) => b - a);
+    html += `<div class="fila-meses" role="group" aria-label="Mes">${boton("m", "", "Todo " + f.a, !f.m)}${meses.map(m => boton("m", m, may(MESES[m - 1]), f.m == m, partes.filter(p => p.a == f.a && p.m === m).length)).join("")}</div>`;
+  }
+  $(id).innerHTML = html;
+  $(id).querySelectorAll("[data-a]").forEach(b => b.onclick = () => { f.a = b.dataset.a; f.m = ""; f.d = ""; repintar(); });
+  $(id).querySelectorAll("[data-m]").forEach(b => b.onclick = () => { f.m = b.dataset.m; repintar(); });
+}
+// Pone un título de mes («Octubre de 2026 · 3») cada vez que cambia el mes en una lista ordenada por fecha
+function porMeses(lista, isoDe, htmlDe) {
+  let html = "", clave = null;
+  lista.forEach(x => {
+    const p = partesFecha(isoDe(x)), k = p ? p.a + "-" + p.m : "";
+    if (k !== clave) { clave = k; const n = lista.filter(y => { const q = partesFecha(isoDe(y)); return q && q.a + "-" + q.m === k; }).length;
+      html += `<h2 class="grupo-mes">${p ? may(MESES[p.m - 1]) + " de " + p.a : "Sin fecha"} <span>${n}</span></h2>`; }
+    html += htmlDe(x);
   });
-  const q = $(id).querySelector("[data-f-quitar]"); if (q) q.onclick = () => { estado.fechas[clave] = {}; repintar(); };
+  return html;
 }
 function pasaFecha(clave, iso) {
   const f = estado.fechas[clave], p = partesFecha(iso);
@@ -105,12 +116,13 @@ function pintaInicio() {
   else rot = `<div class="rotulo"><span class="rot-tipo">Sin avisos urgentes</span><span class="rot-l1">Todo en orden</span><span class="rot-l2">Aquí verás lo importante en cuanto se publique.</span></div>`;
   $("inicio-rotulo").innerHTML = rot;
   // Todo lo publicado, por fecha
-  const ICONOS = { aviso: ["avisos", "c-verde"], fecha: ["calendario", "c-azul"], acta: ["actas", "c-ambar"], doc: ["carpeta", "c-rojo"], conv: ["convenio", "c-morado"], preg: ["pregunta", "c-gris"] };
+  const ICONOS = { aviso: ["avisos", "c-verde"], fecha: ["calendario", "c-azul"], acta: ["actas", "c-ambar"], doc: ["carpeta", "c-rojo"], conv: ["convenio", "c-morado"], preg: ["pregunta", "c-gris"], pub: ["carpeta", "c-turquesa"] };
   const items = [
     ...D.avisos.filter(a => a !== urg).map(a => ({ f: a.fecha, k: "aviso", que: "Aviso" + (a.fijado ? " · fijado" : ""), t: a.titulo, s: resumenPlano(a.contenido, 90), h: "#aviso-" + a.id, adj: (a.adjuntos || []).length })),
     ...D.eventos.filter(e => e.fecha >= hoy).map(e => ({ f: e.creado, k: "fecha", que: "Fecha · " + cuandoEvento(e), t: e.titulo, s: e.lugar || "", h: "#calendario", dia: e.fecha })),
     ...D.actas.map(a => ({ f: a.creado, k: "acta", que: "Acta" + (a.fecha ? " · " + fechaDia(a.fecha).toLocaleDateString("es-ES", { day: "numeric", month: "long" }) : ""), t: a.titulo, s: a.acuerdos ? (a.acuerdos.split("\n").filter(l => l.trim()).length + " acuerdo(s)") : resumenPlano(a.resumen, 90), h: "#actas" })),
     ...D.docs.map(d => ({ f: d.fecha, k: "doc", que: "Documento · " + tipoArchivo(d.tipo_archivo, d.nombre_archivo).txt, t: d.titulo, s: d.descripcion || "", url: d.url })),
+    ...D.publicaciones.map(x => { const ap = D.apartados.find(y => y.id === x.apartado_id); return ap && { f: x.creado, k: "pub", ic: ap.icono, que: ap.titulo, t: x.titulo, s: (x.adjuntos || []).length ? (x.adjuntos.length + " archivo(s)") : resumenPlano(x.contenido, 90), h: "#ap-" + ap.slug }; }).filter(Boolean),
     ...D.convenio.filter(c => ahora - new Date(c.actualizado) < 30 * DIA).map(c => ({ f: c.actualizado, k: "conv", que: "Convenio · actualizado", t: c.titulo, s: c.resumen || "", h: "#convenio" })),
     ...D.preguntas.filter(q => ahora - new Date(q.creado) < 30 * DIA).map(q => ({ f: q.creado, k: "preg", que: "Pregunta frecuente", t: q.pregunta, s: "", h: "#preguntas" })),
   ].filter(x => x.f).sort((a, b) => new Date(b.f) - new Date(a.f));
@@ -131,7 +143,7 @@ function pintaInicio() {
   items.slice(0, max).forEach(x => {
     const gr = grupo(x.f);
     if (gr !== g) { html += `<h3 class="grupo-tablon">${gr}</h3>`; g = gr; }
-    const [ic, cl] = ICONOS[x.k];
+    const [icDef, cl] = ICONOS[x.k], ic = x.ic || icDef;
     const attrs = x.url ? `href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener"` : `href="${x.h}"${x.dia ? ` data-dia="${x.dia}"` : ""}`;
     html += `<a class="item-tablon ${esDesdeUltima(x.f) ? "es-nuevo" : ""}" ${attrs}>
       <span class="ic ${cl}">${icono(ic, "p")}</span>
@@ -143,9 +155,9 @@ function pintaInicio() {
   $("inicio-feed").innerHTML = items.length ? html : html + vacio("avisos", "Todavía no hay nada publicado.");
   if ($("ver-mas")) $("ver-mas").onclick = () => { estado.feedMax = max + 20; pintaInicio(); };
   // Accesos
-  const acc = [["avisos", "avisos", "Avisos"], ["convenio", "convenio", "Convenio"], ["calendario", "calendario", "Fechas"], ["actas", "actas", "Actas"], ["documentos", "carpeta", "Documentos"], ["preguntas", "pregunta", "Dudas"]];
+  const acc = [["avisos", "avisos", "Avisos"], ...D.apartados.map(a => ["ap-" + a.slug, a.icono || "carpeta", a.titulo]), ["convenio", "convenio", "Convenio"], ["calendario", "calendario", "Fechas"], ["actas", "actas", "Actas"], ["documentos", "carpeta", "Documentos"], ["preguntas", "pregunta", "Dudas"]];
   $("inicio-accesos").innerHTML = `<h2 class="tit-seccion">Ir a</h2><nav class="accesos-tablon" aria-label="Accesos rápidos">${acc.map(([v, ic, t]) =>
-    `<a href="#${v}">${icono(ic)}<b>${t}</b></a>`).join("")}</nav>`;
+    `<a href="#${esc(v)}">${icono(esc(ic))}<b>${esc(t)}</b></a>`).join("")}</nav>`;
   document.querySelectorAll("#v-inicio [data-dia]").forEach(l => l.onclick = () => irADia(l.dataset.dia));
 }
 
@@ -166,7 +178,8 @@ function pintaAvisos(idNuevo) {
     (!q || normal(a.titulo + " " + a.contenido + " " + textoFecha(a.fecha)).includes(q)));
   $("lista-avisos").innerHTML = (buscando && l.length ? `<p class="fecha-txt">${l.length} aviso${l.length === 1 ? "" : "s"} encontrado${l.length === 1 ? "" : "s"} (incluye el archivo).</p>` : "") +
     (estado.archivo && !buscando ? `<p class="fecha-txt">Avisos de hace más de ${mesesArchivo()} mes${mesesArchivo() === 1 ? "" : "es"}.</p>` : "") +
-    (l.length ? l.map(a => tarjetaAviso(a, { nuevo: a.id === idNuevo, resaltar: qr })).join("")
+    (l.length ? l.filter(a => a.fijado).map(a => tarjetaAviso(a, { nuevo: a.id === idNuevo, resaltar: qr })).join("") +
+        porMeses(l.filter(a => !a.fijado), a => a.fecha, a => tarjetaAviso(a, { nuevo: a.id === idNuevo, resaltar: qr }))
       : vacio("avisos", buscando ? "No hay avisos que coincidan con la búsqueda o la fecha." : "Todavía no hay avisos publicados."));
 }
 $("buscar-avisos").oninput = () => pintaAvisos();
@@ -244,12 +257,7 @@ function pintaActas() {
   const l = D.actas.filter(a => (estado.tipoActa === "Todos" || a.tipo === estado.tipoActa) && pasaFecha("actas", a.fecha) &&
     (!q || normal(a.titulo + " " + a.resumen + " " + a.acuerdos + " " + textoFecha(a.fecha)).includes(q)));
   if (!l.length) { $("lista-actas").innerHTML = vacio("actas", q || hayFecha("actas") ? "No hay actas que coincidan con la búsqueda o la fecha." : "Todavía no hay actas publicadas."); return; }
-  let html = "", anyo = null;
-  l.forEach(a => {
-    const y = (a.fecha || "").slice(0, 4);
-    if (y !== anyo) { html += `<div class="grupo-anyo">${y}</div>`; anyo = y; }
-    html += actaHTML(a, qr);
-  });
+  const html = porMeses(l, a => a.fecha, a => actaHTML(a, qr));
   $("lista-actas").innerHTML = html;
 }
 $("buscar-actas").oninput = () => pintaActas();
@@ -261,10 +269,30 @@ function pintaDocumentos() {
   const q = normal($("buscar-docs").value.trim());
   const l = D.docs.filter(d => (estado.catDoc === "Todos" || d.categoria === estado.catDoc) && pasaFecha("docs", d.fecha) &&
     (!q || normal(d.titulo + " " + d.descripcion + " " + d.nombre_archivo + " " + textoFecha(d.fecha)).includes(q)));
-  $("lista-documentos").innerHTML = l.length ? l.map(docHTML).join("")
+  $("lista-documentos").innerHTML = l.length ? porMeses(l, d => d.fecha, docHTML)
     : vacio("carpeta", q || hayFecha("docs") ? "No hay documentos que coincidan con la búsqueda o la fecha." : "Todavía no hay documentos subidos.");
 }
 $("buscar-docs").oninput = () => pintaDocumentos();
+
+// ---------- Apartados que crea el admin (Comité de empresa, etc.) ----------
+function pintaPestanasApartados() {
+  document.querySelectorAll(".pestanas-web a[data-ap]").forEach(a => a.remove());
+  const tras = document.querySelector('.pestanas-web a[data-v="actas"]');
+  tras.insertAdjacentHTML("afterend", D.apartados.map(a => `<a href="#ap-${esc(a.slug)}" data-v="ap-${esc(a.slug)}" data-ap>${esc(a.titulo)}</a>`).join(""));
+}
+function pintaApartado() {
+  const a = D.apartados.find(x => x.slug === estado.ap);
+  if (!a) { $("ap-titulo").textContent = D.apartados.length || !cargar.listo ? "Cargando…" : "Apartado no encontrado"; $("lista-ap").innerHTML = ""; $("ap-desc").textContent = ""; $("fechas-ap").innerHTML = ""; return; }
+  $("ap-titulo").textContent = a.titulo;
+  $("ap-desc").textContent = a.descripcion || "";
+  const todas = D.publicaciones.filter(x => x.apartado_id === a.id);
+  pintaFechas("fechas-ap", "ap", todas, x => x.fecha, () => pintaApartado());
+  const qr = $("buscar-ap").value.trim(), q = normal(qr);
+  const l = todas.filter(x => pasaFecha("ap", x.fecha) && (!q || normal(x.titulo + " " + x.contenido + " " + (x.adjuntos || []).map(j => j.nombre).join(" ") + " " + textoFecha(x.fecha)).includes(q)));
+  $("lista-ap").innerHTML = l.length ? porMeses(l, x => x.fecha, x => publicacionHTML(x, qr))
+    : vacio(a.icono || "carpeta", q || hayFecha("ap") ? "No hay nada que coincida con la búsqueda o la fecha." : "Todavía no hay nada publicado en este apartado.");
+}
+$("buscar-ap").oninput = () => pintaApartado();
 
 // ---------- Preguntas frecuentes ----------
 function pintaPreguntas() {
@@ -291,7 +319,7 @@ function pintaInfo() {
 // ---------- Carga de datos ----------
 async function cargar(idNuevo) {
   await cargarOpciones();
-  const [a, e, c, d, ac, p, pr, dl, en] = await Promise.all([
+  const [a, e, c, d, ac, p, pr, dl, en, aps, pubs] = await Promise.all([
     sb.from("comunicados").select("*").order("fecha", { ascending: false }).limit(200),
     sb.from("eventos").select("*").order("fecha"),
     sb.from("convenio_secciones").select("*").order("orden").order("id"),
@@ -301,6 +329,8 @@ async function cargar(idNuevo) {
     sb.from("preguntas").select("*").order("orden").order("id"),
     sb.from("delegados").select("*").order("orden").order("id"),
     sb.from("enlaces").select("*").order("orden").order("id"),
+    sb.from("apartados").select("*").order("orden").order("id"),
+    sb.from("publicaciones").select("*").order("fecha", { ascending: false }).order("id", { ascending: false }).limit(1000),
   ]);
   if (a.error) {
     document.querySelectorAll("#inicio-rotulo, #lista-avisos").forEach(el =>
@@ -310,6 +340,8 @@ async function cargar(idNuevo) {
   D.avisos = a.data || []; D.eventos = e.data || []; D.convenio = c.data || []; D.docs = d.data || []; D.actas = ac.data || [];
   D.paginas = Object.fromEntries((p.data || []).map(x => [x.slug, x.contenido]));
   D.preguntas = pr.data || []; D.delegados = dl.data || []; D.enlaces = en.data || [];
+  D.apartados = aps.data || []; D.publicaciones = pubs.data || []; cargar.listo = true;
+  pintaPestanasApartados(); pintaApartado();
   pintaInicio(); pintaAvisos(idNuevo); pintaCalendario(); pintaConvenio(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaInfo(); pintaCanales();
   if (/^#aviso-\d+$/.test(location.hash) && !cargar.hecho) { cargar.hecho = true; irA(); }
 }
@@ -324,11 +356,12 @@ function avisar(texto, hash) {
   clearTimeout(avisar.t); avisar.t = setTimeout(() => toast.classList.remove("ver"), 9000);
 }
 let recarga;
-const QUE = { comunicados: ["Nuevo aviso: ", "avisos"], actas: ["Nueva acta: ", "actas"], documentos: ["Nuevo documento: ", "documentos"], eventos: ["Nueva fecha: ", "calendario"] };
+const QUE = { comunicados: ["Nuevo aviso: ", "avisos"], actas: ["Nueva acta: ", "actas"], documentos: ["Nuevo documento: ", "documentos"], eventos: ["Nueva fecha: ", "calendario"], publicaciones: ["Novedad: ", "inicio"] };
 const canal = sb.channel("web-directo");
 Object.keys(QUE).forEach(t => canal.on("postgres_changes", { event: "*", schema: "public", table: t }, (pl) => {
   clearTimeout(recarga); recarga = setTimeout(() => cargar(t === "comunicados" ? pl.new?.id : null), 400);
-  if (pl.eventType === "INSERT") avisar(QUE[t][0] + (pl.new.titulo || ""), QUE[t][1]);
+  const ap = t === "publicaciones" && D.apartados.find(a => a.id === pl.new?.apartado_id);
+  if (pl.eventType === "INSERT") avisar(QUE[t][0] + (pl.new.titulo || ""), ap ? "ap-" + ap.slug : QUE[t][1]);
 }));
 canal.subscribe();
 document.addEventListener("visibilitychange", () => { if (!document.hidden) cargar(); });
@@ -504,18 +537,19 @@ function buscarTodo() {
     ["Convenio", "convenio", D.convenio.filter(s => pasa(s.titulo, s.resumen, s.contenido, s.articulo)).map(s => ({ h: "convenio", t: s.titulo, s: s.resumen || s.categoria, q: qr }))],
     ["Preguntas frecuentes", "pregunta", D.preguntas.filter(x => pasa(x.pregunta, x.respuesta)).map(x => ({ h: "preguntas", t: x.pregunta, s: x.categoria, q: qr }))],
     ["Actas", "actas", D.actas.filter(a => pasa(a.titulo, a.resumen, a.acuerdos, a.tipo, textoFecha(a.fecha))).map(a => ({ h: "actas", t: a.titulo, s: a.fecha ? fechaLarga(a.fecha + "T12:00:00") : a.tipo, q: qr }))],
+    ...D.apartados.map(ap => [ap.titulo, ap.icono || "carpeta", D.publicaciones.filter(x => x.apartado_id === ap.id && pasa(x.titulo, x.contenido, textoFecha(x.fecha), (x.adjuntos || []).map(j => j.nombre).join(" "))).map(x => ({ h: "ap-" + ap.slug, t: x.titulo, s: x.fecha ? fechaLarga(x.fecha + "T12:00:00") : "", q: qr }))]),
     ["Documentos", "carpeta", D.docs.filter(d => pasa(d.titulo, d.descripcion, d.nombre_archivo, d.categoria)).map(d => ({ url: d.url, t: d.titulo, s: d.categoria + " · " + tipoArchivo(d.tipo_archivo, d.nombre_archivo).txt }))],
   ].filter(g => g[2].length);
   const total = grupos.reduce((n, g) => n + g[2].length, 0);
   $("resultados-todo").innerHTML = total ? `<p class="fecha-txt">${total} resultado${total === 1 ? "" : "s"}</p>` + grupos.map(([tit, ic, l]) => `
-    <h2 class="titulo-bloque">${tit} <span class="etq">${l.length}</span></h2>
+    <h2 class="titulo-bloque">${esc(tit)} <span class="etq">${l.length}</span></h2>
     <div class="panel resultados">${l.slice(0, 8).map(r => `<a class="novedad" ${r.url ? `href="${esc(urlSegura(r.url))}" target="_blank" rel="noopener"` : `href="#${r.h}" data-q="${esc(r.q || "")}" data-dia="${r.dia || ""}"`}>
-      <span class="ic">${icono(ic === "pregunta" ? "pregunta" : ic, "p")}</span><span class="txt"><b>${esc(r.t)}</b><small>${esc(r.s || "")}</small></span>${icono("der", "p")}</a>`).join("")}</div>`).join("")
+      <span class="ic">${icono(esc(ic), "p")}</span><span class="txt"><b>${esc(r.t)}</b><small>${esc(r.s || "")}</small></span>${icono("der", "p")}</a>`).join("")}</div>`).join("")
     : vacio("buscar", `No hay nada con «${esc(qr)}». Prueba con otra palabra o <a href="#info">pregúntanos</a>.`);
   $("resultados-todo").querySelectorAll("a[data-q]").forEach(l => l.onclick = () => {
     const h = l.getAttribute("href").slice(1), q2 = l.dataset.q;
     if (l.dataset.dia) { const d = fechaDia(l.dataset.dia); estado.mes = new Date(d.getFullYear(), d.getMonth(), 1); estado.diaSel = l.dataset.dia; pintaCalendario(); }
-    const campo = { convenio: "buscar-convenio", preguntas: "buscar-preguntas", actas: "buscar-actas" }[h];
+    const campo = h.startsWith("ap-") ? "buscar-ap" : { convenio: "buscar-convenio", preguntas: "buscar-preguntas", actas: "buscar-actas" }[h];
     if (campo && q2) { $(campo).value = q2; $(campo).dispatchEvent(new Event("input")); }
   });
 }

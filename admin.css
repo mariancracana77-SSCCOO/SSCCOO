@@ -265,3 +265,27 @@ body.admin { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
 
 /* Tema oscuro elegido a mano (botón Aa) */
 :root[data-theme="dark"] .asistente h3 { color: #8db4f0; }
+
+/* ===== Diseño «Rótulo de línea» en el panel ===== */
+.cabecera { background: var(--asfalto); border-bottom: 4px solid var(--rojo); }
+:root[data-theme="dark"] .cabecera { background: #0b0e11; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cabecera { background: #0b0e11; } }
+.cabecera .nombre { text-transform: uppercase; letter-spacing: .03em; font-size: 1.35rem; }
+.cabecera .sub { color: #aeb4bc; opacity: 1; }
+.btn-cab { background: transparent; border: 1.5px solid #3a414a; min-width: 44px; min-height: 44px; }
+.btn-cab:hover { background: transparent; border-color: #fff; }
+.cabecera :focus-visible { outline-color: var(--ambar-rotulo); }
+.sec-cab h1 { text-transform: uppercase; letter-spacing: .02em; font-size: 2.2rem; }
+.titulo-bloque { font-size: 1.35rem; }
+#nav-admin button { text-align: left; line-height: 1.2; }
+@media (min-width: 1000px) {
+  #nav-admin button.activa { background: var(--asfalto); color: #fff; box-shadow: inset 4px 0 0 var(--ambar-rotulo); }
+  :root[data-theme="dark"] #nav-admin button.activa { background: #232931; }
+  .cabecera { height: 74px; }
+}
+@media (prefers-color-scheme: dark) and (min-width: 1000px) { :root:not([data-theme="light"]) #nav-admin button.activa { background: #232931; color: #fff; } }
+.item-adm { border-radius: 12px; }
+.fab { box-shadow: 0 6px 18px rgba(196, 18, 47, .35); width: 64px; height: 64px; }
+#fechas-adm { margin-bottom: 14px; }
+:root[data-theme="dark"] .etq.adj { color: #8fb3ff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .etq.adj { color: #8fb3ff; } }

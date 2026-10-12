@@ -12,9 +12,9 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link rel="stylesheet" href="fuentes.css?v=17">
-<script src="lectura.js?v=17"></script>
-<link rel="stylesheet" href="styles.css?v=17">
+<link rel="stylesheet" href="fuentes.css?v=18">
+<script src="lectura.js?v=18"></script>
+<link rel="stylesheet" href="styles.css?v=18">
 </head>
 <body class="publica">
 
@@ -136,6 +136,18 @@
     <div id="lista-actas"></div>
   </section>
 
+  <!-- APARTADO (los crea el admin desde el panel: Comité de empresa, etc.) -->
+  <section class="vista" id="v-apartado">
+    <h1 class="titulo-vista" id="ap-titulo">Cargando…</h1>
+    <p class="intro-vista" id="ap-desc"></p>
+    <div class="herramientas">
+      <div class="buscador"><svg class="icono p" aria-hidden="true"><use href="#i-buscar"/></svg>
+        <input id="buscar-ap" type="search" placeholder="Buscar en este apartado" aria-label="Buscar en este apartado"></div>
+    </div>
+    <div class="filtro-fechas" id="fechas-ap"></div>
+    <div id="lista-ap"></div>
+  </section>
+
   <!-- BUSCAR EN TODO -->
   <section class="vista" id="v-buscar">
     <h1 class="titulo-vista">Buscar</h1>
@@ -202,10 +214,10 @@
 
 <div class="barra-acciones" id="barra-acciones"></div>
 
-<script src="lib/supabase.js?v=17"></script>
-<script src="iconos.js?v=17"></script>
-<script src="config.js?v=17"></script>
-<script src="render.js?v=17"></script>
-<script src="app.js?v=17"></script>
+<script src="lib/supabase.js?v=18"></script>
+<script src="iconos.js?v=18"></script>
+<script src="config.js?v=18"></script>
+<script src="render.js?v=18"></script>
+<script src="app.js?v=18"></script>
 </body>
 </html>
