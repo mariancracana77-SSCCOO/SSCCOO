@@ -849,3 +849,41 @@ input, select { min-height: 48px; }
 .trampa { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 #buzon-enviar { width: 100%; margin-top: 12px; min-height: 54px; font-size: 1.05rem; }
 .buzon .fecha-txt { margin: 10px 0 0; }
+
+/* --- Fase 3: calculadoras del convenio --- */
+.selector-calc { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0 0 12px; }
+.selector-calc button { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 64px; padding: 8px 4px; border: 2px solid var(--linea); border-radius: 10px; background: var(--tarjeta); color: var(--tinta); font: inherit; font-weight: 700; font-size: .95rem; cursor: pointer; }
+.selector-calc button .icono { color: var(--rojo); }
+.selector-calc button[aria-selected="true"] { background: var(--asfalto); border-color: var(--asfalto); color: #fff; }
+.selector-calc button[aria-selected="true"] .icono { color: var(--ambar-rotulo); }
+:root[data-theme="dark"] .selector-calc button[aria-selected="true"] { border-color: var(--ambar-rotulo); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .selector-calc button[aria-selected="true"] { border-color: var(--ambar-rotulo); } }
+.calc { padding: 18px; max-width: 720px; }
+.calc h2 { font-size: 1.5rem; text-transform: uppercase; letter-spacing: .02em; margin-bottom: 8px; }
+.calc label:not(.check) { font-size: 1rem; }
+.calc input[type=number] { font-size: 1.3rem; font-weight: 700; max-width: 220px; }
+.calc .ayuda { color: var(--suave); font-size: .92rem; margin: 6px 0 0; }
+.fila-calc { display: grid; gap: 0 12px; }
+@media (min-width: 480px) { .fila-calc { grid-template-columns: 1fr 1fr; } }
+.resultado-calc { display: flex; flex-direction: column; gap: 4px; margin-top: 18px; padding: 16px; background: var(--rotulo); border: 2px solid var(--rotulo-borde); border-radius: 12px; color: #fff; }
+.resultado-calc .rc-tit { color: #c9ced4; font-weight: 700; font-size: .95rem; }
+.resultado-calc .rc-num { font-family: var(--cond); font-weight: 700; font-size: 2.6rem; line-height: 1; color: var(--ambar-rotulo); text-transform: uppercase; }
+.resultado-calc .rc-num small { font-size: 1.3rem; color: var(--ambar-claro); }
+.resultado-calc .rc-sub { color: var(--ambar-claro); font-size: .95rem; }
+.resultado-calc p { margin: 6px 0 0; color: #e6e9ed; }
+html[data-contraste="alto"] .resultado-calc { border-color: #fff; }
+.opciones-permiso { display: grid; gap: 8px; margin-top: 10px; }
+.opcion-permiso { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 56px; padding: 12px 14px; border: 2px solid var(--linea); border-radius: 10px; background: var(--tarjeta); color: var(--tinta); font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
+.opcion-permiso:hover { border-color: var(--tinta); }
+.volver-calc { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; color: var(--rojo); font: inherit; font-weight: 700; padding: 8px 0; min-height: 44px; cursor: pointer; margin-bottom: 6px; }
+:root[data-theme="dark"] .volver-calc { color: #ff8193; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .volver-calc { color: #ff8193; } }
+.si-no { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-width: 360px; }
+.si-no label { margin: 0; position: relative; cursor: pointer; }
+.si-no input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.si-no span { display: flex; align-items: center; justify-content: center; min-height: 52px; border: 2px solid var(--linea); border-radius: 10px; font-weight: 700; background: var(--tarjeta); }
+.si-no input:checked + span { background: var(--asfalto); border-color: var(--asfalto); color: #fff; }
+:root[data-theme="dark"] .si-no input:checked + span { background: var(--tinta); color: var(--fondo); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .si-no input:checked + span { background: var(--tinta); color: var(--fondo); } }
+.si-no input:focus-visible + span { outline: 3px solid var(--azul); outline-offset: 2px; }
+#v-calcula .aviso-datos { margin-bottom: 14px; }

@@ -1,8 +1,8 @@
 // ===== Web pública: Sección Sindical CCOO Calsina Carré =====
 const $ = (id) => document.getElementById(id);
-const D = { avisos: [], eventos: [], convenio: [], docs: [], actas: [], preguntas: [], delegados: [], enlaces: [], apartados: [], publicaciones: [], paginas: {} };
+const D = { avisos: [], eventos: [], convenio: [], docs: [], actas: [], preguntas: [], delegados: [], enlaces: [], apartados: [], publicaciones: [], calc: { permisos: [], categorias: [], ajustes: {} }, paginas: {} };
 const estado = { catAviso: "Todos", catConv: "Todos", tipoActa: "Todos", catDoc: "Todos", catPreg: "Todos", archivo: false, mes: new Date(), diaSel: hoyISO(),
-  fechas: { avisos: {}, actas: {}, docs: {}, ap: {} }, ap: null };
+  fechas: { avisos: {}, actas: {}, docs: {}, ap: {} }, ap: null, calc: "vacaciones", permiso: null };
 
 // ---------- Iconos fijos ----------
 document.querySelectorAll("[data-i]").forEach(el => el.outerHTML = icono(el.dataset.i));
@@ -12,7 +12,7 @@ $("version-web").textContent = "Versión " + VERSION_WEB;
 document.querySelector(".contacto-btn").innerHTML = icono("correo", "p") + "Escribir a la Sección Sindical";
 
 // ---------- Navegación ----------
-const VISTAS = ["inicio", "avisos", "calendario", "convenio", "actas", "documentos", "preguntas", "info", "buscar", "legal"];
+const VISTAS = ["inicio", "avisos", "calendario", "convenio", "calcula", "actas", "documentos", "preguntas", "info", "buscar", "legal"];
 function irA() {
   const h = location.hash.slice(1), avisoDirecto = /^aviso-\d+$/.test(h) ? h : null;
   const legal = h === "aviso-legal" || h === "privacidad" ? h : null, aDelegados = h === "delegados";
@@ -173,7 +173,7 @@ function pintaInicio() {
   $("inicio-feed").innerHTML = items.length ? html : html + vacio("avisos", "Todavía no hay nada publicado.");
   if ($("ver-mas")) $("ver-mas").onclick = () => { estado.feedMax = max + 20; pintaInicio(); };
   // Accesos
-  const acc = [["avisos", "avisos", "Avisos"], ...D.apartados.map(a => ["ap-" + a.slug, a.icono || "carpeta", a.titulo]), ["convenio", "convenio", "Convenio"], ["calendario", "calendario", "Fechas"], ["actas", "actas", "Actas"], ["documentos", "carpeta", "Documentos"], ["preguntas", "pregunta", "Dudas"]];
+  const acc = [["avisos", "avisos", "Avisos"], ...D.apartados.map(a => ["ap-" + a.slug, a.icono || "carpeta", a.titulo]), ["convenio", "convenio", "Convenio"], ["calcula", "reloj", "Calcula"], ["calendario", "calendario", "Fechas"], ["actas", "actas", "Actas"], ["documentos", "carpeta", "Documentos"], ["preguntas", "pregunta", "Dudas"]];
   $("inicio-accesos").innerHTML = `<h2 class="tit-seccion">Ir a</h2><nav class="accesos-tablon" aria-label="Accesos rápidos">${acc.map(([v, ic, t]) =>
     `<a href="#${esc(v)}">${icono(esc(ic))}<b>${esc(t)}</b></a>`).join("")}</nav>`;
   document.querySelectorAll("#v-inicio [data-dia]").forEach(l => l.onclick = () => irADia(l.dataset.dia));
@@ -322,6 +322,82 @@ function pintaPreguntas() {
 }
 $("buscar-preguntas").oninput = () => pintaPreguntas();
 
+// ---------- Calculadoras del convenio ----------
+// Los valores (días, precios…) los pone el admin en el panel. Aquí solo se hacen las cuentas, en el móvil.
+const numDe = (el) => { const v = parseFloat(String(el?.value || "").replace(",", ".")); return isNaN(v) || v < 0 ? 0 : v; };
+document.querySelectorAll("[data-calc]").forEach(b => b.onclick = () => { estado.calc = b.dataset.calc; estado.permiso = null; pintaCalcula(); });
+function pintaCalcula() {
+  const A = D.calc.ajustes, z = $("calc-zona");
+  $("calc-aviso-txt").textContent = A.aviso || "Cálculo orientativo. Ante cualquier duda, pregunta a un delegado.";
+  document.querySelectorAll("[data-calc]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.calc === estado.calc)));
+  if (estado.calc === "vacaciones") {
+    const anyo = new Date().getFullYear();
+    z.innerHTML = `<h2>Vacaciones que te quedan</h2>
+      <label for="cv-total">Días de vacaciones al año</label>
+      <input id="cv-total" type="number" inputmode="decimal" min="0" step="0.5" value="${esc(A.vac_dias || "30")}">
+      <p class="ayuda">${esc(A.vac_nota || "")}</p>
+      <label class="check"><input type="checkbox" id="cv-nuevo">Empecé a trabajar este año (${anyo})</label>
+      <div id="cv-fecha-caja" class="oculto"><label for="cv-fecha">Día en que empezaste</label><input id="cv-fecha" type="date" min="${anyo}-01-01" max="${anyo}-12-31"></div>
+      <label for="cv-gastados">Días que ya has disfrutado o pedido este año</label>
+      <input id="cv-gastados" type="number" inputmode="decimal" min="0" step="0.5" placeholder="0">
+      <div id="cv-res" aria-live="polite"></div>`;
+    const calcula = () => {
+      let total = numDe($("cv-total"));
+      const f = $("cv-nuevo").checked && $("cv-fecha").value ? fechaDia($("cv-fecha").value) : null;
+      let prop = "";
+      if (f) {
+        const fin = new Date(anyo, 11, 31), dAnyo = (new Date(anyo + 1, 0, 1) - new Date(anyo, 0, 1)) / 86400000, dTrab = Math.round((fin - f) / 86400000) + 1;
+        const t = Math.round(total * Math.max(0, dTrab) / dAnyo * 2) / 2;
+        prop = `Como empezaste el ${f.getDate()} de ${MESES[f.getMonth()]}, te corresponde la parte proporcional: ${numTxt(t)} de ${numTxt(total)}.`;
+        total = t;
+      }
+      const gastados = numDe($("cv-gastados")), quedan = Math.max(0, total - gastados), unidad = A.vac_unidad || "días";
+      $("cv-res").innerHTML = `<div class="resultado-calc"><span class="rc-tit">Te quedan</span><span class="rc-num">${numTxt(quedan)} <small>${esc(unidad)}</small></span>
+        <span class="rc-sub">${numTxt(total)} que te corresponden − ${numTxt(gastados)} ya disfrutados</span>${prop ? `<p>${esc(prop)}</p>` : ""}${gastados > total ? `<p><b>Has puesto más días disfrutados que los que te corresponden.</b> Revisa los datos o consúltalo con un delegado.</p>` : ""}</div>`;
+    };
+    $("cv-nuevo").onchange = () => { $("cv-fecha-caja").classList.toggle("oculto", !$("cv-nuevo").checked); calcula(); };
+    ["cv-total", "cv-gastados", "cv-fecha"].forEach(id => $(id).oninput = calcula);
+    calcula();
+  } else if (estado.calc === "permisos") {
+    const l = D.calc.permisos, p = l.find(x => x.id === estado.permiso);
+    if (!l.length) { z.innerHTML = `<h2>Permisos retribuidos</h2><p class="fecha-txt">Todavía no se han puesto los permisos. Pregunta a un delegado.</p>`; return; }
+    if (!p) {
+      z.innerHTML = `<h2>¿Qué ha pasado?</h2><p class="ayuda" style="margin-top:0">Toca lo que te ocurre y te decimos qué permiso pagado te corresponde.</p>
+        <div class="opciones-permiso">${l.map(x => `<button class="opcion-permiso" data-permiso="${x.id}"><span>${esc(x.nombre)}</span>${icono("der", "p")}</button>`).join("")}</div>`;
+      z.querySelectorAll("[data-permiso]").forEach(b => b.onclick = () => { estado.permiso = +b.dataset.permiso; pintaCalcula(); $("calc-zona").scrollIntoView({ block: "start" }); });
+      return;
+    }
+    const conPregunta = Number(p.dias_extra) > 0 && p.pregunta_extra;
+    z.innerHTML = `<button class="volver-calc" id="cp-volver">${icono("izq", "p")}Elegir otro motivo</button>
+      ${conPregunta ? `<h2>${esc(p.pregunta_extra)}</h2><div class="si-no" role="radiogroup" aria-label="${esc(p.pregunta_extra)}">
+        <label><input type="radio" name="cp-extra" value="no" checked><span>No</span></label><label><input type="radio" name="cp-extra" value="si"><span>Sí</span></label></div>` : ""}
+      <div id="cp-res" aria-live="polite"></div>`;
+    const res = () => { $("cp-res").innerHTML = resultadoPermisoHTML(p, conPregunta && document.querySelector('input[name="cp-extra"]:checked')?.value === "si"); };
+    z.querySelectorAll('input[name="cp-extra"]').forEach(r => r.onchange = res);
+    $("cp-volver").onclick = () => { estado.permiso = null; pintaCalcula(); };
+    res();
+  } else {
+    const cats = D.calc.categorias;
+    if (!cats.length) { z.innerHTML = `<h2>Horas extra</h2><p class="fecha-txt">Todavía no se han puesto los precios de las horas extra. Pregunta a un delegado.</p>`; return; }
+    z.innerHTML = `<h2>Horas extra</h2>
+      <label for="ce-cat">Tu categoría</label>
+      <select id="ce-cat">${cats.map(c => `<option value="${c.id}">${esc(c.nombre)}</option>`).join("")}</select>
+      <div class="fila-calc"><div><label for="ce-h">Horas extra normales</label><input id="ce-h" type="number" inputmode="decimal" min="0" step="0.5" placeholder="0"></div>
+      <div id="ce-f-caja"><label for="ce-f">Horas extra en festivo</label><input id="ce-f" type="number" inputmode="decimal" min="0" step="0.5" placeholder="0"></div></div>
+      <div id="ce-res" aria-live="polite"></div>
+      <p class="ayuda">${esc(A.extra_nota || "")}</p>`;
+    const calcula = () => {
+      const c = cats.find(x => x.id == $("ce-cat").value) || cats[0], pf = Number(c.precio_extra_festiva || 0);
+      $("ce-f-caja").classList.toggle("oculto", !pf);
+      const h = numDe($("ce-h")), f = pf ? numDe($("ce-f")) : 0, total = h * Number(c.precio_extra || 0) + f * pf;
+      $("ce-res").innerHTML = `<div class="resultado-calc"><span class="rc-tit">Te corresponden</span><span class="rc-num">${eurosTxt(total)}</span>
+        <span class="rc-sub">${numTxt(h)} h × ${eurosTxt(c.precio_extra)}${pf ? ` + ${numTxt(f)} h × ${eurosTxt(pf)} (festivo)` : ""}</span></div>`;
+    };
+    ["ce-cat", "ce-h", "ce-f"].forEach(id => $(id).oninput = calcula); $("ce-cat").onchange = calcula;
+    calcula();
+  }
+}
+
 // ---------- Buzón anónimo ----------
 // Se envía con una función de la base de datos que comprueba el texto y pone un límite diario.
 // No se guarda nada del móvil: ni IP, ni identificadores, ni la hora (solo el día).
@@ -360,7 +436,7 @@ function pintaInfo() {
 // ---------- Carga de datos ----------
 async function cargar(idNuevo) {
   await cargarOpciones();
-  const [a, e, c, d, ac, p, pr, dl, en, aps, pubs] = await Promise.all([
+  const [a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca] = await Promise.all([
     sb.from("comunicados").select("*").order("fecha", { ascending: false }).limit(200),
     sb.from("eventos").select("*").order("fecha"),
     sb.from("convenio_secciones").select("*").order("orden").order("id"),
@@ -372,6 +448,9 @@ async function cargar(idNuevo) {
     sb.from("enlaces").select("*").order("orden").order("id"),
     sb.from("apartados").select("*").order("orden").order("id"),
     sb.from("publicaciones").select("*").order("fecha", { ascending: false }).order("id", { ascending: false }).limit(1000),
+    sb.from("calc_permisos").select("*").order("orden").order("id"),
+    sb.from("calc_categorias").select("*").order("orden").order("id"),
+    sb.from("calc_ajustes").select("*"),
   ]);
   if (a.error) {
     document.querySelectorAll("#inicio-rotulo, #lista-avisos").forEach(el =>
@@ -382,6 +461,8 @@ async function cargar(idNuevo) {
   D.paginas = Object.fromEntries((p.data || []).map(x => [x.slug, x.contenido]));
   D.preguntas = pr.data || []; D.delegados = dl.data || []; D.enlaces = en.data || [];
   D.apartados = aps.data || []; D.publicaciones = pubs.data || []; cargar.listo = true;
+  D.calc = { permisos: cp.data || [], categorias: cc.data || [], ajustes: Object.fromEntries((ca.data || []).map(x => [x.clave, x.valor])) };
+  if (!$("calc-zona").contains(document.activeElement)) pintaCalcula(); // no borrar lo que se está escribiendo
   pintaPestanasApartados(); pintaApartado();
   pintaInicio(); pintaAvisos(idNuevo); pintaCalendario(); pintaConvenio(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaInfo(); pintaCanales(); pintaContadores();
   if (/^#aviso-\d+$/.test(location.hash) && !cargar.hecho) { cargar.hecho = true; irA(); }

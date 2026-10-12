@@ -38,6 +38,7 @@
     <a href="#actas" data-v="actas">Actas</a>
     <a href="#documentos" data-v="documentos">Documentos</a>
     <a href="#convenio" data-v="convenio">Convenio</a>
+    <a href="#calcula" data-v="calcula">Calcula</a>
     <a href="#preguntas" data-v="preguntas">Dudas</a>
     <a href="#info" data-v="info">Nosotros</a>
   </nav>
@@ -122,6 +123,19 @@
         <div class="panel"><h3>Documentos</h3><div id="lista-docs"></div></div>
       </aside>
     </div>
+  </section>
+
+  <!-- CALCULADORAS DEL CONVENIO (todo se calcula en el móvil; no se guarda nada) -->
+  <section class="vista" id="v-calcula">
+    <h1 class="titulo-vista">Calcula</h1>
+    <p class="intro-vista">Haz cuentas rápidas con los datos del convenio. Todo se calcula en tu móvil: no se guarda ni se envía nada.</p>
+    <div class="aviso-datos" id="calc-aviso"><span data-i="alerta"></span><span><b id="calc-aviso-txt">Cálculo orientativo. Ante cualquier duda, pregunta a un delegado.</b> <a href="#delegados">Hablar con un delegado</a></span></div>
+    <div class="selector-calc" role="tablist" aria-label="Qué quieres calcular">
+      <button role="tab" data-calc="vacaciones" aria-selected="true"><span data-i="calendario"></span>Vacaciones</button>
+      <button role="tab" data-calc="permisos" aria-selected="false"><span data-i="convenio"></span>Permisos</button>
+      <button role="tab" data-calc="extra" aria-selected="false"><span data-i="reloj"></span>Horas extra</button>
+    </div>
+    <div class="panel calc" id="calc-zona"></div>
   </section>
 
   <!-- ACTAS -->

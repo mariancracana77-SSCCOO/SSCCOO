@@ -140,6 +140,22 @@ window.publicacionHTML = (x, qr = "") => {
     </div></article>`;
 };
 
+// ---------- Calculadoras del convenio ----------
+window.numTxt = (n) => Number(n || 0).toLocaleString("es-ES", { maximumFractionDigits: 1 });
+window.eurosTxt = (n) => Number(n || 0).toLocaleString("es-ES", { style: "currency", currency: "EUR" });
+// Resultado del asistente de permisos: cuánto te corresponde y por qué
+window.resultadoPermisoHTML = (p, conExtra) => {
+  const tiempo = p.unidad === "tiempo necesario";
+  const total = Number(p.dias || 0) + (conExtra ? Number(p.dias_extra || 0) : 0);
+  return `<div class="resultado-calc">
+    <span class="rc-tit">${esc(p.nombre || "Permiso")}</span>
+    <span class="rc-num">${tiempo ? "El tiempo necesario" : `${numTxt(total)} <small>${esc(p.unidad)}</small>`}</span>
+    ${conExtra && Number(p.dias_extra) ? `<span class="rc-sub">${numTxt(p.dias)} + ${numTxt(p.dias_extra)} por desplazamiento</span>` : ""}
+    ${p.detalle ? `<p>${esc(p.detalle)}</p>` : ""}
+    ${p.articulo ? `<span class="rc-sub">${esc(p.articulo)}</span>` : ""}
+  </div>`;
+};
+
 // ---------- Preguntas frecuentes ----------
 window.preguntaHTML = (p, qr = "", abierta = false) => `<details class="panel apartado pregunta" ${abierta ? "open" : ""} data-reg="preguntas:${p.id}">
   <summary><div class="txt">

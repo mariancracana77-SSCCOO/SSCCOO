@@ -153,6 +153,36 @@ SECCIONES.apartados = {
   previa: (x) => `<div class="accesos-tablon" style="max-width:360px"><a href="#">${icono(x.icono || "carpeta")}<b>${esc(x.titulo || "Sin nombre")}</b></a></div><p class="ayuda">${esc(x.descripcion || "")}</p>`,
   extracto: (x) => x.descripcion, chips: (x) => [x.visible === false ? "Oculto" : "Se ve en la web", "Posición " + x.orden], fechas: (x) => [x.creado, x.actualizado],
 };
+// Valores de las calculadoras de la web («Calcula»). Se editan desde la página «Calculadoras».
+const UNIDADES = ["días", "días naturales", "días laborables", "horas", "días al año", "tiempo necesario"].map(u => [u, u]);
+SECCIONES.permisos = {
+  nombre: "Permisos retribuidos", icono: "convenio", tabla: "calc_permisos", orden: ["orden", true], uno: "permiso", nuevo: "Añadir permiso", lista: "aviso", campoColor: "_", oculta: true, volver: "calculadoras",
+  intro: "", tituloDe: (x) => x.nombre,
+  campos: [
+    { k: "nombre", l: "Qué ha pasado (así lo verá el trabajador)", t: "text", req: true, ph: "Ej: Boda o registro como pareja de hecho" },
+    { fila: [{ k: "dias", l: "Cuántos", t: "number", dec: true, paso: "0.5" }, { k: "unidad", l: "Unidad", t: "select", ops: UNIDADES }] },
+    { k: "pregunta_extra", l: "Pregunta para sumar días (si la hay)", t: "text", opc: true, ph: "Ej: ¿Tienes que desplazarte a otra localidad?", ayuda: "Si el trabajador contesta «Sí», se suman los días de abajo." },
+    { k: "dias_extra", l: "Días que se suman si contesta «Sí»", t: "number", dec: true, paso: "0.5" },
+    { k: "detalle", l: "Explicación", t: "textarea", opc: true, corto: true, ayuda: "A quién afecta, qué hay que llevar, etc." },
+    { k: "articulo", l: "De dónde sale", t: "text", opc: true, ph: "Ej: Convenio, art. 24" },
+    { k: "orden", l: "Posición en la lista", t: "number" },
+    { checks: [{ k: "visible", l: "Se ve en la web", def: true }] },
+  ],
+  previa: (x) => `<div class="panel calc">${resultadoPermisoHTML(x, false)}${Number(x.dias_extra) && x.pregunta_extra ? `<p class="ayuda">Si contesta «Sí» a «${esc(x.pregunta_extra)}»:</p>${resultadoPermisoHTML(x, true)}` : ""}</div>`,
+  extracto: (x) => x.detalle, chips: (x) => [x.unidad === "tiempo necesario" ? "Tiempo necesario" : numTxt(x.dias) + " " + x.unidad, Number(x.dias_extra) ? "+" + numTxt(x.dias_extra) + " con desplazamiento" : null, x.visible === false ? "Oculto" : null, x.articulo], fechas: (x) => [null, x.actualizado],
+};
+SECCIONES.categorias = {
+  nombre: "Precios de horas extra", icono: "reloj", tabla: "calc_categorias", orden: ["orden", true], uno: "categoría", nuevo: "Añadir categoría", lista: "aviso", campoColor: "_", oculta: true, volver: "calculadoras",
+  intro: "", tituloDe: (x) => x.nombre,
+  campos: [
+    { k: "nombre", l: "Categoría", t: "text", req: true, ph: "Ej: Conductor/a" },
+    { fila: [{ k: "precio_extra", l: "Precio de la hora extra (€)", t: "number", dec: true, paso: "0.01" }, { k: "precio_extra_festiva", l: "Hora extra en festivo (€)", t: "number", dec: true, paso: "0.01", ayuda: "Pon 0 si no hay precio distinto." }] },
+    { k: "orden", l: "Posición en la lista", t: "number" },
+  ],
+  previa: (x) => `<div class="panel calc"><div class="resultado-calc"><span class="rc-tit">${esc(x.nombre || "Categoría")}</span><span class="rc-num">${eurosTxt(x.precio_extra)} <small>por hora</small></span>${Number(x.precio_extra_festiva) ? `<span class="rc-sub">En festivo: ${eurosTxt(x.precio_extra_festiva)} por hora</span>` : ""}</div></div>`,
+  extracto: () => "", chips: (x) => [eurosTxt(x.precio_extra) + " la hora", Number(x.precio_extra_festiva) ? eurosTxt(x.precio_extra_festiva) + " en festivo" : null], fechas: (x) => [null, x.actualizado],
+};
+
 // Una sección del panel por cada apartado
 const seccionApartado = (a) => ({
   nombre: a.titulo, icono: a.icono || "carpeta", tabla: "publicaciones", filtro: { apartado_id: a.id }, orden: ["fecha", false], uno: "publicación", nuevo: "Publicar en " + a.titulo, lista: "aviso", campoColor: "_",
@@ -177,9 +207,10 @@ async function cargarApartados() {
 }
 let PAGINAS = {};
 function construirPaginas() {
-  const base = Object.keys(SECCIONES).filter(k => !/^ap\d+$/.test(k) && k !== "apartados"), i = base.indexOf("actas") + 1;
+  const base = Object.keys(SECCIONES).filter(k => !/^ap\d+$/.test(k) && k !== "apartados" && !SECCIONES[k].oculta), i = base.indexOf("actas") + 1;
+  base.splice(base.indexOf("convenio") + 1, 0, "calculadoras");
   const orden = [...base.slice(0, i), ...APARTADOS.map(a => "ap" + a.id), ...base.slice(i), "apartados"];
-  PAGINAS = { resumen: { nombre: "Inicio", icono: "resumen" }, ...Object.fromEntries(orden.map(k => [k, { nombre: SECCIONES[k].nombre, icono: SECCIONES[k].icono }])),
+  PAGINAS = { resumen: { nombre: "Inicio", icono: "resumen" }, ...Object.fromEntries(orden.map(k => [k, k === "calculadoras" ? { nombre: "Calculadoras", icono: "reloj" } : { nombre: SECCIONES[k].nombre, icono: SECCIONES[k].icono }])),
     buzon: { nombre: "Buzón anónimo", icono: "correo" }, textos: { nombre: "Textos", icono: "texto" }, ajustes: { nombre: "Ajustes", icono: "ajustes" } };
 }
 construirPaginas();
@@ -283,6 +314,7 @@ function abrir(k) {
   if (!window.ES_ADMIN) { $("zona").innerHTML = `<div class="panel vacio">${icono("alerta")}Esta cuenta (${esc(window.MI_EMAIL)}) no tiene permiso para publicar. Pide a la Sección Sindical que añada tu email en Ajustes.</div>`; return; }
   if (k === "resumen") pintaResumen();
   else if (k === "buzon") pintaBuzon();
+  else if (k === "calculadoras") pintaCalculadoras();
   else if (k === "textos") pintaTextos();
   else if (k === "ajustes") pintaAjustes();
   else pintaSeccion(k);
@@ -327,7 +359,7 @@ async function pintaResumen() {
     }
   });
   await Promise.all(Object.keys(SECCIONES).map(cargarDatos));
-  $("cuentas").innerHTML = Object.entries(SECCIONES).map(([k, s]) => `<span class="etq">${datos[k].length} ${s.nombre.toLowerCase()}</span>`).join("");
+  $("cuentas").innerHTML = Object.entries(SECCIONES).filter(([, s]) => !s.oculta).map(([k, s]) => `<span class="etq">${datos[k].length} ${s.nombre.toLowerCase()}</span>`).join("");
   const todos = Object.entries(SECCIONES).flatMap(([k, s]) => datos[k].map(x => ({ k, x, f: s.fechas(x)[1] || s.fechas(x)[0] })))
     .sort((a, b) => new Date(b.f) - new Date(a.f)).slice(0, 6);
   $("ultimos").innerHTML = todos.length ? todos.map(({ k, x }) => itemHTML(k, x, true)).join("") : `<div class="panel vacio">${icono("avisos")}Todavía no has publicado nada.</div>`;
@@ -450,13 +482,13 @@ function campoHTML(c, v) {
     const loc = v ? new Date(new Date(v) - new Date(v).getTimezoneOffset() * 6e4).toISOString().slice(0, 16) : "";
     return `<label for="${id}">${c.l}${opc}</label><input id="${id}" type="datetime-local" value="${loc}">${ayuda}`;
   }
-  return `<label for="${id}">${c.l}${opc}</label><input id="${id}" type="${c.t}" value="${esc(v ?? "")}" ${c.ph ? `placeholder="${esc(c.ph)}"` : ""}>${ayuda}`;
+  return `<label for="${id}">${c.l}${opc}</label><input id="${id}" type="${c.t}" value="${esc(v ?? "")}" ${c.ph ? `placeholder="${esc(c.ph)}"` : ""} ${c.paso ? `step="${c.paso}" min="0" inputmode="decimal"` : ""}>${ayuda}`;
 }
 const camposPlanos = (s) => s.campos.flatMap(c => c.fila || c.checks?.map(x => ({ ...x, t: "check" })) || [c]);
 
 function abrirEditor(k, orig = null, preset = {}) {
   const s = SECCIONES[k];
-  if (actual !== k && actual !== "resumen" && actual !== "calendario") abrir(k);
+  if (actual !== k && actual !== "resumen" && actual !== "calendario" && !s.oculta) abrir(k);
   const x = orig || {};
   ED = { k, orig, pendientes: [], existentes: orig ? (s.campos.some(c => c.t === "archivos") ? [...(orig.adjuntos || [])] : (orig.url ? [{ nombre: orig.nombre_archivo || "Archivo", url: orig.url, tipo: orig.tipo_archivo, tamano: orig.tamano }] : [])) : [], quitar: [], sucio: false };
   const def = { orden: Math.max(0, ...(datos[k] || []).map(d => d.orden || 0)) + 1, fecha: k === "calendario" || s.filtro ? hoyISO() : undefined, ...preset };
@@ -535,7 +567,7 @@ function leerFormulario() {
     const el = $("f-" + c.k); if (!el) continue;
     if (c.t === "check") fila[c.k] = el.checked;
     else if (c.t === "datetime-local") fila[c.k] = el.value ? new Date(el.value).toISOString() : null;
-    else if (c.t === "number") fila[c.k] = parseInt(el.value || "0", 10);
+    else if (c.t === "number") fila[c.k] = c.dec ? (parseFloat(String(el.value).replace(",", ".")) || 0) : parseInt(el.value || "0", 10);
     else { const v = el.value.trim(); fila[c.k] = v || (c.opc ? null : ""); }
   }
   return fila;
@@ -613,11 +645,11 @@ $("ed-guardar").onclick = async () => {
     const editado = !!ED.orig, k = ED.k;
     ED.sucio = false; await cerrarEditor();
     if (k === "apartados") { await cargarApartados(); pintaNav(); }
-    abrir(["resumen", "calendario"].includes(actual) ? actual : k);
-    if (editado) return aviso("Cambios guardados. Ya se ven en la web.");
+    abrir(["resumen", "calendario"].includes(actual) ? actual : (s.volver || k));
+    if (editado || s.oculta) return aviso(editado ? "Cambios guardados. Ya se ven en la web." : "Guardado. Ya se ve en la web.");
     // Avisar a los móviles y a Telegram
     let res = null;
-    if (fila.notificar !== false && k !== "apartados") {
+    if (fila.notificar !== false && k !== "apartados" && !s.oculta) {
       const r = await sb.functions.invoke("notificar", { body: { modo: "publicado", tabla: s.tabla, id: guardado.id } }).catch(() => null);
       res = r?.data || null;
     }
@@ -641,7 +673,7 @@ $("ed-borrar").onclick = async () => {
   await borrarArchivos([...(x.adjuntos || []).map(a => a.url), x.url, x.pdf_url, ...archivosApartado]);
   ED.sucio = false; const k = ED.k; await cerrarEditor();
   if (k === "apartados") { await cargarApartados(); pintaNav(); }
-  aviso("Borrado."); abrir(["resumen", "calendario"].includes(actual) ? actual : k);
+  aviso("Borrado."); abrir(["resumen", "calendario"].includes(actual) ? actual : (s.volver || k));
 };
 
 // ---------- Asistente de actas (a partir de fotos y archivos) ----------
@@ -752,6 +784,37 @@ async function generarActa() {
     $("f-titulo").scrollIntoView({ behavior: "smooth", block: "center" });
   } catch (e) { msg("m-ia", e.message); }
   btn.disabled = false;
+}
+
+// ---------- Calculadoras (valores que usa «Calcula» en la web) ----------
+const AJUSTES_CALC = [
+  ["vac_dias", "Días de vacaciones al año", "number"], ["vac_unidad", "Unidad de las vacaciones", "unidad"],
+  ["vac_nota", "Nota bajo las vacaciones", "text"], ["extra_nota", "Nota bajo las horas extra", "text"], ["aviso", "Aviso de arriba (que es orientativo)", "text"],
+];
+async function pintaCalculadoras() {
+  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Calculadoras</h1><p>Los datos que usan las calculadoras de la web (pestaña «Calcula»): vacaciones, permisos pagados y horas extra. Al principio están los <b>mínimos del Estatuto de los Trabajadores</b>: revísalos con el convenio y cámbialos aquí.</p></div></div>
+    <section class="panel tarjeta-ajuste"><h2>Vacaciones y avisos</h2><div id="calc-ajustes"><p class="fecha-txt">Cargando…</p></div></section>
+    <section class="panel tarjeta-ajuste"><div class="sec-cab" style="margin:0 0 10px"><div><h2>Permisos retribuidos</h2><p>Cada línea es un motivo que el trabajador puede elegir.</p></div><button class="btn" data-nuevo="permisos">${icono("mas", "p")}Añadir permiso</button></div><div class="lista-adm" id="lista-permisos"></div></section>
+    <section class="panel tarjeta-ajuste"><div class="sec-cab" style="margin:0 0 10px"><div><h2>Precios de las horas extra</h2><p>Un precio por categoría. Sin precios, la calculadora de horas extra no sale.</p></div><button class="btn" data-nuevo="categorias">${icono("mas", "p")}Añadir categoría</button></div><div class="lista-adm" id="lista-categorias"></div></section>`;
+  $("zona").querySelectorAll("[data-nuevo]").forEach(b => b.onclick = () => abrirEditor(b.dataset.nuevo));
+  const [aj] = await Promise.all([sb.from("calc_ajustes").select("*"), cargarDatos("permisos"), cargarDatos("categorias")]);
+  const A = Object.fromEntries((aj.data || []).map(x => [x.clave, x.valor]));
+  $("calc-ajustes").innerHTML = AJUSTES_CALC.map(([k, l, t]) => t === "unidad"
+      ? `<label for="ca-${k}">${l}</label><select id="ca-${k}">${["días naturales", "días laborables", "días"].map(u => `<option ${u === A[k] ? "selected" : ""}>${u}</option>`).join("")}</select>`
+      : t === "number" ? `<label for="ca-${k}">${l}</label><input id="ca-${k}" type="number" step="0.5" min="0" inputmode="decimal" value="${esc(A[k] || "")}">`
+      : `<label for="ca-${k}">${l}</label><textarea id="ca-${k}" maxlength="400" style="min-height:76px">${esc(A[k] || "")}</textarea>`).join("") +
+    `<div class="botones"><button class="btn" id="ca-guardar">${icono("check", "p")}Guardar</button></div><p class="msg" id="ca-msg"></p>`;
+  $("ca-guardar").onclick = async () => {
+    const filas = AJUSTES_CALC.map(([k]) => ({ clave: k, valor: String($("ca-" + k).value).trim().slice(0, 400), actualizado: new Date().toISOString() }));
+    const dias = parseFloat(filas[0].valor.replace(",", "."));
+    if (isNaN(dias) || dias < 0 || dias > 60) return msg("ca-msg", "Pon un número de días entre 0 y 60.");
+    filas[0].valor = String(dias);
+    const { error } = await sb.from("calc_ajustes").upsert(filas);
+    msg("ca-msg", error ? "No se ha podido guardar: " + error.message : "Guardado. Ya se usa en la web.", !error);
+  };
+  $("lista-permisos").innerHTML = datos.permisos.length ? datos.permisos.map(x => itemHTML("permisos", x)).join("") : `<div class="panel vacio">${icono("convenio")}Todavía no hay permisos.</div>`;
+  $("lista-categorias").innerHTML = datos.categorias.length ? datos.categorias.map(x => itemHTML("categorias", x)).join("") : `<div class="panel vacio">${icono("reloj")}Todavía no hay precios. Pulsa «Añadir categoría».</div>`;
+  enlazarItems($("lista-permisos")); enlazarItems($("lista-categorias"));
 }
 
 // ---------- Buzón anónimo ----------
@@ -1112,7 +1175,7 @@ async function prepararPlantillas() {
 }
 
 // ---------- Copia de seguridad y archivo ----------
-const TABLAS_COPIA = ["comunicados", "eventos", "convenio_secciones", "actas", "documentos", "preguntas", "plantillas", "apartados", "publicaciones", "buzon", "paginas", "opciones", "admins"];
+const TABLAS_COPIA = ["comunicados", "eventos", "convenio_secciones", "actas", "documentos", "preguntas", "plantillas", "apartados", "publicaciones", "buzon", "calc_permisos", "calc_categorias", "calc_ajustes", "paginas", "opciones", "admins"];
 async function prepararCopiaYArchivo() {
   const { data } = await sb.from("paginas").select("slug, contenido, actualizado").in("slug", ["archivo_meses", "ultima_copia"]);
   const p = Object.fromEntries((data || []).map(x => [x.slug, x]));
