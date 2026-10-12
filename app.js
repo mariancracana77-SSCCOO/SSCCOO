@@ -29,6 +29,8 @@ function irA() {
     if (on) b.scrollIntoView({ inline: "center", block: "nearest" });
   });
   if (!avisoDirecto && !legal && !aDelegados) window.scrollTo(0, 0);
+  const sec = ap ? "ap-" + ap : v;
+  if (sec !== "inicio") { marcaVisto(sec); if (cargar.listo) pintaContadores(); }
   if (v === "buscar") setTimeout(() => $("buscar-todo").focus(), 100);
 }
 
@@ -98,6 +100,22 @@ const cuandoEvento = (e) => {
 };
 const resumenPlano = (t, n) => { const r = String(t || "").replace(/\*\*/g, "").replace(/^\s*(?:[-*•]|\d+[.)])\s+/gm, "").replace(/\s+/g, " ").trim(); return r.length > n ? r.slice(0, n).replace(/\s+\S*$/, "") + "…" : r; };
 const irADia = (iso) => { const d = fechaDia(iso); estado.mes = new Date(d.getFullYear(), d.getMonth(), 1); estado.diaSel = iso; pintaCalendario(); };
+
+// Contador pequeño en cada pestaña: lo nuevo desde la última visita de este móvil (o desde que se abrió esa pestaña)
+function leeVisto() { try { return JSON.parse(localStorage.getItem("ccoo-visto") || "{}") || {}; } catch (_) { return {}; } }
+function marcaVisto(sec) { try { const v = leeVisto(); v[sec] = Date.now(); localStorage.setItem("ccoo-visto", JSON.stringify(v)); } catch (_) {} }
+function pintaContadores() {
+  const VISTO = leeVisto();
+  const nuevos = (sec, l, f) => { const desde = Math.max(ULTIMA, VISTO[sec] || 0); return l.filter(x => f(x) && new Date(f(x)).getTime() > desde).length; };
+  const c = { avisos: nuevos("avisos", D.avisos, a => a.fecha), calendario: nuevos("calendario", D.eventos, e => e.creado), actas: nuevos("actas", D.actas, a => a.creado),
+    documentos: nuevos("documentos", D.docs, d => d.fecha), convenio: nuevos("convenio", D.convenio, x => x.actualizado), preguntas: nuevos("preguntas", D.preguntas, x => x.creado) };
+  D.apartados.forEach(a => { c["ap-" + a.slug] = nuevos("ap-" + a.slug, D.publicaciones.filter(p => p.apartado_id === a.id), p => p.creado); });
+  document.querySelectorAll(".pestanas-web a[data-v]").forEach(a => {
+    a.querySelectorAll(".cuenta-pestana, .sr-cuenta").forEach(e => e.remove());
+    const n = a.classList.contains("activa") ? 0 : c[a.dataset.v] || 0;
+    if (n) a.insertAdjacentHTML("beforeend", `<span class="cuenta-pestana" aria-hidden="true">${n > 9 ? "9+" : n}</span><span class="sr-only sr-cuenta">, ${n} ${n === 1 ? "nuevo" : "nuevos"}</span>`);
+  });
+}
 
 function pintaInicio() {
   $("txt-inicio").textContent = D.paginas.inicio || "";
@@ -342,7 +360,7 @@ async function cargar(idNuevo) {
   D.preguntas = pr.data || []; D.delegados = dl.data || []; D.enlaces = en.data || [];
   D.apartados = aps.data || []; D.publicaciones = pubs.data || []; cargar.listo = true;
   pintaPestanasApartados(); pintaApartado();
-  pintaInicio(); pintaAvisos(idNuevo); pintaCalendario(); pintaConvenio(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaInfo(); pintaCanales();
+  pintaInicio(); pintaAvisos(idNuevo); pintaCalendario(); pintaConvenio(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaInfo(); pintaCanales(); pintaContadores();
   if (/^#aviso-\d+$/.test(location.hash) && !cargar.hecho) { cargar.hecho = true; irA(); }
 }
 cargar();
@@ -355,13 +373,36 @@ function avisar(texto, hash) {
   toast.onclick = () => { location.hash = hash; toast.classList.remove("ver"); };
   clearTimeout(avisar.t); avisar.t = setTimeout(() => toast.classList.remove("ver"), 9000);
 }
+// Lo nuevo que llega mientras la web está abierta no se pinta de golpe (no salta nada en la pantalla):
+// aparece una banda «Hay 1 novedad · Ver» y se muestra al pulsarla, sin recargar la página.
 let recarga;
-const QUE = { comunicados: ["Nuevo aviso: ", "avisos"], actas: ["Nueva acta: ", "actas"], documentos: ["Nuevo documento: ", "documentos"], eventos: ["Nueva fecha: ", "calendario"], publicaciones: ["Novedad: ", "inicio"] };
+const PEND = [];
+const QUE = { comunicados: "Aviso", actas: "Acta", documentos: "Documento", eventos: "Fecha", publicaciones: "Novedad" };
+function pintaBandaNovedad() {
+  const b = $("banda-novedad"), n = PEND.length;
+  b.classList.toggle("oculto", !n);
+  if (!n) { b.innerHTML = ""; return; }
+  b.innerHTML = `<button id="ver-novedad" type="button"><span class="pt" aria-hidden="true"></span>
+    <span class="txt">${n === 1 ? `Hay 1 novedad: <b>${esc(PEND[0].titulo || QUE[PEND[0].t])}</b>` : `Hay ${n} novedades`}</span><span class="ver">Ver</span></button>`;
+  $("ver-novedad").onclick = verNovedades;
+}
+const irAHash = (h) => { if (location.hash.slice(1) === h) irA(); else location.hash = h; };
+async function verNovedades() {
+  const l = PEND.splice(0); pintaBandaNovedad();
+  await cargar(l.length === 1 && l[0].t === "comunicados" ? l[0].id : null);
+  if (l.length !== 1) { irAHash("inicio"); setTimeout(() => $("lo-ultimo").scrollIntoView({ block: "start" }), 60); return; }
+  const x = l[0];
+  if (x.t === "comunicados") return irAHash("aviso-" + x.id);
+  if (x.t === "eventos") { if (x.fecha) irADia(x.fecha); return irAHash("calendario"); }
+  if (x.t === "publicaciones") { const ap = D.apartados.find(a => a.id === x.apartado_id); return irAHash(ap ? "ap-" + ap.slug : "inicio"); }
+  irAHash(x.t === "actas" ? "actas" : "documentos");
+}
 const canal = sb.channel("web-directo");
 Object.keys(QUE).forEach(t => canal.on("postgres_changes", { event: "*", schema: "public", table: t }, (pl) => {
-  clearTimeout(recarga); recarga = setTimeout(() => cargar(t === "comunicados" ? pl.new?.id : null), 400);
-  const ap = t === "publicaciones" && D.apartados.find(a => a.id === pl.new?.apartado_id);
-  if (pl.eventType === "INSERT") avisar(QUE[t][0] + (pl.new.titulo || ""), ap ? "ap-" + ap.slug : QUE[t][1]);
+  if (pl.eventType === "INSERT" && pl.new?.id != null) {
+    if (!PEND.some(x => x.t === t && x.id === pl.new.id)) PEND.push({ t, id: pl.new.id, titulo: pl.new.titulo, fecha: pl.new.fecha, apartado_id: pl.new.apartado_id });
+    pintaBandaNovedad();
+  } else { clearTimeout(recarga); recarga = setTimeout(() => cargar(), 400); } // cambios y borrados: se actualiza en silencio
 }));
 canal.subscribe();
 document.addEventListener("visibilitychange", () => { if (!document.hidden) cargar(); });

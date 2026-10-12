@@ -306,7 +306,7 @@ textarea { min-height: 130px; resize: vertical; line-height: 1.5; }
 
 /* Evita que las columnas se salgan de la pantalla en el móvil */
 .inicio-rejilla > *, .cal-rejilla > *, .conv-rejilla > *, .info-rejilla > *, .zona > * { min-width: 0; }
-html, body { overflow-x: hidden; }
+html, body { overflow-x: hidden; overflow-x: clip; } /* «clip» no rompe la cabecera fija (sticky); «hidden» queda para navegadores antiguos */
 .evento .cartel { align-self: start; }
 .dia { aspect-ratio: auto; min-height: 46px; min-width: 0; }
 
@@ -813,3 +813,17 @@ input, select { min-height: 48px; }
 @media (max-width: 420px) { .publicacion { grid-template-columns: 1fr; } .pub-fecha { display: none; } }
 .accesos-tablon a:last-child:nth-child(odd) { grid-column: 1 / -1; min-height: 72px; }
 .paradas .ruta a, .paradas .ruta a:visited { color: var(--tinta); }
+
+/* --- Fase 1: novedades en directo --- */
+.cuenta-pestana { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; margin-left: 6px; border-radius: 10px; background: var(--ambar-rotulo); color: var(--asfalto); font-family: var(--texto); font-size: .72rem; font-weight: 700; letter-spacing: 0; vertical-align: 2px; }
+.banda-novedad button { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 10px 16px; border: 0; background: var(--ambar-rotulo); color: var(--asfalto); font: inherit; font-size: 1rem; text-align: left; cursor: pointer; }
+.banda-novedad button:hover { background: #ffc233; }
+.banda-novedad button:focus-visible { outline: 3px solid var(--asfalto); outline-offset: -5px; }
+.banda-novedad .txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.banda-novedad .ver { flex: none; background: var(--asfalto); color: #fff; font-weight: 700; padding: 6px 14px; border-radius: 8px; }
+.banda-novedad .pt { flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--rojo); animation: latido 1.6s ease-in-out infinite; }
+@keyframes latido { 0%, 100% { box-shadow: 0 0 0 0 rgba(196, 18, 47, .5); } 50% { box-shadow: 0 0 0 7px rgba(196, 18, 47, 0); } }
+@media (prefers-reduced-motion: reduce) { .banda-novedad .pt { animation: none; } }
+@media (min-width: 1000px) { .banda-novedad button { justify-content: center; } .banda-novedad .txt { flex: 0 1 auto; } }
+/* Al saltar a un aviso o a una sección, que no quede tapado por la cabecera fija */
+.aviso, .acta, .publicacion, .texto-legal, #tit-delegados, #txt-contacto, .dia-detalle { scroll-margin-top: 140px; }

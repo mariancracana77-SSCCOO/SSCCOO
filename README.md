@@ -130,3 +130,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Clasificación por año y mes**: en Avisos, Actas, Documentos y los apartados, los desplegables de fecha se cambian por botones de año y, dentro de cada año, de mes, con cuántos hay. Las listas van separadas por meses («Octubre de 2026»). En el panel, igual.
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
+
+## Versión 19 (en preparación)
+### Fase 1: novedades en directo
+- Si se publica algo (aviso, fecha, acta, documento o algo en un apartado) mientras alguien tiene la web abierta, aparece arriba una banda amarilla **«Hay 1 novedad · Ver»**. Al pulsarla se muestra lo nuevo sin recargar la página. Los cambios y borrados se actualizan solos, sin avisar.
+- **Contador pequeño en cada pestaña** con lo nuevo desde la última visita de ese móvil. Desaparece al entrar en la pestaña. Se guarda solo en el propio móvil.
+- Arreglado: la cabecera con las pestañas ya se queda fija arriba al bajar por la página. Antes se iba con el resto.

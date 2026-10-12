@@ -27,6 +27,8 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
   - Vista `apartado` (`#ap-<slug>`) para los apartados que crea el admin.
   - Clasificación por año y mes con botones (`pintaFechas`) y listas separadas por meses (`porMeses`).
   - Vista `legal` (#aviso-legal, #privacidad).
+  - Tiempo real (Fase 1): los INSERT se guardan en `PEND` y se muestra la banda `#banda-novedad`. «Ver» llama a `cargar()` y lleva a lo nuevo. Contadores por pestaña (`pintaContadores`) con localStorage `ccoo-visto` y `ccoo-ultima-visita`.
+  - `html, body { overflow-x: clip }`: con `hidden` deja de funcionar la cabecera `sticky`.
 - `admin.html` + `admin.js` + `admin.css`: panel (Resumen con visitas, Calendario mensual, secciones, Textos, Ajustes: canales Telegram/WhatsApp, copia ZIP, archivo, administradores, listas; asistente de actas con Gemini a partir de fotos/archivos).
   - Las secciones se definen en el objeto `SECCIONES`.
   - «Apartados de la web» (`SECCIONES.apartados`) crea apartados. Cada uno genera una sección dinámica `ap<id>` (`seccionApartado`, tabla `publicaciones` filtrada por `apartado_id`) que se coloca tras Actas (`construirPaginas`).
