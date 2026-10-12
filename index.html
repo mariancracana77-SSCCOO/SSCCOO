@@ -170,6 +170,23 @@
     </div>
     <div class="filtros" id="filtros-preguntas"></div>
     <div id="lista-preguntas"></div>
+
+    <section class="panel buzon" id="buzon" aria-labelledby="buzon-tit">
+      <h2 id="buzon-tit">Buzón anónimo</h2>
+      <p>¿Tienes una pregunta o una sugerencia para la Sección Sindical? Escríbela aquí. <b>No sabemos quién la envía.</b></p>
+      <div class="aviso-datos"><span data-i="alerta"></span><span>No pongas tu nombre, ni el de compañeros, ni teléfonos o emails. Si quieres una respuesta personal, <a href="#delegados">habla con un delegado</a>.</span></div>
+      <div class="tipo-buzon" role="radiogroup" aria-label="Qué quieres enviar">
+        <label><input type="radio" name="buzon-tipo" value="Pregunta" checked><span>Una pregunta</span></label>
+        <label><input type="radio" name="buzon-tipo" value="Sugerencia"><span>Una sugerencia</span></label>
+      </div>
+      <label for="buzon-texto">Tu mensaje</label>
+      <textarea id="buzon-texto" maxlength="1000" rows="5" placeholder="Escribe aquí tu pregunta o sugerencia"></textarea>
+      <div class="cuenta-car" aria-live="polite"><span id="buzon-cuenta">0</span> de 1000 letras</div>
+      <input class="trampa" id="buzon-web" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <button class="btn" id="buzon-enviar" type="button"><span data-i="correo"></span>Enviar de forma anónima</button>
+      <p class="msg" id="buzon-msg" role="status"></p>
+      <p class="fecha-txt">Las respuestas que sirvan a todos se publicarán aquí, en las preguntas frecuentes. <a href="#privacidad">Qué se guarda</a>.</p>
+    </section>
   </section>
 
   <!-- DOCUMENTOS -->

@@ -56,13 +56,13 @@ Añadir una línea en `README.md` y entregar zip `SSCCOO-web-vN.zip`. La usuaria
 ## Supabase
 - Proyecto `kdfedwcskymaitvpryvg` (región eu-west-3, París), nombre `ccoo-calsina-carre`. URL https://kdfedwcskymaitvpryvg.supabase.co. Clave publicable en `config.js`.
 - RLS en todas las tablas: lectura pública de lo publicado; escritura solo `public.is_admin()` (tabla `admins` por email).
-- Tablas: comunicados, eventos, convenio_secciones, actas, documentos, preguntas, plantillas, delegados, enlaces, apartados (slug, titulo, descripcion, icono, orden, visible), publicaciones (apartado_id, titulo, contenido, fecha, adjuntos, publicado, notificar/notificado), paginas (slugs: inicio, convenio, quienes, contacto, telegram, whatsapp, archivo_meses, ultima_copia, aviso_legal, privacidad), opciones, admins, config_privada (sin políticas: solo service role; VAPID, Telegram, Gemini, cron), push_subs (sin políticas), traducciones, visitas_dia.
-- RPC: suscribir_push (valida y tope 5000), desuscribir_push, contar_visita, contar_suscritos, reiniciar_suscripciones (solo admin), is_admin.
+- Tablas: comunicados, eventos, convenio_secciones, actas, documentos, preguntas, plantillas, delegados, enlaces, apartados (slug, titulo, descripcion, icono, orden, visible), publicaciones (apartado_id, titulo, contenido, fecha, adjuntos, publicado, notificar/notificado), buzon (tipo, texto, dia, leido, archivado: solo admin lee; se inserta solo con la RPC), paginas (slugs: inicio, convenio, quienes, contacto, telegram, whatsapp, archivo_meses, ultima_copia, aviso_legal, privacidad), opciones, admins, config_privada (sin políticas: solo service role; VAPID, Telegram, Gemini, cron), push_subs (sin políticas), traducciones, visitas_dia.
+- RPC: enviar_buzon (pública: valida tipo y largo 5–1000, rechaza emails y teléfonos, tope de 40 al día; guarda solo el día, sin hora), suscribir_push (valida y tope 5000), desuscribir_push, contar_visita, contar_suscritos, reiniciar_suscripciones (solo admin), is_admin.
 - Trigger `solo_admins_registran` en `auth.users`: solo puede crear cuenta un email que esté en `admins`.
 - Storage: bucket público `documentos` (20 MB); subir/borrar solo admin.
 - Edge functions (código en Supabase, leer con el conector): `notificar` (push + Telegram, también para `publicaciones`; cron cada 10 min con `x-cron-secret`; resto solo admin), `traducir` (pública, solo traduce lo publicado, con caché), `generar-acta` (con JWT, Gemini).
-- Avisos del linter que son intencionados: tablas con RLS sin políticas (config_privada, push_subs), RPC públicas de push/visitas, pg_net en public (lo usa el cron).
-- En este entorno, las migraciones con `drop`/`revoke` juntos pueden cancelarse esperando confirmación: dividirlas en partes no destructivas.
+- Avisos del linter que son intencionados: tablas con RLS sin políticas (config_privada, push_subs), RPC públicas de push/visitas/buzón, pg_net en public (lo usa el cron).
+- En este entorno, las migraciones con `drop`/`revoke` juntos pueden cancelarse esperando confirmación: dividirlas en partes no destructivas. Lo mismo con `delete` en execute_sql. Para probar funciones sin dejar rastro: un bloque `do $$ … raise exception 'RESULTADO …' $$` lo deshace todo y devuelve el resultado en el error.
 
 ## Pruebas
 Playwright con Chromium (sin `playwright install`), servidor local `python3 -m http.server 8765` y un mock de supabase-js que sustituye `lib/supabase.js`. Probar móvil 320–412 px y PC, claro/oscuro, letra «muy grande», y que no haya errores de consola ni de CSP.

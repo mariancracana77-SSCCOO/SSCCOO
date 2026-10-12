@@ -827,3 +827,25 @@ input, select { min-height: 48px; }
 @media (min-width: 1000px) { .banda-novedad button { justify-content: center; } .banda-novedad .txt { flex: 0 1 auto; } }
 /* Al saltar a un aviso o a una sección, que no quede tapado por la cabecera fija */
 .aviso, .acta, .publicacion, .texto-legal, #tit-delegados, #txt-contacto, .dia-detalle { scroll-margin-top: 140px; }
+
+/* --- Fase 2: buzón anónimo --- */
+.buzon { padding: 20px; margin-top: 28px; border-top: 5px solid var(--rojo); }
+.buzon h2 { font-size: 1.7rem; text-transform: uppercase; letter-spacing: .02em; margin-bottom: 6px; }
+.buzon > p { margin: 0 0 12px; }
+.aviso-datos { display: flex; gap: 10px; align-items: flex-start; background: var(--ambar-suave); border-left: 5px solid var(--ambar-rotulo); border-radius: 8px; padding: 12px 14px; margin: 0 0 14px; font-size: .98rem; }
+.aviso-datos .icono { color: #8a5d00; margin-top: 2px; }
+:root[data-theme="dark"] .aviso-datos .icono { color: var(--ambar-rotulo); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .aviso-datos .icono { color: var(--ambar-rotulo); } }
+.tipo-buzon { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+.tipo-buzon label { margin: 0; position: relative; cursor: pointer; }
+.tipo-buzon input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.tipo-buzon span { display: flex; align-items: center; justify-content: center; min-height: 52px; padding: 8px; border: 2px solid var(--linea); border-radius: 10px; font-weight: 700; text-align: center; background: var(--tarjeta); }
+.tipo-buzon input:checked + span { background: var(--asfalto); border-color: var(--asfalto); color: #fff; }
+:root[data-theme="dark"] .tipo-buzon input:checked + span { background: var(--tinta); border-color: var(--tinta); color: var(--fondo); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tipo-buzon input:checked + span { background: var(--tinta); border-color: var(--tinta); color: var(--fondo); } }
+.tipo-buzon input:focus-visible + span { outline: 3px solid var(--azul); outline-offset: 2px; }
+.buzon textarea { font-size: 1.05rem; min-height: 140px; }
+.cuenta-car { text-align: right; color: var(--suave); font-size: .85rem; margin-top: 4px; }
+.trampa { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+#buzon-enviar { width: 100%; margin-top: 12px; min-height: 54px; font-size: 1.05rem; }
+.buzon .fecha-txt { margin: 10px 0 0; }

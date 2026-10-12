@@ -322,6 +322,29 @@ function pintaPreguntas() {
 }
 $("buscar-preguntas").oninput = () => pintaPreguntas();
 
+// ---------- Buzón anónimo ----------
+// Se envía con una función de la base de datos que comprueba el texto y pone un límite diario.
+// No se guarda nada del móvil: ni IP, ni identificadores, ni la hora (solo el día).
+const PARECE_DATO = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}|(\+?\d[ .-]?){9,}/i;
+$("buzon-texto").oninput = () => { $("buzon-cuenta").textContent = $("buzon-texto").value.length; msg2("buzon-msg", ""); };
+function msg2(id, t, ok) { const el = $(id); el.textContent = t; el.className = "msg " + (t ? (ok ? "ok" : "err") : ""); }
+$("buzon-enviar").onclick = async () => {
+  const texto = $("buzon-texto").value.trim(), tipo = document.querySelector('input[name="buzon-tipo"]:checked')?.value || "Pregunta";
+  if ($("buzon-web").value) { $("buzon-texto").value = ""; return msg2("buzon-msg", "Enviado. Gracias.", true); } // relleno por un programa automático
+  if (texto.length < 5) return msg2("buzon-msg", "Escribe un poco más para que se entienda.");
+  if (PARECE_DATO.test(texto)) return msg2("buzon-msg", "Quita el email o el teléfono: el buzón es anónimo.");
+  const clave = "ccoo-buzon-" + hoyISO(); let n = 0;
+  try { n = +localStorage.getItem(clave) || 0; } catch (_) {}
+  if (n >= 3) return msg2("buzon-msg", "Ya has enviado 3 mensajes hoy desde este móvil. Prueba mañana o habla con un delegado.");
+  const b = $("buzon-enviar"); b.disabled = true; msg2("buzon-msg", "Enviando…", true);
+  const { error } = await sb.rpc("enviar_buzon", { p_tipo: tipo, p_texto: texto });
+  b.disabled = false;
+  if (error) return msg2("buzon-msg", /[a-záéíóú]/i.test(error.message || "") && !/fetch|network/i.test(error.message) ? error.message : "No se ha podido enviar. Comprueba la conexión y vuelve a intentarlo.");
+  try { Object.keys(localStorage).filter(k => k.startsWith("ccoo-buzon-") && k !== clave).forEach(k => localStorage.removeItem(k)); localStorage.setItem(clave, String(n + 1)); } catch (_) {}
+  $("buzon-texto").value = ""; $("buzon-cuenta").textContent = "0";
+  msg2("buzon-msg", "Enviado. Gracias. Lo leerá la Sección Sindical.", true);
+};
+
 // ---------- Nosotros ----------
 function pintaInfo() {
   $("txt-aviso-legal").innerHTML = textoHTML(D.paginas.aviso_legal || "Texto pendiente de publicar.");

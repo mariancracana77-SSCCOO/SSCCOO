@@ -289,3 +289,32 @@ body.admin { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
 #fechas-adm { margin-bottom: 14px; }
 :root[data-theme="dark"] .etq.adj { color: #8fb3ff; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .etq.adj { color: #8fb3ff; } }
+
+/* ===== Buzón anónimo ===== */
+.cuenta-menu { margin-left: auto; background: var(--rojo); color: #fff; font-size: .75rem; font-weight: 700; border-radius: 10px; min-width: 22px; height: 22px; display: inline-grid; place-items: center; padding: 0 6px; }
+#nav-admin button { position: relative; }
+@media (max-width: 999px) { #nav-admin .cuenta-menu { position: absolute; top: 4px; right: calc(50% - 22px); } }
+.msg-buzon { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.msg-buzon.sin-leer { border-left: 5px solid var(--ambar-rotulo); }
+.msg-buzon .cab { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.msg-buzon .texto { margin: 0; white-space: pre-wrap; font-size: 1.05rem; overflow-wrap: anywhere; }
+.acciones-buzon { display: flex; gap: 8px; flex-wrap: wrap; }
+.acciones-buzon .btn { min-height: 46px; }
+@media (max-width: 520px) { .acciones-buzon .btn { flex: 1 1 100%; } }
+.etq.tipo-preg { background: var(--azul-suave); color: var(--azul); }
+.etq.tipo-sug { background: var(--verde-suave); color: var(--verde); }
+.aviso-buzon { width: 100%; text-align: left; cursor: pointer; border-color: var(--ambar-rotulo); border-width: 2px; margin: 4px 0 6px; }
+.aviso-buzon .ic { background: var(--ambar-suave); color: #8a5d00; }
+#vistas-buzon button .etq { margin-left: 4px; }
+.cambio-vista { max-width: 100%; flex-wrap: wrap; }
+#vistas-buzon { display: flex; width: 100%; }
+#vistas-buzon button { flex: 1 1 0; justify-content: center; padding: 8px 6px; white-space: nowrap; }
+@media (max-width: 380px) { #vistas-buzon button .etq { display: none; } }
+#vistas-buzon { flex-wrap: nowrap; }
+@media (max-width: 520px) {
+  .acciones-buzon { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .acciones-buzon .btn { flex: none; padding: 8px 4px; font-size: .85rem; flex-direction: column; gap: 2px; }
+  .acciones-buzon .btn[data-acc="pregunta"] { grid-column: 1 / -1; flex-direction: row; font-size: 1rem; }
+}
+:root[data-theme="dark"] .etq.tipo-preg { color: #8fb3ff; } :root[data-theme="dark"] .etq.tipo-sug { color: #5fd08f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .etq.tipo-preg { color: #8fb3ff; } :root:not([data-theme="light"]) .etq.tipo-sug { color: #5fd08f; } }

@@ -180,7 +180,7 @@ function construirPaginas() {
   const base = Object.keys(SECCIONES).filter(k => !/^ap\d+$/.test(k) && k !== "apartados"), i = base.indexOf("actas") + 1;
   const orden = [...base.slice(0, i), ...APARTADOS.map(a => "ap" + a.id), ...base.slice(i), "apartados"];
   PAGINAS = { resumen: { nombre: "Inicio", icono: "resumen" }, ...Object.fromEntries(orden.map(k => [k, { nombre: SECCIONES[k].nombre, icono: SECCIONES[k].icono }])),
-    textos: { nombre: "Textos", icono: "texto" }, ajustes: { nombre: "Ajustes", icono: "ajustes" } };
+    buzon: { nombre: "Buzón anónimo", icono: "correo" }, textos: { nombre: "Textos", icono: "texto" }, ajustes: { nombre: "Ajustes", icono: "ajustes" } };
 }
 construirPaginas();
 const EN_MOVIL = ["resumen", "avisos", "calendario", "actas"];
@@ -204,6 +204,7 @@ async function iniciar() {
   window.ES_ADMIN = !!data;
   await cargarOpciones();
   await cargarApartados();
+  await contarBuzon();
   pintaNav();
   const h = location.hash.slice(1);
   abrir(PAGINAS[h] ? h : "resumen");
@@ -248,9 +249,10 @@ const salir = async () => { if (await confirmarSalida()) { await sb.auth.signOut
 
 // ---------- Navegación ----------
 function pintaNav() {
-  const b = (k, extra = "") => `<button data-p="${k}" class="${k === actual ? "activa" : ""} ${extra}">${icono(PAGINAS[k].icono)}${PAGINAS[k].nombre}</button>`;
+  const cuenta = (k) => k === "buzon" && BUZON_SIN_LEER ? `<span class="cuenta-menu" aria-label="${BUZON_SIN_LEER} sin leer">${BUZON_SIN_LEER}</span>` : "";
+  const b = (k, extra = "") => `<button data-p="${k}" class="${k === actual ? "activa" : ""} ${extra}">${icono(PAGINAS[k].icono)}${PAGINAS[k].nombre}${cuenta(k)}</button>`;
   $("nav-admin").innerHTML =
-    Object.keys(PAGINAS).map(k => (["preguntas", "apartados", "textos"].includes(k) ? `<div class="sep solo-pc"></div>` : "") + b(k, EN_MOVIL.includes(k) ? "" : "solo-pc")).join("") +
+    Object.keys(PAGINAS).map(k => (["preguntas", "apartados", "buzon"].includes(k) ? `<div class="sep solo-pc"></div>` : "") + b(k, EN_MOVIL.includes(k) ? "" : "solo-pc")).join("") +
     `<button class="solo-movil ${EN_MOVIL.includes(actual) ? "" : "activa"}" id="b-mas">${icono("menu")}Más</button>
      <div class="sep solo-pc"></div>
      <div class="quien">${esc(window.MI_EMAIL || "")}<br>Versión ${VERSION_WEB}</div>
@@ -263,7 +265,7 @@ function pintaNav() {
 }
 function abrirMas() {
   $("hoja-mas").innerHTML = Object.keys(PAGINAS).filter(k => !EN_MOVIL.includes(k)).map(k =>
-    `<button data-p="${k}">${icono(PAGINAS[k].icono)}${PAGINAS[k].nombre}</button>`).join("") +
+    `<button data-p="${k}">${icono(PAGINAS[k].icono)}${PAGINAS[k].nombre}${k === "buzon" && BUZON_SIN_LEER ? `<span class="cuenta-menu">${BUZON_SIN_LEER}</span>` : ""}</button>`).join("") +
     (INSTALADA_A() ? "" : `<button id="m-instalar">${icono("descargar")}Instalar la app</button>`) +
     `<a href="index.html" target="_blank">${icono("ver")}Ver la web</a><button id="m-salir">${icono("salir")}Salir (${esc(window.MI_EMAIL || "")})</button><p class="fecha-txt" style="text-align:center;margin:6px 0 0">Versión ${VERSION_WEB}</p>`;
   ["velo-mas", "hoja-mas"].forEach(i => $(i).classList.remove("oculto"));
@@ -280,6 +282,7 @@ function abrir(k) {
   if (SECCIONES[k]) { $("fab").onclick = () => abrirEditor(k); $("fab").setAttribute("aria-label", SECCIONES[k].nuevo); }
   if (!window.ES_ADMIN) { $("zona").innerHTML = `<div class="panel vacio">${icono("alerta")}Esta cuenta (${esc(window.MI_EMAIL)}) no tiene permiso para publicar. Pide a la Sección Sindical que añada tu email en Ajustes.</div>`; return; }
   if (k === "resumen") pintaResumen();
+  else if (k === "buzon") pintaBuzon();
   else if (k === "textos") pintaTextos();
   else if (k === "ajustes") pintaAjustes();
   else pintaSeccion(k);
@@ -296,6 +299,7 @@ async function pintaResumen() {
       <button class="panel rapido" data-n="convenio"><span class="ic">${icono("convenio")}</span><span><b>Apartado del convenio</b><small>Explicar un derecho</small></span></button>
       <button class="panel rapido" data-ir="ajustes"><span class="ic">${icono("telegram")}</span><span><b>Telegram y avisos</b><small>Canales y cartel QR</small></span></button>
     </div>
+    <div id="aviso-buzon"></div>
     <div id="recordatorio-copia"></div>
     <div id="banda-instalar"></div>
     <h2 class="titulo-bloque">Visitas a la web</h2>
@@ -309,6 +313,11 @@ async function pintaResumen() {
     <div class="lista-adm" id="ultimos"><p class="fecha-txt">Cargando…</p></div>`;
   $("zona").querySelectorAll("[data-n]").forEach(b => b.onclick = () => abrirEditor(b.dataset.n));
   pintaBandaInstalar();
+  contarBuzon().then(n => {
+    if (!n || !$("aviso-buzon")) return;
+    $("aviso-buzon").innerHTML = `<button class="panel banda aviso-buzon" id="ir-buzon"><span class="ic">${icono("correo")}</span><span class="txt"><b>${n === 1 ? "Tienes 1 mensaje sin leer" : `Tienes ${n} mensajes sin leer`} en el buzón anónimo</b><p>Preguntas y sugerencias de la plantilla.</p></span>${icono("der")}</button>`;
+    $("ir-buzon").onclick = () => abrir("buzon");
+  });
   $("zona").querySelector("[data-ir]").onclick = () => { abrir("ajustes"); setTimeout(() => $("ajuste-canales")?.scrollIntoView({ behavior: "smooth" }), 400); };
   sb.from("paginas").select("contenido").eq("slug", "ultima_copia").maybeSingle().then(({ data }) => {
     const f = data?.contenido, dias = f ? (Date.now() - new Date(f)) / 86400000 : Infinity;
@@ -553,7 +562,7 @@ async function cerrarEditor(desdeAtras) {
   if (!ED) return;
   if (!(await confirmarSalida())) { if (desdeAtras) history.pushState({ editor: 1 }, ""); return; }
   ED.pendientes.forEach(p => p.vista && URL.revokeObjectURL(p.vista));
-  ED = null;
+  ED = null; BUZON_A_PREGUNTA = null;
   ["velo-ed", "editor"].forEach(i => $(i).classList.add("oculto"));
   document.body.style.overflow = "";
   if (!desdeAtras && history.state?.editor) history.back();
@@ -599,6 +608,7 @@ $("ed-guardar").onclick = async () => {
     const q = ED.orig ? sb.from(s.tabla).update(fila).eq("id", ED.orig.id).select("*").single() : sb.from(s.tabla).insert(fila).select("*").single();
     const { data: guardado, error } = await q;
     if (error) throw error;
+    if (ED.k === "preguntas" && BUZON_A_PREGUNTA) { await sb.from("buzon").update({ archivado: true, leido: true }).eq("id", BUZON_A_PREGUNTA); BUZON_A_PREGUNTA = null; contarBuzon().then(pintaNav); }
     await borrarArchivos(ED.quitar);
     const editado = !!ED.orig, k = ED.k;
     ED.sucio = false; await cerrarEditor();
@@ -742,6 +752,50 @@ async function generarActa() {
     $("f-titulo").scrollIntoView({ behavior: "smooth", block: "center" });
   } catch (e) { msg("m-ia", e.message); }
   btn.disabled = false;
+}
+
+// ---------- Buzón anónimo ----------
+let BUZON_SIN_LEER = 0, BUZON_A_PREGUNTA = null, VISTA_BUZON = "nuevos";
+async function contarBuzon() {
+  const { count, error } = await sb.from("buzon").select("id", { count: "exact", head: true }).eq("leido", false).eq("archivado", false);
+  BUZON_SIN_LEER = error ? 0 : count || 0;
+  return BUZON_SIN_LEER;
+}
+async function pintaBuzon() {
+  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Buzón anónimo</h1><p>Preguntas y sugerencias que la plantilla envía desde «Dudas». No se sabe quién las envía: solo se guarda el texto y el día.</p></div></div>
+    <div class="cambio-vista" role="tablist" id="vistas-buzon"></div>
+    <div class="lista-adm" id="lista-buzon"><p class="fecha-txt">Cargando…</p></div>`;
+  const { data, error } = await sb.from("buzon").select("*").order("dia", { ascending: false }).order("id", { ascending: false }).limit(500);
+  if (error) { $("lista-buzon").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(error.message)}</p>`; return; }
+  const grupos = { nuevos: data.filter(m => !m.leido && !m.archivado), leidos: data.filter(m => m.leido && !m.archivado), archivo: data.filter(m => m.archivado) };
+  BUZON_SIN_LEER = grupos.nuevos.length; pintaNav();
+  const NOM = { nuevos: "Sin leer", leidos: "Leídos", archivo: "Archivados" };
+  $("vistas-buzon").innerHTML = Object.keys(NOM).map(k => `<button role="tab" class="${k === VISTA_BUZON ? "activa" : ""}" data-v="${k}">${NOM[k]} <span class="etq">${grupos[k].length}</span></button>`).join("");
+  $("vistas-buzon").querySelectorAll("[data-v]").forEach(b => b.onclick = () => { VISTA_BUZON = b.dataset.v; pintaBuzon(); });
+  const l = grupos[VISTA_BUZON];
+  $("lista-buzon").innerHTML = l.length ? l.map(m => `<article class="panel msg-buzon ${m.leido ? "" : "sin-leer"}" data-id="${m.id}">
+      <div class="cab"><span class="etq ${m.tipo === "Pregunta" ? "tipo-preg" : "tipo-sug"}">${esc(m.tipo)}</span><span class="fecha-txt">Llegó el ${fechaLarga(m.dia + "T12:00:00")}</span></div>
+      <p class="texto">${esc(m.texto)}</p>
+      <div class="acciones-buzon">
+        ${m.archivado ? "" : `<button class="btn" data-acc="pregunta">${icono("pregunta", "p")}Convertir en pregunta frecuente</button>`}
+        ${m.archivado ? "" : `<button class="btn sec" data-acc="leido">${icono("check", "p")}${m.leido ? "No leído" : "Leído"}</button>`}
+        <button class="btn sec" data-acc="archivar">${icono("archivo2", "p")}${m.archivado ? "Sacar del archivo" : "Archivar"}</button>
+        <button class="btn peligro" data-acc="borrar">${icono("borrar", "p")}Borrar</button>
+      </div></article>`).join("")
+    : `<div class="panel vacio">${icono("correo")}${VISTA_BUZON === "nuevos" ? "No hay mensajes sin leer." : "No hay mensajes aquí."}</div>`;
+  $("lista-buzon").querySelectorAll("[data-acc]").forEach(b => b.onclick = async () => {
+    const art = b.closest("[data-id]"), id = +art.dataset.id, m = data.find(x => x.id === id), acc = b.dataset.acc;
+    let r = null;
+    if (acc === "pregunta") {
+      BUZON_A_PREGUNTA = id;
+      return abrirEditor("preguntas", null, { pregunta: m.texto.length > 160 ? "" : m.texto, respuesta: m.texto.length > 160 ? "Pregunta recibida: " + m.texto + "\n\nRespuesta: " : "" });
+    }
+    if (acc === "leido") r = await sb.from("buzon").update({ leido: !m.leido }).eq("id", id);
+    if (acc === "archivar") r = await sb.from("buzon").update({ archivado: !m.archivado, leido: true }).eq("id", id);
+    if (acc === "borrar") { if (!confirm("¿Borrar este mensaje del buzón? No se puede deshacer.")) return; r = await sb.from("buzon").delete().eq("id", id); }
+    if (r?.error) return aviso("No se ha podido: " + r.error.message, true);
+    pintaBuzon();
+  });
 }
 
 // ---------- Textos ----------
@@ -1058,7 +1112,7 @@ async function prepararPlantillas() {
 }
 
 // ---------- Copia de seguridad y archivo ----------
-const TABLAS_COPIA = ["comunicados", "eventos", "convenio_secciones", "actas", "documentos", "preguntas", "plantillas", "apartados", "publicaciones", "paginas", "opciones", "admins"];
+const TABLAS_COPIA = ["comunicados", "eventos", "convenio_secciones", "actas", "documentos", "preguntas", "plantillas", "apartados", "publicaciones", "buzon", "paginas", "opciones", "admins"];
 async function prepararCopiaYArchivo() {
   const { data } = await sb.from("paginas").select("slug, contenido, actualizado").in("slug", ["archivo_meses", "ultima_copia"]);
   const p = Object.fromEntries((data || []).map(x => [x.slug, x]));
@@ -1234,7 +1288,7 @@ $("ed-duplicar").onclick = async () => {
   const titulo = SECCIONES[k].tituloDe ? "pregunta" : "titulo";
   x[titulo] = (x[titulo] || "") + " (copia)";
   ED.pendientes.forEach(p => p.vista && URL.revokeObjectURL(p.vista));
-  ED = null; // se reutiliza el editor abierto, sin tocar el historial
+  ED = null; BUZON_A_PREGUNTA = null; // se reutiliza el editor abierto, sin tocar el historial
   abrirEditor(k, null, x);
   if (ED) { ED.existentes = []; msg("ed-msg", "Copia lista: cambia lo que haga falta (por ejemplo la fecha) y publica.", true); }
 };
