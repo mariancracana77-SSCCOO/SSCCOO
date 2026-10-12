@@ -606,3 +606,4 @@ html[data-letra] .pestanas-web a { font-size: .95rem; }
 body { overflow-wrap: break-word; }
 p, a, li, dd, td { overflow-wrap: anywhere; }
 .cal-nav { flex-wrap: wrap; justify-content: flex-end; }
+.texto-legal { margin-bottom: 14px; } .texto-legal h1 { font-size: 1.6rem; margin-bottom: 10px; } body.publica #v-legal { max-width: 760px; margin: 0 auto; }

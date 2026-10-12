@@ -3,7 +3,7 @@
 window.SUPABASE_URL = "https://kdfedwcskymaitvpryvg.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_RLt0HuAMskXkKl2hxhUF2w_sCexGznp";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "15"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "16"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/SSCCOO/";
 // Clave pública de las notificaciones (la privada solo está en el servidor)
 window.VAPID_PUBLICA = "BMMdZjehtNipsScHJ__kzOIn9XCgIpya3UDDRlexxOAWJU-J6ZICDlf72ItPOebzl-SfzoU234pd82Chp87Vm1w";
@@ -126,3 +126,9 @@ window.abrirLectura = () => {
   document.body.appendChild(v); v.querySelector(".activa")?.focus();
 };
 aplicarLectura();
+
+// Botón «Aa» (tamaño de letra y colores)
+document.addEventListener("click", (e) => { if (e.target.closest?.("[data-aa]")) abrirLectura(); });
+
+// Solo enlaces web, email o teléfono (nunca «javascript:» ni otros esquemas)
+window.urlSegura = (u) => { u = String(u || "").trim(); return /^(https?:\/\/|mailto:|tel:)/i.test(u) ? u : "#"; };

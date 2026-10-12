@@ -26,7 +26,7 @@ window.adjuntosHTML = (lista) => {
   if (!lista || !lista.length) return "";
   return `<div class="adjuntos">${lista.map(a => {
     const t = tipoArchivo(a.tipo, a.nombre), esImg = (a.tipo || "").startsWith("image/") && !/hei[cf]/.test(a.tipo);
-    return `<a class="adjunto" href="${esc(a.url)}" target="_blank" rel="noopener">
+    return `<a class="adjunto" href="${esc(urlSegura(a.url))}" target="_blank" rel="noopener">
       ${esImg ? `<img src="${esc(a.url)}" alt="" loading="lazy">` : `<span class="ic">${icono(t.ic, "p")}</span>`}
       <span class="txt"><b>${esc(a.nombre || "Archivo")}</b><small>${t.txt}${a.tamano ? " · " + tamanoTxt(a.tamano) : ""}</small></span></a>`;
   }).join("")}</div>`;
@@ -108,7 +108,7 @@ window.actaHTML = (a, qr = "") => `<article class="panel acta" data-reg="actas:$
 // ---------- Documentos ----------
 window.docHTML = (d) => {
   const t = tipoArchivo(d.tipo_archivo, d.nombre_archivo || d.url);
-  return `<a class="panel documento" href="${esc(d.url || "#")}" target="_blank" rel="noopener">
+  return `<a class="panel documento" href="${esc(urlSegura(d.url || "#"))}" target="_blank" rel="noopener">
     <span class="ic ${t.ic}">${icono(t.ic)}</span>
     <span class="txt">
       <span class="cab"><span class="etq tipo ${claseTipo(d.categoria, "documento")}">${esc(d.categoria)}</span>${etqNuevo(d.fecha)}</span>
@@ -165,6 +165,6 @@ window.delegadoHTML = (d) => {
 };
 window.enlaceHTML = (e) => {
   let dom = ""; try { dom = new URL(e.url).hostname.replace(/^www\./, ""); } catch (_) {}
-  return `<a class="panel enlace-util" href="${esc(e.url)}" target="_blank" rel="noopener">
+  return `<a class="panel enlace-util" href="${esc(urlSegura(e.url))}" target="_blank" rel="noopener">
     <span class="ic">${icono("idioma", "p")}</span><span class="txt"><b>${esc(e.titulo || "Enlace")}</b>${e.descripcion ? `<small>${esc(e.descripcion)}</small>` : ""}<span class="dom">${esc(dom)}</span></span>${icono("der", "p")}</a>`;
 };

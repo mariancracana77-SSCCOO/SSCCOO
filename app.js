@@ -12,17 +12,19 @@ $("version-web").textContent = "Versión " + VERSION_WEB;
 document.querySelector(".contacto-btn").innerHTML = icono("correo", "p") + "Escribir a la Sección Sindical";
 
 // ---------- Navegación ----------
-const VISTAS = ["inicio", "avisos", "calendario", "convenio", "actas", "documentos", "preguntas", "info", "buscar"];
+const VISTAS = ["inicio", "avisos", "calendario", "convenio", "actas", "documentos", "preguntas", "info", "buscar", "legal"];
 function irA() {
   const h = location.hash.slice(1), avisoDirecto = /^aviso-\d+$/.test(h) ? h : null;
-  const v = avisoDirecto ? "avisos" : (VISTAS.includes(h) ? h : "inicio");
+  const legal = h === "aviso-legal" || h === "privacidad" ? h : null;
+  const v = avisoDirecto ? "avisos" : legal ? "legal" : (VISTAS.includes(h) ? h : "inicio");
+  if (legal) setTimeout(() => $("leg-" + legal)?.scrollIntoView({ block: "start" }), 50);
   if (avisoDirecto) setTimeout(() => { const el = $(avisoDirecto); if (el) { el.scrollIntoView({ block: "start" }); el.classList.add("nuevo"); } }, 300);
   document.querySelectorAll(".vista").forEach(s => s.classList.toggle("activa", s.id === "v-" + v));
   document.querySelectorAll(".pestanas-web a").forEach(b => {
     const on = b.dataset.v === v; b.classList.toggle("activa", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current");
     if (on) b.scrollIntoView({ inline: "center", block: "nearest" });
   });
-  if (!avisoDirecto) window.scrollTo(0, 0);
+  if (!avisoDirecto && !legal) window.scrollTo(0, 0);
   if (v === "buscar") setTimeout(() => $("buscar-todo").focus(), 100);
 }
 
@@ -137,7 +139,7 @@ function pintaInicio() {
     const gr = grupo(x.f);
     if (gr !== g) { html += `<h2 class="grupo-tablon">${gr}</h2>`; g = gr; }
     const [ic, cl] = ICONOS[x.k];
-    const attrs = x.url ? `href="${esc(x.url)}" target="_blank" rel="noopener"` : `href="${x.h}"${x.dia ? ` data-dia="${x.dia}"` : ""}`;
+    const attrs = x.url ? `href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener"` : `href="${x.h}"${x.dia ? ` data-dia="${x.dia}"` : ""}`;
     html += `<a class="item-tablon" ${attrs}>
       ${x.dia ? `<span class="ic dia ${cl}"><b>${fechaDia(x.dia).getDate()}</b>${MES_CORTO[fechaDia(x.dia).getMonth()]}</span>` : `<span class="ic ${cl}">${icono(ic, "p")}</span>`}
       <span class="txt"><small class="${cl}"><span class="tipo">${esc(x.que)}</span> · ${haceTxt(x.f)}${esNuevo(x.f) ? ' <span class="punto-nuevo" title="Nuevo"></span>' : ""}</small>
@@ -222,7 +224,7 @@ function pintaConvenio() {
   const docsConv = D.docs.slice(0, 5);
   $("lista-docs").innerHTML = (docsConv.length ? docsConv.map(d => {
       const t = tipoArchivo(d.tipo_archivo, d.nombre_archivo || d.url);
-      return `<a class="doc" href="${esc(d.url)}" target="_blank" rel="noopener"><span class="ic">${icono(t.ic, "p")}</span>
+      return `<a class="doc" href="${esc(urlSegura(d.url))}" target="_blank" rel="noopener"><span class="ic">${icono(t.ic, "p")}</span>
         <span><b>${esc(d.titulo)}</b><small>${t.txt} · ${haceTxt(d.fecha)}</small></span></a>`;
     }).join("") : `<p class="fecha-txt" style="margin:0">Aún no hay documentos subidos.</p>`) +
     `<a class="enlace-btn" href="#documentos" style="margin-top:10px">Ver todos los documentos ${icono("der", "p")}</a>`;
@@ -271,6 +273,8 @@ $("buscar-preguntas").oninput = () => pintaPreguntas();
 
 // ---------- Nosotros ----------
 function pintaInfo() {
+  $("txt-aviso-legal").innerHTML = textoHTML(D.paginas.aviso_legal || "Texto pendiente de publicar.");
+  $("txt-privacidad").innerHTML = textoHTML(D.paginas.privacidad || "Texto pendiente de publicar.");
   $("txt-quienes").innerHTML = textoHTML(D.paginas.quienes || "");
   $("txt-contacto").innerHTML = textoHTML(D.paginas.contacto || "");
   $("tit-delegados").classList.toggle("oculto", !D.delegados.length);
@@ -502,7 +506,7 @@ function buscarTodo() {
   const total = grupos.reduce((n, g) => n + g[2].length, 0);
   $("resultados-todo").innerHTML = total ? `<p class="fecha-txt">${total} resultado${total === 1 ? "" : "s"}</p>` + grupos.map(([tit, ic, l]) => `
     <h2 class="titulo-bloque">${tit} <span class="etq">${l.length}</span></h2>
-    <div class="panel resultados">${l.slice(0, 8).map(r => `<a class="novedad" ${r.url ? `href="${esc(r.url)}" target="_blank" rel="noopener"` : `href="#${r.h}" data-q="${esc(r.q || "")}" data-dia="${r.dia || ""}"`}>
+    <div class="panel resultados">${l.slice(0, 8).map(r => `<a class="novedad" ${r.url ? `href="${esc(urlSegura(r.url))}" target="_blank" rel="noopener"` : `href="#${r.h}" data-q="${esc(r.q || "")}" data-dia="${r.dia || ""}"`}>
       <span class="ic">${icono(ic === "pregunta" ? "pregunta" : ic, "p")}</span><span class="txt"><b>${esc(r.t)}</b><small>${esc(r.s || "")}</small></span>${icono("der", "p")}</a>`).join("")}</div>`).join("")
     : vacio("buscar", `No hay nada con «${esc(qr)}». Prueba con otra palabra o <a href="#info">pregúntanos</a>.`);
   $("resultados-todo").querySelectorAll("a[data-q]").forEach(l => l.onclick = () => {

@@ -103,3 +103,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 ## Versión 15
 - Arreglado el contador de visitas del día (no se enviaba).
 - Arreglado el borrado de suscripciones antiguas de avisos (evita duplicados).
+
+## Versión 16: seguridad y páginas legales
+- **Aviso legal** y **Privacidad y cookies**: enlazados abajo en la web y editables en el panel, en Textos. Hay que completar la entidad de CCOO responsable y su NIF.
+- Solo pueden crear cuenta en el panel los emails que un administrador haya añadido antes.
+- Contraseñas del panel: mínimo 10 caracteres, con letras y números. Tras 5 fallos seguidos, hay que esperar.
+- Protección contra código inyectado (CSP), enlaces filtrados y la web no se puede meter dentro de otra.
+- Librerías y fuentes alojadas en la propia web: no dependen de servidores externos y no avisan a Google de cada visita.
+- Nuevos archivos: `lectura.js`, `cartel.js`, `fuentes.css`, carpetas `lib/` y `fuentes/`. **Súbelos también a GitHub.**
+- `CLAUDE.md`: contexto para seguir el proyecto con Claude Code.

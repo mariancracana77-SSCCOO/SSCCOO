@@ -168,23 +168,39 @@ async function iniciar() {
   const h = location.hash.slice(1);
   abrir(PAGINAS[h] ? h : "resumen");
 }
+let fallosLogin = 0, esperaHasta = 0;
 $("b-entrar").onclick = async () => {
+  const falta = Math.ceil((esperaHasta - Date.now()) / 1000);
+  if (falta > 0) return msg("m-login", `Demasiados intentos. Espera ${falta} segundos.`);
   msg("m-login", "Entrando…", true);
   const { error } = await sb.auth.signInWithPassword({ email: $("email").value.trim(), password: $("pass").value });
-  if (error) msg("m-login", /confirm/i.test(error.message) ? "Falta confirmar la cuenta: abre el email que te ha llegado y pulsa el enlace." : "Email o contraseña incorrectos.");
+  if (!error) { fallosLogin = 0; return; }
+  fallosLogin++;
+  if (fallosLogin >= 5) esperaHasta = Date.now() + Math.min(300, 15 * 2 ** (fallosLogin - 5)) * 1000;
+  msg("m-login", /confirm/i.test(error.message) ? "Falta confirmar la cuenta: abre el email que te ha llegado y pulsa el enlace."
+    : /rate|too many/i.test(error.message) ? "Demasiados intentos. Espera unos minutos." : "Email o contraseña incorrectos.");
 };
 $("pass").onkeydown = (e) => { if (e.key === "Enter") $("b-entrar").click(); };
+// Contraseña segura: 10 caracteres o más, con letras y números, y que no sea de las típicas
+const DEBILES = ["1234567890", "contraseña", "contrasena", "password12", "qwertyuiop", "ccoo123456", "calsina123"];
+const fallaPass = (p) => p.length < 10 ? "La contraseña debe tener al menos 10 caracteres."
+  : !/[a-zA-Z]/.test(p) || !/\d/.test(p) ? "La contraseña debe mezclar letras y números."
+  : DEBILES.some(d => p.toLowerCase().includes(d)) ? "Esa contraseña es demasiado fácil de adivinar. Elige otra." : "";
 $("b-registro").onclick = async () => {
-  if ($("pass").value.length < 8) return msg("m-login", "Escribe arriba una contraseña de al menos 8 caracteres y vuelve a pulsar.");
+  const f = fallaPass($("pass").value);
+  if (f) return msg("m-login", f + " Escríbela arriba y vuelve a pulsar.");
   const { error } = await sb.auth.signUp({ email: $("email").value.trim(), password: $("pass").value, options: { emailRedirectTo: aqui } });
-  error ? msg("m-login", error.message) : msg("m-login", "Cuenta creada. Abre el email de confirmación, pulsa el enlace y luego entra aquí.", true);
+  if (error) return msg("m-login", /database error|no permitido|not authorized/i.test(error.message)
+    ? "Este email no está autorizado. Solo pueden crear cuenta las personas que un administrador haya añadido antes en Ajustes, Administradores."
+    : /weak|pwned|leaked/i.test(error.message) ? "Esa contraseña aparece en filtraciones de internet. Elige otra." : error.message);
+  msg("m-login", "Cuenta creada. Abre el email de confirmación, pulsa el enlace y luego entra aquí.", true);
 };
 $("b-olvido").onclick = async () => {
   const { error } = await sb.auth.resetPasswordForEmail($("email").value.trim(), { redirectTo: aqui });
   error ? msg("m-login", error.message) : msg("m-login", "Te hemos enviado un email para cambiar la contraseña.", true);
 };
 $("b-nueva").onclick = async () => {
-  if ($("nueva").value.length < 8) return msg("m-rec", "Mínimo 8 caracteres.");
+  const f = fallaPass($("nueva").value); if (f) return msg("m-rec", f);
   const { error } = await sb.auth.updateUser({ password: $("nueva").value });
   error ? msg("m-rec", error.message) : (msg("m-rec", "Contraseña guardada.", true), setTimeout(() => location.replace(aqui), 1200));
 };
@@ -629,7 +645,7 @@ async function aBase64(f) {
 }
 // Saca el texto de un Word (.docx) en el propio navegador
 async function textoDeWord(f) {
-  if (!window.JSZip) await new Promise((ok, mal) => { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"; sc.onload = ok; sc.onerror = () => mal(new Error("No se ha podido abrir el Word. Guárdalo como PDF y súbelo otra vez.")); document.head.appendChild(sc); });
+  if (!window.JSZip) await new Promise((ok, mal) => { const sc = document.createElement("script"); sc.src = "lib/jszip.min.js"; sc.onload = ok; sc.onerror = () => mal(new Error("No se ha podido abrir el Word. Guárdalo como PDF y súbelo otra vez.")); document.head.appendChild(sc); });
   const zip = await JSZip.loadAsync(f), xml = await zip.file("word/document.xml")?.async("string");
   if (!xml) throw new Error(`«${f.name}» no parece un Word válido.`);
   return xml.replace(/<\/w:p>/g, "\n").replace(/<w:tab\/>/g, "\t").replace(/<[^>]+>/g, "")
@@ -670,10 +686,12 @@ async function generarActa() {
 
 // ---------- Textos ----------
 const TEXTOS = [
-  { slug: "inicio", l: "Bienvenida (Inicio)", ayuda: "Sale debajo de «Hola, compañero/a»." },
+  { slug: "inicio", l: "Texto de la portada", ayuda: "Sale al final de la portada («Todo»)." },
   { slug: "convenio", l: "Introducción del convenio", ayuda: "Sale arriba de los apartados: qué convenio es, vigencia, etc." },
   { slug: "quienes", l: "Quiénes somos" },
   { slug: "contacto", l: "Contacto", ayuda: "Email, teléfono, horario, delegados…" },
+  { slug: "aviso_legal", l: "Aviso legal", ayuda: "Quién es el responsable de la web. Enlazado abajo en la web. Conviene que lo revise el servicio jurídico de CCOO." },
+  { slug: "privacidad", l: "Privacidad y cookies", ayuda: "Qué datos se tratan y cómo. Si cambias algo de la web (por ejemplo, un formulario), actualízalo." },
 ];
 async function pintaTextos() {
   $("zona").innerHTML = `<div class="sec-cab"><div><h1>Textos</h1><p>Los textos fijos de la web, que cambian poco.</p></div></div><div id="textos"><p class="fecha-txt">Cargando…</p></div>`;
@@ -781,7 +799,7 @@ async function pintaAjustes() {
   cargarAdmins(); cargarCanales(); prepararCopiaYArchivo();
 }
 function selColor(v, id) {
-  return `<select ${id ? `id="${id}"` : ""} class="sel-color c-${v}" aria-label="Color" onchange="this.className='sel-color c-'+this.value">
+  return `<select ${id ? `id="${id}"` : ""} class="sel-color c-${v}" aria-label="Color">
     ${Object.entries(COLORES).map(([c, n]) => `<option value="${c}" ${c === v ? "selected" : ""}>${n}</option>`).join("")}</select>`;
 }
 function pintaLista(k) {
@@ -993,7 +1011,7 @@ async function prepararCopiaYArchivo() {
 }
 async function cargarJSZip() {
   if (window.JSZip) return;
-  await new Promise((ok, mal) => { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"; sc.onload = ok; sc.onerror = () => mal(new Error("No se ha podido preparar el archivo ZIP. Revisa la conexión.")); document.head.appendChild(sc); });
+  await new Promise((ok, mal) => { const sc = document.createElement("script"); sc.src = "lib/jszip.min.js"; sc.onload = ok; sc.onerror = () => mal(new Error("No se ha podido preparar el archivo ZIP. Revisa la conexión.")); document.head.appendChild(sc); });
 }
 async function hacerCopia(conArchivos) {
   const b1 = $("b-copia-todo"), b2 = $("b-copia-datos"); b1.disabled = b2.disabled = true;
@@ -1183,3 +1201,6 @@ async function pintaVisitas() {
     }).join("")}</div>
     <p class="ayuda">Cuenta de forma anónima: no se sabe quién entra, solo cuántos. «Móviles distintos» cuenta cada móvil una vez al día.</p>`;
 }
+
+// Selector de color: el recuadro toma el color elegido
+document.addEventListener("change", (e) => { const s = e.target.closest?.(".sel-color"); if (s) s.className = "sel-color c-" + s.value; });

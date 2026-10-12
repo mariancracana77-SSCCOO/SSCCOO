@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://kdfedwcskymaitvpryvg.supabase.co; connect-src 'self' https://kdfedwcskymaitvpryvg.supabase.co wss://kdfedwcskymaitvpryvg.supabase.co; media-src 'self' https://kdfedwcskymaitvpryvg.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Panel de publicación · CCOO Calsina Carré</title>
 <meta name="robots" content="noindex">
@@ -9,18 +12,16 @@
 <link rel="icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script>try{var L=JSON.parse(localStorage.getItem("ccoo-lectura")||"{}"),h=document.documentElement;if(L.letra&&L.letra!=="normal")h.setAttribute("data-letra",L.letra);if(L.contraste==="alto")h.setAttribute("data-contraste","alto");if(L.tema&&L.tema!=="auto")h.setAttribute("data-theme",L.tema)}catch(e){}</script>
-<link rel="stylesheet" href="styles.css?v=15">
-<link rel="stylesheet" href="admin.css?v=15">
+<link rel="stylesheet" href="fuentes.css?v=16">
+<script src="lectura.js?v=16"></script>
+<link rel="stylesheet" href="styles.css?v=16">
+<link rel="stylesheet" href="admin.css?v=16">
 </head>
 <body class="admin">
 <header class="cabecera">
   <img src="logo.png" alt="Logo">
   <div><div class="nombre">Panel de publicación</div><div class="sub">Sección Sindical CCOO Calsina Carré</div></div>
-  <div class="acciones"><button class="btn-cab aa" onclick="abrirLectura()" aria-label="Tamaño de letra y colores" title="Tamaño de letra y colores">Aa</button><a class="btn-cab" href="index.html" target="_blank" id="ver-web" title="Ver la web como un trabajador" aria-label="Ver la web"></a></div>
+  <div class="acciones"><button class="btn-cab aa" data-aa aria-label="Tamaño de letra y colores" title="Tamaño de letra y colores">Aa</button><a class="btn-cab" href="index.html" target="_blank" id="ver-web" title="Ver la web como un trabajador" aria-label="Ver la web"></a></div>
 </header>
 
 <div class="toast" id="toast" role="status"></div>
@@ -89,10 +90,10 @@
   </div>
 </section>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="iconos.js?v=15"></script>
-<script src="config.js?v=15"></script>
-<script src="render.js?v=15"></script>
-<script src="admin.js?v=15"></script>
+<script src="lib/supabase.js?v=16"></script>
+<script src="iconos.js?v=16"></script>
+<script src="config.js?v=16"></script>
+<script src="render.js?v=16"></script>
+<script src="admin.js?v=16"></script>
 </body>
 </html>
