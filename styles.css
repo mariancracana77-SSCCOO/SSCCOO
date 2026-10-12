@@ -812,3 +812,4 @@ input, select { min-height: 48px; }
 .galeria a:focus-visible { outline-offset: 2px; }
 @media (max-width: 420px) { .publicacion { grid-template-columns: 1fr; } .pub-fecha { display: none; } }
 .accesos-tablon a:last-child:nth-child(odd) { grid-column: 1 / -1; min-height: 72px; }
+.paradas .ruta a, .paradas .ruta a:visited { color: var(--tinta); }
