@@ -5,7 +5,7 @@ const msg = (id, t, ok) => { const el = $(id); if (!el) return; el.textContent =
 const MAX_MB = 20;
 $("ver-web").innerHTML = icono("ver", "p");
 $("ed-cerrar").innerHTML = icono("cerrar", "p");
-$("fab").innerHTML = icono("mas");
+$("fab").innerHTML = icono("mas") + "<span>Nuevo</span>";
 $("previa-icono").innerHTML = icono("ver", "p");
 
 function aviso(texto, error) {
@@ -29,7 +29,7 @@ const SECCIONES = {
       { checks: [{ k: "urgente", l: "Urgente: sale en rojo y arriba del todo en Inicio" }, { k: "fijado", l: "Fijar arriba de la lista de avisos" }, { k: "notificar", l: "Avisar en los móviles y en el canal de Telegram", def: true, soloNuevo: true }] },
       { k: "publicar_en", l: "Programar la publicación", t: "datetime-local", opc: true, ayuda: "Déjalo vacío para publicar ahora. Si pones día y hora, se publicará y avisará solo en ese momento." },
     ],
-    previa: (x) => tarjetaAviso(x),
+    previa: (x) => previaCanales(x),
     extracto: (x) => x.contenido, chips: (x) => [x.publicar_en && new Date(x.publicar_en) > new Date() ? "Programado: " + new Date(x.publicar_en).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : null, x.categoria, x.urgente && "Urgente", x.fijado && "Fijado"], fechas: (x) => [x.fecha, x.actualizado],
   },
   calendario: {
@@ -41,10 +41,10 @@ const SECCIONES = {
       { fila: [{ k: "hora", l: "Hora de inicio", t: "time", opc: true }, { k: "hora_fin", l: "Hora de fin", t: "time", opc: true }] },
       { k: "lugar", l: "Lugar", t: "text", opc: true, ph: "Ej: Comedor de la nave 2" },
       { k: "descripcion", l: "Descripción", t: "textarea", opc: true, corto: true },
-      { checks: [{ k: "notificar", l: "Avisar en los móviles y en el canal de Telegram", def: true, soloNuevo: true }] },
+      { checks: [{ k: "importante", l: "Cita importante: sale en la portada con cuenta atrás" }, { k: "notificar", l: "Avisar en los móviles y en el canal de Telegram", def: true, soloNuevo: true }] },
     ],
     previa: (x) => `<div class="panel dia-detalle">${x.fecha ? `<h3>${fechaDia(x.fecha).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}</h3>` : ""}${eventoHTML(x, true)}</div>`,
-    extracto: (x) => [x.hora, x.lugar].filter(Boolean).join(" · "), chips: (x) => [x.fecha && fechaLarga(x.fecha + "T12:00:00"), x.tipo], fechas: (x) => [x.creado, x.actualizado],
+    extracto: (x) => [x.hora, x.lugar].filter(Boolean).join(" · "), chips: (x) => [x.fecha && fechaLarga(x.fecha + "T12:00:00"), x.tipo, x.importante && "Importante: cuenta atrás"], fechas: (x) => [x.creado, x.actualizado],
   },
   convenio: {
     nombre: "Convenio", icono: "convenio", tabla: "convenio_secciones", orden: ["orden", true], uno: "apartado", nuevo: "Nuevo apartado", lista: "convenio", campoColor: "categoria",
@@ -138,12 +138,83 @@ const SECCIONES = {
     extracto: (x) => x.descripcion || x.url, chips: (x) => [x.url && x.url.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]], fechas: (x) => [null, x.actualizado],
   },
 };
-const PAGINAS = {
-  resumen: { nombre: "Inicio", icono: "resumen" },
-  ...Object.fromEntries(Object.entries(SECCIONES).map(([k, s]) => [k, { nombre: s.nombre, icono: s.icono }])),
-  textos: { nombre: "Textos", icono: "texto" },
-  ajustes: { nombre: "Ajustes", icono: "ajustes" },
+// Apartados nuevos de la web (Comité de empresa, etc.): los crea el admin y cada uno tiene su lista de publicaciones
+const ICONOS_AP = [["grupo", "Personas"], ["carpeta", "Carpeta"], ["camara", "Cámara de fotos"], ["imagen", "Foto"], ["actas", "Hoja"], ["convenio", "Libro"], ["avisos", "Altavoz"], ["calendario", "Calendario"], ["pregunta", "Pregunta"], ["alerta", "Atención"], ["archivo2", "Archivo"]];
+SECCIONES.apartados = {
+  nombre: "Apartados de la web", icono: "carpeta", tabla: "apartados", orden: ["orden", true], uno: "apartado", nuevo: "Nuevo apartado", lista: "aviso", campoColor: "_",
+  intro: "Secciones nuevas de la web, como «Comité de empresa». Cada una sale como una pestaña y aquí en el panel tiene su propia lista para publicar fotos, documentos y textos.",
+  campos: [
+    { k: "titulo", l: "Nombre del apartado", t: "text", req: true, ph: "Ej: Comité de empresa", ayuda: "Corto: es lo que sale en la pestaña de la web." },
+    { k: "descripcion", l: "Explicación corta", t: "text", opc: true, ph: "Ej: Fotos, documentos y novedades del comité." },
+    { k: "icono", l: "Dibujo", t: "select", ops: ICONOS_AP },
+    { k: "orden", l: "Posición", t: "number", ayuda: "1 sale primero, 2 después…" },
+    { checks: [{ k: "visible", l: "Se ve en la web (desmárcalo para prepararlo sin que se vea)", def: true }] },
+  ],
+  previa: (x) => `<div class="accesos-tablon" style="max-width:360px"><a href="#">${icono(x.icono || "carpeta")}<b>${esc(x.titulo || "Sin nombre")}</b></a></div><p class="ayuda">${esc(x.descripcion || "")}</p>`,
+  extracto: (x) => x.descripcion, chips: (x) => [x.visible === false ? "Oculto" : "Se ve en la web", "Posición " + x.orden], fechas: (x) => [x.creado, x.actualizado],
 };
+// Valores de las calculadoras de la web («Calcula»). Se editan desde la página «Calculadoras».
+const UNIDADES = ["días", "días naturales", "días laborables", "horas", "días al año", "tiempo necesario"].map(u => [u, u]);
+SECCIONES.permisos = {
+  nombre: "Permisos retribuidos", icono: "convenio", tabla: "calc_permisos", orden: ["orden", true], uno: "permiso", nuevo: "Añadir permiso", lista: "aviso", campoColor: "_", oculta: true, volver: "calculadoras",
+  intro: "", tituloDe: (x) => x.nombre,
+  campos: [
+    { k: "nombre", l: "Qué ha pasado (así lo verá el trabajador)", t: "text", req: true, ph: "Ej: Boda o registro como pareja de hecho" },
+    { fila: [{ k: "dias", l: "Cuántos", t: "number", dec: true, paso: "0.5" }, { k: "unidad", l: "Unidad", t: "select", ops: UNIDADES }] },
+    { k: "pregunta_extra", l: "Pregunta para sumar días (si la hay)", t: "text", opc: true, ph: "Ej: ¿Tienes que desplazarte a otra localidad?", ayuda: "Si el trabajador contesta «Sí», se suman los días de abajo." },
+    { k: "dias_extra", l: "Días que se suman si contesta «Sí»", t: "number", dec: true, paso: "0.5" },
+    { k: "detalle", l: "Explicación", t: "textarea", opc: true, corto: true, ayuda: "A quién afecta, qué hay que llevar, etc." },
+    { k: "articulo", l: "De dónde sale", t: "text", opc: true, ph: "Ej: Convenio, art. 24" },
+    { k: "orden", l: "Posición en la lista", t: "number" },
+    { checks: [{ k: "visible", l: "Se ve en la web", def: true }] },
+  ],
+  previa: (x) => `<div class="panel calc">${resultadoPermisoHTML(x, false)}${Number(x.dias_extra) && x.pregunta_extra ? `<p class="ayuda">Si contesta «Sí» a «${esc(x.pregunta_extra)}»:</p>${resultadoPermisoHTML(x, true)}` : ""}</div>`,
+  extracto: (x) => x.detalle, chips: (x) => [x.unidad === "tiempo necesario" ? "Tiempo necesario" : numTxt(x.dias) + " " + x.unidad, Number(x.dias_extra) ? "+" + numTxt(x.dias_extra) + " con desplazamiento" : null, x.visible === false ? "Oculto" : null, x.articulo], fechas: (x) => [null, x.actualizado],
+};
+SECCIONES.categorias = {
+  nombre: "Precios de horas extra", icono: "reloj", tabla: "calc_categorias", orden: ["orden", true], uno: "categoría", nuevo: "Añadir categoría", lista: "aviso", campoColor: "_", oculta: true, volver: "calculadoras",
+  intro: "", tituloDe: (x) => x.nombre,
+  campos: [
+    { k: "nombre", l: "Categoría", t: "text", req: true, ph: "Ej: Conductor/a" },
+    { fila: [{ k: "precio_extra", l: "Precio de la hora extra (€)", t: "number", dec: true, paso: "0.01" }, { k: "precio_extra_festiva", l: "Hora extra en festivo (€)", t: "number", dec: true, paso: "0.01", ayuda: "Pon 0 si no hay precio distinto." }] },
+    { k: "orden", l: "Posición en la lista", t: "number" },
+  ],
+  previa: (x) => `<div class="panel calc"><div class="resultado-calc"><span class="rc-tit">${esc(x.nombre || "Categoría")}</span><span class="rc-num">${eurosTxt(x.precio_extra)} <small>por hora</small></span>${Number(x.precio_extra_festiva) ? `<span class="rc-sub">En festivo: ${eurosTxt(x.precio_extra_festiva)} por hora</span>` : ""}</div></div>`,
+  extracto: () => "", chips: (x) => [eurosTxt(x.precio_extra) + " la hora", Number(x.precio_extra_festiva) ? eurosTxt(x.precio_extra_festiva) + " en festivo" : null], fechas: (x) => [null, x.actualizado],
+};
+
+// Una sección del panel por cada apartado
+const seccionApartado = (a) => ({
+  nombre: a.titulo, icono: a.icono || "carpeta", tabla: "publicaciones", filtro: { apartado_id: a.id }, orden: ["fecha", false], uno: "publicación", nuevo: "Publicar en " + a.titulo, lista: "aviso", campoColor: "_",
+  intro: (a.descripcion ? a.descripcion + " " : "") + "Lo que publiques aquí sale en la web, ordenado por año y mes.",
+  campos: [
+    { k: "titulo", l: "Título", t: "text", req: true, ph: "Ej: Reunión con la empresa por el parking" },
+    { k: "fecha", l: "Fecha", t: "date", req: true, ayuda: "El día de la reunión, la foto o el documento. Sirve para ordenarlo por año y mes." },
+    { k: "contenido", l: "Texto", t: "textarea", opc: true, formato: true },
+    { k: "adjuntos", l: "Fotos y documentos", t: "archivos", opc: true },
+    { checks: [{ k: "notificar", l: "Avisar en los móviles y en el canal de Telegram", def: true, soloNuevo: true }] },
+  ],
+  previa: (x) => publicacionHTML(x),
+  extracto: (x) => x.contenido, chips: (x) => [x.fecha && fechaLarga(x.fecha + "T12:00:00")], fechas: (x) => [x.creado, x.actualizado],
+});
+let APARTADOS = [];
+async function cargarApartados() {
+  Object.keys(SECCIONES).filter(k => /^ap\d+$/.test(k)).forEach(k => { delete SECCIONES[k]; delete FECHA_DE[k]; });
+  const { data } = await sb.from("apartados").select("*").order("orden").order("id");
+  APARTADOS = data || [];
+  APARTADOS.forEach(a => { SECCIONES["ap" + a.id] = seccionApartado(a); FECHA_DE["ap" + a.id] = x => x.fecha; });
+  construirPaginas();
+}
+let PAGINAS = {};
+function construirPaginas() {
+  const base = Object.keys(SECCIONES).filter(k => !/^ap\d+$/.test(k) && k !== "apartados" && !SECCIONES[k].oculta), i = base.indexOf("actas") + 1;
+  base.splice(base.indexOf("convenio") + 1, 0, "calculadoras");
+  if (base.includes("recurrentes")) { base.splice(base.indexOf("recurrentes"), 1); base.splice(base.indexOf("plantillas") + 1, 0, "recurrentes"); }
+  const orden = [...base.slice(0, i), ...APARTADOS.map(a => "ap" + a.id), ...base.slice(i), "apartados"];
+  PAGINAS = { resumen: { nombre: "Inicio", icono: "resumen" }, ...Object.fromEntries(orden.map(k => [k, k === "calculadoras" ? { nombre: "Calculadoras", icono: "reloj" } : { nombre: SECCIONES[k].nombre, icono: SECCIONES[k].icono }])),
+    buzon: { nombre: "Buzón anónimo", icono: "correo" }, historial: { nombre: "Historial", icono: "reloj" }, textos: { nombre: "Textos", icono: "texto" }, ajustes: { nombre: "Ajustes", icono: "ajustes" } };
+}
+construirPaginas();
 const EN_MOVIL = ["resumen", "avisos", "calendario", "actas"];
 let actual = "resumen", datos = {};
 
@@ -164,27 +235,45 @@ async function iniciar() {
   const { data } = await sb.rpc("is_admin");
   window.ES_ADMIN = !!data;
   await cargarOpciones();
+  await cargarApartados();
+  await contarBuzon();
   pintaNav();
   const h = location.hash.slice(1);
   abrir(PAGINAS[h] ? h : "resumen");
 }
+let fallosLogin = 0, esperaHasta = 0;
 $("b-entrar").onclick = async () => {
+  const falta = Math.ceil((esperaHasta - Date.now()) / 1000);
+  if (falta > 0) return msg("m-login", `Demasiados intentos. Espera ${falta} segundos.`);
   msg("m-login", "Entrando…", true);
   const { error } = await sb.auth.signInWithPassword({ email: $("email").value.trim(), password: $("pass").value });
-  if (error) msg("m-login", /confirm/i.test(error.message) ? "Falta confirmar la cuenta: abre el email que te ha llegado y pulsa el enlace." : "Email o contraseña incorrectos.");
+  if (!error) { fallosLogin = 0; return; }
+  fallosLogin++;
+  if (fallosLogin >= 5) esperaHasta = Date.now() + Math.min(300, 15 * 2 ** (fallosLogin - 5)) * 1000;
+  msg("m-login", /confirm/i.test(error.message) ? "Falta confirmar la cuenta: abre el email que te ha llegado y pulsa el enlace."
+    : /rate|too many/i.test(error.message) ? "Demasiados intentos. Espera unos minutos." : "Email o contraseña incorrectos.");
 };
 $("pass").onkeydown = (e) => { if (e.key === "Enter") $("b-entrar").click(); };
+// Contraseña segura: 10 caracteres o más, con letras y números, y que no sea de las típicas
+const DEBILES = ["1234567890", "contraseña", "contrasena", "password12", "qwertyuiop", "ccoo123456", "calsina123"];
+const fallaPass = (p) => p.length < 10 ? "La contraseña debe tener al menos 10 caracteres."
+  : !/[a-zA-Z]/.test(p) || !/\d/.test(p) ? "La contraseña debe mezclar letras y números."
+  : DEBILES.some(d => p.toLowerCase().includes(d)) ? "Esa contraseña es demasiado fácil de adivinar. Elige otra." : "";
 $("b-registro").onclick = async () => {
-  if ($("pass").value.length < 8) return msg("m-login", "Escribe arriba una contraseña de al menos 8 caracteres y vuelve a pulsar.");
+  const f = fallaPass($("pass").value);
+  if (f) return msg("m-login", f + " Escríbela arriba y vuelve a pulsar.");
   const { error } = await sb.auth.signUp({ email: $("email").value.trim(), password: $("pass").value, options: { emailRedirectTo: aqui } });
-  error ? msg("m-login", error.message) : msg("m-login", "Cuenta creada. Abre el email de confirmación, pulsa el enlace y luego entra aquí.", true);
+  if (error) return msg("m-login", /database error|no permitido|not authorized/i.test(error.message)
+    ? "Este email no está autorizado. Solo pueden crear cuenta las personas que un administrador haya añadido antes en Ajustes, Administradores."
+    : /weak|pwned|leaked/i.test(error.message) ? "Esa contraseña aparece en filtraciones de internet. Elige otra." : error.message);
+  msg("m-login", "Cuenta creada. Abre el email de confirmación, pulsa el enlace y luego entra aquí.", true);
 };
 $("b-olvido").onclick = async () => {
   const { error } = await sb.auth.resetPasswordForEmail($("email").value.trim(), { redirectTo: aqui });
   error ? msg("m-login", error.message) : msg("m-login", "Te hemos enviado un email para cambiar la contraseña.", true);
 };
 $("b-nueva").onclick = async () => {
-  if ($("nueva").value.length < 8) return msg("m-rec", "Mínimo 8 caracteres.");
+  const f = fallaPass($("nueva").value); if (f) return msg("m-rec", f);
   const { error } = await sb.auth.updateUser({ password: $("nueva").value });
   error ? msg("m-rec", error.message) : (msg("m-rec", "Contraseña guardada.", true), setTimeout(() => location.replace(aqui), 1200));
 };
@@ -192,9 +281,10 @@ const salir = async () => { if (await confirmarSalida()) { await sb.auth.signOut
 
 // ---------- Navegación ----------
 function pintaNav() {
-  const b = (k, extra = "") => `<button data-p="${k}" class="${k === actual ? "activa" : ""} ${extra}">${icono(PAGINAS[k].icono)}${PAGINAS[k].nombre}</button>`;
+  const cuenta = (k) => k === "buzon" && BUZON_SIN_LEER ? `<span class="cuenta-menu" aria-label="${BUZON_SIN_LEER} sin leer">${BUZON_SIN_LEER}</span>` : "";
+  const b = (k, extra = "") => `<button data-p="${k}" class="${k === actual ? "activa" : ""} ${extra}">${icono(PAGINAS[k].icono)}${PAGINAS[k].nombre}${cuenta(k)}</button>`;
   $("nav-admin").innerHTML =
-    Object.keys(PAGINAS).map(k => (["preguntas", "textos"].includes(k) ? `<div class="sep solo-pc"></div>` : "") + b(k, EN_MOVIL.includes(k) ? "" : "solo-pc")).join("") +
+    Object.keys(PAGINAS).map(k => (["preguntas", "apartados", "buzon"].includes(k) ? `<div class="sep solo-pc"></div>` : "") + b(k, EN_MOVIL.includes(k) ? "" : "solo-pc")).join("") +
     `<button class="solo-movil ${EN_MOVIL.includes(actual) ? "" : "activa"}" id="b-mas">${icono("menu")}Más</button>
      <div class="sep solo-pc"></div>
      <div class="quien">${esc(window.MI_EMAIL || "")}<br>Versión ${VERSION_WEB}</div>
@@ -207,7 +297,7 @@ function pintaNav() {
 }
 function abrirMas() {
   $("hoja-mas").innerHTML = Object.keys(PAGINAS).filter(k => !EN_MOVIL.includes(k)).map(k =>
-    `<button data-p="${k}">${icono(PAGINAS[k].icono)}${PAGINAS[k].nombre}</button>`).join("") +
+    `<button data-p="${k}">${icono(PAGINAS[k].icono)}${PAGINAS[k].nombre}${k === "buzon" && BUZON_SIN_LEER ? `<span class="cuenta-menu">${BUZON_SIN_LEER}</span>` : ""}</button>`).join("") +
     (INSTALADA_A() ? "" : `<button id="m-instalar">${icono("descargar")}Instalar la app</button>`) +
     `<a href="index.html" target="_blank">${icono("ver")}Ver la web</a><button id="m-salir">${icono("salir")}Salir (${esc(window.MI_EMAIL || "")})</button><p class="fecha-txt" style="text-align:center;margin:6px 0 0">Versión ${VERSION_WEB}</p>`;
   ["velo-mas", "hoja-mas"].forEach(i => $(i).classList.remove("oculto"));
@@ -220,10 +310,13 @@ $("velo-mas").onclick = cerrarMas;
 
 function abrir(k) {
   actual = k; history.replaceState(null, "", "#" + k); pintaNav(); window.scrollTo(0, 0);
-  $("fab").classList.toggle("oculto", !SECCIONES[k]);
-  if (SECCIONES[k]) { $("fab").onclick = () => abrirEditor(k); $("fab").setAttribute("aria-label", SECCIONES[k].nuevo); }
+  $("fab").classList.remove("oculto");
+  $("fab").onclick = abrirHojaNuevo; $("fab").setAttribute("aria-label", "Nuevo: elegir qué crear");
   if (!window.ES_ADMIN) { $("zona").innerHTML = `<div class="panel vacio">${icono("alerta")}Esta cuenta (${esc(window.MI_EMAIL)}) no tiene permiso para publicar. Pide a la Sección Sindical que añada tu email en Ajustes.</div>`; return; }
   if (k === "resumen") pintaResumen();
+  else if (k === "buzon") pintaBuzon();
+  else if (k === "calculadoras") pintaCalculadoras();
+  else if (k === "historial") pintaHistorial();
   else if (k === "textos") pintaTextos();
   else if (k === "ajustes") pintaAjustes();
   else pintaSeccion(k);
@@ -240,10 +333,17 @@ async function pintaResumen() {
       <button class="panel rapido" data-n="convenio"><span class="ic">${icono("convenio")}</span><span><b>Apartado del convenio</b><small>Explicar un derecho</small></span></button>
       <button class="panel rapido" data-ir="ajustes"><span class="ic">${icono("telegram")}</span><span><b>Telegram y avisos</b><small>Canales y cartel QR</small></span></button>
     </div>
+    <div id="aviso-buzon"></div>
     <div id="recordatorio-copia"></div>
     <div id="banda-instalar"></div>
     <h2 class="titulo-bloque">Visitas a la web</h2>
     <div class="panel visitas" id="visitas"><p class="fecha-txt">Cargando…</p></div>
+    <h2 class="titulo-bloque">Estadísticas</h2>
+    <div class="estadisticas">
+      <section class="panel graf"><h3>Lo más leído</h3><p class="fecha-txt">Veces que se ha abierto cada cosa en la web. Anónimo: no se sabe quién.</p><div id="est-leido"><p class="fecha-txt">Cargando…</p></div></section>
+      <section class="panel graf"><h3>Móviles con avisos activados</h3><p class="fecha-txt">Por semana.</p><div id="est-suscritos"><p class="fecha-txt">Cargando…</p></div></section>
+      <section class="panel graf"><h3>Secciones más visitadas</h3><p class="fecha-txt">Últimos 30 días.</p><div id="est-secciones"><p class="fecha-txt">Cargando…</p></div></section>
+    </div>
     <div class="resumen-rejilla">
       <div><h2 class="titulo-bloque">Próximos 14 días <a href="#" id="ir-cal">Ver calendario</a></h2><div class="panel proximos" id="proximos"><p class="fecha-txt">Cargando…</p></div></div>
       <div><h2 class="titulo-bloque">Avisos programados</h2><div class="panel proximos" id="programados"><p class="fecha-txt">Cargando…</p></div></div>
@@ -253,6 +353,11 @@ async function pintaResumen() {
     <div class="lista-adm" id="ultimos"><p class="fecha-txt">Cargando…</p></div>`;
   $("zona").querySelectorAll("[data-n]").forEach(b => b.onclick = () => abrirEditor(b.dataset.n));
   pintaBandaInstalar();
+  contarBuzon().then(n => {
+    if (!n || !$("aviso-buzon")) return;
+    $("aviso-buzon").innerHTML = `<button class="panel banda aviso-buzon" id="ir-buzon"><span class="ic">${icono("correo")}</span><span class="txt"><b>${n === 1 ? "Tienes 1 mensaje sin leer" : `Tienes ${n} mensajes sin leer`} en el buzón anónimo</b><p>Preguntas y sugerencias de la plantilla.</p></span>${icono("der")}</button>`;
+    $("ir-buzon").onclick = () => abrir("buzon");
+  });
   $("zona").querySelector("[data-ir]").onclick = () => { abrir("ajustes"); setTimeout(() => $("ajuste-canales")?.scrollIntoView({ behavior: "smooth" }), 400); };
   sb.from("paginas").select("contenido").eq("slug", "ultima_copia").maybeSingle().then(({ data }) => {
     const f = data?.contenido, dias = f ? (Date.now() - new Date(f)) / 86400000 : Infinity;
@@ -262,12 +367,13 @@ async function pintaResumen() {
     }
   });
   await Promise.all(Object.keys(SECCIONES).map(cargarDatos));
-  $("cuentas").innerHTML = Object.entries(SECCIONES).map(([k, s]) => `<span class="etq">${datos[k].length} ${s.nombre.toLowerCase()}</span>`).join("");
+  $("cuentas").innerHTML = Object.entries(SECCIONES).filter(([, s]) => !s.oculta).map(([k, s]) => `<span class="etq">${datos[k].length} ${s.nombre.toLowerCase()}</span>`).join("");
   const todos = Object.entries(SECCIONES).flatMap(([k, s]) => datos[k].map(x => ({ k, x, f: s.fechas(x)[1] || s.fechas(x)[0] })))
     .sort((a, b) => new Date(b.f) - new Date(a.f)).slice(0, 6);
   $("ultimos").innerHTML = todos.length ? todos.map(({ k, x }) => itemHTML(k, x, true)).join("") : `<div class="panel vacio">${icono("avisos")}Todavía no has publicado nada.</div>`;
   enlazarItems($("ultimos"));
   pintaVisitas();
+  pintaEstadisticas();
   // Próximos días y programados
   $("ir-cal").onclick = (e) => { e.preventDefault(); VISTA_CAL.modo = "mes"; abrir("calendario"); };
   const hoy = hoyISO(), lim = isoLocal(new Date(Date.now() + 14 * 86400000));
@@ -287,14 +393,17 @@ async function pintaResumen() {
 // ---------- Listas ----------
 async function cargarDatos(k) {
   const s = SECCIONES[k];
-  const { data, error } = await sb.from(s.tabla).select("*").order(s.orden[0], { ascending: s.orden[1] }).order("id", { ascending: false });
+  let q = sb.from(s.tabla).select("*");
+  Object.entries(s.filtro || {}).forEach(([c, v]) => { q = q.eq(c, v); });
+  const { data, error } = await q.order(s.orden[0], { ascending: s.orden[1] }).order("id", { ascending: false });
   if (error) throw error;
   datos[k] = data || [];
   return datos[k];
 }
 function itemHTML(k, x, conSeccion) {
   const s = SECCIONES[k], [pub, act] = s.fechas(x), nAdj = (x.adjuntos || []).length;
-  const chips = [conSeccion ? s.nombre : null, ...s.chips(x)].filter(Boolean);
+  const nl = TABLAS_LEIDAS.includes(s.tabla) ? LECTURAS[s.tabla + ":" + x.id] : 0;
+  const chips = [conSeccion ? s.nombre : null, ...s.chips(x), nl ? "Leído " + vecesTxt(nl) : null].filter(Boolean);
   return `<button class="item-adm ${claseTipo(x[s.campoColor], s.lista)}" data-k="${k}" data-id="${x.id}">
     <span class="barra-color"></span>
     <span class="txt">
@@ -306,6 +415,90 @@ function itemHTML(k, x, conSeccion) {
     ${icono("der", "chevron")}
   </button>`;
 }
+// ---------- Reordenar arrastrando (ratón o dedo) y con el teclado ----------
+const REORDENABLE = (k) => SECCIONES[k]?.orden?.[0] === "orden";
+// Envuelve cada elemento con un asa para arrastrarlo y botones para subir/bajar
+const filaOrden = (k, x) => `<div class="fila-orden" data-id="${x.id}">
+  <span class="asa" role="button" tabindex="0" aria-label="Arrastrar para cambiar el orden de «${esc((SECCIONES[k].tituloDe ? SECCIONES[k].tituloDe(x) : x.titulo) || "")}». También con las flechas del teclado.">${icono("arrastrar")}</span>
+  ${itemHTML(k, x)}</div>`;
+function hacerOrdenable(cont, k) {
+  const filas = () => [...cont.querySelectorAll(":scope > .fila-orden")];
+  const guardar = async () => {
+    const ids = filas().map(f => +f.dataset.id), cambios = [];
+    ids.forEach((id, i) => { const x = datos[k].find(d => d.id === id); if (x && x.orden !== i + 1) { x.orden = i + 1; cambios.push(sb.from(SECCIONES[k].tabla).update({ orden: i + 1 }).eq("id", id)); } });
+    if (!cambios.length) return;
+    const r = await Promise.all(cambios), e = r.find(x => x.error);
+    datos[k].sort((a, b) => a.orden - b.orden);
+    aviso(e ? "No se ha podido guardar el orden: " + e.error.message : "Orden guardado. Ya se ve así en la web.", !!e);
+  };
+  filas().forEach(f => {
+    const asa = f.querySelector(".asa");
+    asa.onpointerdown = (e) => {
+      if (e.button > 0) return;
+      e.preventDefault(); f.classList.add("arrastrando");
+      const id = e.pointerId;
+      // Se escucha en toda la página: al mover la fila en la lista, el navegador deja de mandar los movimientos al asa
+      const mover = (ev) => {
+        if (ev.pointerId !== id) return;
+        if (ev.clientY < 90) scrollBy(0, -14); else if (ev.clientY > innerHeight - 110) scrollBy(0, 14);
+        const sobre = document.elementFromPoint(ev.clientX, ev.clientY)?.closest(".fila-orden");
+        if (!sobre || sobre === f || sobre.parentElement !== cont) return;
+        const r = sobre.getBoundingClientRect();
+        cont.insertBefore(f, ev.clientY < r.top + r.height / 2 ? sobre : sobre.nextSibling);
+      };
+      const soltar = (ev) => {
+        if (ev.pointerId !== id) return;
+        removeEventListener("pointermove", mover); removeEventListener("pointerup", soltar); removeEventListener("pointercancel", soltar);
+        f.classList.remove("arrastrando"); guardar();
+      };
+      addEventListener("pointermove", mover); addEventListener("pointerup", soltar); addEventListener("pointercancel", soltar);
+    };
+    asa.onkeydown = (e) => {
+      if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+      e.preventDefault();
+      const otro = e.key === "ArrowUp" ? f.previousElementSibling : f.nextElementSibling;
+      if (!otro?.classList.contains("fila-orden")) return;
+      cont.insertBefore(f, e.key === "ArrowUp" ? otro : otro.nextSibling); asa.focus(); guardar();
+    };
+  });
+}
+
+// ---------- Borrador guardado solo (por si se cierra la app sin querer) ----------
+const claveBorrador = () => ED && `ccoo-borrador-${ED.k}-${ED.orig?.id ?? "nuevo"}`;
+function guardarBorrador() {
+  if (!ED?.sucio) return;
+  const campos = {};
+  $("ed-form").querySelectorAll("[id^='f-']:not([type=file])").forEach(el => campos[el.id] = el.type === "checkbox" ? el.checked : el.value);
+  try { localStorage.setItem(claveBorrador(), JSON.stringify({ t: Date.now(), campos })); } catch (_) {}
+}
+const quitarBorrador = () => { try { if (ED) localStorage.removeItem(claveBorrador()); } catch (_) {} };
+setInterval(guardarBorrador, 4000);
+document.addEventListener("visibilitychange", () => { if (document.hidden) guardarBorrador(); });
+function ofrecerBorrador() {
+  let b = null; try { b = JSON.parse(localStorage.getItem(claveBorrador()) || "null"); } catch (_) {}
+  if (!b || (ED.orig?.actualizado && new Date(ED.orig.actualizado).getTime() > b.t)) return;
+  $("ed-form").insertAdjacentHTML("afterbegin", `<div class="borrador" id="borrador"><p>${icono("reloj", "p")}<span>Tienes un borrador sin guardar de ${esc(haceTxt(b.t))}. ¿Lo recuperas? <small>(Los archivos hay que volver a elegirlos.)</small></span></p>
+    <div class="botones"><button class="btn" type="button" id="b-borrador-si">Recuperar el borrador</button><button class="btn sec" type="button" id="b-borrador-no">Descartar</button></div></div>`);
+  $("b-borrador-si").onclick = () => {
+    Object.entries(b.campos).forEach(([id, v]) => { const el = $(id); if (!el) return; if (el.type === "checkbox") el.checked = v; else el.value = v; });
+    $("borrador").remove(); ED.sucio = true; actualizarPrevia(); aviso("Borrador recuperado.");
+  };
+  $("b-borrador-no").onclick = () => { quitarBorrador(); $("borrador").remove(); };
+}
+
+// ---------- Botón «+ Nuevo»: pregunta qué crear ----------
+function abrirHojaNuevo() {
+  const orden = Object.keys(PAGINAS).filter(k => SECCIONES[k] && !SECCIONES[k].oculta);
+  if (SECCIONES[actual] && !SECCIONES[actual].oculta) orden.splice(orden.indexOf(actual), 1), orden.unshift(actual);
+  $("hoja-mas").innerHTML = `<p class="hoja-tit">¿Qué quieres crear?</p>` + orden.map(k =>
+    `<button data-nuevo="${k}" class="${k === actual ? "actual" : ""}">${icono(SECCIONES[k].icono)}${esc({ convenio: "Nuevo apartado del convenio", apartados: "Nuevo apartado de la web" }[k] || SECCIONES[k].nuevo)}</button>`).join("") +
+    `<button id="h-calc">${icono("reloj")}Permiso o precio de las calculadoras</button>`;
+  ["velo-mas", "hoja-mas"].forEach(i => $(i).classList.remove("oculto"));
+  $("hoja-mas").querySelectorAll("[data-nuevo]").forEach(b => b.onclick = () => { cerrarMas(); abrirEditor(b.dataset.nuevo); });
+  $("h-calc").onclick = () => { cerrarMas(); abrir("calculadoras"); };
+  $("hoja-mas").querySelector("button")?.focus();
+}
+
 function enlazarItems(cont) {
   cont.querySelectorAll(".item-adm").forEach(b => b.onclick = () => abrirEditor(b.dataset.k, datos[b.dataset.k].find(x => x.id == b.dataset.id)));
 }
@@ -314,24 +507,29 @@ async function pintaSeccion(k) {
   if (k === "calendario" && VISTA_CAL.modo === "mes") return pintaCalAdm();
   $("zona").innerHTML = `<div class="sec-cab">
       <div><h1>${s.nombre}</h1><p id="cuenta">${s.intro}</p></div>
-      <button class="btn btn-nuevo" id="b-nuevo">${icono("mas", "p")}${s.nuevo}</button>
+      <div class="botones" style="margin:0">${k === "avisos" ? `<button class="btn sec" id="b-recurrentes">${icono("reloj2", "p")}Avisos que se repiten</button>` : ""}<button class="btn btn-nuevo" id="b-nuevo">${icono("mas", "p")}${s.nuevo}</button></div>
     </div>
     ${k === "calendario" ? cambioVistaCal() : ""}
     <div class="herramientas"><div class="buscador">${icono("buscar", "p")}<input id="buscar" type="search" placeholder="Buscar en ${s.nombre.toLowerCase()} (también fechas: 12/10, octubre…)" aria-label="Buscar"></div></div>
     ${FECHA_DE[k] ? `<div class="filtro-fechas" id="fechas-adm"></div>` : ""}
     <div class="lista-adm" id="lista"><p class="fecha-txt">Cargando…</p></div>`;
   $("b-nuevo").onclick = () => abrirEditor(k);
+  if ($("b-recurrentes")) $("b-recurrentes").onclick = () => abrir("recurrentes");
   enlazarVistaCal();
-  try { await cargarDatos(k); } catch (e) { $("lista").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
+  try { await Promise.all([cargarDatos(k), TABLAS_LEIDAS.includes(s.tabla) ? cargarLecturas() : null]); } catch (e) { $("lista").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
   const ff = FILTRO_ADM[k] ||= {};
   const pinta = () => {
     if (FECHA_DE[k]) pintaFechasAdm(datos[k], k, ff, pinta);
     const q = $("buscar").value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const l = datos[k].filter(x => pasaFechaAdm(ff, FECHA_DE[k]?.(x)) &&
       (!q || (JSON.stringify(x) + " " + textoFecha(FECHA_DE[k]?.(x))).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)));
-    $("lista").innerHTML = l.length ? l.map(x => itemHTML(k, x)).join("") :
+    const ordenable = REORDENABLE(k) && !q && l.length > 1;
+    if (!ordenable) $("ayuda-orden")?.remove();
+    if (ordenable && !$("ayuda-orden")) $("lista").insertAdjacentHTML("beforebegin", `<p class="ayuda" id="ayuda-orden">${icono("arrastrar", "p")} Para cambiar el orden, arrastra desde las rayas de la izquierda (con el dedo o el ratón).</p>`);
+    $("lista").innerHTML = l.length ? (ordenable ? l.map(x => filaOrden(k, x)).join("") : l.map(x => itemHTML(k, x)).join("")) :
       `<div class="panel vacio">${icono(s.icono)}${q || ff.a || ff.m || ff.d ? "Nada coincide con la búsqueda o la fecha." : `Todavía no hay nada. Pulsa «${s.nuevo}» para empezar.`}</div>`;
     enlazarItems($("lista"));
+    if (ordenable) hacerOrdenable($("lista"), k);
   };
   $("buscar").oninput = pinta; pinta();
 }
@@ -362,6 +560,7 @@ function validarArchivo(f) {
 let ED = null; // { k, orig, pendientes:[File], existentes:[adj], quitar:[url], sucio }
 function campoHTML(c, v) {
   const id = "f-" + c.k, opc = c.opc ? " <small>(opcional)</small>" : "", ayuda = c.ayuda ? `<p class="ayuda">${c.ayuda}</p>` : "";
+  if (c.t === "select" && c.ops) return `<label for="${id}">${c.l}</label><select id="${id}">${c.ops.map(([val, txt]) => `<option value="${esc(val)}" ${String(val) === String(v) ? "selected" : ""}>${esc(txt)}</option>`).join("")}</select>${ayuda}`;
   if (c.t === "select") {
     const ops = nombres(c.lista); if (v && !ops.includes(v)) ops.push(v);
     return `<label for="${id}">${c.l}</label><select id="${id}">${ops.map(o => `<option ${o === v ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>
@@ -382,16 +581,16 @@ function campoHTML(c, v) {
     const loc = v ? new Date(new Date(v) - new Date(v).getTimezoneOffset() * 6e4).toISOString().slice(0, 16) : "";
     return `<label for="${id}">${c.l}${opc}</label><input id="${id}" type="datetime-local" value="${loc}">${ayuda}`;
   }
-  return `<label for="${id}">${c.l}${opc}</label><input id="${id}" type="${c.t}" value="${esc(v ?? "")}" ${c.ph ? `placeholder="${esc(c.ph)}"` : ""}>${ayuda}`;
+  return `<label for="${id}">${c.l}${opc}</label><input id="${id}" type="${c.t}" value="${esc(v ?? "")}" ${c.ph ? `placeholder="${esc(c.ph)}"` : ""} ${c.paso ? `step="${c.paso}" min="0" inputmode="decimal"` : ""}>${ayuda}`;
 }
 const camposPlanos = (s) => s.campos.flatMap(c => c.fila || c.checks?.map(x => ({ ...x, t: "check" })) || [c]);
 
 function abrirEditor(k, orig = null, preset = {}) {
   const s = SECCIONES[k];
-  if (actual !== k && actual !== "resumen" && actual !== "calendario") abrir(k);
+  if (actual !== k && actual !== "resumen" && actual !== "calendario" && !s.oculta) abrir(k);
   const x = orig || {};
   ED = { k, orig, pendientes: [], existentes: orig ? (s.campos.some(c => c.t === "archivos") ? [...(orig.adjuntos || [])] : (orig.url ? [{ nombre: orig.nombre_archivo || "Archivo", url: orig.url, tipo: orig.tipo_archivo, tamano: orig.tamano }] : [])) : [], quitar: [], sucio: false };
-  const def = { orden: Math.max(0, ...(datos[k] || []).map(d => d.orden || 0)) + 1, fecha: k === "calendario" ? hoyISO() : undefined, ...preset };
+  const def = { orden: Math.max(0, ...(datos[k] || []).map(d => d.orden || 0)) + 1, fecha: k === "calendario" || s.filtro ? hoyISO() : undefined, ...preset };
   $("ed-modo").innerHTML = orig ? `${icono("editar", "p")}Editando ${s.uno}` : `${icono("mas", "p")}${s.nuevo}`;
   $("ed-modo").className = orig ? "editando" : "";
   $("ed-titulo").textContent = orig ? ((s.tituloDe ? s.tituloDe(orig) : orig.titulo) || "Sin título") : "Sin título todavía";
@@ -409,9 +608,9 @@ function abrirEditor(k, orig = null, preset = {}) {
     (s.asistente && !orig ? asistenteHTML() : "") +
     (s.asistente && !orig ? `<div class="separador">Revisa el acta y publícala</div>` : "") +
     s.campos.map(c => {
-      if (c.fila) return `<div class="fila">${c.fila.map(f => `<div>${campoHTML(f, x[f.k] ?? def[f.k])}</div>`).join("")}</div>`;
+      if (c.fila) return `<div class="fila">${c.fila.map(f => `<div${f.si ? ` data-si="${f.si}"` : ""}>${campoHTML(f, x[f.k] ?? def[f.k] ?? f.def)}</div>`).join("")}</div>`;
       if (c.checks) { const v = c.checks.filter(ch => !(ch.soloNuevo && orig)); return v.length ? `<div class="grupo-check">${v.map(ch => `<label class="check"><input type="checkbox" id="f-${ch.k}" ${(orig ? x[ch.k] : (x[ch.k] ?? ch.def)) ? "checked" : ""}>${ch.l}</label>`).join("")}</div>` : ""; }
-      return campoHTML(c, x[c.k] ?? def[c.k]);
+      return c.si ? `<div data-si="${c.si}">${campoHTML(c, x[c.k] ?? def[c.k] ?? c.def)}</div>` : campoHTML(c, x[c.k] ?? def[c.k] ?? c.def);
     }).join("");
 
   // archivos
@@ -421,6 +620,7 @@ function abrirEditor(k, orig = null, preset = {}) {
     el.addEventListener("input", () => { ED.sucio = true; actualizarPrevia(); });
     el.addEventListener("change", () => { ED.sucio = true; actualizarPrevia(); });
   });
+  ofrecerBorrador();
   if (s.asistente && !orig) prepararAsistente();
   if (k === "avisos" && !orig) prepararPlantillas();
   actualizarPrevia();
@@ -443,7 +643,8 @@ function prepararArchivos(c) {
   input.onchange = () => añadir(input.files);
   dz.ondragover = (e) => { e.preventDefault(); dz.classList.add("encima"); };
   dz.ondragleave = () => dz.classList.remove("encima");
-  dz.ondrop = (e) => { e.preventDefault(); dz.classList.remove("encima"); añadir(e.dataTransfer.files); };
+  dz.ondrop = (e) => { e.preventDefault(); e.stopPropagation(); dz.classList.remove("encima"); $("editor").classList.remove("soltando"); añadir(e.dataTransfer.files); };
+  ED.añadir = añadir; // para soltar archivos en cualquier parte del editor o pegarlos
   pintaArchivos(c);
 }
 function pintaArchivos(c) {
@@ -467,7 +668,8 @@ function leerFormulario() {
     const el = $("f-" + c.k); if (!el) continue;
     if (c.t === "check") fila[c.k] = el.checked;
     else if (c.t === "datetime-local") fila[c.k] = el.value ? new Date(el.value).toISOString() : null;
-    else if (c.t === "number") fila[c.k] = parseInt(el.value || "0", 10);
+    else if (c.num) fila[c.k] = parseInt(el.value, 10) || 1;
+    else if (c.t === "number") fila[c.k] = c.dec ? (parseFloat(String(el.value).replace(",", ".")) || 0) : parseInt(el.value || "0", 10);
     else { const v = el.value.trim(); fila[c.k] = v || (c.opc ? null : ""); }
   }
   return fila;
@@ -478,9 +680,12 @@ function actualizarPrevia() {
   const adj = [...ED.existentes, ...ED.pendientes.filter(p => !p.error).map(p => ({ nombre: p.file.name, url: p.vista || "#", tipo: mimeDe(p.file), tamano: p.file.size }))];
   const x = { ...(ED.orig || {}), ...f, adjuntos: adj, fecha: f.fecha || ED.orig?.fecha || ahora, creado: ED.orig?.creado || ahora, actualizado: ED.orig ? ahora : null };
   if (ED.k === "documentos") { x.fecha = ED.orig?.fecha || ahora; const a = adj[0]; Object.assign(x, a ? { url: a.url, nombre_archivo: a.nombre, tipo_archivo: a.tipo, tamano: a.tamano } : {}); }
-  if (ED.k === "calendario") x.fecha = f.fecha || hoyISO();
+  if (ED.k === "calendario" || s.filtro) x.fecha = f.fecha || hoyISO();
   $("ed-titulo").textContent = (s.tituloDe ? s.tituloDe(f) : f.titulo) || (ED.orig ? "Sin título" : "Sin título todavía");
   $("ed-previa").innerHTML = s.previa(x);
+  $("ed-previa").querySelectorAll("[data-canal]").forEach(b => b.onclick = () => { PREVIA_CANAL = b.dataset.canal; actualizarPrevia(); });
+  aplicarCondiciones();
+  if (["avisos", "recurrentes"].includes(ED.k)) avisoTitulo(f);
   $("ed-previa").querySelectorAll("a").forEach(a => a.onclick = (e) => { if (a.getAttribute("href") === "#" || a.href.startsWith("blob:")) e.preventDefault(); });
 }
 function cambiarPestana(p) {
@@ -489,16 +694,21 @@ function cambiarPestana(p) {
 }
 document.querySelectorAll(".ed-pestanas button").forEach(b => b.onclick = () => cambiarPestana(b.dataset.p));
 
-async function confirmarSalida() { return !ED || !ED.sucio || confirm("Tienes cambios sin guardar. ¿Salir sin guardar?"); }
+async function confirmarSalida() { return !ED || !ED.sucio || confirm("Tienes cambios sin guardar. ¿Salir sin guardar? (Se perderá el borrador.)"); }
 async function cerrarEditor(desdeAtras) {
   if (!ED) return;
   if (!(await confirmarSalida())) { if (desdeAtras) history.pushState({ editor: 1 }, ""); return; }
+  if (ED.sucio) quitarBorrador(); // ha dicho «salir sin guardar»
   ED.pendientes.forEach(p => p.vista && URL.revokeObjectURL(p.vista));
-  ED = null;
+  ED = null; BUZON_A_PREGUNTA = null;
   ["velo-ed", "editor"].forEach(i => $(i).classList.add("oculto"));
   document.body.style.overflow = "";
   if (!desdeAtras && history.state?.editor) history.back();
 }
+$("editor").addEventListener("dragover", (e) => { if (!ED?.añadir || !e.dataTransfer?.types?.includes("Files")) return; e.preventDefault(); $("editor").classList.add("soltando"); });
+$("editor").addEventListener("dragleave", (e) => { if (!e.relatedTarget || !$("editor").contains(e.relatedTarget)) $("editor").classList.remove("soltando"); });
+$("editor").addEventListener("drop", (e) => { if (!ED?.añadir) return; e.preventDefault(); $("editor").classList.remove("soltando"); if (e.dataTransfer.files.length) { cambiarPestana("form"); ED.añadir(e.dataTransfer.files); } });
+document.addEventListener("paste", (e) => { if (!ED?.añadir) return; const f = [...(e.clipboardData?.files || [])]; if (f.length) { e.preventDefault(); ED.añadir(f); aviso(f.length === 1 ? "Archivo pegado." : f.length + " archivos pegados."); } });
 $("ed-cerrar").onclick = () => cerrarEditor();
 $("ed-cancelar").onclick = () => cerrarEditor();
 $("velo-ed").onclick = () => cerrarEditor();
@@ -513,6 +723,15 @@ $("ed-guardar").onclick = async () => {
   }
   if (["avisos"].includes(ED.k) && /\[[^\]]{1,30}\]/.test((fila.titulo || "") + (fila.contenido || "")) && !confirm("El aviso todavía tiene partes entre [corchetes] sin rellenar. ¿Publicar igualmente?")) return;
   if (ED.k === "enlaces" && fila.url && !/^https?:\/\//.test(fila.url)) fila.url = "https://" + fila.url;
+  if (s.filtro) Object.assign(fila, s.filtro);
+  if (ED.k === "apartados") {
+    fila.descripcion = fila.descripcion || "";
+    if (!ED.orig) { // dirección de la pestaña: #ap-comite-de-empresa (no cambia aunque luego se cambie el nombre)
+      let base = fila.titulo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 36) || "apartado", slug = base, n = 2;
+      while ((datos.apartados || []).some(a => a.slug === slug)) slug = base + "-" + n++;
+      fila.slug = slug;
+    }
+  }
   const malos = ED.pendientes.filter(p => p.error);
   if (malos.length) { cambiarPestana("form"); return msg("ed-msg", "Quita los archivos marcados en rojo antes de guardar."); }
   if (ED.k === "documentos" && !ED.existentes.length && !ED.pendientes.length) { cambiarPestana("form"); return msg("ed-msg", "Falta elegir el archivo."); }
@@ -531,14 +750,16 @@ $("ed-guardar").onclick = async () => {
     const q = ED.orig ? sb.from(s.tabla).update(fila).eq("id", ED.orig.id).select("*").single() : sb.from(s.tabla).insert(fila).select("*").single();
     const { data: guardado, error } = await q;
     if (error) throw error;
-    await borrarArchivos(ED.quitar);
+    if (ED.k === "preguntas" && BUZON_A_PREGUNTA) { await sb.from("buzon").update({ archivado: true, leido: true }).eq("id", BUZON_A_PREGUNTA); BUZON_A_PREGUNTA = null; contarBuzon().then(pintaNav); }
+    // Los archivos quitados se conservan: así se pueden recuperar desde el Historial. Se limpian en Ajustes.
     const editado = !!ED.orig, k = ED.k;
-    ED.sucio = false; await cerrarEditor();
-    abrir(["resumen", "calendario"].includes(actual) ? actual : k);
-    if (editado) return aviso("Cambios guardados. Ya se ven en la web.");
+    quitarBorrador(); ED.sucio = false; await cerrarEditor();
+    if (k === "apartados") { await cargarApartados(); pintaNav(); }
+    abrir(["resumen", "calendario"].includes(actual) ? actual : (s.volver || k));
+    if (editado || s.oculta) return aviso(editado ? "Cambios guardados. Ya se ven en la web." : "Guardado. Ya se ve en la web.");
     // Avisar a los móviles y a Telegram
     let res = null;
-    if (fila.notificar !== false) {
+    if (fila.notificar !== false && k !== "apartados" && k !== "recurrentes" && !s.oculta) {
       const r = await sb.functions.invoke("notificar", { body: { modo: "publicado", tabla: s.tabla, id: guardado.id } }).catch(() => null);
       res = r?.data || null;
     }
@@ -550,12 +771,19 @@ $("ed-guardar").onclick = async () => {
 };
 $("ed-borrar").onclick = async () => {
   const s = SECCIONES[ED.k], x = ED.orig;
-  if (!confirm(`¿Borrar «${(s.tituloDe ? s.tituloDe(x) : x.titulo)}»? Desaparecerá de la web y no se puede deshacer.`)) return;
+  let archivosApartado = [];
+  if (ED.k === "apartados") {
+    const { data: pubs } = await sb.from("publicaciones").select("adjuntos").eq("apartado_id", x.id);
+    if ((pubs || []).length && !confirm(`El apartado «${x.titulo}» tiene ${pubs.length} publicación(es). Si lo borras, se borrarán también. Si solo quieres que no se vea, desmarca «Se ve en la web». ¿Borrar todo?`)) return;
+    archivosApartado = (pubs || []).flatMap(p => (p.adjuntos || []).map(a => a.url));
+  }
+  if (!confirm(`¿Borrar «${(s.tituloDe ? s.tituloDe(x) : x.titulo)}»? Desaparecerá de la web. Si te equivocas, puedes recuperarlo en «Historial».`)) return;
   const { error } = await sb.from(s.tabla).delete().eq("id", x.id);
   if (error) return msg("ed-msg", "No se ha podido borrar: " + error.message);
-  await borrarArchivos([...(x.adjuntos || []).map(a => a.url), x.url, x.pdf_url]);
+  // Los archivos se conservan para poder recuperarlo desde el Historial (se limpian en Ajustes > Archivos sin usar).
   ED.sucio = false; const k = ED.k; await cerrarEditor();
-  aviso("Borrado."); abrir(["resumen", "calendario"].includes(actual) ? actual : k);
+  if (k === "apartados") { await cargarApartados(); pintaNav(); }
+  aviso("Borrado."); abrir(["resumen", "calendario"].includes(actual) ? actual : (s.volver || k));
 };
 
 // ---------- Asistente de actas (a partir de fotos y archivos) ----------
@@ -629,7 +857,7 @@ async function aBase64(f) {
 }
 // Saca el texto de un Word (.docx) en el propio navegador
 async function textoDeWord(f) {
-  if (!window.JSZip) await new Promise((ok, mal) => { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"; sc.onload = ok; sc.onerror = () => mal(new Error("No se ha podido abrir el Word. Guárdalo como PDF y súbelo otra vez.")); document.head.appendChild(sc); });
+  if (!window.JSZip) await new Promise((ok, mal) => { const sc = document.createElement("script"); sc.src = "lib/jszip.min.js"; sc.onload = ok; sc.onerror = () => mal(new Error("No se ha podido abrir el Word. Guárdalo como PDF y súbelo otra vez.")); document.head.appendChild(sc); });
   const zip = await JSZip.loadAsync(f), xml = await zip.file("word/document.xml")?.async("string");
   if (!xml) throw new Error(`«${f.name}» no parece un Word válido.`);
   return xml.replace(/<\/w:p>/g, "\n").replace(/<w:tab\/>/g, "\t").replace(/<[^>]+>/g, "")
@@ -668,12 +896,262 @@ async function generarActa() {
   btn.disabled = false;
 }
 
+// ---------- Vista previa en todos los canales (avisos) ----------
+// Recorta igual que la función «notificar» del servidor, para que lo que se ve aquí sea lo que llega.
+let PREVIA_CANAL = "web";
+const LIM_TIT_NOTIF = 45; // letras que se suelen ver del título de una notificación en el móvil
+const recortaCanal = (t, n) => { t = String(t || "").replace(/\*\*/g, "").replace(/\s+/g, " ").trim(); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
+const tituloNotif = (x) => (x.urgente ? "URGENTE: " : "Nuevo aviso: ") + (x.titulo || "Sin título");
+function previaCanales(x) {
+  const tit = tituloNotif(x), corta = tit.length > LIM_TIT_NOTIF, nAdj = (x.adjuntos || []).length, largo = recortaCanal(x.contenido, 100000);
+  const tg = recortaCanal(x.contenido, 700) + (nAdj ? `\n\nArchivos adjuntos: ${nAdj}` : "");
+  const wa = textoCompartir((x.urgente ? "URGENTE: " : "") + (x.titulo || ""), x.contenido, x.id ? "aviso-" + x.id : "avisos");
+  const notas = [];
+  if (corta) notas.push(`El título se cortará en la notificación del móvil: se ven unas ${LIM_TIT_NOTIF} letras y tiene ${tit.length} (contando «${x.urgente ? "URGENTE: " : "Nuevo aviso: "}»).`);
+  if (largo.length > 140) notas.push("El texto se corta en la notificación; se lee entero al abrirla.");
+  if (x.notificar === false) notas.push("La casilla de avisar está desmarcada: no llegará a los móviles ni a Telegram.");
+  if (x.publicar_en && new Date(x.publicar_en) > new Date()) notas.push("Está programado: la notificación y Telegram llegarán cuando se publique.");
+  const canal = (k, nom, html) => `<section class="canal-p ${PREVIA_CANAL === k ? "activo" : ""}"><h4>${nom}</h4>${html}</section>`;
+  return `<div class="canales-previa">
+    ${notas.length ? `<div class="aviso-corte" role="status">${notas.map(n => `<p>${icono("alerta", "p")}<span>${esc(n)}</span></p>`).join("")}</div>` : ""}
+    <div class="tabs-canal" role="tablist" aria-label="Ver cómo queda en">${[["web", "Web"], ["movil", "Móvil"], ["telegram", "Telegram"], ["whatsapp", "WhatsApp"]].map(([k, n]) =>
+      `<button type="button" role="tab" data-canal="${k}" aria-selected="${PREVIA_CANAL === k}">${n}</button>`).join("")}</div>
+    ${canal("web", "En la web", tarjetaAviso({ ...x, id: x.id || 0 }))}
+    ${canal("movil", "Notificación en el móvil", `<div class="notif"><img src="icon-192.png" alt=""><div class="notif-txt"><small>CCOO Calsina Carré · ahora</small><b class="${corta ? "corta" : ""}">${esc(tit)}</b><span>${esc(recortaCanal(x.contenido, 140))}</span></div></div>`)}
+    ${canal("telegram", "Canal de Telegram", `<div class="chat tg"><div class="burbuja"><b>${esc(tit)}</b>${tg.trim() ? "<br><br>" + esc(tg).replace(/\n/g, "<br>") : ""}</div><div class="tg-boton">Abrir en la web</div></div>`)}
+    ${canal("whatsapp", "WhatsApp (lo envías tú con el botón)", `<div class="chat wa"><div class="burbuja">${esc(wa).replace(/\*([^*\n]+)\*/g, "<b>$1</b>").replace(/\n/g, "<br>")}</div></div>`)}
+  </div>`;
+}
+// Aviso bajo el título mientras se escribe
+function avisoTitulo(f) {
+  const campo = $("f-titulo"); if (!campo) return;
+  let p = $("aviso-titulo"); if (!p) { campo.insertAdjacentHTML("afterend", `<p class="ayuda" id="aviso-titulo" aria-live="polite"></p>`); p = $("aviso-titulo"); }
+  const n = tituloNotif(f).length;
+  p.className = "ayuda" + (n > LIM_TIT_NOTIF ? " corte" : "");
+  p.textContent = n > LIM_TIT_NOTIF ? `Demasiado largo para la notificación del móvil: se cortará. Prueba a dejarlo en ${LIM_TIT_NOTIF - (n - (f.titulo || "").length)} letras o menos (ahora ${(f.titulo || "").length}).` : `${(f.titulo || "").length} letras: se leerá entero en la notificación.`;
+}
+// Campos que solo se ven según otra opción (data-si="campo:valor1,valor2")
+function aplicarCondiciones() {
+  document.querySelectorAll("#ed-form [data-si]").forEach(d => {
+    const [campo, vals] = d.dataset.si.split(":"), el = $("f-" + campo);
+    d.classList.toggle("oculto", !!el && !vals.split(",").includes(el.value));
+  });
+}
+
+// ---------- Avisos que se repiten solos ----------
+const DIAS_SEMANA = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
+const horaCorta = (h) => String(h || "09:00").slice(0, 5);
+function frecTxt(x) {
+  if (x.frecuencia === "semanal") return `Cada ${DIAS_SEMANA[(x.dia_semana || 1) - 1]} a las ${horaCorta(x.hora)}`;
+  if (x.frecuencia === "anual") return `Cada ${x.dia_mes || 1} de ${MESES[(x.mes || 1) - 1]} a las ${horaCorta(x.hora)}`;
+  return `El día ${x.dia_mes || 1} de cada mes a las ${horaCorta(x.hora)}`;
+}
+// Próxima vez que se publicará (misma regla que la función publicar_recurrentes del servidor)
+function proximaVez(x) {
+  if (x.activo === false) return "pausado, no se publicará";
+  const ahora = new Date(), [hh, mm] = horaCorta(x.hora).split(":").map(Number), hoyIso = isoLocal(ahora);
+  for (let i = 0; i < 400; i++) {
+    const d = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + i), ultimo = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    const toca = x.frecuencia === "semanal" ? ((d.getDay() + 6) % 7) + 1 === Number(x.dia_semana || 1)
+      : x.frecuencia === "anual" ? d.getMonth() + 1 === Number(x.mes || 1) && d.getDate() === Math.min(Number(x.dia_mes || 1), ultimo)
+      : d.getDate() === Math.min(Number(x.dia_mes || 1), ultimo);
+    if (!toca) continue;
+    if (i === 0 && (x.ultima_publicacion === hoyIso || ahora.getHours() * 60 + ahora.getMinutes() > hh * 60 + mm + 9)) continue; // hoy ya pasó o ya salió
+    return d.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) + " a las " + horaCorta(x.hora);
+  }
+  return "—";
+}
+SECCIONES.recurrentes = {
+  nombre: "Avisos que se repiten", icono: "reloj2", tabla: "avisos_recurrentes", orden: ["id", false], uno: "aviso que se repite", nuevo: "Nuevo aviso que se repite", lista: "aviso", campoColor: "categoria",
+  intro: "Avisos que se publican solos cada semana, cada mes o cada año, a la hora que elijas. Por ejemplo: «Recuerda entregar la hoja de horas», el día 25 de cada mes.",
+  campos: [
+    { k: "titulo", l: "Título", t: "text", req: true, ph: "Ej: Recuerda entregar la hoja de horas" },
+    { k: "categoria", l: "Categoría", t: "select", lista: "aviso" },
+    { k: "contenido", l: "Texto del aviso", t: "textarea", formato: true },
+    { k: "frecuencia", l: "Cada cuánto se publica", t: "select", ops: [["mensual", "Cada mes"], ["semanal", "Cada semana"], ["anual", "Cada año"]], def: "mensual" },
+    { fila: [
+      { k: "dia_mes", l: "Día del mes", t: "select", num: true, ops: Array.from({ length: 31 }, (_, i) => [i + 1, String(i + 1)]), def: 1, si: "frecuencia:mensual,anual" },
+      { k: "mes", l: "Mes", t: "select", num: true, ops: MESES.map((m, i) => [i + 1, m.charAt(0).toUpperCase() + m.slice(1)]), def: 1, si: "frecuencia:anual" },
+      { k: "dia_semana", l: "Día de la semana", t: "select", num: true, ops: DIAS_SEMANA.map((d, i) => [i + 1, d.charAt(0).toUpperCase() + d.slice(1)]), def: 1, si: "frecuencia:semanal" },
+      { k: "hora", l: "Hora", t: "time", def: "09:00" },
+    ] },
+    { checks: [{ k: "activo", l: "Activo (desmárcalo para pausarlo sin borrarlo)", def: true }, { k: "urgente", l: "Urgente: sale en rojo y arriba del todo" }, { k: "notificar", l: "Avisar en los móviles y en Telegram cada vez", def: true }] },
+  ],
+  ayuda: "Si eliges el día 31 y el mes tiene menos días, se publica el último día del mes.",
+  previa: (x) => `<p class="proxima-vez">${icono("reloj2", "p")}<span>${esc(frecTxt(x))}.<br><b>Próxima vez: ${esc(proximaVez(x))}</b></span></p>` + previaCanales({ ...x, fecha: new Date().toISOString(), id: 0 }),
+  extracto: (x) => x.contenido, chips: (x) => [frecTxt(x), x.activo === false ? "Pausado" : "Activo", x.ultima_publicacion && "Última vez: " + fechaLarga(x.ultima_publicacion + "T12:00:00")], fechas: (x) => [x.creado, x.actualizado],
+};
+
+// ---------- Historial y deshacer ----------
+const NOMBRE_TABLA = { comunicados: "el aviso", eventos: "la fecha", convenio_secciones: "el apartado del convenio", actas: "el acta", documentos: "el documento",
+  preguntas: "la pregunta frecuente", plantillas: "la plantilla", delegados: "el delegado", enlaces: "el enlace", apartados: "el apartado de la web",
+  publicaciones: "la publicación", opciones: "la opción de lista", calc_permisos: "el permiso de la calculadora", calc_categorias: "el precio de horas extra",
+  avisos_recurrentes: "el aviso que se repite", buzon: "el mensaje del buzón", paginas: "el texto", calc_ajustes: "el ajuste de la calculadora", admins: "el administrador" };
+const VERBO = { crear: "creó", cambiar: "cambió", borrar: "borró" };
+const BOTON_DESHACER = { borrar: "Recuperar", cambiar: "Volver a como estaba", crear: "Deshacer (quitarlo)" };
+const CAMPOS_NOMBRE = { titulo: "Título", contenido: "Texto", categoria: "Categoría", urgente: "Urgente", fijado: "Fijado", adjuntos: "Archivos", fecha: "Fecha", hora: "Hora", hora_fin: "Hora de fin",
+  lugar: "Lugar", descripcion: "Descripción", tipo: "Tipo", resumen: "Resumen", acuerdos: "Acuerdos", pregunta: "Pregunta", respuesta: "Respuesta", nombre: "Nombre", cargo: "Cargo",
+  telefono: "Teléfono", email: "Email", url: "Dirección", orden: "Posición", visible: "Se ve en la web", publicado: "Publicado", publicar_en: "Programado", importante: "Importante",
+  leido: "Leído", archivado: "Archivado", valor: "Valor", dias: "Días", unidad: "Unidad", precio_extra: "Precio hora extra", precio_extra_festiva: "Precio festivo", activo: "Activo" };
+const nombreDe = (r) => r && (r.titulo || r.nombre || r.pregunta || (r.texto && r.texto.slice(0, 60)) || r.slug || r.clave || r.email || r.id);
+const valorTxt = (v) => v == null || v === "" ? "(vacío)" : Array.isArray(v) ? v.length + (v.length === 1 ? " archivo" : " archivos") : typeof v === "boolean" ? (v ? "Sí" : "No") : String(v).length > 140 ? String(v).slice(0, 139) + "…" : String(v);
+const FILTRO_HIST = { tabla: "", accion: "", max: 60 };
+async function pintaHistorial() {
+  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Historial</h1><p>Todo lo que se ha creado, cambiado o borrado en el panel durante el último año: quién, qué y cuándo. Si algo se borró o cambió por error, pulsa el botón para deshacerlo.</p></div></div>
+    <div class="fila filtros-hist">
+      <div><label for="h-tabla">Qué</label><select id="h-tabla"><option value="">Todo</option>${Object.entries(NOMBRE_TABLA).map(([k, n]) => `<option value="${k}" ${FILTRO_HIST.tabla === k ? "selected" : ""}>${mayus(n.replace(/^(el|la) /, ""))}</option>`).join("")}</select></div>
+      <div><label for="h-accion">Qué se hizo</label><select id="h-accion"><option value="">Todo</option>${[["borrar", "Borrados"], ["cambiar", "Cambios"], ["crear", "Creados"]].map(([k, n]) => `<option value="${k}" ${FILTRO_HIST.accion === k ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+    </div>
+    <div class="lista-adm" id="lista-hist"><p class="fecha-txt">Cargando…</p></div>`;
+  ["h-tabla", "h-accion"].forEach(id => $(id).onchange = () => { FILTRO_HIST.tabla = $("h-tabla").value; FILTRO_HIST.accion = $("h-accion").value; FILTRO_HIST.max = 60; pintaHistorial(); });
+  let q = sb.from("historial").select("*").order("cuando", { ascending: false }).order("id", { ascending: false }).limit(FILTRO_HIST.max + 1);
+  if (FILTRO_HIST.tabla) q = q.eq("tabla", FILTRO_HIST.tabla);
+  if (FILTRO_HIST.accion) q = q.eq("accion", FILTRO_HIST.accion);
+  const { data, error } = await q;
+  if (error) { $("lista-hist").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(error.message)}</p>`; return; }
+  const l = data.slice(0, FILTRO_HIST.max);
+  $("lista-hist").innerHTML = l.length ? l.map(h => {
+    const reg = h.despues || h.antes, quien = h.email || "La web (automático)";
+    const cambios = h.accion === "cambiar" ? Object.keys(h.despues || {}).filter(c => !["actualizado", "notificado", "ultima_publicacion", "id"].includes(c) && JSON.stringify(h.antes?.[c]) !== JSON.stringify(h.despues?.[c])) : [];
+    return `<article class="panel cambio ${h.accion}">
+      <span class="ic-cambio">${icono(h.accion === "crear" ? "mas" : h.accion === "borrar" ? "borrar" : "editar", "p")}</span>
+      <div class="txt"><p class="que"><b>${esc(quien)}</b> ${VERBO[h.accion]} ${esc(NOMBRE_TABLA[h.tabla] || h.tabla)} <b>«${esc(String(nombreDe(reg) ?? ""))}»</b></p>
+        <small class="fecha-txt">${esc(haceTxt(h.cuando))} · ${new Date(h.cuando).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</small>
+        ${cambios.length ? `<details class="detalle-cambio"><summary>Ver qué cambió (${cambios.length})</summary><ul>${cambios.map(c => `<li><b>${esc(CAMPOS_NOMBRE[c] || c)}:</b> <del>${esc(valorTxt(h.antes?.[c]))}</del> → <ins>${esc(valorTxt(h.despues?.[c]))}</ins></li>`).join("")}</ul></details>` : ""}
+      </div>
+      <button class="btn ${h.accion === "borrar" ? "" : "sec"} peq" data-deshacer="${h.id}">${icono(h.accion === "borrar" ? "subir" : "izq", "p")}${BOTON_DESHACER[h.accion]}</button>
+    </article>`;
+  }).join("") + (data.length > FILTRO_HIST.max ? `<button class="btn sec ver-mas" id="h-mas">Ver más</button>` : "")
+    : `<div class="panel vacio">${icono("reloj")}Todavía no hay cambios apuntados.</div>`;
+  if ($("h-mas")) $("h-mas").onclick = () => { FILTRO_HIST.max += 60; pintaHistorial(); };
+  $("lista-hist").querySelectorAll("[data-deshacer]").forEach(b => b.onclick = async () => {
+    const h = data.find(x => x.id == b.dataset.deshacer), nom = String(nombreDe(h.despues || h.antes) ?? "");
+    const pregunta = h.accion === "borrar" ? `¿Recuperar ${NOMBRE_TABLA[h.tabla]} «${nom}»? Volverá a salir en la web.`
+      : h.accion === "cambiar" ? `¿Dejar ${NOMBRE_TABLA[h.tabla]} «${nom}» como estaba antes de este cambio? Se perderán los cambios que se hicieron en ese momento.`
+      : `¿Quitar ${NOMBRE_TABLA[h.tabla]} «${nom}» que se creó?${h.tabla === "apartados" ? " Se quitarán también sus publicaciones." : ""}`;
+    if (!confirm(pregunta)) return;
+    b.disabled = true;
+    const { data: r, error: e } = await sb.rpc("recuperar_cambio", { p_id: h.id });
+    if (e) { b.disabled = false; return aviso(e.message || "No se ha podido.", true); }
+    aviso(r || "Hecho.");
+    if (["apartados"].includes(h.tabla)) { await cargarApartados(); }
+    pintaHistorial();
+  });
+}
+
+// Quita del almacenamiento los archivos que ya no usa nada (ni la web ni los últimos 90 días del Historial) y tienen más de 30 días
+async function limpiarArchivos() {
+  const b = $("b-limpiar"); b.disabled = true; msg("m-limpiar", "Buscando…", true);
+  try {
+    const objetos = [];
+    for (let desde = 0; ; desde += 1000) {
+      const { data, error } = await sb.storage.from("documentos").list("", { limit: 1000, offset: desde, sortBy: { column: "created_at", order: "asc" } });
+      if (error) throw error;
+      objetos.push(...(data || []).filter(o => o.id)); if (!data || data.length < 1000) break;
+    }
+    const hace90 = new Date(Date.now() - 90 * 86400000).toISOString();
+    const usados = await Promise.all([
+      sb.from("comunicados").select("adjuntos, pdf_url"), sb.from("actas").select("adjuntos, pdf_url"), sb.from("documentos").select("url"),
+      sb.from("publicaciones").select("adjuntos"), sb.from("historial").select("antes, despues").gte("cuando", hace90),
+    ]);
+    const err = usados.find(r => r.error); if (err) throw err.error;
+    const texto = JSON.stringify(usados.map(r => r.data));
+    const viejos = Date.now() - 30 * 86400000;
+    const sobran = objetos.filter(o => new Date(o.created_at).getTime() < viejos && !texto.includes(o.name) && !texto.includes(encodeURIComponent(o.name)));
+    if (!sobran.length) { msg("m-limpiar", "No hay archivos sin usar. Todo en orden.", true); return; }
+    const mb = sobran.reduce((n, o) => n + (o.metadata?.size || 0), 0) / 1048576;
+    if (!confirm(`Hay ${sobran.length} archivo(s) sin usar (${mb.toFixed(1).replace(".", ",")} MB). ¿Quitarlos? No se podrán recuperar.`)) { msg("m-limpiar", ""); return; }
+    const { error } = await sb.storage.from("documentos").remove(sobran.map(o => o.name));
+    if (error) throw error;
+    msg("m-limpiar", `Hecho: se han quitado ${sobran.length} archivo(s).`, true);
+  } catch (e) { msg("m-limpiar", "No se ha podido: " + (e.message || e)); }
+  finally { b.disabled = false; }
+}
+
+// ---------- Calculadoras (valores que usa «Calcula» en la web) ----------
+const AJUSTES_CALC = [
+  ["vac_dias", "Días de vacaciones al año", "number"], ["vac_unidad", "Unidad de las vacaciones", "unidad"],
+  ["vac_nota", "Nota bajo las vacaciones", "text"], ["extra_nota", "Nota bajo las horas extra", "text"], ["aviso", "Aviso de arriba (que es orientativo)", "text"],
+];
+async function pintaCalculadoras() {
+  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Calculadoras</h1><p>Los datos que usan las calculadoras de la web (pestaña «Calcula»): vacaciones, permisos pagados y horas extra. Al principio están los <b>mínimos del Estatuto de los Trabajadores</b>: revísalos con el convenio y cámbialos aquí.</p></div></div>
+    <section class="panel tarjeta-ajuste"><h2>Vacaciones y avisos</h2><div id="calc-ajustes"><p class="fecha-txt">Cargando…</p></div></section>
+    <section class="panel tarjeta-ajuste"><div class="sec-cab" style="margin:0 0 10px"><div><h2>Permisos retribuidos</h2><p>Cada línea es un motivo que el trabajador puede elegir.</p></div><button class="btn" data-nuevo="permisos">${icono("mas", "p")}Añadir permiso</button></div><div class="lista-adm" id="lista-permisos"></div></section>
+    <section class="panel tarjeta-ajuste"><div class="sec-cab" style="margin:0 0 10px"><div><h2>Precios de las horas extra</h2><p>Un precio por categoría. Sin precios, la calculadora de horas extra no sale.</p></div><button class="btn" data-nuevo="categorias">${icono("mas", "p")}Añadir categoría</button></div><div class="lista-adm" id="lista-categorias"></div></section>`;
+  $("zona").querySelectorAll("[data-nuevo]").forEach(b => b.onclick = () => abrirEditor(b.dataset.nuevo));
+  const [aj] = await Promise.all([sb.from("calc_ajustes").select("*"), cargarDatos("permisos"), cargarDatos("categorias")]);
+  const A = Object.fromEntries((aj.data || []).map(x => [x.clave, x.valor]));
+  $("calc-ajustes").innerHTML = AJUSTES_CALC.map(([k, l, t]) => t === "unidad"
+      ? `<label for="ca-${k}">${l}</label><select id="ca-${k}">${["días naturales", "días laborables", "días"].map(u => `<option ${u === A[k] ? "selected" : ""}>${u}</option>`).join("")}</select>`
+      : t === "number" ? `<label for="ca-${k}">${l}</label><input id="ca-${k}" type="number" step="0.5" min="0" inputmode="decimal" value="${esc(A[k] || "")}">`
+      : `<label for="ca-${k}">${l}</label><textarea id="ca-${k}" maxlength="400" style="min-height:76px">${esc(A[k] || "")}</textarea>`).join("") +
+    `<div class="botones"><button class="btn" id="ca-guardar">${icono("check", "p")}Guardar</button></div><p class="msg" id="ca-msg"></p>`;
+  $("ca-guardar").onclick = async () => {
+    const filas = AJUSTES_CALC.map(([k]) => ({ clave: k, valor: String($("ca-" + k).value).trim().slice(0, 400), actualizado: new Date().toISOString() }));
+    const dias = parseFloat(filas[0].valor.replace(",", "."));
+    if (isNaN(dias) || dias < 0 || dias > 60) return msg("ca-msg", "Pon un número de días entre 0 y 60.");
+    filas[0].valor = String(dias);
+    const { error } = await sb.from("calc_ajustes").upsert(filas);
+    msg("ca-msg", error ? "No se ha podido guardar: " + error.message : "Guardado. Ya se usa en la web.", !error);
+  };
+  $("lista-permisos").innerHTML = datos.permisos.length ? datos.permisos.map(x => filaOrden("permisos", x)).join("") : `<div class="panel vacio">${icono("convenio")}Todavía no hay permisos.</div>`;
+  $("lista-categorias").innerHTML = datos.categorias.length ? datos.categorias.map(x => filaOrden("categorias", x)).join("") : `<div class="panel vacio">${icono("reloj")}Todavía no hay precios. Pulsa «Añadir categoría».</div>`;
+  enlazarItems($("lista-permisos")); enlazarItems($("lista-categorias"));
+  hacerOrdenable($("lista-permisos"), "permisos"); hacerOrdenable($("lista-categorias"), "categorias");
+}
+
+// ---------- Buzón anónimo ----------
+let BUZON_SIN_LEER = 0, BUZON_A_PREGUNTA = null, VISTA_BUZON = "nuevos";
+async function contarBuzon() {
+  const { count, error } = await sb.from("buzon").select("id", { count: "exact", head: true }).eq("leido", false).eq("archivado", false);
+  BUZON_SIN_LEER = error ? 0 : count || 0;
+  return BUZON_SIN_LEER;
+}
+async function pintaBuzon() {
+  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Buzón anónimo</h1><p>Preguntas y sugerencias que la plantilla envía desde «Dudas». No se sabe quién las envía: solo se guarda el texto y el día.</p></div></div>
+    <div class="cambio-vista" role="tablist" id="vistas-buzon"></div>
+    <div class="lista-adm" id="lista-buzon"><p class="fecha-txt">Cargando…</p></div>`;
+  const { data, error } = await sb.from("buzon").select("*").order("dia", { ascending: false }).order("id", { ascending: false }).limit(500);
+  if (error) { $("lista-buzon").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(error.message)}</p>`; return; }
+  const grupos = { nuevos: data.filter(m => !m.leido && !m.archivado), leidos: data.filter(m => m.leido && !m.archivado), archivo: data.filter(m => m.archivado) };
+  BUZON_SIN_LEER = grupos.nuevos.length; pintaNav();
+  const NOM = { nuevos: "Sin leer", leidos: "Leídos", archivo: "Archivados" };
+  $("vistas-buzon").innerHTML = Object.keys(NOM).map(k => `<button role="tab" class="${k === VISTA_BUZON ? "activa" : ""}" data-v="${k}">${NOM[k]} <span class="etq">${grupos[k].length}</span></button>`).join("");
+  $("vistas-buzon").querySelectorAll("[data-v]").forEach(b => b.onclick = () => { VISTA_BUZON = b.dataset.v; pintaBuzon(); });
+  const l = grupos[VISTA_BUZON];
+  $("lista-buzon").innerHTML = l.length ? l.map(m => `<article class="panel msg-buzon ${m.leido ? "" : "sin-leer"}" data-id="${m.id}">
+      <div class="cab"><span class="etq ${m.tipo === "Pregunta" ? "tipo-preg" : "tipo-sug"}">${esc(m.tipo)}</span><span class="fecha-txt">Llegó el ${fechaLarga(m.dia + "T12:00:00")}</span></div>
+      <p class="texto">${esc(m.texto)}</p>
+      <div class="acciones-buzon">
+        ${m.archivado ? "" : `<button class="btn" data-acc="pregunta">${icono("pregunta", "p")}Convertir en pregunta frecuente</button>`}
+        ${m.archivado ? "" : `<button class="btn sec" data-acc="leido">${icono("check", "p")}${m.leido ? "No leído" : "Leído"}</button>`}
+        <button class="btn sec" data-acc="archivar">${icono("archivo2", "p")}${m.archivado ? "Sacar del archivo" : "Archivar"}</button>
+        <button class="btn peligro" data-acc="borrar">${icono("borrar", "p")}Borrar</button>
+      </div></article>`).join("")
+    : `<div class="panel vacio">${icono("correo")}${VISTA_BUZON === "nuevos" ? "No hay mensajes sin leer." : "No hay mensajes aquí."}</div>`;
+  $("lista-buzon").querySelectorAll("[data-acc]").forEach(b => b.onclick = async () => {
+    const art = b.closest("[data-id]"), id = +art.dataset.id, m = data.find(x => x.id === id), acc = b.dataset.acc;
+    let r = null;
+    if (acc === "pregunta") {
+      BUZON_A_PREGUNTA = id;
+      return abrirEditor("preguntas", null, { pregunta: m.texto.length > 160 ? "" : m.texto, respuesta: m.texto.length > 160 ? "Pregunta recibida: " + m.texto + "\n\nRespuesta: " : "" });
+    }
+    if (acc === "leido") r = await sb.from("buzon").update({ leido: !m.leido }).eq("id", id);
+    if (acc === "archivar") r = await sb.from("buzon").update({ archivado: !m.archivado, leido: true }).eq("id", id);
+    if (acc === "borrar") { if (!confirm("¿Borrar este mensaje del buzón? No se puede deshacer.")) return; r = await sb.from("buzon").delete().eq("id", id); }
+    if (r?.error) return aviso("No se ha podido: " + r.error.message, true);
+    pintaBuzon();
+  });
+}
+
 // ---------- Textos ----------
 const TEXTOS = [
-  { slug: "inicio", l: "Bienvenida (Inicio)", ayuda: "Sale debajo de «Hola, compañero/a»." },
+  { slug: "inicio", l: "Texto de la portada", ayuda: "Sale al final de la portada («Todo»)." },
   { slug: "convenio", l: "Introducción del convenio", ayuda: "Sale arriba de los apartados: qué convenio es, vigencia, etc." },
   { slug: "quienes", l: "Quiénes somos" },
   { slug: "contacto", l: "Contacto", ayuda: "Email, teléfono, horario, delegados…" },
+  { slug: "aviso_legal", l: "Aviso legal", ayuda: "Quién es el responsable de la web. Enlazado abajo en la web. Conviene que lo revise el servicio jurídico de CCOO." },
+  { slug: "privacidad", l: "Privacidad y cookies", ayuda: "Qué datos se tratan y cómo. Si cambias algo de la web (por ejemplo, un formulario), actualízalo." },
 ];
 async function pintaTextos() {
   $("zona").innerHTML = `<div class="sec-cab"><div><h1>Textos</h1><p>Los textos fijos de la web, que cambian poco.</p></div></div><div id="textos"><p class="fecha-txt">Cargando…</p></div>`;
@@ -740,6 +1218,12 @@ async function pintaAjustes() {
         <button class="btn sec" id="b-copia-datos">${icono("descargar", "p")}Solo los textos</button></div>
       <div class="msg" id="m-copia"></div>
     </div>
+    <div class="panel tarjeta-ajuste" id="ajuste-limpiar">
+      <h2>Archivos sin usar</h2>
+      <p class="ayuda">Al borrar algo, sus archivos se guardan un tiempo para poder recuperarlo desde «Historial». Aquí se quitan los que ya no usa nada y tienen más de 30 días, para no llenar el espacio gratuito.</p>
+      <div class="botones" style="margin-top:10px"><button class="btn sec" id="b-limpiar">${icono("borrar", "p")}Buscar archivos sin usar</button></div>
+      <div class="msg" id="m-limpiar"></div>
+    </div>
     <div class="panel tarjeta-ajuste" id="ajuste-archivo">
       <h2>Archivo de avisos</h2>
       <p class="ayuda">Los avisos antiguos pasan a la pestaña «Archivo» de la web para que la lista no se llene. Los fijados nunca se archivan.</p>
@@ -779,9 +1263,10 @@ async function pintaAjustes() {
   document.querySelectorAll("[data-guardar]").forEach(b => b.onclick = () => guardarLista(b.dataset.guardar));
   document.querySelectorAll("[id^=nn-]").forEach(i => i.onkeydown = (e) => { if (e.key === "Enter") document.querySelector(`[data-anadir="${i.id.slice(3)}"]`).click(); });
   cargarAdmins(); cargarCanales(); prepararCopiaYArchivo();
+  $("b-limpiar").onclick = limpiarArchivos;
 }
 function selColor(v, id) {
-  return `<select ${id ? `id="${id}"` : ""} class="sel-color c-${v}" aria-label="Color" onchange="this.className='sel-color c-'+this.value">
+  return `<select ${id ? `id="${id}"` : ""} class="sel-color c-${v}" aria-label="Color">
     ${Object.entries(COLORES).map(([c, n]) => `<option value="${c}" ${c === v ? "selected" : ""}>${n}</option>`).join("")}</select>`;
 }
 function pintaLista(k) {
@@ -862,11 +1347,13 @@ function textoDe(k, x) {
   if (k === "avisos") return textoCompartir((x.urgente ? "URGENTE: " : "") + x.titulo, x.contenido, "aviso-" + x.id);
   if (k === "actas") return textoCompartir("Nueva acta: " + x.titulo, x.resumen || "", "actas");
   if (k === "documentos") return textoCompartir("Nuevo documento: " + x.titulo, x.descripcion || "Ya disponible en la web.", "documentos");
+  if (/^ap\d+$/.test(k)) { const ap = APARTADOS.find(a => "ap" + a.id === k); return textoCompartir(x.titulo, x.contenido || "", ap ? "ap-" + ap.slug : ""); }
   if (k === "calendario") return textoCompartir(x.titulo, fechaDia(x.fecha).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }) + (x.hora ? ", " + x.hora : "") + (x.lugar ? " · " + x.lugar : ""), "calendario");
   return textoCompartir(x.titulo, "", "");
 }
 function trasPublicar(k, x, res) {
-  if (k === "convenio") return aviso("Publicado. Ya se ve en la web.");
+  if (k === "recurrentes") return aviso("Guardado. Se publicará solo: " + frecTxt(x).toLowerCase() + ".");
+  if (k === "convenio" || k === "apartados") return aviso(k === "apartados" ? "Apartado guardado. Ya sale en el menú del panel y como pestaña en la web." : "Publicado. Ya se ve en la web.");
   const programado = x.publicar_en && new Date(x.publicar_en) > new Date();
   const lineas = [];
   if (programado) lineas.push(`${icono("reloj", "p")} Se publicará el <b>${new Date(x.publicar_en).toLocaleString("es-ES", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}</b>, y entonces se avisará.`);
@@ -939,18 +1426,19 @@ async function cargarCanales() {
 // ---------- Filtro por fecha en las listas del panel ----------
 const FECHA_DE = { avisos: x => x.fecha, calendario: x => x.fecha, actas: x => x.fecha, documentos: x => x.fecha };
 const FILTRO_ADM = {};
+// Botones de año y, dentro del año, de mes (con cuántos hay), igual que en la web
 function pintaFechasAdm(items, k, f, repintar) {
-  const anyos = [...new Set(items.map(x => partesFecha(FECHA_DE[k](x))?.a).filter(Boolean))].sort((a, b) => b - a);
-  const activo = f.a || f.m || f.d;
-  $("fechas-adm").innerHTML = items.length ? `<span class="ff-ic">${icono("calendario", "p")}</span>
-    <select data-f="a" aria-label="Año"><option value="">Cualquier año</option>${anyos.map(a => `<option ${f.a == a ? "selected" : ""}>${a}</option>`).join("")}</select>
-    <select data-f="m" aria-label="Mes"><option value="">Cualquier mes</option>${MESES.map((m, i) => `<option value="${i + 1}" ${f.m == i + 1 ? "selected" : ""}>${m.charAt(0).toUpperCase() + m.slice(1)}</option>`).join("")}</select>
-    <input type="date" data-f="d" value="${f.d || ""}" aria-label="Día exacto">
-    ${activo ? `<button class="filtro" data-f-quitar>${icono("cerrar", "p")}Quitar fecha</button>` : ""}` : "";
-  $("fechas-adm").querySelectorAll("[data-f]").forEach(el => el.onchange = () => {
-    f[el.dataset.f] = el.value; if (el.dataset.f === "d" && el.value) { f.a = ""; f.m = ""; } if (el.dataset.f !== "d" && el.value) f.d = ""; repintar();
-  });
-  const q = $("fechas-adm").querySelector("[data-f-quitar]"); if (q) q.onclick = () => { f.a = f.m = f.d = ""; repintar(); };
+  const partes = items.map(x => partesFecha(FECHA_DE[k](x))).filter(Boolean), anyos = [...new Set(partes.map(p => p.a))].sort((a, b) => b - a);
+  if (!partes.length) { $("fechas-adm").innerHTML = ""; return; }
+  const boton = (dato, valor, texto, activo, n) => `<button class="filtro ${activo ? "activo" : ""}" data-${dato}="${valor}">${texto}${n != null ? ` <span class="cuenta">${n}</span>` : ""}</button>`;
+  let html = `<div class="fila-anyos" role="group" aria-label="Año">${boton("a", "", "Todos", !f.a)}${anyos.map(a => boton("a", a, a, f.a == a, partes.filter(p => p.a === a).length)).join("")}</div>`;
+  if (f.a) {
+    const meses = [...new Set(partes.filter(p => p.a == f.a).map(p => p.m))].sort((a, b) => b - a);
+    html += `<div class="fila-meses" role="group" aria-label="Mes">${boton("m", "", "Todo " + f.a, !f.m)}${meses.map(m => boton("m", m, mayus(MESES[m - 1]), f.m == m, partes.filter(p => p.a == f.a && p.m === m).length)).join("")}</div>`;
+  }
+  $("fechas-adm").innerHTML = html;
+  $("fechas-adm").querySelectorAll("[data-a]").forEach(el => el.onclick = () => { f.a = el.dataset.a; f.m = ""; f.d = ""; repintar(); });
+  $("fechas-adm").querySelectorAll("[data-m]").forEach(el => el.onclick = () => { f.m = el.dataset.m; repintar(); });
 }
 function pasaFechaAdm(f, iso) {
   if (!f.a && !f.m && !f.d) return true;
@@ -978,7 +1466,7 @@ async function prepararPlantillas() {
 }
 
 // ---------- Copia de seguridad y archivo ----------
-const TABLAS_COPIA = ["comunicados", "eventos", "convenio_secciones", "actas", "documentos", "preguntas", "plantillas", "paginas", "opciones", "admins"];
+const TABLAS_COPIA = ["comunicados", "eventos", "convenio_secciones", "actas", "documentos", "preguntas", "plantillas", "apartados", "publicaciones", "buzon", "avisos_recurrentes", "calc_permisos", "calc_categorias", "calc_ajustes", "paginas", "opciones", "admins"];
 async function prepararCopiaYArchivo() {
   const { data } = await sb.from("paginas").select("slug, contenido, actualizado").in("slug", ["archivo_meses", "ultima_copia"]);
   const p = Object.fromEntries((data || []).map(x => [x.slug, x]));
@@ -993,7 +1481,7 @@ async function prepararCopiaYArchivo() {
 }
 async function cargarJSZip() {
   if (window.JSZip) return;
-  await new Promise((ok, mal) => { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"; sc.onload = ok; sc.onerror = () => mal(new Error("No se ha podido preparar el archivo ZIP. Revisa la conexión.")); document.head.appendChild(sc); });
+  await new Promise((ok, mal) => { const sc = document.createElement("script"); sc.src = "lib/jszip.min.js"; sc.onload = ok; sc.onerror = () => mal(new Error("No se ha podido preparar el archivo ZIP. Revisa la conexión.")); document.head.appendChild(sc); });
 }
 async function hacerCopia(conArchivos) {
   const b1 = $("b-copia-todo"), b2 = $("b-copia-datos"); b1.disabled = b2.disabled = true;
@@ -1069,7 +1557,7 @@ async function pintaCalAdm() {
   const s = SECCIONES.calendario;
   $("zona").innerHTML = `<div class="sec-cab">
       <div><h1>Calendario</h1><p>Toca un día para ver lo que hay o añadir una fecha. También salen los avisos programados y las actas.</p></div>
-      <button class="btn btn-nuevo" id="b-nuevo">${icono("mas", "p")}${s.nuevo}</button>
+      <div class="botones" style="margin:0">${k === "avisos" ? `<button class="btn sec" id="b-recurrentes">${icono("reloj2", "p")}Avisos que se repiten</button>` : ""}<button class="btn btn-nuevo" id="b-nuevo">${icono("mas", "p")}${s.nuevo}</button></div>
     </div>
     ${cambioVistaCal()}
     <div class="cal-rejilla cal-adm">
@@ -1154,10 +1642,63 @@ $("ed-duplicar").onclick = async () => {
   const titulo = SECCIONES[k].tituloDe ? "pregunta" : "titulo";
   x[titulo] = (x[titulo] || "") + " (copia)";
   ED.pendientes.forEach(p => p.vista && URL.revokeObjectURL(p.vista));
-  ED = null; // se reutiliza el editor abierto, sin tocar el historial
+  ED = null; BUZON_A_PREGUNTA = null; // se reutiliza el editor abierto, sin tocar el historial
   abrirEditor(k, null, x);
   if (ED) { ED.existentes = []; msg("ed-msg", "Copia lista: cambia lo que haga falta (por ejemplo la fecha) y publica.", true); }
 };
+
+// ---------- Estadísticas (anónimas) ----------
+let LECTURAS = {};
+const TABLAS_LEIDAS = ["comunicados", "actas", "documentos", "publicaciones"];
+async function cargarLecturas() {
+  const { data } = await sb.from("lecturas").select("*");
+  LECTURAS = Object.fromEntries((data || []).map(r => [r.tabla + ":" + r.item_id, r.total]));
+}
+const vecesTxt = (n) => n + (n === 1 ? " vez" : " veces");
+// Barras horizontales (una sola serie): nombre a la izquierda, valor al final de la barra
+function barrasH(filas, unidad) {
+  const max = Math.max(1, ...filas.map(f => f.n));
+  return `<div class="graf-h" role="list">${filas.map(f => `<div class="fila-h" role="listitem" tabindex="0" data-tip="${esc(f.et)}: ${f.n} ${unidad}">
+      <span class="et">${esc(f.et)}${f.sub ? ` <small>${esc(f.sub)}</small>` : ""}</span>
+      <span class="pista"><span class="barra" style="width:${Math.max(2, Math.round(f.n / max * 100))}%"></span><b>${f.n}</b></span></div>`).join("")}</div>`;
+}
+const tablaDatos = (cab, filas) => `<details class="tabla-datos"><summary>Ver como tabla</summary><table><thead><tr>${cab.map(c => `<th>${esc(c)}</th>`).join("")}</tr></thead>
+  <tbody>${filas.map(f => `<tr>${f.map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></details>`;
+async function pintaEstadisticas() {
+  const hace30 = isoLocal(new Date(Date.now() - 29 * 86400000));
+  const [lec, sec, sem] = await Promise.all([
+    sb.from("lecturas").select("*").order("total", { ascending: false }).limit(300),
+    sb.from("visitas_seccion").select("*").gte("dia", hace30),
+    sb.from("suscritos_semana").select("*").order("semana", { ascending: false }).limit(12),
+  ]);
+  if (!$("est-leido")) return;
+  // Lo más leído: título de cada cosa según su tabla
+  const titulos = {}, TIPO = { comunicados: "Aviso", actas: "Acta", documentos: "Documento" };
+  (datos.avisos || []).forEach(x => titulos["comunicados:" + x.id] = [x.titulo, "Aviso"]);
+  (datos.actas || []).forEach(x => titulos["actas:" + x.id] = [x.titulo, "Acta"]);
+  (datos.documentos || []).forEach(x => titulos["documentos:" + x.id] = [x.titulo, "Documento"]);
+  APARTADOS.forEach(a => (datos["ap" + a.id] || []).forEach(x => titulos["publicaciones:" + x.id] = [x.titulo, a.titulo]));
+  LECTURAS = Object.fromEntries((lec.data || []).map(r => [r.tabla + ":" + r.item_id, r.total]));
+  const leidas = (lec.data || []).map(r => ({ k: r.tabla + ":" + r.item_id, n: r.total })).filter(r => titulos[r.k]).slice(0, 8)
+    .map(r => ({ et: titulos[r.k][0] || "Sin título", sub: titulos[r.k][1] || TIPO[r.k.split(":")[0]], n: r.n }));
+  $("est-leido").innerHTML = leidas.length ? barrasH(leidas, "veces") + tablaDatos(["Qué", "Tipo", "Veces"], leidas.map(f => [f.et, f.sub, f.n]))
+    : `<p class="vacio-graf">Todavía no hay lecturas. Se cuentan desde esta versión de la web.</p>`;
+  // Móviles con avisos por semana (columnas)
+  const semanas = (sem.data || []).slice().reverse();
+  if (semanas.length) {
+    const max = Math.max(1, ...semanas.map(x => x.n)), et = (d) => { const f = fechaDia(d); return f.getDate() + " " + MESES[f.getMonth()].slice(0, 3); };
+    $("est-suscritos").innerHTML = `<div class="graf-col" role="list">${semanas.map((x, i) => `<div class="col-s" role="listitem" tabindex="0" data-tip="Semana del ${et(x.semana)}: ${x.n} móviles">
+        <span class="valor ${i === semanas.length - 1 ? "ver" : ""}">${x.n}</span><span class="col" style="height:${Math.max(2, Math.round(x.n / max * 100))}%"></span><span class="et">${et(x.semana)}</span></div>`).join("")}</div>` +
+      tablaDatos(["Semana del", "Móviles"], semanas.map(x => [et(x.semana), x.n]));
+  } else $("est-suscritos").innerHTML = `<p class="vacio-graf">Todavía no hay datos. Se apunta cada noche.</p>`;
+  // Secciones más visitadas
+  const NOM = { inicio: "Inicio", avisos: "Avisos", calendario: "Fechas", convenio: "Convenio", calcula: "Calcula", actas: "Actas", documentos: "Documentos", preguntas: "Dudas", info: "Nosotros", buscar: "Buscar", legal: "Aviso legal y privacidad" };
+  APARTADOS.forEach(a => NOM["ap-" + a.slug] = a.titulo);
+  const suma = {}; (sec.data || []).forEach(r => suma[r.seccion] = (suma[r.seccion] || 0) + r.n);
+  const secs = Object.entries(suma).map(([k, n]) => ({ et: NOM[k] || k, n })).sort((a, b) => b.n - a.n).slice(0, 10);
+  $("est-secciones").innerHTML = secs.length ? barrasH(secs, "visitas") + tablaDatos(["Sección", "Visitas"], secs.map(f => [f.et, f.n]))
+    : `<p class="vacio-graf">Todavía no hay visitas apuntadas. Se cuentan desde esta versión de la web.</p>`;
+}
 
 // ---------- Visitas (anónimas) ----------
 async function pintaVisitas() {
@@ -1183,3 +1724,6 @@ async function pintaVisitas() {
     }).join("")}</div>
     <p class="ayuda">Cuenta de forma anónima: no se sabe quién entra, solo cuántos. «Móviles distintos» cuenta cada móvil una vez al día.</p>`;
 }
+
+// Selector de color: el recuadro toma el color elegido
+document.addEventListener("change", (e) => { const s = e.target.closest?.(".sel-color"); if (s) s.className = "sel-color c-" + s.value; });

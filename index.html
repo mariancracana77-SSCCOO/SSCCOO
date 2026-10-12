@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://kdfedwcskymaitvpryvg.supabase.co; connect-src 'self' https://kdfedwcskymaitvpryvg.supabase.co wss://kdfedwcskymaitvpryvg.supabase.co; media-src 'self' https://kdfedwcskymaitvpryvg.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sección Sindical CCOO Calsina Carré</title>
 <meta name="description" content="Avisos, calendario, convenio y actas de la Sección Sindical CCOO Calsina Carré">
@@ -9,11 +12,9 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script>try{var L=JSON.parse(localStorage.getItem("ccoo-lectura")||"{}"),h=document.documentElement;if(L.letra&&L.letra!=="normal")h.setAttribute("data-letra",L.letra);if(L.contraste==="alto")h.setAttribute("data-contraste","alto");if(L.tema&&L.tema!=="auto")h.setAttribute("data-theme",L.tema)}catch(e){}</script>
-<link rel="stylesheet" href="styles.css?v=15">
+<link rel="stylesheet" href="fuentes.css?v=19">
+<script src="lectura.js?v=19"></script>
+<link rel="stylesheet" href="styles.css?v=19">
 </head>
 <body class="publica">
 
@@ -21,25 +22,28 @@
   <div class="cab-fila">
     <img src="logo.png" alt="Logo de la Sección Sindical CCOO Calsina Carré">
     <div class="cab-titulo">
-      <span class="nombre">Tablón sindical</span>
-      <span class="sub">CCOO · Calsina Carré</span>
+      <span class="nombre">CCOO Calsina Carré</span>
+      <span class="sub">Sección Sindical</span>
     </div>
     <div class="cab-acciones">
       <button class="btn-tab oculto" id="cab-instalar" aria-label="Instalar la app" title="Instalar la app"><span data-i="descargar"></span></button>
-      <button class="btn-tab aa" onclick="abrirLectura()" aria-label="Tamaño de letra y colores" title="Tamaño de letra y colores">Aa</button>
+      <button class="btn-tab aa" data-aa aria-label="Tamaño de letra y colores" title="Tamaño de letra y colores">Aa</button>
       <a class="btn-tab" href="#buscar" aria-label="Buscar en toda la web" title="Buscar"><span data-i="buscar"></span></a>
     </div>
   </div>
   <nav class="pestanas-web" aria-label="Secciones">
-    <a href="#inicio" data-v="inicio">Todo</a>
+    <a href="#inicio" data-v="inicio">Inicio</a>
     <a href="#avisos" data-v="avisos">Avisos</a>
     <a href="#calendario" data-v="calendario">Fechas</a>
     <a href="#actas" data-v="actas">Actas</a>
-    <a href="#documentos" data-v="documentos">Docs</a>
+    <a href="#documentos" data-v="documentos">Documentos</a>
     <a href="#convenio" data-v="convenio">Convenio</a>
+    <a href="#calcula" data-v="calcula">Calcula</a>
     <a href="#preguntas" data-v="preguntas">Dudas</a>
     <a href="#info" data-v="info">Nosotros</a>
   </nav>
+  <div class="banda-novedad oculto" id="banda-novedad" role="status" aria-live="polite"></div>
+  <div class="tirar" id="tirar" aria-live="polite"><span class="tirar-ic" data-i="abajo"></span><span class="txt"></span></div>
 </header>
 
 <div class="toast" id="toast" role="status"></div>
@@ -49,12 +53,17 @@
   <!-- TODO (tablón) -->
   <section class="vista" id="v-inicio">
     <h1 class="sr-only">Tablón: lo último de la Sección Sindical</h1>
-    <div id="inicio-saludo"></div>
-    <div id="inicio-destacado"></div>
-    <div id="inicio-accesos"></div>
-    <div id="banda-app"></div>
-    <div id="inicio-feed"><p class="fecha-txt">Cargando…</p></div>
-    <p class="intro-tablon" id="txt-inicio"></p>
+    <div class="portada">
+      <div class="zona-rotulo"><div id="inicio-rotulo"><div class="esq esq-rotulo" aria-hidden="true"></div><span class="sr-only">Cargando…</span></div><div id="cuenta-atras"></div><div id="inicio-novedades"></div></div>
+      <aside class="portada-lateral" aria-label="Próximas fechas y accesos">
+        <section class="paradas" id="inicio-paradas"><div class="esq esq-titulo" aria-hidden="true"></div><div class="esq esq-linea" aria-hidden="true"></div><div class="esq esq-linea" aria-hidden="true"></div></section>
+        <section class="sabias" id="sabias-que"></section>
+        <div class="ir-a" id="inicio-accesos"></div>
+        <div class="banda-app" id="banda-app"></div>
+      </aside>
+      <section class="lo-ultimo" id="lo-ultimo"><div id="inicio-feed"><div class="esq esq-titulo" aria-hidden="true"></div><div class="esq esq-tarjeta" aria-hidden="true"></div><div class="esq esq-tarjeta" aria-hidden="true"></div><div class="esq esq-tarjeta" aria-hidden="true"></div></div></section>
+      <p class="intro-tablon" id="txt-inicio"></p>
+    </div>
   </section>
 
   <!-- AVISOS -->
@@ -68,7 +77,7 @@
     <div class="filtros" id="filtros-avisos"></div>
     <div class="filtro-fechas" id="fechas-avisos"></div>
     <div class="pestanas-archivo" id="archivo-avisos"></div>
-    <div id="lista-avisos"></div>
+    <div id="lista-avisos"><div class="esq esq-tarjeta" aria-hidden="true"></div><div class="esq esq-tarjeta" aria-hidden="true"></div></div>
   </section>
 
   <!-- CALENDARIO -->
@@ -92,7 +101,7 @@
       <div>
         <div class="panel dia-detalle" id="cal-detalle"></div>
         <h2 class="titulo-bloque">Próximas fechas</h2>
-        <div class="panel dia-detalle" id="cal-proximas"></div>
+        <div class="tablero" id="cal-proximas"></div>
       </div>
     </div>
   </section>
@@ -110,12 +119,25 @@
             <input id="buscar-convenio" type="search" placeholder="Buscar: vacaciones, permiso, plus…" aria-label="Buscar en el convenio"></div>
         </div>
         <div class="filtros" id="filtros-convenio"></div>
-        <div id="lista-convenio"></div>
+        <div id="lista-convenio"><div class="esq esq-tarjeta" aria-hidden="true"></div><div class="esq esq-tarjeta" aria-hidden="true"></div></div>
       </div>
       <aside class="lateral">
         <div class="panel"><h3>Documentos</h3><div id="lista-docs"></div></div>
       </aside>
     </div>
+  </section>
+
+  <!-- CALCULADORAS DEL CONVENIO (todo se calcula en el móvil; no se guarda nada) -->
+  <section class="vista" id="v-calcula">
+    <h1 class="titulo-vista">Calcula</h1>
+    <p class="intro-vista">Haz cuentas rápidas con los datos del convenio. Todo se calcula en tu móvil: no se guarda ni se envía nada.</p>
+    <div class="aviso-datos" id="calc-aviso"><span data-i="alerta"></span><span><b id="calc-aviso-txt">Cálculo orientativo. Ante cualquier duda, pregunta a un delegado.</b> <a href="#delegados">Hablar con un delegado</a></span></div>
+    <div class="selector-calc" role="tablist" aria-label="Qué quieres calcular">
+      <button role="tab" data-calc="vacaciones" aria-selected="true"><span data-i="calendario"></span>Vacaciones</button>
+      <button role="tab" data-calc="permisos" aria-selected="false"><span data-i="convenio"></span>Permisos</button>
+      <button role="tab" data-calc="extra" aria-selected="false"><span data-i="reloj"></span>Horas extra</button>
+    </div>
+    <div class="panel calc" id="calc-zona"></div>
   </section>
 
   <!-- ACTAS -->
@@ -128,7 +150,19 @@
     </div>
     <div class="filtros" id="filtros-actas"></div>
     <div class="filtro-fechas" id="fechas-actas"></div>
-    <div id="lista-actas"></div>
+    <div id="lista-actas"><div class="esq esq-tarjeta" aria-hidden="true"></div><div class="esq esq-tarjeta" aria-hidden="true"></div></div>
+  </section>
+
+  <!-- APARTADO (los crea el admin desde el panel: Comité de empresa, etc.) -->
+  <section class="vista" id="v-apartado">
+    <h1 class="titulo-vista" id="ap-titulo">Cargando…</h1>
+    <p class="intro-vista" id="ap-desc"></p>
+    <div class="herramientas">
+      <div class="buscador"><svg class="icono p" aria-hidden="true"><use href="#i-buscar"/></svg>
+        <input id="buscar-ap" type="search" placeholder="Buscar en este apartado" aria-label="Buscar en este apartado"></div>
+    </div>
+    <div class="filtro-fechas" id="fechas-ap"></div>
+    <div id="lista-ap"><div class="esq esq-tarjeta" aria-hidden="true"></div><div class="esq esq-tarjeta" aria-hidden="true"></div></div>
   </section>
 
   <!-- BUSCAR EN TODO -->
@@ -151,7 +185,24 @@
         <input id="buscar-preguntas" type="search" placeholder="Buscar: vacaciones, nómina, turnos…" aria-label="Buscar en las preguntas"></div>
     </div>
     <div class="filtros" id="filtros-preguntas"></div>
-    <div id="lista-preguntas"></div>
+    <div id="lista-preguntas"><div class="esq esq-tarjeta" aria-hidden="true"></div><div class="esq esq-tarjeta" aria-hidden="true"></div></div>
+
+    <section class="panel buzon" id="buzon" aria-labelledby="buzon-tit">
+      <h2 id="buzon-tit">Buzón anónimo</h2>
+      <p>¿Tienes una pregunta o una sugerencia para la Sección Sindical? Escríbela aquí. <b>No sabemos quién la envía.</b></p>
+      <div class="aviso-datos"><span data-i="alerta"></span><span>No pongas tu nombre, ni el de compañeros, ni teléfonos o emails. Si quieres una respuesta personal, <a href="#delegados">habla con un delegado</a>.</span></div>
+      <div class="tipo-buzon" role="radiogroup" aria-label="Qué quieres enviar">
+        <label><input type="radio" name="buzon-tipo" value="Pregunta" checked><span>Una pregunta</span></label>
+        <label><input type="radio" name="buzon-tipo" value="Sugerencia"><span>Una sugerencia</span></label>
+      </div>
+      <label for="buzon-texto">Tu mensaje</label>
+      <textarea id="buzon-texto" maxlength="1000" rows="5" placeholder="Escribe aquí tu pregunta o sugerencia"></textarea>
+      <div class="cuenta-car" aria-live="polite"><span id="buzon-cuenta">0</span> de 1000 letras</div>
+      <input class="trampa" id="buzon-web" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <button class="btn" id="buzon-enviar" type="button"><span data-i="correo"></span>Enviar de forma anónima</button>
+      <p class="msg" id="buzon-msg" role="status"></p>
+      <p class="fecha-txt">Las respuestas que sirvan a todos se publicarán aquí, en las preguntas frecuentes. <a href="#privacidad">Qué se guarda</a>.</p>
+    </section>
   </section>
 
   <!-- DOCUMENTOS -->
@@ -164,7 +215,7 @@
     </div>
     <div class="filtros" id="filtros-docs"></div>
     <div class="filtro-fechas" id="fechas-docs"></div>
-    <div class="lista-documentos" id="lista-documentos"></div>
+    <div class="lista-documentos" id="lista-documentos"><div class="esq esq-tarjeta" aria-hidden="true"></div><div class="esq esq-tarjeta" aria-hidden="true"></div></div>
   </section>
 
   <!-- INFO -->
@@ -184,18 +235,23 @@
     <div id="banda-app-info" style="margin-top:16px"></div>
   </section>
 
+  <section class="vista" id="v-legal">
+    <div class="panel texto-legal" id="leg-aviso-legal"><h1>Aviso legal</h1><div id="txt-aviso-legal"></div></div>
+    <div class="panel texto-legal" id="leg-privacidad"><h1>Privacidad y cookies</h1><div id="txt-privacidad"></div></div>
+  </section>
+
   <footer class="pie">
     Web informativa de la Sección Sindical CCOO Calsina Carré. No recoge datos personales ni usa cookies de seguimiento: solo cuenta, de forma anónima, cuántas veces se abre cada día.<br>
-    <a href="admin.html">Acceso para publicar</a> · <span id="version-web"></span>
+    <a href="#aviso-legal">Aviso legal</a> · <a href="#privacidad">Privacidad y cookies</a> · <a href="admin.html">Acceso para publicar</a> · <span id="version-web"></span>
   </footer>
 </main>
 
 <div class="barra-acciones" id="barra-acciones"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="iconos.js?v=15"></script>
-<script src="config.js?v=15"></script>
-<script src="render.js?v=15"></script>
-<script src="app.js?v=15"></script>
+<script src="lib/supabase.js?v=19"></script>
+<script src="iconos.js?v=19"></script>
+<script src="config.js?v=19"></script>
+<script src="render.js?v=19"></script>
+<script src="app.js?v=19"></script>
 </body>
 </html>

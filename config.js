@@ -3,7 +3,7 @@
 window.SUPABASE_URL = "https://kdfedwcskymaitvpryvg.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_RLt0HuAMskXkKl2hxhUF2w_sCexGznp";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "15"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "19"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/SSCCOO/";
 // Clave pública de las notificaciones (la privada solo está en el servidor)
 window.VAPID_PUBLICA = "BMMdZjehtNipsScHJ__kzOIn9XCgIpya3UDDRlexxOAWJU-J6ZICDlf72ItPOebzl-SfzoU234pd82Chp87Vm1w";
@@ -83,7 +83,7 @@ window.descargarICS = (e) => {
   const hm = (h) => (h || "").replace(":", "").padEnd(4, "0") + "00";
   const escI = (t) => String(t || "").replace(/([,;\\])/g, "\\$1").replace(/\n/g, "\\n");
   let ini, fin;
-  if (e.hora) { ini = `DTSTART;TZID=Europe/Madrid:${d}T${hm(e.hora)}`; fin = `DTEND;TZID=Europe/Madrid:${d}T${hm(e.hora_fin || (String(+e.hora.slice(0, 2) + 1).padStart(2, "0") + e.hora.slice(2)))}`; }
+  if (e.hora && !window.esTodoElDia?.(e)) { ini = `DTSTART;TZID=Europe/Madrid:${d}T${hm(e.hora)}`; fin = `DTEND;TZID=Europe/Madrid:${d}T${hm(e.hora_fin || (String(+e.hora.slice(0, 2) + 1).padStart(2, "0") + e.hora.slice(2)))}`; }
   else { const sig = new Date(fechaDia(e.fecha).getTime() + 86400000); ini = `DTSTART;VALUE=DATE:${d}`; fin = `DTEND;VALUE=DATE:${sig.getFullYear()}${String(sig.getMonth() + 1).padStart(2, "0")}${String(sig.getDate()).padStart(2, "0")}`; }
   const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//CCOO Calsina Carre//ES", "BEGIN:VEVENT", `UID:evento-${e.id || d}@ccoo-calsina`, `DTSTAMP:${ahora}`, ini, fin,
     `SUMMARY:${escI(e.titulo)}`, e.lugar ? `LOCATION:${escI(e.lugar)}` : "", `DESCRIPTION:${escI((e.descripcion || "") + "\nSección Sindical CCOO Calsina Carré")}`,
@@ -126,3 +126,9 @@ window.abrirLectura = () => {
   document.body.appendChild(v); v.querySelector(".activa")?.focus();
 };
 aplicarLectura();
+
+// Botón «Aa» (tamaño de letra y colores)
+document.addEventListener("click", (e) => { if (e.target.closest?.("[data-aa]")) abrirLectura(); });
+
+// Solo enlaces web, email o teléfono (nunca «javascript:» ni otros esquemas)
+window.urlSegura = (u) => { u = String(u || "").trim(); return /^(https?:\/\/|mailto:|tel:)/i.test(u) ? u : "#"; };

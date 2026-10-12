@@ -103,3 +103,94 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 ## Versión 15
 - Arreglado el contador de visitas del día (no se enviaba).
 - Arreglado el borrado de suscripciones antiguas de avisos (evita duplicados).
+
+## Versión 16: seguridad y páginas legales
+- **Aviso legal** y **Privacidad y cookies**: enlazados abajo en la web y editables en el panel, en Textos. Hay que completar la entidad de CCOO responsable y su NIF.
+- Solo pueden crear cuenta en el panel los emails que un administrador haya añadido antes.
+- Contraseñas del panel: mínimo 10 caracteres, con letras y números. Tras 5 fallos seguidos, hay que esperar.
+- Protección contra código inyectado (CSP), enlaces filtrados y la web no se puede meter dentro de otra.
+- Librerías y fuentes alojadas en la propia web: no dependen de servidores externos y no avisan a Google de cada visita.
+- Nuevos archivos: `lectura.js`, `cartel.js`, `fuentes.css`, carpetas `lib/` y `fuentes/`. **Súbelos también a GitHub.**
+- `CLAUDE.md`: contexto para seguir el proyecto con Claude Code.
+
+## Versión 18: diseño «Rótulo de línea» y apartados nuevos
+- **Diseño nuevo**, inspirado en los rótulos de los autobuses y en los paneles de salidas:
+  - Cabecera oscura con pestañas grandes.
+  - Lo urgente sale arriba como un **rótulo ámbar**. Si no hay nada urgente, sale la próxima cita.
+  - «**N novedades desde tu última visita**»: cada móvil recuerda cuándo entró por última vez y marca lo nuevo con la etiqueta «Nuevo». No se envía nada a ningún sitio.
+  - **Próximas paradas**: las próximas fechas sobre una línea roja, como un mapa de ruta.
+  - En el calendario, las próximas fechas salen como un **panel de salidas**.
+  - Abajo, siempre a mano: **«Hablar con un delegado»** y la campana de avisos.
+  - Letra nueva **Atkinson Hyperlegible**, pensada para leer bien con poca visión y alojada en la propia web. Letra base más grande.
+- **Apartados que crea el admin desde el panel**: en «Apartados de la web» se crean secciones nuevas.
+  - Ya está creado **«Comité de empresa»**.
+  - Cada apartado sale como una pestaña en la web y tiene su propia lista en el panel para publicar texto, fotos y documentos, con su fecha.
+  - Las fotos se ven en galería.
+  - Al publicar se avisa en los móviles y en Telegram, igual que con los avisos.
+- **Clasificación por año y mes**: en Avisos, Actas, Documentos y los apartados, los desplegables de fecha se cambian por botones de año y, dentro de cada año, de mes, con cuántos hay. Las listas van separadas por meses («Octubre de 2026»). En el panel, igual.
+- Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
+- Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
+
+## Versión 19: ocho mejoras grandes (novedades en directo, buzón, calculadoras, portada viva, estadísticas, canales, historial y panel móvil)
+### Fase 1: novedades en directo
+- Si se publica algo (aviso, fecha, acta, documento o algo en un apartado) mientras alguien tiene la web abierta, aparece arriba una banda amarilla **«Hay 1 novedad · Ver»**. Al pulsarla se muestra lo nuevo sin recargar la página. Los cambios y borrados se actualizan solos, sin avisar.
+- **Contador pequeño en cada pestaña** con lo nuevo desde la última visita de ese móvil. Desaparece al entrar en la pestaña. Se guarda solo en el propio móvil.
+- Arreglado: la cabecera con las pestañas ya se queda fija arriba al bajar por la página. Antes se iba con el resto.
+
+### Fase 2: buzón anónimo
+- En **«Dudas»**, abajo, un formulario corto para enviar una **pregunta o una sugerencia**, con un aviso bien visible de no poner nombres ni datos personales. Máximo 1000 letras.
+- **Es anónimo de verdad**: se guarda solo el texto, si es pregunta o sugerencia y el día, sin la hora. No se guarda ni la IP ni nada del móvil.
+- Si el mensaje lleva un email o un teléfono, no se envía.
+- Límites: 3 mensajes al día por móvil (contados en el propio móvil) y 40 al día en total (los cuenta el servidor).
+- En el panel, **«Buzón anónimo»** con pestañas *Sin leer / Leídos / Archivados*. Cada mensaje tiene los botones *Convertir en pregunta frecuente* (abre el editor ya relleno y, al guardarla, archiva el mensaje), *Leído*, *Archivar* y *Borrar*.
+- En **Inicio** del panel sale un aviso cuando hay mensajes sin leer, y en el menú un número rojo.
+- El texto de **Privacidad** ya explica el buzón y lo que se guarda en el móvil.
+
+### Fase 3: calculadoras del convenio
+- Pestaña nueva **«Calcula»** en la web, con tres calculadoras. Todo se calcula en el móvil y no se guarda ni se envía nada. Arriba hay un aviso visible: «Cálculo orientativo. Ante cualquier duda, pregunta a un delegado».
+  - **Vacaciones que te quedan**: días al año menos los ya disfrutados, con la parte proporcional si empezaste este año.
+  - **Permisos retribuidos**: asistente «¿Qué ha pasado?». Se elige el motivo y, si hace falta, contesta una pregunta («¿Tienes que desplazarte?»). Dice cuántos días corresponden y de dónde sale.
+  - **Horas extra**: por categoría, con horas normales y en festivo. Da el importe bruto.
+- En el panel, página **«Calculadoras»**: días de vacaciones, notas y aviso, lista de permisos (añadir, cambiar, ocultar) y precios de las horas extra por categoría. **Nada está fijo en el código.**
+- Valores de partida: los **mínimos del Estatuto de los Trabajadores** (30 días de vacaciones y permisos del art. 37). **Hay que revisarlos con el convenio.** Los precios de las horas extra están vacíos hasta que se pongan.
+
+### Fase 4: portada más viva
+- **Cuenta atrás** en la portada hasta la próxima cita marcada como importante. En el panel, al crear o editar una fecha, se marca la casilla *«Cita importante: sale en la portada con cuenta atrás»*. Muestra días y horas, o horas y minutos el último día, y se actualiza cada minuto.
+- **«Sabías que…»**: cada día sale un apartado distinto del convenio (el mismo para todos ese día), con un enlace para leerlo entero.
+- **Recuadros grises de carga** mientras llegan los datos, en vez de una pantalla vacía.
+- En el móvil, **desliza hacia abajo** desde arriba del todo para actualizar sin recargar la página.
+- Las animaciones son mínimas y se quitan si el móvil tiene activado «reducir movimiento».
+
+### Fase 5: estadísticas en el panel
+- En el **Inicio del panel**, apartado nuevo **«Estadísticas»** con tres gráficas propias, sin librerías de fuera. Cada una muestra el dato al pasar el ratón o el dedo y se puede **ver como tabla**:
+  - **Lo más leído**: veces que se ha abierto cada aviso, acta, documento o publicación de un apartado.
+  - **Móviles con avisos activados**, por semana. Se apunta cada noche con una tarea programada. Las semanas anteriores a hoy son una estimación.
+  - **Secciones más visitadas** en los últimos 30 días.
+- En las listas del panel (Avisos, Actas, Documentos, apartados) sale «Leído N veces» en cada elemento.
+- **Todo es anónimo**: solo se suma 1 en un contador. Un aviso cuenta como leído si se ve en pantalla al menos 2 segundos, y un documento cuando se abre. Cada cosa se cuenta una sola vez por visita.
+
+### Fase 6: vista previa en todos los canales y avisos que se repiten
+- Al escribir un aviso, la **vista previa** enseña a la vez cómo quedará **en la web, en la notificación del móvil, en el canal de Telegram y en WhatsApp**. En el móvil van en pestañas y en el PC, una debajo de otra. Recorta igual que la función que envía los avisos, así que lo que se ve es lo que llega.
+- **Avisa si el título se va a cortar** en la notificación del móvil (se ven unas 45 letras), justo debajo del título y en la vista previa. También avisa si el texto se corta, si la casilla de avisar está desmarcada o si está programado.
+- **Avisos que se repiten**, en el panel en *Avisos que se repiten*, o con el botón que hay en Avisos: cada semana, cada mes o cada año, a la hora que se elija, con *Activo* para pausarlos. Ejemplo: «Recuerda entregar la hoja de horas», el día 25 de cada mes a las 9:00. Muestra cuándo será la próxima vez.
+- Los publica la tarea programada de la función `notificar` (cada 10 minutos). Salen como un aviso normal y se avisa en los móviles y en Telegram. No se repiten aunque la tarea pase varias veces el mismo día. Si se elige el día 31 y el mes tiene menos días, sale el último día del mes.
+
+### Fase 7: historial y deshacer
+- En la base de datos se apunta **cada cambio**: quién (el email del administrador), qué (aviso, fecha, acta…), qué registro, si se creó, cambió o borró, cuándo y la **versión anterior**. Los cambios automáticos, como la marca de «ya avisado», no se apuntan. Se guarda un año.
+- En el panel, sección **«Historial»** con filtros por tipo y por acción. En los cambios se puede ver qué campo cambió y cómo estaba. Cada línea tiene su botón:
+  - **Recuperar**, para algo borrado.
+  - **Volver a como estaba**, para un cambio.
+  - **Deshacer (quitarlo)**, para algo creado por error.
+- Ahora, al borrar algo, **sus archivos se conservan** para poder recuperarlo con sus fotos y PDF. En **Ajustes > Archivos sin usar** se quitan los que ya no usa nada y tienen más de 30 días.
+- Los avisos de «¿Borrar…?» ya no dicen «no se puede deshacer»: dicen que se puede recuperar en «Historial».
+
+### Fase 8: panel más rápido en el móvil
+- **Botón flotante «+ Nuevo»** en todas las páginas del panel (en el móvil). Pregunta *«¿Qué quieres crear?»* con la lista de todo (aviso, fecha, publicación en el Comité, acta, documento…). Lo de la sección en la que estás sale primero.
+- **Reordenar arrastrando**, con el dedo o el ratón, desde las tres rayas de la izquierda: apartados del convenio, preguntas, plantillas, delegados, enlaces, apartados de la web, permisos y precios de las calculadoras. Si se lleva al borde de la pantalla, baja sola. También funciona con el teclado (flechas arriba y abajo). Se guarda solo y el historial no se llena con cada cambio de orden.
+- **Archivos**: ahora se pueden soltar en cualquier parte del editor (sale «Suelta aquí para añadir los archivos») o **pegar** con Ctrl+V una foto copiada.
+- **Borrador guardado solo**: mientras se escribe, cada 4 segundos y al cambiar de app, se guarda un borrador en el propio móvil. Si la app se cierra sin querer, al volver a abrir ese editor sale *«Tienes un borrador sin guardar… ¿Lo recuperas?»*. Los archivos hay que volver a elegirlos. Al publicar, o al salir diciendo «salir sin guardar», el borrador se borra.
+
+### Cierre de la versión 19
+- Versión subida en los 3 sitios (`?v=19` en los HTML, `VERSION_WEB` en `config.js`, `VERSION` en `sw.js`).
+- **Pendiente de revisar antes de usarlo con la plantilla**: los valores de «Calcula» son los mínimos del Estatuto de los Trabajadores, no los del convenio de Girona. Revisarlos en el panel, en «Calculadoras». Los precios de las horas extra están vacíos: hasta que se pongan, esa calculadora no sale.
+- Sigue pendiente completar la entidad de CCOO responsable y su NIF en Textos > Aviso legal y Privacidad.
