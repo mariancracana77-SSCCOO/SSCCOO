@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, GitHub Pages, con `.nojekyll`)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **19**
+- Versión actual: **21**
 
 ## Reglas del proyecto (no negociables)
 - Responder siempre en **español**, claro y sin tecnicismos innecesarios.
@@ -54,7 +54,14 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 1. `?v=N` en `index.html`, `admin.html`, `cartel.html`
 2. `VERSION_WEB` en `config.js`
 3. `VERSION` en `sw.js`
-Añadir una línea en `README.md` y entregar zip `SSCCOO-web-vN.zip`. La usuaria sube los archivos a GitHub a mano.
+Añadir una línea en `README.md` y entregar zip `SSCCOO-web-vN.zip`.
+
+**Publicar en GitHub lo hace Claude, no la usuaria.** Orden:
+1. **Antes de tocar `main`**, crear y subir una etiqueta de la versión que está publicada ahora (`git tag vN-1 <commit de main>` y `git push origin vN-1`), para poder volver atrás. Decírselo a la usuaria.
+2. Commit solo con los archivos modificados en esa versión, con mensaje claro en español (ej.: «v21: adjuntos en Convenio»).
+3. Subir a `main` (es la rama que publica GitHub Pages). **Nunca** `--force` ni reescribir historial. No subir al repo el zip, las copias de seguridad ni los archivos de prueba.
+4. Avisar a la usuaria con el enlace del commit y el tiempo que tarda en verse (GitHub Pages, 1–3 minutos; además el service worker pide recargar).
+5. Si falla (permisos, conflictos), **parar y explicarlo**. Nunca pedir ni aceptar tokens ni contraseñas por el chat: se usa el acceso a GitHub ya configurado.
 
 ## Seguridad (mantenerla)
 - **CSP** en `<meta>` de los 3 HTML: `script-src 'self'`. Prohibido: `<script>` en línea, `onclick=""`/`onchange=""` en HTML o plantillas, `eval`. Usar listeners/delegación. Si se añade un dominio externo, añadirlo a la CSP a propósito.
@@ -65,7 +72,7 @@ Añadir una línea en `README.md` y entregar zip `SSCCOO-web-vN.zip`. La usuaria
 ## Supabase
 - Proyecto `kdfedwcskymaitvpryvg` (región eu-west-3, París), nombre `ccoo-calsina-carre`. URL https://kdfedwcskymaitvpryvg.supabase.co. Clave publicable en `config.js`.
 - RLS en todas las tablas: lectura pública de lo publicado; escritura solo `public.is_admin()` (tabla `admins` por email).
-- Tablas: comunicados, eventos (con `importante` para la cuenta atrás), convenio_secciones, actas, documentos, preguntas, plantillas, delegados, enlaces, apartados (slug, titulo, descripcion, icono, orden, visible), publicaciones (apartado_id, titulo, contenido, fecha, adjuntos, publicado, notificar/notificado), buzon (tipo, texto, dia, leido, archivado: solo admin lee; se inserta solo con la RPC), calc_permisos / calc_categorias / calc_ajustes (valores de «Calcula»; lectura pública, escritura admin), historial (cuando, email, tabla, clave, accion crear/cambiar/borrar, antes, despues; no apunta cambios solo de notificado/actualizado/ultima_publicacion/orden; lo llenan los disparadores `historial` con `registrar_cambio(clave)`; solo admin lee; se limpia a los 365 días con la tarea `limpiar-historial`), avisos_recurrentes (frecuencia semanal/mensual/anual, dia_mes, dia_semana, mes, hora, activo, ultima_publicacion; solo admin), lecturas (tabla, item_id, total), visitas_seccion (dia, seccion, n), suscritos_semana (semana, n) — estas tres solo las lee el admin, paginas (slugs: inicio, convenio, quienes, contacto, telegram, whatsapp, archivo_meses, ultima_copia, aviso_legal, privacidad), opciones, admins, config_privada (sin políticas: solo service role; VAPID, Telegram, Gemini, cron), push_subs (sin políticas), traducciones, visitas_dia.
+- Tablas: comunicados, eventos (con `importante` para la cuenta atrás), convenio_secciones (con `adjuntos` jsonb, igual formato que los demás), actas, documentos, preguntas, plantillas, delegados, enlaces, apartados (slug, titulo, descripcion, icono, orden, visible), publicaciones (apartado_id, titulo, contenido, fecha, adjuntos, publicado, notificar/notificado), buzon (tipo, texto, dia, leido, archivado: solo admin lee; se inserta solo con la RPC), calc_permisos / calc_categorias / calc_ajustes (valores de «Calcula»; lectura pública, escritura admin), historial (cuando, email, tabla, clave, accion crear/cambiar/borrar, antes, despues; no apunta cambios solo de notificado/actualizado/ultima_publicacion/orden; lo llenan los disparadores `historial` con `registrar_cambio(clave)`; solo admin lee; se limpia a los 365 días con la tarea `limpiar-historial`), avisos_recurrentes (frecuencia semanal/mensual/anual, dia_mes, dia_semana, mes, hora, activo, ultima_publicacion; solo admin), lecturas (tabla, item_id, total), visitas_seccion (dia, seccion, n), suscritos_semana (semana, n) — estas tres solo las lee el admin, paginas (slugs: inicio, convenio, quienes, contacto, telegram, whatsapp, archivo_meses, ultima_copia, aviso_legal, privacidad), opciones, admins, config_privada (sin políticas: solo service role; VAPID, Telegram, Gemini, cron), push_subs (sin políticas), traducciones, visitas_dia.
 - RPC: recuperar_cambio(p_id) (solo admin: recupera un borrado, vuelve a la versión anterior o quita lo creado), contar_lectura(p_tabla, p_id) y contar_seccion(p_seccion) (públicas, validan que exista y sea visible; la web las llama una vez por visita con `contarUnaVez`), publicar_recurrentes() (solo el servidor: la llama `notificar` en modo cron antes de enviar los pendientes; inserta en comunicados), foto_suscritos() (solo la tarea programada `foto-suscritos` de pg_cron, cada noche), enviar_buzon (pública: valida tipo y largo 5–1000, rechaza emails y teléfonos, tope de 40 al día; guarda solo el día, sin hora), suscribir_push (valida y tope 5000), desuscribir_push, contar_visita, contar_suscritos, reiniciar_suscripciones (solo admin), is_admin.
 - Trigger `solo_admins_registran` en `auth.users`: solo puede crear cuenta un email que esté en `admins`.
 - Storage: bucket público `documentos` (20 MB); subir/borrar solo admin.
