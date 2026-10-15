@@ -167,7 +167,7 @@ window.preguntaHTML = (p, qr = "", abierta = false) => `<details class="panel ap
     <div class="pie-tarjeta" style="margin-top:12px">${p.actualizado ? `<span class="fechas">Actualizado ${haceTxt(p.actualizado)}</span>` : "<span></span>"}<span class="acciones-tarjeta">${botonTraducir()}</span></div></div></details>`;
 
 // ---------- Traducir ----------
-window.IDIOMAS = { ca: "Català", en: "English", ro: "Română", ar: "العربية", fr: "Français", pt: "Português" };
+window.IDIOMAS = { ca: "Català", en: "English", ro: "Română", ar: "العربية", fr: "Français", pt: "Português", de: "Deutsch", pl: "Polski", sr: "Српски" };
 window.botonTraducir = () => `<span class="traducir"><button class="accion" data-traducir aria-haspopup="true">${icono("idioma", "p")}Traducir</button></span>`;
 
 // ---------- Fechas para buscar ----------

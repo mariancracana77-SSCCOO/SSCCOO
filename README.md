@@ -131,6 +131,11 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 22: tres idiomas más para traducir
+- El botón **Traducir** de avisos, actas, preguntas y apartados del convenio añade **alemán, polaco y serbio**, además de catalán, inglés, rumano, árabe, francés y portugués. Sigue siendo gratis (Gemini) y cada traducción se guarda para no volver a pedirla.
+- Con nueve idiomas el menú se hacía demasiado alto y en el móvil se metía debajo de la cabecera: ahora sale en dos columnas y se le ajusta el alto al hueco que queda, con desplazamiento dentro si hace falta.
+- Cambios: `render.js` (lista de idiomas), `app.js` (`colocaMenuIdiomas`), `styles.css` (dos columnas) y la función `traducir` de Supabase (la misma lista, en el servidor).
+
 ## Versión 21: archivos en los apartados del convenio
 - **Panel, Convenio → Nuevo apartado**: ahora hay un campo **«Archivos del apartado»** para subir uno o varios archivos (PDF, fotos, Word, Excel, PowerPoint). Se ve el nombre, el tipo y el tamaño de cada uno, y se pueden quitar antes de guardar. Máximo 20 MB por archivo, con aviso claro si se pasa o si el tipo no vale. Usa la misma subida que Documentos y Avisos (`subirArchivo()`, bucket `documentos`).
 - **Web, Convenio**: al abrir un apartado, sus archivos salen debajo de la explicación como enlaces de descarga, con el icono del tipo y el tamaño.

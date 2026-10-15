@@ -417,6 +417,8 @@ a.proxima:hover { border-color: var(--azul); }
 .menu-idiomas button { border: 0; background: none; text-align: left; padding: 9px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; }
 .menu-idiomas button[dir=rtl] { text-align: right; }
 .menu-idiomas button:hover { background: var(--fondo); }
+/* Con nueve idiomas el menú se hacía tan alto que se salía por arriba en el móvil: dos columnas y, si aun así no cabe, se desplaza */
+.menu-idiomas { grid-template-columns: 1fr 1fr; max-height: min(58vh, 320px); overflow-y: auto; overscroll-behavior: contain; }
 [dir=rtl] ul { padding-right: 20px; padding-left: 0; }
 .accesos { grid-template-columns: repeat(2, 1fr) !important; }
 @media (min-width: 620px) and (max-width: 859px) { .accesos { grid-template-columns: repeat(3, 1fr) !important; } }

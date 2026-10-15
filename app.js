@@ -700,6 +700,15 @@ function pintaCanales() {
 }
 
 // ---------- Traducir ----------
+// El menú se abre hacia arriba (hacia abajo lo recortaría el «overflow: hidden» de la tarjeta).
+// Con nueve idiomas ya no siempre cabe, así que se le limita el alto al hueco que queda bajo la
+// cabecera fija; si no caben todos, el menú se desplaza por dentro.
+function colocaMenuIdiomas(menu, btn) {
+  if (!menu || !btn) return;
+  const cab = document.querySelector("header")?.getBoundingClientRect().bottom || 0;
+  const hueco = btn.getBoundingClientRect().top - cab - 12;
+  menu.style.maxHeight = Math.max(120, Math.floor(hueco)) + "px";
+}
 document.addEventListener("click", async (ev) => {
   const btn = ev.target.closest("[data-traducir]");
   const opc = ev.target.closest("[data-idioma]");
@@ -713,6 +722,7 @@ document.addEventListener("click", async (ev) => {
     }
     if (caja.querySelector(".menu-idiomas")) return;
     caja.insertAdjacentHTML("beforeend", `<div class="menu-idiomas" role="menu">${Object.entries(IDIOMAS).map(([k, n]) => `<button role="menuitem" data-idioma="${k}" ${k === "ar" ? 'dir="rtl"' : ""}>${n}</button>`).join("")}</div>`);
+    colocaMenuIdiomas(caja.querySelector(".menu-idiomas"), btn);
     return;
   }
   if (opc) {
