@@ -43,10 +43,10 @@ window.haceTxt = (d) => {
   return "el " + fechaLarga(d);
 };
 window.esNuevo = (d) => d && (Date.now() - new Date(d)) < 7 * 86400000;
-window.fechasHTML = (publicado, actualizado) => {
+window.fechasHTML = (publicado, actualizado, palabra = "Publicado") => {
   if (!publicado) return "";
   const editado = actualizado && (new Date(actualizado) - new Date(publicado)) > 120000;
-  return `<span class="fechas">Publicado ${haceTxt(publicado)}${editado ? " · actualizado " + haceTxt(actualizado) : ""}</span>`;
+  return `<span class="fechas">${palabra} ${haceTxt(publicado)}${editado ? " · actualizado " + haceTxt(actualizado) : ""}</span>`;
 };
 const etqNuevo = (d) => esNuevo(d) ? `<span class="etq nuevo">${icono("nuevo", "p")}Nuevo</span>` : "";
 

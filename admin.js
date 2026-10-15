@@ -194,10 +194,11 @@ const seccionApartado = (a) => ({
     { k: "fecha", l: "Fecha", t: "date", req: true, ayuda: "El día de la reunión, la foto o el documento. Sirve para ordenarlo por año y mes." },
     { k: "contenido", l: "Texto", t: "textarea", opc: true, formato: true },
     { k: "adjuntos", l: "Fotos y documentos", t: "archivos", opc: true },
-    { checks: [{ k: "notificar", l: "Avisar en los móviles y en el canal de Telegram", def: true, soloNuevo: true }] },
+    { checks: [{ k: "publicado", l: "Se ve en la web (desmárcalo para ocultarlo sin borrarlo)", def: true },
+      { k: "notificar", l: "Avisar en los móviles y en el canal de Telegram", def: true, soloNuevo: true }] },
   ],
   previa: (x) => publicacionHTML(x),
-  extracto: (x) => x.contenido, chips: (x) => [x.fecha && fechaLarga(x.fecha + "T12:00:00")], fechas: (x) => [x.creado, x.actualizado],
+  extracto: (x) => x.contenido, chips: (x) => [x.publicado === false && "Oculto en la web", x.fecha && fechaLarga(x.fecha + "T12:00:00")], fechas: (x) => [x.creado, x.actualizado],
 });
 let APARTADOS = [];
 async function cargarApartados() {
@@ -421,7 +422,7 @@ function itemHTML(k, x, conSeccion) {
       <span class="tit">${esc((s.tituloDe ? s.tituloDe(x) : x.titulo) || "Sin título")}</span>
       ${s.extracto(x) ? `<span class="extracto">${esc(String(s.extracto(x)).replace(/\*\*/g, ""))}</span>` : ""}
       <span class="chips">${chips.map(c => `<span class="etq">${esc(c)}</span>`).join("")}${nAdj ? `<span class="etq adj">${icono("clip", "p")}${nAdj} archivo${nAdj > 1 ? "s" : ""}</span>` : ""}</span>
-      ${fechasHTML(pub || act, act)}
+      ${fechasHTML(pub || act, act, x.publicado === false ? "Guardado sin publicar" : undefined)}
     </span>
     ${icono("der", "chevron")}
   </button>`;
@@ -643,7 +644,7 @@ function abrirEditor(k, orig = null, preset = {}) {
     (s.asistente && !orig ? `<div class="separador">Revisa el acta y publícala</div>` : "") +
     s.campos.map(c => {
       if (c.fila) return `<div class="fila">${c.fila.map(f => `<div${f.si ? ` data-si="${f.si}"` : ""}>${campoHTML(f, x[f.k] ?? def[f.k] ?? f.def)}</div>`).join("")}</div>`;
-      if (c.checks) { const v = c.checks.filter(ch => !(ch.soloNuevo && orig)); return v.length ? `<div class="grupo-check">${v.map(ch => `<label class="check"><input type="checkbox" id="f-${ch.k}" ${(orig ? x[ch.k] : (x[ch.k] ?? ch.def)) ? "checked" : ""}>${ch.l}</label>`).join("")}</div>` : ""; }
+      if (c.checks) { const v = c.checks.filter(ch => !(ch.soloNuevo && orig)); return v.length ? `<div class="grupo-check">${v.map(ch => `<label class="check"><input type="checkbox" id="f-${ch.k}" ${(x[ch.k] ?? ch.def) ? "checked" : ""}>${ch.l}</label>`).join("")}</div>` : ""; }
       return c.si ? `<div data-si="${c.si}">${campoHTML(c, x[c.k] ?? def[c.k] ?? c.def)}</div>` : campoHTML(c, x[c.k] ?? def[c.k] ?? c.def);
     }).join("");
 
@@ -759,6 +760,7 @@ $("ed-guardar").onclick = async () => {
   if (["avisos"].includes(ED.k) && /\[[^\]]{1,30}\]/.test((fila.titulo || "") + (fila.contenido || "")) && !confirm("El aviso todavía tiene partes entre [corchetes] sin rellenar. ¿Publicar igualmente?")) return;
   if (ED.k === "enlaces" && fila.url && !/^https?:\/\//.test(fila.url)) fila.url = "https://" + fila.url;
   if (s.filtro) Object.assign(fila, s.filtro);
+  if (fila.publicado === false && !ED.orig) fila.notificar = false;
   if (ED.k === "apartados") {
     fila.descripcion = fila.descripcion || "";
     if (!ED.orig) { // dirección de la pestaña: #ap-comite-de-empresa (no cambia aunque luego se cambie el nombre)
@@ -795,6 +797,7 @@ $("ed-guardar").onclick = async () => {
       return aviso("Apartado creado. Ahora pulsa «Publicar» para subir textos, fotos y documentos.");
     }
     abrir(["resumen", "calendario"].includes(actual) ? actual : (s.volver || k));
+    if (fila.publicado === false) return aviso(editado ? "Cambios guardados. Está oculto: no se ve en la web." : "Guardado sin publicar: no se ve en la web y no se ha avisado a nadie. Para publicarlo, ábrelo y marca «Se ve en la web».");
     if (editado || s.oculta) return aviso(editado ? "Cambios guardados. Ya se ven en la web." : "Guardado. Ya se ve en la web.");
     // Avisar a los móviles y a Telegram
     let res = null;
@@ -812,9 +815,12 @@ $("ed-borrar").onclick = async () => {
   const s = SECCIONES[ED.k], x = ED.orig;
   if (ED.k === "apartados") {
     const { data: pubs } = await sb.from("publicaciones").select("adjuntos").eq("apartado_id", x.id);
-    if ((pubs || []).length && !confirm(`El apartado «${x.titulo}» tiene ${pubs.length} publicación(es). Si lo borras, se borrarán también. Si solo quieres que no se vea, desmarca «Se ve en la web». ¿Borrar todo?`)) return;
+    if ((pubs || []).length) {
+      const n = pubs.length, r = prompt(`El apartado «${x.titulo}» tiene ${n} ${n === 1 ? "publicación" : "publicaciones"}. Si lo borras, se ${n === 1 ? "borrará" : "borrarán"} también, con sus fotos y documentos.\n\nSi solo quieres que no se vea, pulsa Cancelar y desmarca «Se ve en la web».\n\nPara borrarlo todo, escribe BORRAR:`);
+      if ((r || "").trim().toUpperCase() !== "BORRAR") return aviso("No se ha borrado nada.");
+    } else if (!confirm(`¿Borrar el apartado «${x.titulo}»? Está vacío. Desaparecerá de la web.`)) return;
   }
-  if (!confirm(`¿Borrar «${(s.tituloDe ? s.tituloDe(x) : x.titulo)}»? Desaparecerá de la web. Si te equivocas, puedes recuperarlo en «Historial».`)) return;
+  if (ED.k !== "apartados" && !confirm(`¿Borrar «${(s.tituloDe ? s.tituloDe(x) : x.titulo)}»? Desaparecerá de la web. Si te equivocas, puedes recuperarlo en «Historial».`)) return;
   const { error } = await sb.from(s.tabla).delete().eq("id", x.id);
   if (error) return msg("ed-msg", "No se ha podido borrar: " + error.message);
   // Los archivos se conservan para poder recuperarlo desde el Historial (se limpian en Ajustes > Archivos sin usar).

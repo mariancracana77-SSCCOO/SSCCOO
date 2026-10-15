@@ -131,6 +131,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 25: ocultar sin borrar y borrar con más cuidado
+- **Publicaciones de los apartados** (Comité de empresa, Decretos y leyes, Info laboral…): casilla **«Se ve en la web»**. Desmarcándola, la publicación se oculta sin borrarla (y en el panel sale «Oculto en la web» y «Guardado sin publicar»). Si se crea ya oculta, no se avisa a nadie.
+- **Borrar un apartado de la web que tiene publicaciones**: como se borrarían también todas ellas, ahora hay que **escribir BORRAR** para confirmarlo, y el aviso recuerda que, si solo quieres que no se vea, basta con desmarcar «Se ve en la web». Si está vacío, basta con aceptar.
+- **La web enseña solo lo publicado aunque en ese móvil esté abierta la sesión del panel**: antes, el administrador veía en la web los avisos programados antes de la hora y lo oculto (los trabajadores no, eso ya lo filtraba el servidor). Tampoco sale la banda «Hay 1 novedad» por algo oculto o programado.
+- Cambios: `admin.js`, `app.js`, `render.js`.
+
 ## Versión 24: el panel en el móvil hace lo que se espera (Convenio y Apartados de la web)
 - **Convenio (y todas las secciones) en el móvil**: el botón «Nuevo apartado» de arriba estaba escondido en el móvil, y el botón flotante «+ Nuevo» abría una lista con todo («¿Qué quieres crear?»), así que parecía que te llevaba a otro sitio. Ahora el botón de arriba se ve, ancho y grande, y el flotante crea directamente en la sección donde estás («Nuevo apartado», «Publicar», «Nueva acta»…). La lista general solo sale desde el Inicio del panel.
 - **Apartados de la web**: tocar la tarjeta de «Decretos y leyes», «Info laboral» o «Comité de empresa» **abre la sección** para publicar dentro (con «Fotos y documentos»). Cada tarjeta dice cuántas publicaciones tiene. El nombre, el dibujo y la posición se cambian con el botón aparte **«Cambiar nombre y ajustes»**, que avisa arriba: «Aquí solo cambias el nombre y el aspecto…» con el botón **«Abrir y publicar contenido»**.

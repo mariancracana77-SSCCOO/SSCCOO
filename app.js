@@ -518,10 +518,14 @@ async function cargar(idNuevo) {
       el.innerHTML = vacio("alerta", "No se ha podido conectar. Comprueba tu conexión a internet y vuelve a abrir la página."));
     return;
   }
-  D.avisos = a.data || []; D.eventos = e.data || []; D.convenio = c.data || []; D.docs = d.data || []; D.actas = ac.data || [];
+  // La web enseña solo lo publicado, también si en este móvil está abierta la sesión del panel
+  // (el servidor a un administrador le da todo: avisos programados, publicaciones y apartados ocultos)
+  const ahoraMs = Date.now();
+  D.avisos = (a.data || []).filter(x => !x.publicar_en || new Date(x.publicar_en).getTime() <= ahoraMs); D.eventos = e.data || []; D.convenio = c.data || []; D.docs = d.data || []; D.actas = ac.data || [];
   D.paginas = Object.fromEntries((p.data || []).map(x => [x.slug, x.contenido]));
   D.preguntas = pr.data || []; D.delegados = dl.data || []; D.enlaces = en.data || [];
-  D.apartados = aps.data || []; D.publicaciones = pubs.data || []; cargar.listo = true;
+  D.apartados = (aps.data || []).filter(x => x.visible !== false);
+  D.publicaciones = (pubs.data || []).filter(x => x.publicado !== false && D.apartados.some(ap => ap.id === x.apartado_id)); cargar.listo = true;
   D.calc = { permisos: cp.data || [], categorias: cc.data || [], ajustes: Object.fromEntries((ca.data || []).map(x => [x.clave, x.valor])) };
   if (!$("calc-zona").contains(document.activeElement)) pintaCalcula(); // no borrar lo que se está escribiendo
   pintaPestanasApartados(); pintaApartado();
@@ -565,6 +569,7 @@ async function verNovedades() {
 const canal = sb.channel("web-directo");
 Object.keys(QUE).forEach(t => canal.on("postgres_changes", { event: "*", schema: "public", table: t }, (pl) => {
   if (pl.eventType === "INSERT" && pl.new?.id != null) {
+    if (pl.new.publicado === false || (pl.new.publicar_en && new Date(pl.new.publicar_en) > new Date())) return; // oculto o programado: no es novedad todavía
     if (!PEND.some(x => x.t === t && x.id === pl.new.id)) PEND.push({ t, id: pl.new.id, titulo: pl.new.titulo, fecha: pl.new.fecha, apartado_id: pl.new.apartado_id });
     pintaBandaNovedad();
   } else { clearTimeout(recarga); recarga = setTimeout(() => cargar(), 400); } // cambios y borrados: se actualiza en silencio

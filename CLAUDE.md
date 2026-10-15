@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, GitHub Pages, con `.nojekyll`)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **24**
+- Versión actual: **25**
 
 ## Reglas del proyecto (no negociables)
 - Responder siempre en **español**, claro y sin tecnicismos innecesarios.
@@ -27,6 +27,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
   - Vista `apartado` (`#ap-<slug>`) para los apartados que crea el admin.
   - Clasificación por año y mes con botones (`pintaFechas`) y listas separadas por meses (`porMeses`).
   - Vista `legal` (#aviso-legal, #privacidad).
+  - `cargar()` filtra también en la web lo no publicado (avisos con `publicar_en` futuro, apartados con `visible = false`, publicaciones con `publicado = false` o de un apartado oculto): si en el mismo navegador está abierta la sesión del panel, el servidor (RLS) le da todo.
   - Tiempo real (Fase 1): los INSERT se guardan en `PEND` y se muestra la banda `#banda-novedad`. «Ver» llama a `cargar()` y lleva a lo nuevo. Contadores por pestaña (`pintaContadores`) con localStorage `ccoo-visto` y `ccoo-ultima-visita`.
   - Portada viva (Fase 4): `pintaCuentaAtras` (eventos con `importante`), `pintaSabias` (un apartado del convenio por día), esqueletos `.esq` en el HTML inicial y «desliza para actualizar» (`#tirar`, solo táctil; `overscroll-behavior-y: contain` para que el navegador no recargue).
   - Estadísticas (Fase 5): `data-lectura="tabla:id"` en avisos, actas y publicaciones (se cuenta si se ve 2 s, con IntersectionObserver) y `data-abre` en documentos (al pulsar).
@@ -44,6 +45,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
   - Secciones con `oculta: true` (`permisos`, `categorias`) no salen en el menú: se editan desde la página «Calculadoras» (`pintaCalculadoras`) y al guardar vuelven a `s.volver`.
   - Botón flotante `#fab` (móvil): dentro de una sección crea ahí (`abrir()` le pone el texto de `s.nuevo`, «Publicar» en los apartados); fuera de secciones abre `abrirHojaNuevo`. El botón `#b-nuevo` de la cabecera también se ve en el móvil. `body.admin` deja 168 px abajo para que el flotante no tape la última tarjeta.
   - Secciones con `tarjeta(x)` usan su propia tarjeta en la lista (`itemHTML`). En «Apartados de la web», `tarjetaApartado`: tocarla abre la sección (`data-abrir-ap`) y «Cambiar nombre y ajustes» (`data-ajustes-ap`) abre el editor, que lleva arriba `.aviso-ajustes` con «Abrir y publicar contenido». `contarPublicaciones()` cuenta lo publicado en cada uno.
+  - Publicaciones: casilla `publicado` («Se ve en la web»); si se crea oculta, `notificar = false`. Borrar un apartado con publicaciones (se borran en cascada) pide escribir BORRAR. En el editor, un valor vacío en una casilla toma su `def`.
   - `cerrarEditor()` espera a que termine el «atrás» del historial antes de seguir: si no, al saltar a otra sección la dirección se quedaba con la anterior.
   - «Apartados de la web» (`SECCIONES.apartados`) crea apartados. Cada uno genera una sección dinámica `ap<id>` (`seccionApartado`, tabla `publicaciones` filtrada por `apartado_id`) que se coloca tras Actas (`construirPaginas`).
 - `config.js`: cliente Supabase, `VERSION_WEB`, `WEB_URL`, `VAPID_PUBLICA`, ayudas (textoHTML, compartir, ICS, lectura «Aa», `urlSegura`).
