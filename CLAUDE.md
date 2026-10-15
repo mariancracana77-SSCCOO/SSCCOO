@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, GitHub Pages, con `.nojekyll`)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **22**
+- Versión actual: **23**
 
 ## Reglas del proyecto (no negociables)
 - Responder siempre en **español**, claro y sin tecnicismos innecesarios.
@@ -32,6 +32,8 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
   - Estadísticas (Fase 5): `data-lectura="tabla:id"` en avisos, actas y publicaciones (se cuenta si se ve 2 s, con IntersectionObserver) y `data-abre` en documentos (al pulsar).
   - Vista `calcula` (`pintaCalcula`): vacaciones, permisos (asistente) y horas extra. Usa `D.calc`; no guarda nada.
   - `html, body { overflow-x: clip }`: con `hidden` deja de funcionar la cabecera `sticky`.
+  - Barra de pestañas (`.pestanas-caja` > `.pestanas-web`): flechas `.pest-flecha` a cada lado con `flechasPestanas()` (clases `hay-izq`/`hay-der` y máscara), en cualquier ancho, solo si no caben todas. Recalcular al añadir pestañas (`pintaPestanasApartados`).
+  - Festivos: filas normales de `eventos` con `tipo = "Festivo"` (00:00–23:59). `esFestivo()` los saca de «Lo último», del recuento de novedades y del contador de la pestaña. Al cargarlos en bloque, `notificar = false` y `notificado = true` para no mandar avisos.
 - `admin.html` + `admin.js` + `admin.css`: panel (Resumen con visitas, Calendario mensual, secciones, Textos, Ajustes: canales Telegram/WhatsApp, copia ZIP, archivo, administradores, listas; asistente de actas con Gemini a partir de fotos/archivos).
   - Las secciones se definen en el objeto `SECCIONES`.
   - Vista previa de avisos en 4 canales (`previaCanales`: web, notificación, Telegram, WhatsApp; recorta igual que `notificar`) y aviso de título largo (`avisoTitulo`, 45 letras). Campos condicionales en el editor con `si: "campo:valor1,valor2"` (`aplicarCondiciones`), `def` para valores por defecto y `num` en selects numéricos.

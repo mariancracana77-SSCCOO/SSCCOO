@@ -12,9 +12,9 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link rel="stylesheet" href="fuentes.css?v=22">
-<script src="lectura.js?v=22"></script>
-<link rel="stylesheet" href="styles.css?v=22">
+<link rel="stylesheet" href="fuentes.css?v=23">
+<script src="lectura.js?v=23"></script>
+<link rel="stylesheet" href="styles.css?v=23">
 </head>
 <body class="publica">
 
@@ -31,10 +31,12 @@
       <a class="btn-tab" href="#buscar" aria-label="Buscar en toda la web" title="Buscar"><span data-i="buscar"></span></a>
     </div>
   </div>
+  <div class="pestanas-caja">
+  <button class="pest-flecha izq" type="button" aria-label="Ver las secciones de la izquierda" hidden><span data-i="izq"></span></button>
   <nav class="pestanas-web" aria-label="Secciones">
     <a href="#inicio" data-v="inicio">Inicio</a>
     <a href="#avisos" data-v="avisos">Avisos</a>
-    <a href="#calendario" data-v="calendario">Fechas</a>
+    <a href="#calendario" data-v="calendario">Calendario</a>
     <a href="#actas" data-v="actas">Actas</a>
     <a href="#documentos" data-v="documentos">Documentos</a>
     <a href="#convenio" data-v="convenio">Convenio</a>
@@ -42,6 +44,8 @@
     <a href="#preguntas" data-v="preguntas">Dudas</a>
     <a href="#info" data-v="info">Nosotros</a>
   </nav>
+  <button class="pest-flecha der" type="button" aria-label="Ver más secciones" hidden><span data-i="der"></span></button>
+  </div>
   <div class="banda-novedad oculto" id="banda-novedad" role="status" aria-live="polite"></div>
   <div class="tirar" id="tirar" aria-live="polite"><span class="tirar-ic" data-i="abajo"></span><span class="txt"></span></div>
 </header>
@@ -248,10 +252,10 @@
 
 <div class="barra-acciones" id="barra-acciones"></div>
 
-<script src="lib/supabase.js?v=22"></script>
-<script src="iconos.js?v=22"></script>
-<script src="config.js?v=22"></script>
-<script src="render.js?v=22"></script>
-<script src="app.js?v=22"></script>
+<script src="lib/supabase.js?v=23"></script>
+<script src="iconos.js?v=23"></script>
+<script src="config.js?v=23"></script>
+<script src="render.js?v=23"></script>
+<script src="app.js?v=23"></script>
 </body>
 </html>

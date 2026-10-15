@@ -131,6 +131,13 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 23: se ven todas las secciones, festivos de España y «Calendario»
+- **Barra de secciones**: con 12 pestañas, en el móvil solo caben 2 o 3 y no se notaba que se puede deslizar (parecía que solo existían, por ejemplo, «Info laboral» y «Comité de empresa»). Ahora sale una **flecha ámbar a cada lado** cuando hay más secciones escondidas por ese lado; al pulsarla, la barra se desliza. También en el ordenador, donde ya no cabía «Nosotros». Si caben todas, no sale ninguna flecha.
+- La pestaña **«Fechas» pasa a llamarse «Calendario»** (también en «Ir a» de la portada).
+- **Festivos nacionales** de lo que queda de 2026 y de todo 2027 añadidos al calendario (Todos los Santos, Constitución, Inmaculada, Navidad, Año Nuevo, Reyes, Viernes Santo, Día del Trabajo, Asunción, Fiesta Nacional). Se añadieron **sin avisar** a los móviles ni a Telegram, y se pueden cambiar o borrar desde el panel como cualquier fecha.
+- Los festivos (tipo «Festivo») **no cuentan como novedad**: salen en el Calendario y en «Próximas paradas», pero no en «Lo último» ni en el contador de la pestaña. Así, añadir los del año no muestra «14 novedades» a todo el mundo.
+- Cambios: `index.html`, `app.js` (`flechasPestanas`, `esFestivo`), `styles.css`.
+
 ## Versión 22: tres idiomas más para traducir
 - El botón **Traducir** de avisos, actas, preguntas y apartados del convenio añade **alemán, polaco y serbio**, además de catalán, inglés, rumano, árabe, francés y portugués. Sigue siendo gratis (Gemini) y cada traducción se guarda para no volver a pedirla.
 - Con nueve idiomas el menú se hacía demasiado alto y en el móvil se metía debajo de la cabecera: ahora sale en dos columnas y se le ajusta el alto al hueco que queda, con desplazamiento dentro si hace falta.

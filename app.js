@@ -36,7 +36,24 @@ function irA() {
 }
 
 window.addEventListener("hashchange", irA);
+
+// Barra de pestañas: en el móvil caben 2 o 3 de 12 y no se notaba que se puede deslizar.
+// Una flecha a cada lado (y la sombra) solo cuando hay más secciones escondidas por ese lado.
+function flechasPestanas() {
+  const nav = document.querySelector(".pestanas-web"), izq = document.querySelector(".pest-flecha.izq"), der = document.querySelector(".pest-flecha.der");
+  if (!nav || !izq || !der) return;
+  const hayIzq = nav.scrollLeft > 4, hayDer = nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 4;
+  izq.hidden = !hayIzq; der.hidden = !hayDer;
+  nav.classList.toggle("hay-izq", hayIzq); nav.classList.toggle("hay-der", hayDer);
+}
+document.querySelectorAll(".pest-flecha").forEach(b => b.addEventListener("click", () => {
+  const nav = document.querySelector(".pestanas-web"), lado = b.classList.contains("izq") ? -1 : 1;
+  nav.scrollBy({ left: lado * nav.clientWidth * 0.7, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+}));
+document.querySelector(".pestanas-web")?.addEventListener("scroll", flechasPestanas, { passive: true });
+window.addEventListener("resize", flechasPestanas);
 irA();
+flechasPestanas();
 
 // ---------- Utilidades ----------
 const vacio = (ic, t) => `<div class="panel vacio">${icono(ic)}${t}</div>`;
@@ -105,10 +122,13 @@ const irADia = (iso) => { const d = fechaDia(iso); estado.mes = new Date(d.getFu
 // Contador pequeño en cada pestaña: lo nuevo desde la última visita de este móvil (o desde que se abrió esa pestaña)
 function leeVisto() { try { return JSON.parse(localStorage.getItem("ccoo-visto") || "{}") || {}; } catch (_) { return {}; } }
 function marcaVisto(sec) { try { const v = leeVisto(); v[sec] = Date.now(); localStorage.setItem("ccoo-visto", JSON.stringify(v)); } catch (_) {} }
+// Los festivos son fechas fijas del calendario, no noticias: salen en Calendario y en «Próximas paradas»,
+// pero no cuentan como novedad (si no, al añadir los del año saldrían «14 novedades» a todo el mundo).
+function esFestivo(e) { return (e.tipo || "").toLowerCase() === "festivo"; }
 function pintaContadores() {
   const VISTO = leeVisto();
   const nuevos = (sec, l, f) => { const desde = Math.max(ULTIMA, VISTO[sec] || 0); return l.filter(x => f(x) && new Date(f(x)).getTime() > desde).length; };
-  const c = { avisos: nuevos("avisos", D.avisos, a => a.fecha), calendario: nuevos("calendario", D.eventos, e => e.creado), actas: nuevos("actas", D.actas, a => a.creado),
+  const c = { avisos: nuevos("avisos", D.avisos, a => a.fecha), calendario: nuevos("calendario", D.eventos.filter(e => !esFestivo(e)), e => e.creado), actas: nuevos("actas", D.actas, a => a.creado),
     documentos: nuevos("documentos", D.docs, d => d.fecha), convenio: nuevos("convenio", D.convenio, x => x.actualizado), preguntas: nuevos("preguntas", D.preguntas, x => x.creado) };
   D.apartados.forEach(a => { c["ap-" + a.slug] = nuevos("ap-" + a.slug, D.publicaciones.filter(p => p.apartado_id === a.id), p => p.creado); });
   document.querySelectorAll(".pestanas-web a[data-v]").forEach(a => {
@@ -138,7 +158,7 @@ function pintaInicio() {
   const ICONOS = { aviso: ["avisos", "c-verde"], fecha: ["calendario", "c-azul"], acta: ["actas", "c-ambar"], doc: ["carpeta", "c-rojo"], conv: ["convenio", "c-morado"], preg: ["pregunta", "c-gris"], pub: ["carpeta", "c-turquesa"] };
   const items = [
     ...D.avisos.filter(a => a !== urg).map(a => ({ f: a.fecha, k: "aviso", que: "Aviso" + (a.fijado ? " · fijado" : ""), t: a.titulo, s: resumenPlano(a.contenido, 90), h: "#aviso-" + a.id, adj: (a.adjuntos || []).length })),
-    ...D.eventos.filter(e => e.fecha >= hoy).map(e => ({ f: e.creado, k: "fecha", que: "Fecha · " + cuandoEvento(e), t: e.titulo, s: e.lugar || "", h: "#calendario", dia: e.fecha })),
+    ...D.eventos.filter(e => e.fecha >= hoy && !esFestivo(e)).map(e => ({ f: e.creado, k: "fecha", que: "Fecha · " + cuandoEvento(e), t: e.titulo, s: e.lugar || "", h: "#calendario", dia: e.fecha })),
     ...D.actas.map(a => ({ f: a.creado, k: "acta", que: "Acta" + (a.fecha ? " · " + fechaDia(a.fecha).toLocaleDateString("es-ES", { day: "numeric", month: "long" }) : ""), t: a.titulo, s: a.acuerdos ? (a.acuerdos.split("\n").filter(l => l.trim()).length + " acuerdo(s)") : resumenPlano(a.resumen, 90), h: "#actas" })),
     ...D.docs.map(d => ({ f: d.fecha, k: "doc", que: "Documento · " + tipoArchivo(d.tipo_archivo, d.nombre_archivo).txt, t: d.titulo, s: d.descripcion || "", url: d.url, id: d.id })),
     ...D.publicaciones.map(x => { const ap = D.apartados.find(y => y.id === x.apartado_id); return ap && { f: x.creado, k: "pub", ic: ap.icono, que: ap.titulo, t: x.titulo, s: (x.adjuntos || []).length ? (x.adjuntos.length + " archivo(s)") : resumenPlano(x.contenido, 90), h: "#ap-" + ap.slug }; }).filter(Boolean),
@@ -174,7 +194,7 @@ function pintaInicio() {
   $("inicio-feed").innerHTML = items.length ? html : html + vacio("avisos", "Todavía no hay nada publicado.");
   if ($("ver-mas")) $("ver-mas").onclick = () => { estado.feedMax = max + 20; pintaInicio(); };
   // Accesos
-  const acc = [["avisos", "avisos", "Avisos"], ...D.apartados.map(a => ["ap-" + a.slug, a.icono || "carpeta", a.titulo]), ["convenio", "convenio", "Convenio"], ["calcula", "reloj", "Calcula"], ["calendario", "calendario", "Fechas"], ["actas", "actas", "Actas"], ["documentos", "carpeta", "Documentos"], ["preguntas", "pregunta", "Dudas"]];
+  const acc = [["avisos", "avisos", "Avisos"], ...D.apartados.map(a => ["ap-" + a.slug, a.icono || "carpeta", a.titulo]), ["convenio", "convenio", "Convenio"], ["calcula", "reloj", "Calcula"], ["calendario", "calendario", "Calendario"], ["actas", "actas", "Actas"], ["documentos", "carpeta", "Documentos"], ["preguntas", "pregunta", "Dudas"]];
   $("inicio-accesos").innerHTML = `<h2 class="tit-seccion">Ir a</h2><nav class="accesos-tablon" aria-label="Accesos rápidos">${acc.map(([v, ic, t]) =>
     `<a href="#${esc(v)}">${icono(esc(ic))}<b>${esc(t)}</b></a>`).join("")}</nav>`;
   pintaCuentaAtras(urg ? null : prox[0]);
@@ -337,6 +357,7 @@ function pintaPestanasApartados() {
   document.querySelectorAll(".pestanas-web a[data-ap]").forEach(a => a.remove());
   const tras = document.querySelector('.pestanas-web a[data-v="actas"]');
   tras.insertAdjacentHTML("afterend", D.apartados.map(a => `<a href="#ap-${esc(a.slug)}" data-v="ap-${esc(a.slug)}" data-ap>${esc(a.titulo)}</a>`).join(""));
+  flechasPestanas();
 }
 function pintaApartado() {
   const a = D.apartados.find(x => x.slug === estado.ap);
