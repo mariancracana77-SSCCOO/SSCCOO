@@ -1557,7 +1557,7 @@ async function pintaCalAdm() {
   const s = SECCIONES.calendario;
   $("zona").innerHTML = `<div class="sec-cab">
       <div><h1>Calendario</h1><p>Toca un día para ver lo que hay o añadir una fecha. También salen los avisos programados y las actas.</p></div>
-      <div class="botones" style="margin:0">${k === "avisos" ? `<button class="btn sec" id="b-recurrentes">${icono("reloj2", "p")}Avisos que se repiten</button>` : ""}<button class="btn btn-nuevo" id="b-nuevo">${icono("mas", "p")}${s.nuevo}</button></div>
+      <div class="botones" style="margin:0"><button class="btn btn-nuevo" id="b-nuevo">${icono("mas", "p")}${s.nuevo}</button></div>
     </div>
     ${cambioVistaCal()}
     <div class="cal-rejilla cal-adm">

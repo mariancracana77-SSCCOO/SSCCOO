@@ -285,7 +285,12 @@ $("cal-hoy").onclick = () => { estado.mes = new Date(); estado.diaSel = hoyISO()
 
 // ---------- Convenio ----------
 function pintaConvenio() {
-  $("conv-intro").innerHTML = `<span class="ic">${icono("convenio")}</span><div>${textoHTML(D.paginas.convenio || "")}</div>`;
+  // La tarjeta de arriba del convenio es un enlace de verdad: promete «los documentos más importantes»,
+  // asi que lleva a Documentos. Antes era un <div> con pinta de tarjeta y al pulsarla no pasaba nada.
+  const intro = (D.paginas.convenio || "").trim();
+  $("conv-intro").innerHTML = intro
+    ? `<a class="panel conv-intro" href="#documentos"><span class="ic">${icono("convenio")}</span><div>${textoHTML(intro)}<span class="conv-ir">Ver los documentos del convenio</span></div>${icono("der", "p")}</a>`
+    : "";
   pintaFiltros("filtros-convenio", usadas("convenio", D.convenio, "categoria"), estado.catConv, o => { estado.catConv = o; pintaConvenio(); });
   const qr = $("buscar-convenio").value.trim(), q = normal(qr);
   const l = D.convenio.filter(s => (estado.catConv === "Todos" || s.categoria === estado.catConv) &&
