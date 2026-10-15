@@ -26,7 +26,12 @@ body.admin { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
 .sec-cab { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
 .sec-cab h1 { font-size: 2.1rem; }
 .sec-cab p { margin: 2px 0 0; color: var(--suave); }
-@media (max-width: 640px) { .sec-cab .btn-nuevo { display: none; } }
+@media (max-width: 640px) {
+  .sec-cab .botones { width: 100%; }
+  .sec-cab .btn-nuevo { flex: 1 1 auto; justify-content: center; min-height: 48px; }
+  /* El botón flotante no debe tapar la última tarjeta: hueco abajo = barra (76) + flotante (60) + margen */
+  body.admin { padding-bottom: calc(168px + env(safe-area-inset-bottom)); }
+}
 
 /* Lista de elementos publicados */
 .lista-adm { display: grid; gap: 10px; }
@@ -458,3 +463,23 @@ html[data-contraste="alto"] .fila-h .barra, html[data-contraste="alto"] .col-s .
 .borrador p .icono { flex: none; margin-top: 2px; }
 .borrador small { color: var(--suave); }
 .borrador .botones { margin-top: 10px; }
+
+/* ===== v24: Apartados de la web, botón flotante y zonas táctiles ===== */
+/* Tarjeta de cada apartado de la web: tocarla abre la sección; los ajustes van en un botón aparte */
+.tarjeta-ap { flex: 1; min-width: 0; display: grid; gap: 6px; }
+.tarjeta-ap .item-adm { width: 100%; align-items: center; }
+.tarjeta-ap .ic-ap { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border-radius: 12px; background: var(--azul-suave); color: var(--azul); margin-left: 12px; }
+.tarjeta-ap .ajustes-ap { justify-self: end; }
+.lista-adm > .tarjeta-ap { margin-bottom: 4px; }
+/* Aviso arriba del editor de un apartado de la web */
+.aviso-ajustes { margin-top: 14px; padding: 14px; border-radius: 12px; background: var(--ambar-suave); border: 1px solid var(--ambar-rotulo); }
+.aviso-ajustes p { margin: 0 0 10px; font-weight: 600; }
+.aviso-ajustes .btn { width: 100%; justify-content: center; }
+/* El botón flotante lleva el texto de lo que crea; que no se salga en pantallas estrechas */
+.fab { max-width: calc(100vw - 36px); }
+.fab span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Zonas táctiles de al menos 44 px en el panel */
+body.admin .btn, body.admin .indice-ajustes a { min-height: 44px; }
+body.admin .btn-cab.aa { min-width: 44px; }
+/* Enlace «Ver calendario» junto al título del bloque: zona táctil de 44 px */
+.titulo-bloque a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; }

@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, GitHub Pages, con `.nojekyll`)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **23**
+- Versión actual: **24**
 
 ## Reglas del proyecto (no negociables)
 - Responder siempre en **español**, claro y sin tecnicismos innecesarios.
@@ -42,12 +42,15 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
   - «Avisos que se repiten» (`SECCIONES.recurrentes`, `frecTxt`, `proximaVez`).
   - Estadísticas en el Resumen (`pintaEstadisticas`): barras CSS propias (`barrasH`, `.graf-col`), color de datos `--dato` (#1E4F9C claro / #5B8DE6 oscuro, validados) y «Ver como tabla».
   - Secciones con `oculta: true` (`permisos`, `categorias`) no salen en el menú: se editan desde la página «Calculadoras» (`pintaCalculadoras`) y al guardar vuelven a `s.volver`.
+  - Botón flotante `#fab` (móvil): dentro de una sección crea ahí (`abrir()` le pone el texto de `s.nuevo`, «Publicar» en los apartados); fuera de secciones abre `abrirHojaNuevo`. El botón `#b-nuevo` de la cabecera también se ve en el móvil. `body.admin` deja 168 px abajo para que el flotante no tape la última tarjeta.
+  - Secciones con `tarjeta(x)` usan su propia tarjeta en la lista (`itemHTML`). En «Apartados de la web», `tarjetaApartado`: tocarla abre la sección (`data-abrir-ap`) y «Cambiar nombre y ajustes» (`data-ajustes-ap`) abre el editor, que lleva arriba `.aviso-ajustes` con «Abrir y publicar contenido». `contarPublicaciones()` cuenta lo publicado en cada uno.
+  - `cerrarEditor()` espera a que termine el «atrás» del historial antes de seguir: si no, al saltar a otra sección la dirección se quedaba con la anterior.
   - «Apartados de la web» (`SECCIONES.apartados`) crea apartados. Cada uno genera una sección dinámica `ap<id>` (`seccionApartado`, tabla `publicaciones` filtrada por `apartado_id`) que se coloca tras Actas (`construirPaginas`).
 - `config.js`: cliente Supabase, `VERSION_WEB`, `WEB_URL`, `VAPID_PUBLICA`, ayudas (textoHTML, compartir, ICS, lectura «Aa», `urlSegura`).
 - `render.js`: plantillas HTML de tarjetas. `iconos.js`: iconos SVG. `styles.css`: estilos (al final, bloques «Tablón», portada, modales, filtro de fechas, tema oscuro manual).
 - `lectura.js`: aplica letra/contraste/tema antes de pintar + anti-iframe.
 - `sw.js`: service worker (caché network-first, HTML sin caché, push).
-- `cartel.html` + `cartel.js` + `qr.js`: cartel con QR para imprimir.
+- `cartel.html` + `cartel.js` + `qr.js`: cartel con QR para imprimir (usa `icon-512.png` para el logo; `logo.png` es pequeño, 192 px, para la web y el panel).
 - `lib/supabase.js` (supabase-js 2.58.0 UMD) y `lib/jszip.min.js` (3.10.1): **alojados aquí a propósito** (no CDN).
 - `fuentes.css` + `fuentes/`: Atkinson Hyperlegible (texto), Barlow Condensed (títulos) y Barlow (de reserva), alojadas aquí (no Google Fonts, por privacidad).
 - Diseño: colores en `:root` de `styles.css` (asfalto, `--rotulo`, `--ambar-rotulo` `#FFB000`, rojo CCOO `#C4122F`, hueso `#F5F3EE`). El bloque «Diseño Rótulo de línea» está al final de `styles.css`.
@@ -63,6 +66,7 @@ Añadir una línea en `README.md` y entregar zip `SSCCOO-web-vN.zip`.
 2. Commit solo con los archivos modificados en esa versión, con mensaje claro en español (ej.: «v21: adjuntos en Convenio»).
 3. Subir a `main` (es la rama que publica GitHub Pages). **Nunca** `--force` ni reescribir historial. No subir al repo el zip, las copias de seguridad ni los archivos de prueba.
 4. Avisar a la usuaria con el enlace del commit y el tiempo que tarda en verse (GitHub Pages, 1–3 minutos; además el service worker pide recargar).
+   El permiso de GitHub no deja subir etiquetas (da 403): en su lugar, rama `respaldo-vN-1` apuntando al commit publicado (`git push origin <commit>:refs/heads/respaldo-vN-1`).
 5. Si falla (permisos, conflictos), **parar y explicarlo**. Nunca pedir ni aceptar tokens ni contraseñas por el chat: se usa el acceso a GitHub ya configurado.
 
 ## Seguridad (mantenerla)

@@ -131,6 +131,18 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 24: el panel en el móvil hace lo que se espera (Convenio y Apartados de la web)
+- **Convenio (y todas las secciones) en el móvil**: el botón «Nuevo apartado» de arriba estaba escondido en el móvil, y el botón flotante «+ Nuevo» abría una lista con todo («¿Qué quieres crear?»), así que parecía que te llevaba a otro sitio. Ahora el botón de arriba se ve, ancho y grande, y el flotante crea directamente en la sección donde estás («Nuevo apartado», «Publicar», «Nueva acta»…). La lista general solo sale desde el Inicio del panel.
+- **Apartados de la web**: tocar la tarjeta de «Decretos y leyes», «Info laboral» o «Comité de empresa» **abre la sección** para publicar dentro (con «Fotos y documentos»). Cada tarjeta dice cuántas publicaciones tiene. El nombre, el dibujo y la posición se cambian con el botón aparte **«Cambiar nombre y ajustes»**, que avisa arriba: «Aquí solo cambias el nombre y el aspecto…» con el botón **«Abrir y publicar contenido»**.
+- Al crear un apartado de la web nuevo, el panel lleva directamente a su sección para empezar a publicar.
+- El botón flotante ya no tapa la última tarjeta en el móvil.
+- Al cerrar el editor y saltar a otra sección, la dirección de la página ya no se queda con la sección anterior.
+- **Más rápida**: el logo pasa de 353 KB a 27 KB (es lo que más pesaba de toda la web). El cartel usa la versión grande para imprimir.
+- **Modo oscuro**: los enlaces azules se leían mal (contraste 2,1:1); ahora tienen un azul claro (más de 7:1).
+- **Botones de al menos 44 px** para el dedo: flechas y «Hoy» del calendario de la web, botones de Ajustes, «Aa» y «Ver calendario» del panel.
+- Seguridad: los nombres de los apartados pasan por `esc()` en el menú y la cabecera del panel. Quitado código que no se usaba.
+- Cambios: `admin.js`, `admin.css`, `styles.css`, `cartel.html`, `logo.png`.
+
 ## Versión 23: se ven todas las secciones, festivos de España y «Calendario»
 - **Barra de secciones**: con 12 pestañas, en el móvil solo caben 2 o 3 y no se notaba que se puede deslizar (parecía que solo existían, por ejemplo, «Info laboral» y «Comité de empresa»). Ahora sale una **flecha ámbar a cada lado** cuando hay más secciones escondidas por ese lado; al pulsarla, la barra se desliza. También en el ordenador, donde ya no cabía «Nosotros». Si caben todas, no sale ninguna flecha.
 - La pestaña **«Fechas» pasa a llamarse «Calendario»** (también en «Ir a» de la portada).

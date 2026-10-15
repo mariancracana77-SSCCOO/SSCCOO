@@ -32,7 +32,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --tinta: #eceae4; --suave: #a3a9b1; --fondo: #0f1216; --tarjeta: #1a1f25; --linea: #2c333c;
-    --rojo-suave: #3a1219; --azul-suave: #142640; --ambar-suave: #3a2c0c; --verde-suave: #10301f; --morado-suave: #261a38;
+    --rojo-suave: #3a1219; --azul-suave: #142640; --ambar-suave: #3a2c0c; --verde-suave: #10301f; --morado-suave: #261a38; --azul: #8ab4f8;
     --sombra: none;
   }
 }
@@ -159,9 +159,9 @@ h1, h2, h3 { font-family: var(--cond); line-height: 1.1; margin: 0; }
 .cal-cab { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .cal-cab h2 { font-size: 1.7rem; }
 .cal-nav { display: flex; gap: 6px; }
-.btn-ic { border: 1px solid var(--linea); background: var(--tarjeta); border-radius: 10px; padding: 7px; display: grid; place-items: center; cursor: pointer; }
+.btn-ic { border: 1px solid var(--linea); background: var(--tarjeta); border-radius: 10px; padding: 7px; display: grid; place-items: center; cursor: pointer; min-width: 44px; min-height: 44px; }
 .btn-ic:hover { border-color: var(--tinta); }
-.btn-hoy { border: 1px solid var(--linea); background: var(--tarjeta); border-radius: 10px; padding: 6px 12px; cursor: pointer; font-weight: 600; font-size: .9rem; }
+.btn-hoy { border: 1px solid var(--linea); background: var(--tarjeta); border-radius: 10px; padding: 6px 12px; cursor: pointer; font-weight: 600; font-size: .9rem; min-height: 44px; }
 .semana, .dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
 .semana div { text-align: center; font-size: .78rem; font-weight: 600; color: var(--suave); padding: 4px 0; }
 .dia {
@@ -514,7 +514,7 @@ body.publica .pie { padding-bottom: 20px; }
 /* Tema oscuro elegido a mano (botón Aa) */
 :root[data-theme="dark"] {
     --tinta: #eceae4; --suave: #a3a9b1; --fondo: #0f1216; --tarjeta: #1a1f25; --linea: #2c333c;
-    --rojo-suave: #3a1219; --azul-suave: #142640; --ambar-suave: #3a2c0c; --verde-suave: #10301f; --morado-suave: #261a38;
+    --rojo-suave: #3a1219; --azul-suave: #142640; --ambar-suave: #3a2c0c; --verde-suave: #10301f; --morado-suave: #261a38; --azul: #8ab4f8;
     --sombra: none;
   }
 :root[data-theme="dark"] a { color: #7fa8e8; }

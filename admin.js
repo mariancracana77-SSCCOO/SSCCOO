@@ -142,7 +142,8 @@ const SECCIONES = {
 // Apartados nuevos de la web (Comité de empresa, etc.): los crea el admin y cada uno tiene su lista de publicaciones
 const ICONOS_AP = [["grupo", "Personas"], ["carpeta", "Carpeta"], ["camara", "Cámara de fotos"], ["imagen", "Foto"], ["actas", "Hoja"], ["convenio", "Libro"], ["avisos", "Altavoz"], ["calendario", "Calendario"], ["pregunta", "Pregunta"], ["alerta", "Atención"], ["archivo2", "Archivo"]];
 SECCIONES.apartados = {
-  nombre: "Apartados de la web", icono: "carpeta", tabla: "apartados", orden: ["orden", true], uno: "apartado", nuevo: "Nuevo apartado", lista: "aviso", campoColor: "_",
+  nombre: "Apartados de la web", icono: "carpeta", tabla: "apartados", orden: ["orden", true], uno: "apartado de la web", nuevo: "Nuevo apartado de la web", lista: "aviso", campoColor: "_",
+  tarjeta: (x) => tarjetaApartado(x),
   intro: "Secciones nuevas de la web, como «Comité de empresa». Cada una sale como una pestaña y aquí en el panel tiene su propia lista para publicar fotos, documentos y textos.",
   campos: [
     { k: "titulo", l: "Nombre del apartado", t: "text", req: true, ph: "Ej: Comité de empresa", ayuda: "Corto: es lo que sale en la pestaña de la web." },
@@ -283,7 +284,7 @@ const salir = async () => { if (await confirmarSalida()) { await sb.auth.signOut
 // ---------- Navegación ----------
 function pintaNav() {
   const cuenta = (k) => k === "buzon" && BUZON_SIN_LEER ? `<span class="cuenta-menu" aria-label="${BUZON_SIN_LEER} sin leer">${BUZON_SIN_LEER}</span>` : "";
-  const b = (k, extra = "") => `<button data-p="${k}" class="${k === actual ? "activa" : ""} ${extra}">${icono(PAGINAS[k].icono)}${PAGINAS[k].nombre}${cuenta(k)}</button>`;
+  const b = (k, extra = "") => `<button data-p="${k}" class="${k === actual ? "activa" : ""} ${extra}">${icono(esc(PAGINAS[k].icono))}${esc(PAGINAS[k].nombre)}${cuenta(k)}</button>`;
   $("nav-admin").innerHTML =
     Object.keys(PAGINAS).map(k => (["preguntas", "apartados", "buzon"].includes(k) ? `<div class="sep solo-pc"></div>` : "") + b(k, EN_MOVIL.includes(k) ? "" : "solo-pc")).join("") +
     `<button class="solo-movil ${EN_MOVIL.includes(actual) ? "" : "activa"}" id="b-mas">${icono("menu")}Más</button>
@@ -298,7 +299,7 @@ function pintaNav() {
 }
 function abrirMas() {
   $("hoja-mas").innerHTML = Object.keys(PAGINAS).filter(k => !EN_MOVIL.includes(k)).map(k =>
-    `<button data-p="${k}">${icono(PAGINAS[k].icono)}${PAGINAS[k].nombre}${k === "buzon" && BUZON_SIN_LEER ? `<span class="cuenta-menu">${BUZON_SIN_LEER}</span>` : ""}</button>`).join("") +
+    `<button data-p="${k}">${icono(esc(PAGINAS[k].icono))}${esc(PAGINAS[k].nombre)}${k === "buzon" && BUZON_SIN_LEER ? `<span class="cuenta-menu">${BUZON_SIN_LEER}</span>` : ""}</button>`).join("") +
     (INSTALADA_A() ? "" : `<button id="m-instalar">${icono("descargar")}Instalar la app</button>`) +
     `<a href="index.html" target="_blank">${icono("ver")}Ver la web</a><button id="m-salir">${icono("salir")}Salir (${esc(window.MI_EMAIL || "")})</button><p class="fecha-txt" style="text-align:center;margin:6px 0 0">Versión ${VERSION_WEB}</p>`;
   ["velo-mas", "hoja-mas"].forEach(i => $(i).classList.remove("oculto"));
@@ -312,7 +313,15 @@ $("velo-mas").onclick = cerrarMas;
 function abrir(k) {
   actual = k; history.replaceState(null, "", "#" + k); pintaNav(); window.scrollTo(0, 0);
   $("fab").classList.remove("oculto");
-  $("fab").onclick = abrirHojaNuevo; $("fab").setAttribute("aria-label", "Nuevo: elegir qué crear");
+  const sec = SECCIONES[k];
+  if (sec && !sec.oculta) { // dentro de una sección: crea ahí mismo (antes salía la lista de todo y parecía que te llevaba a otro sitio)
+    $("fab").innerHTML = icono("mas") + `<span>${esc(/^ap\d+$/.test(k) ? "Publicar" : k === "recurrentes" ? "Nuevo" : sec.nuevo)}</span>`;
+    $("fab").setAttribute("aria-label", sec.nuevo);
+    $("fab").onclick = () => k === "calendario" ? abrirEditor("calendario", null, { fecha: VISTA_CAL.dia }) : abrirEditor(k);
+  } else {
+    $("fab").innerHTML = icono("mas") + "<span>Nuevo</span>";
+    $("fab").onclick = abrirHojaNuevo; $("fab").setAttribute("aria-label", "Nuevo: elegir qué crear");
+  }
   if (!window.ES_ADMIN) { $("zona").innerHTML = `<div class="panel vacio">${icono("alerta")}Esta cuenta (${esc(window.MI_EMAIL)}) no tiene permiso para publicar. Pide a la Sección Sindical que añada tu email en Ajustes.</div>`; return; }
   if (k === "resumen") pintaResumen();
   else if (k === "buzon") pintaBuzon();
@@ -402,6 +411,7 @@ async function cargarDatos(k) {
   return datos[k];
 }
 function itemHTML(k, x, conSeccion) {
+  if (SECCIONES[k].tarjeta && !conSeccion) return SECCIONES[k].tarjeta(x);
   const s = SECCIONES[k], [pub, act] = s.fechas(x), nAdj = (x.adjuntos || []).length;
   const nl = TABLAS_LEIDAS.includes(s.tabla) ? LECTURAS[s.tabla + ":" + x.id] : 0;
   const chips = [conSeccion ? s.nombre : null, ...s.chips(x), nl ? "Leído " + vecesTxt(nl) : null].filter(Boolean);
@@ -417,6 +427,25 @@ function itemHTML(k, x, conSeccion) {
   </button>`;
 }
 // ---------- Reordenar arrastrando (ratón o dedo) y con el teclado ----------
+// «Apartados de la web»: tocar la tarjeta abre la sección para publicar dentro (que es lo que se espera).
+// El nombre, el dibujo y la posición se cambian con un botón aparte.
+let CUENTA_PUB = {};
+async function contarPublicaciones() {
+  const { data } = await sb.from("publicaciones").select("apartado_id");
+  CUENTA_PUB = {}; (data || []).forEach(p => { CUENTA_PUB[p.apartado_id] = (CUENTA_PUB[p.apartado_id] || 0) + 1; });
+}
+function tarjetaApartado(x) {
+  const n = CUENTA_PUB[x.id] || 0;
+  return `<div class="tarjeta-ap">
+    <button class="item-adm" data-abrir-ap="${x.id}">
+      <span class="ic-ap">${icono(esc(x.icono || "carpeta"))}</span>
+      <span class="txt"><span class="tit">${esc(x.titulo || "Sin nombre")}</span>
+        <span class="extracto">${n ? `${n} ${n === 1 ? "publicación" : "publicaciones"}. ` : "Todavía está vacío. "}Toca para abrir y publicar textos, fotos y documentos.</span>
+        ${x.visible === false ? `<span class="chips"><span class="etq">Oculto en la web</span></span>` : ""}</span>
+      ${icono("der", "chevron")}</button>
+    <button class="btn sec peq ajustes-ap" data-ajustes-ap="${x.id}">${icono("editar", "p")}Cambiar nombre y ajustes</button>
+  </div>`;
+}
 const REORDENABLE = (k) => SECCIONES[k]?.orden?.[0] === "orden";
 // Envuelve cada elemento con un asa para arrastrarlo y botones para subir/bajar
 const filaOrden = (k, x) => `<div class="fila-orden" data-id="${x.id}">
@@ -501,13 +530,15 @@ function abrirHojaNuevo() {
 }
 
 function enlazarItems(cont) {
-  cont.querySelectorAll(".item-adm").forEach(b => b.onclick = () => abrirEditor(b.dataset.k, datos[b.dataset.k].find(x => x.id == b.dataset.id)));
+  cont.querySelectorAll(".item-adm[data-k]").forEach(b => b.onclick = () => abrirEditor(b.dataset.k, datos[b.dataset.k].find(x => x.id == b.dataset.id)));
+  cont.querySelectorAll("[data-abrir-ap]").forEach(b => b.onclick = () => abrir("ap" + b.dataset.abrirAp));
+  cont.querySelectorAll("[data-ajustes-ap]").forEach(b => b.onclick = () => abrirEditor("apartados", datos.apartados.find(x => x.id == b.dataset.ajustesAp)));
 }
 async function pintaSeccion(k) {
   const s = SECCIONES[k];
   if (k === "calendario" && VISTA_CAL.modo === "mes") return pintaCalAdm();
   $("zona").innerHTML = `<div class="sec-cab">
-      <div><h1>${s.nombre}</h1><p id="cuenta">${s.intro}</p></div>
+      <div><h1>${esc(s.nombre)}</h1><p id="cuenta">${esc(s.intro)}</p></div>
       <div class="botones" style="margin:0">${k === "avisos" ? `<button class="btn sec" id="b-recurrentes">${icono("reloj2", "p")}Avisos que se repiten</button>` : ""}<button class="btn btn-nuevo" id="b-nuevo">${icono("mas", "p")}${s.nuevo}</button></div>
     </div>
     ${k === "calendario" ? cambioVistaCal() : ""}
@@ -517,7 +548,7 @@ async function pintaSeccion(k) {
   $("b-nuevo").onclick = () => abrirEditor(k);
   if ($("b-recurrentes")) $("b-recurrentes").onclick = () => abrir("recurrentes");
   enlazarVistaCal();
-  try { await Promise.all([cargarDatos(k), TABLAS_LEIDAS.includes(s.tabla) ? cargarLecturas() : null]); } catch (e) { $("lista").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
+  try { await Promise.all([cargarDatos(k), TABLAS_LEIDAS.includes(s.tabla) ? cargarLecturas() : null, k === "apartados" ? contarPublicaciones() : null]); } catch (e) { $("lista").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
   const ff = FILTRO_ADM[k] ||= {};
   const pinta = () => {
     if (FECHA_DE[k]) pintaFechasAdm(datos[k], k, ff, pinta);
@@ -603,6 +634,8 @@ function abrirEditor(k, orig = null, preset = {}) {
   $("ed-guardar").disabled = false; msg("ed-msg", "");
 
   $("ed-form").innerHTML =
+    (k === "apartados" && orig ? `<div class="aviso-ajustes"><p>Aquí solo cambias el nombre y el aspecto. Para subir documentos y fotos, pulsa «Abrir y publicar contenido».</p>
+      <button class="btn" type="button" id="ed-abrir-ap">${icono("carpeta", "p")}Abrir y publicar contenido</button></div>` : "") +
     (s.ayuda ? `<p class="ayuda" style="margin-top:14px">${s.ayuda}</p>` : "") +
     (k === "avisos" && !orig ? `<div class="desde-plantilla oculto" id="desde-plantilla">${icono("plantilla", "p")}<label for="sel-plantilla">Empezar desde una plantilla</label>
       <select id="sel-plantilla"><option value="">— En blanco —</option></select></div>` : "") +
@@ -614,6 +647,7 @@ function abrirEditor(k, orig = null, preset = {}) {
       return c.si ? `<div data-si="${c.si}">${campoHTML(c, x[c.k] ?? def[c.k] ?? c.def)}</div>` : campoHTML(c, x[c.k] ?? def[c.k] ?? c.def);
     }).join("");
 
+  if ($("ed-abrir-ap")) $("ed-abrir-ap").onclick = async () => { const id = ED.orig.id; await cerrarEditor(); if (!ED) abrir("ap" + id); };
   // archivos
   s.campos.filter(c => c.t === "archivos" || c.t === "archivo").forEach(c => prepararArchivos(c));
   // cambios → vista previa
@@ -704,7 +738,7 @@ async function cerrarEditor(desdeAtras) {
   ED = null; BUZON_A_PREGUNTA = null;
   ["velo-ed", "editor"].forEach(i => $(i).classList.add("oculto"));
   document.body.style.overflow = "";
-  if (!desdeAtras && history.state?.editor) history.back();
+  if (!desdeAtras && history.state?.editor) await new Promise(r => { addEventListener("popstate", r, { once: true }); history.back(); setTimeout(r, 500); });
 }
 $("editor").addEventListener("dragover", (e) => { if (!ED?.añadir || !e.dataTransfer?.types?.includes("Files")) return; e.preventDefault(); $("editor").classList.add("soltando"); });
 $("editor").addEventListener("dragleave", (e) => { if (!e.relatedTarget || !$("editor").contains(e.relatedTarget)) $("editor").classList.remove("soltando"); });
@@ -756,6 +790,10 @@ $("ed-guardar").onclick = async () => {
     const editado = !!ED.orig, k = ED.k;
     quitarBorrador(); ED.sucio = false; await cerrarEditor();
     if (k === "apartados") { await cargarApartados(); pintaNav(); }
+    if (k === "apartados" && !editado && SECCIONES["ap" + guardado.id]) {
+      abrir("ap" + guardado.id);
+      return aviso("Apartado creado. Ahora pulsa «Publicar» para subir textos, fotos y documentos.");
+    }
     abrir(["resumen", "calendario"].includes(actual) ? actual : (s.volver || k));
     if (editado || s.oculta) return aviso(editado ? "Cambios guardados. Ya se ven en la web." : "Guardado. Ya se ve en la web.");
     // Avisar a los móviles y a Telegram
@@ -772,11 +810,9 @@ $("ed-guardar").onclick = async () => {
 };
 $("ed-borrar").onclick = async () => {
   const s = SECCIONES[ED.k], x = ED.orig;
-  let archivosApartado = [];
   if (ED.k === "apartados") {
     const { data: pubs } = await sb.from("publicaciones").select("adjuntos").eq("apartado_id", x.id);
     if ((pubs || []).length && !confirm(`El apartado «${x.titulo}» tiene ${pubs.length} publicación(es). Si lo borras, se borrarán también. Si solo quieres que no se vea, desmarca «Se ve en la web». ¿Borrar todo?`)) return;
-    archivosApartado = (pubs || []).flatMap(p => (p.adjuntos || []).map(a => a.url));
   }
   if (!confirm(`¿Borrar «${(s.tituloDe ? s.tituloDe(x) : x.titulo)}»? Desaparecerá de la web. Si te equivocas, puedes recuperarlo en «Historial».`)) return;
   const { error } = await sb.from(s.tabla).delete().eq("id", x.id);
