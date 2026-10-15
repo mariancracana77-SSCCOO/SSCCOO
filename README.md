@@ -131,6 +131,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 21: archivos en los apartados del convenio
+- **Panel, Convenio → Nuevo apartado**: ahora hay un campo **«Archivos del apartado»** para subir uno o varios archivos (PDF, fotos, Word, Excel, PowerPoint). Se ve el nombre, el tipo y el tamaño de cada uno, y se pueden quitar antes de guardar. Máximo 20 MB por archivo, con aviso claro si se pasa o si el tipo no vale. Usa la misma subida que Documentos y Avisos (`subirArchivo()`, bucket `documentos`).
+- **Web, Convenio**: al abrir un apartado, sus archivos salen debajo de la explicación como enlaces de descarga, con el icono del tipo y el tamaño.
+- La limpieza de «archivos sin usar» (Ajustes) y la copia de seguridad en ZIP ahora tienen en cuenta también los archivos del convenio y de los apartados de la web, para no borrarlos ni dejarlos fuera de la copia.
+- Base de datos: columna nueva `convenio_secciones.adjuntos` (`jsonb`, por defecto `[]`). No se ha tocado ningún dato ni ninguna política de seguridad.
+
 ## Versión 20: dos arreglos
 - **Panel, Calendario**: pulsar «Calendario» no abría el calendario y se quedaba a la vista la página anterior (normalmente Ajustes), así que no se podían editar ni borrar fechas. Había un trozo de código copiado de otra pantalla que usaba una variable que ahí no existe (`k`) y rompía el dibujado. Arreglado en `admin.js` (`pintaCalAdm`). Ya se puede abrir una fecha desde el día y borrarla.
 - **Web, Convenio**: la tarjeta de arriba («Aquí encontrarás el convenio colectivo aplicable y los documentos más importantes») tenía pinta de botón pero era un simple recuadro de texto: al pulsarla no pasaba nada. Ahora es un enlace de verdad a **Documentos**, con flecha y la línea «Ver los documentos del convenio». Cambiado en `index.html`, `app.js` (`pintaConvenio`) y `styles.css`.

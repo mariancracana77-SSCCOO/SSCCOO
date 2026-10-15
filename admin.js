@@ -54,6 +54,7 @@ const SECCIONES = {
       { fila: [{ k: "categoria", l: "Categoría", t: "select", lista: "convenio" }, { k: "articulo", l: "Artículo", t: "text", opc: true, ph: "Ej: Art. 24" }] },
       { k: "resumen", l: "Resumen en una frase", t: "text", opc: true, ph: "Se ve sin abrir el apartado" },
       { k: "contenido", l: "Explicación completa", t: "textarea", formato: true },
+      { k: "adjuntos", l: "Archivos del apartado", t: "archivos", opc: true, ayuda: "El artículo en PDF, una tabla, una foto… Salen para descargar debajo de la explicación." },
       { k: "orden", l: "Posición en la lista", t: "number", ayuda: "1 sale primero, 2 después… Así ordenas los apartados." },
     ],
     previa: (x) => apartadoHTML(x, "", true),
@@ -1052,7 +1053,8 @@ async function limpiarArchivos() {
     const hace90 = new Date(Date.now() - 90 * 86400000).toISOString();
     const usados = await Promise.all([
       sb.from("comunicados").select("adjuntos, pdf_url"), sb.from("actas").select("adjuntos, pdf_url"), sb.from("documentos").select("url"),
-      sb.from("publicaciones").select("adjuntos"), sb.from("historial").select("antes, despues").gte("cuando", hace90),
+      sb.from("publicaciones").select("adjuntos"), sb.from("convenio_secciones").select("adjuntos"),
+      sb.from("historial").select("antes, despues").gte("cuando", hace90),
     ]);
     const err = usados.find(r => r.error); if (err) throw err.error;
     const texto = JSON.stringify(usados.map(r => r.data));
@@ -1498,7 +1500,8 @@ async function hacerCopia(conArchivos) {
       zip.file("datos.json", JSON.stringify(copia, null, 2));
       zip.file("LEEME.txt", "Copia de seguridad de la web de la Sección Sindical CCOO Calsina Carré.\r\n\r\ndatos.json: todos los textos (avisos, actas, convenio, calendario, preguntas, plantillas, ajustes).\r\narchivos/: los PDF, fotos y documentos subidos.\r\n\r\nGuárdala en un sitio seguro. Si algún día hace falta recuperar algo, con este archivo se puede restaurar.");
       const urls = new Map();
-      (copia.tablas.comunicados || []).concat(copia.tablas.actas || []).forEach(x => (x.adjuntos || []).forEach(a => urls.set(a.url, a.nombre)));
+      (copia.tablas.comunicados || []).concat(copia.tablas.actas || [], copia.tablas.convenio_secciones || [], copia.tablas.publicaciones || [])
+        .forEach(x => (x.adjuntos || []).forEach(a => urls.set(a.url, a.nombre)));
       (copia.tablas.documentos || []).forEach(d => d.url && urls.set(d.url, d.nombre_archivo || d.titulo));
       let i = 0, fallos = 0;
       for (const [url, nom] of urls) {

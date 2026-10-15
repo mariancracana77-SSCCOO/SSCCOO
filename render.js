@@ -94,6 +94,7 @@ window.apartadoHTML = (s, qr = "", abierto = false) => `<details class="panel ap
     <h3 data-campo="titulo">${esc(s.titulo || "Sin título")}</h3>${s.resumen ? `<div class="res" data-campo="resumen" data-plano>${esc(s.resumen)}</div>` : ""}</div>
     ${icono("abajo", "flecha")}</summary>
   <div class="contenido"><div data-campo="contenido">${textoHTML(s.contenido, qr)}</div>
+    ${adjuntosHTML(s.adjuntos)}
     <div class="pie-tarjeta" style="margin-top:12px">${s.actualizado ? `<span class="fechas">Actualizado ${haceTxt(s.actualizado)}</span>` : "<span></span>"}<span class="acciones-tarjeta">${botonTraducir()}</span></div></div></details>`;
 
 // ---------- Actas ----------
