@@ -56,9 +56,10 @@ const SECCIONES = {
       { k: "contenido", l: "Explicación completa", t: "textarea", formato: true },
       { k: "adjuntos", l: "Archivos del apartado", t: "archivos", opc: true, ayuda: "El artículo en PDF, una tabla, una foto… Salen para descargar debajo de la explicación." },
       { k: "orden", l: "Posición en la lista", t: "number", ayuda: "1 sale primero, 2 después… Así ordenas los apartados." },
+      { checks: [{ k: "visible", l: "Se ve en la web (desmárcalo para ocultarlo sin borrarlo)", def: true }] },
     ],
     previa: (x) => apartadoHTML(x, "", true),
-    extracto: (x) => x.resumen || x.contenido, chips: (x) => [x.categoria, x.articulo, "Posición " + x.orden], fechas: (x) => [null, x.actualizado],
+    extracto: (x) => x.resumen || x.contenido, chips: (x) => [x.visible === false && "Oculto en la web", x.categoria, x.articulo, "Posición " + x.orden], fechas: (x) => [null, x.actualizado],
   },
   actas: {
     nombre: "Actas", icono: "actas", tabla: "actas", orden: ["fecha", false], uno: "acta", nuevo: "Nueva acta", lista: "acta", campoColor: "tipo", asistente: true,
@@ -430,7 +431,7 @@ function itemHTML(k, x, conSeccion) {
       <span class="tit">${esc((s.tituloDe ? s.tituloDe(x) : x.titulo) || "Sin título")}</span>
       ${s.extracto(x) ? `<span class="extracto">${esc(String(s.extracto(x)).replace(/\*\*/g, ""))}</span>` : ""}
       <span class="chips">${chips.map(c => `<span class="etq">${esc(c)}</span>`).join("")}${nAdj ? `<span class="etq adj">${icono("clip", "p")}${nAdj} archivo${nAdj > 1 ? "s" : ""}</span>` : ""}</span>
-      ${fechasHTML(pub || act, act, x.publicado === false ? "Guardado sin publicar" : undefined)}
+      ${fechasHTML(pub || act, act, x.publicado === false || (k === "convenio" && x.visible === false) ? "Guardado sin publicar" : undefined)}
     </span>
     ${icono("der", "chevron")}
   </button>`;
@@ -805,7 +806,7 @@ $("ed-guardar").onclick = async () => {
       return aviso("Apartado creado. Ahora pulsa «Publicar» para subir textos, fotos y documentos.");
     }
     abrir(["resumen", "calendario"].includes(actual) ? actual : (s.volver || k));
-    if (fila.publicado === false) return aviso(editado ? "Cambios guardados. Está oculto: no se ve en la web." : "Guardado sin publicar: no se ve en la web y no se ha avisado a nadie. Para publicarlo, ábrelo y marca «Se ve en la web».");
+    if (fila.publicado === false || (k === "convenio" && fila.visible === false)) return aviso(editado ? "Cambios guardados. Está oculto: no se ve en la web." : "Guardado sin publicar: no se ve en la web y no se ha avisado a nadie. Para publicarlo, ábrelo y marca «Se ve en la web».");
     if (editado || s.oculta) return aviso(editado ? "Cambios guardados. Ya se ven en la web." : "Guardado. Ya se ve en la web.");
     // Avisar a los móviles y a Telegram
     let res = null;

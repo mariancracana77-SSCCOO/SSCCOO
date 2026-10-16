@@ -131,6 +131,11 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 27: ocultar un apartado del Convenio sin borrarlo
+- En el panel, cada apartado del Convenio tiene la casilla **«Se ve en la web»**. Desmarcándola, el apartado desaparece de la web (lista, filtros, buscador y «Sabías que»), pero se conserva y se puede volver a publicar. En el panel sale «Oculto en la web» y «Guardado sin publicar».
+- Base de datos: columna nueva `convenio_secciones.visible` (`boolean`, por defecto `true`). Se guardó antes una copia del esquema; los 11 apartados siguen visibles y los permisos no han cambiado. Lo oculto lo filtra la web: quien pida los datos directamente al servidor todavía podría leerlo (no es información privada).
+- Cambios: `admin.js`, `app.js`.
+
 ## Versión 26: abre más rápido en el móvil
 - **Caché más inteligente** (`sw.js`): los archivos que llevan número de versión (`?v=26`) ya no se vuelven a pedir a internet cada vez; salen del propio móvil al momento. Cuando hay versión nueva, la página pide otro número y ese sí se descarga, así que las actualizaciones siguen llegando. Sin conexión, la web sigue abriendo con su diseño. Además, una respuesta con error ya no sustituye a la copia buena guardada.
 - **Inicio del panel con menos consultas** (de 25 a 20): las publicaciones de todos los apartados se piden de una vez (antes, una vez por apartado), los apartados no se piden dos veces y lo de las calculadoras ya no se carga ahí.

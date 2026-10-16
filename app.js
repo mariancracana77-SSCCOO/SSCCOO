@@ -521,7 +521,7 @@ async function cargar(idNuevo) {
   // La web enseña solo lo publicado, también si en este móvil está abierta la sesión del panel
   // (el servidor a un administrador le da todo: avisos programados, publicaciones y apartados ocultos)
   const ahoraMs = Date.now();
-  D.avisos = (a.data || []).filter(x => !x.publicar_en || new Date(x.publicar_en).getTime() <= ahoraMs); D.eventos = e.data || []; D.convenio = c.data || []; D.docs = d.data || []; D.actas = ac.data || [];
+  D.avisos = (a.data || []).filter(x => !x.publicar_en || new Date(x.publicar_en).getTime() <= ahoraMs); D.eventos = e.data || []; D.convenio = (c.data || []).filter(x => x.visible !== false); D.docs = d.data || []; D.actas = ac.data || [];
   D.paginas = Object.fromEntries((p.data || []).map(x => [x.slug, x.contenido]));
   D.preguntas = pr.data || []; D.delegados = dl.data || []; D.enlaces = en.data || [];
   D.apartados = (aps.data || []).filter(x => x.visible !== false);
