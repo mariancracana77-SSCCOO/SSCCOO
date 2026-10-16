@@ -377,9 +377,17 @@ async function pintaResumen() {
       $("ir-copia").onclick = () => { abrir("ajustes"); setTimeout(() => $("ajuste-copia")?.scrollIntoView({ behavior: "smooth" }), 400); };
     }
   });
-  await Promise.all(Object.keys(SECCIONES).map(cargarDatos));
-  $("cuentas").innerHTML = Object.entries(SECCIONES).filter(([, s]) => !s.oculta).map(([k, s]) => `<span class="etq">${datos[k].length} ${s.nombre.toLowerCase()}</span>`).join("");
-  const todos = Object.entries(SECCIONES).flatMap(([k, s]) => datos[k].map(x => ({ k, x, f: s.fechas(x)[1] || s.fechas(x)[0] })))
+  // Sin repetir consultas: las publicaciones de todos los apartados en una sola (antes, una por apartado),
+  // los apartados ya están cargados y lo de las calculadoras (secciones ocultas) no sale en el Inicio.
+  const claves = Object.keys(SECCIONES).filter(k => !SECCIONES[k].oculta && !/^ap\d+$/.test(k) && k !== "apartados");
+  const [pubs] = await Promise.all([
+    sb.from("publicaciones").select("*").order("fecha", { ascending: false }).order("id", { ascending: false }),
+    ...claves.map(cargarDatos)]);
+  if (pubs.error) throw pubs.error;
+  APARTADOS.forEach(a => { datos["ap" + a.id] = (pubs.data || []).filter(p => p.apartado_id === a.id); });
+  datos.apartados = [...APARTADOS];
+  $("cuentas").innerHTML = Object.entries(SECCIONES).filter(([, s]) => !s.oculta).map(([k, s]) => `<span class="etq">${(datos[k] || []).length} ${esc(s.nombre.toLowerCase())}</span>`).join("");
+  const todos = Object.entries(SECCIONES).filter(([, s]) => !s.oculta).flatMap(([k, s]) => (datos[k] || []).map(x => ({ k, x, f: s.fechas(x)[1] || s.fechas(x)[0] })))
     .sort((a, b) => new Date(b.f) - new Date(a.f)).slice(0, 6);
   $("ultimos").innerHTML = todos.length ? todos.map(({ k, x }) => itemHTML(k, x, true)).join("") : `<div class="panel vacio">${icono("avisos")}Todavía no has publicado nada.</div>`;
   enlazarItems($("ultimos"));

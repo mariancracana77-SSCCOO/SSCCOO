@@ -131,6 +131,11 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 26: abre más rápido en el móvil
+- **Caché más inteligente** (`sw.js`): los archivos que llevan número de versión (`?v=26`) ya no se vuelven a pedir a internet cada vez; salen del propio móvil al momento. Cuando hay versión nueva, la página pide otro número y ese sí se descarga, así que las actualizaciones siguen llegando. Sin conexión, la web sigue abriendo con su diseño. Además, una respuesta con error ya no sustituye a la copia buena guardada.
+- **Inicio del panel con menos consultas** (de 25 a 20): las publicaciones de todos los apartados se piden de una vez (antes, una vez por apartado), los apartados no se piden dos veces y lo de las calculadoras ya no se carga ahí.
+- Cambios: `sw.js`, `admin.js`.
+
 ## Versión 25: ocultar sin borrar y borrar con más cuidado
 - **Publicaciones de los apartados** (Comité de empresa, Decretos y leyes, Info laboral…): casilla **«Se ve en la web»**. Desmarcándola, la publicación se oculta sin borrarla (y en el panel sale «Oculto en la web» y «Guardado sin publicar»). Si se crea ya oculta, no se avisa a nadie.
 - **Borrar un apartado de la web que tiene publicaciones**: como se borrarían también todas ellas, ahora hay que **escribir BORRAR** para confirmarlo, y el aviso recuerda que, si solo quieres que no se vea, basta con desmarcar «Se ve en la web». Si está vacío, basta con aceptar.

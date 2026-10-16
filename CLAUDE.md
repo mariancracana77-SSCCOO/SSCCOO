@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, GitHub Pages, con `.nojekyll`)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **25**
+- Versión actual: **26**
 
 ## Reglas del proyecto (no negociables)
 - Responder siempre en **español**, claro y sin tecnicismos innecesarios.
@@ -41,6 +41,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
   - Panel en el móvil (Fase 8): botón «+ Nuevo» (`abrirHojaNuevo`, usa `#hoja-mas`); reordenar arrastrando (`filaOrden` + `hacerOrdenable` con pointer events escuchados en `window`, porque mover la fila suelta la captura; teclado con flechas) en secciones con `orden: ["orden", …]`; soltar archivos en todo el editor y pegar (`ED.añadir`); borrador en localStorage `ccoo-borrador-<sección>-<id|nuevo>` (`guardarBorrador` cada 4 s, `ofrecerBorrador` al abrir).
   - «Historial» (`pintaHistorial`, botón que llama a `recuperar_cambio`). Al borrar no se quitan los archivos del almacenamiento (para poder recuperar); se limpian en Ajustes con `limpiarArchivos` (sin usar y con más de 30 días; respeta lo que sale en los últimos 90 días del historial).
   - «Avisos que se repiten» (`SECCIONES.recurrentes`, `frecTxt`, `proximaVez`).
+  - El Resumen carga todas las publicaciones en una consulta y las reparte por apartado (`datos["ap<id>"]`), reutiliza `APARTADOS` y no carga las secciones `oculta`. Las listas se cargan completas a propósito: `abrirEditor` usa `datos[k]` para proponer la posición siguiente.
   - Estadísticas en el Resumen (`pintaEstadisticas`): barras CSS propias (`barrasH`, `.graf-col`), color de datos `--dato` (#1E4F9C claro / #5B8DE6 oscuro, validados) y «Ver como tabla».
   - Secciones con `oculta: true` (`permisos`, `categorias`) no salen en el menú: se editan desde la página «Calculadoras» (`pintaCalculadoras`) y al guardar vuelven a `s.volver`.
   - Botón flotante `#fab` (móvil): dentro de una sección crea ahí (`abrir()` le pone el texto de `s.nuevo`, «Publicar» en los apartados); fuera de secciones abre `abrirHojaNuevo`. El botón `#b-nuevo` de la cabecera también se ve en el móvil. `body.admin` deja 168 px abajo para que el flotante no tape la última tarjeta.
@@ -51,7 +52,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 - `config.js`: cliente Supabase, `VERSION_WEB`, `WEB_URL`, `VAPID_PUBLICA`, ayudas (textoHTML, compartir, ICS, lectura «Aa», `urlSegura`).
 - `render.js`: plantillas HTML de tarjetas. `iconos.js`: iconos SVG. `styles.css`: estilos (al final, bloques «Tablón», portada, modales, filtro de fechas, tema oscuro manual).
 - `lectura.js`: aplica letra/contraste/tema antes de pintar + anti-iframe.
-- `sw.js`: service worker (caché network-first, HTML sin caché, push).
+- `sw.js`: service worker: archivos con `?v=N` primero desde la caché (no cambian nunca); HTML sin caché y el resto primero de la red, con la caché si no hay conexión. Solo guarda respuestas correctas (`r.ok`). Push.
 - `cartel.html` + `cartel.js` + `qr.js`: cartel con QR para imprimir (usa `icon-512.png` para el logo; `logo.png` es pequeño, 192 px, para la web y el panel).
 - `lib/supabase.js` (supabase-js 2.58.0 UMD) y `lib/jszip.min.js` (3.10.1): **alojados aquí a propósito** (no CDN).
 - `fuentes.css` + `fuentes/`: Atkinson Hyperlegible (texto), Barlow Condensed (títulos) y Barlow (de reserva), alojadas aquí (no Google Fonts, por privacidad).

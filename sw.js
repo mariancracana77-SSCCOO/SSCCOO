@@ -1,6 +1,6 @@
 // Service worker: permite instalar la web como app, abrirla sin conexión
 // y recibir notificaciones aunque la app esté cerrada.
-const VERSION = "25"; // súbelo en cada actualización
+const VERSION = "26"; // súbelo en cada actualización
 const CACHE = "ccoo-v" + VERSION;
 const BASE = ["./", "index.html", "logo.png", "icon-192.png", "manifest.json", "fuentes/atkinson-hyperlegible-latin-400-normal.woff2", "fuentes/atkinson-hyperlegible-latin-700-normal.woff2", "fuentes/barlow-condensed-latin-700-normal.woff2", ...["styles.css", "fuentes.css", "lectura.js", "lib/supabase.js", "config.js", "iconos.js", "render.js", "app.js"].map(f => f + "?v=" + VERSION)];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(BASE))); self.skipWaiting(); });
@@ -9,7 +9,16 @@ self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== location.origin) return; // los datos van siempre en directo
   const pagina = e.request.mode === "navigate" || url.pathname.endsWith(".html") || url.pathname.endsWith("/");
-  e.respondWith(fetch(pagina ? new Request(e.request, { cache: "no-store" }) : e.request).then(r => { const c = r.clone(); caches.open(CACHE).then(k => k.put(e.request, c)); return r; })
+  // Solo se guarda lo que ha llegado bien (un error no debe sustituir a la copia buena)
+  const guarda = (r) => { if (r.ok && r.type === "basic") { const c = r.clone(); caches.open(CACHE).then(k => k.put(e.request, c)); } return r; };
+  // Archivos con número de versión (?v=N): no cambian nunca, así que salen del móvil al instante.
+  // Cuando hay versión nueva, la página pide otro ?v= y ese sí se descarga.
+  if (!pagina && url.searchParams.has("v")) {
+    e.respondWith(caches.match(e.request).then(c => c || fetch(e.request).then(guarda)));
+    return;
+  }
+  // Páginas, logo, fuentes…: primero internet (para tener lo último) y, sin conexión, lo guardado
+  e.respondWith(fetch(pagina ? new Request(e.request, { cache: "no-store" }) : e.request).then(guarda)
     .catch(() => caches.match(e.request)));
 });
 
