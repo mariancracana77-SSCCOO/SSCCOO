@@ -131,6 +131,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 29: aviso de privacidad y casillas de consentimiento
+- **Aviso de privacidad** abajo, encima de la barra fija, solo la primera vez: «Esta web usa solo lo necesario para funcionar. Puedes leer cómo tratamos tus datos en Privacidad y en el Aviso legal.», con los dos enlaces y el botón «Entendido». No bloquea nada: se puede navegar con él puesto. Al pulsar «Entendido» no vuelve a salir en ese móvil (si el navegador no deja guardar, vuelve a salir la próxima vez).
+- **Casilla sin marcar** antes de enviar datos: en el **buzón anónimo** de «Dudas» y al **activar los avisos en el móvil** (sale una ventana antes del permiso del navegador). Sin marcarla no se envía nada y el mensaje dice qué falta.
+- No se han cambiado los textos legales (Privacidad, Aviso legal): lo que les falta está en el informe para que lo revise un asesor.
+- Cambios: `index.html`, `app.js`, `styles.css`.
+
 ## Versión 28: restricciones de circulación para camiones (Zona Conductores)
 - En el apartado **Zona Conductores** sale arriba el bloque **«Restricciones de circulación para camiones»**: un aviso («Estos enlaces llevan a páginas oficiales. Antes de salir, comprueba la información en la fuente oficial. Revisado por última vez: …»), una frase de para qué sirve y un botón grande por país que abre la página oficial en una pestaña nueva: España (DGT), Cataluña (Servei Català de Trànsit), Francia (Bison Futé), Alemania (BALM), Italia (Ministerio de Infraestructuras y Transportes), Portugal (Infraestruturas de Portugal) y Rumanía (Policía Rumana). Fuentes comprobadas el 17 de octubre de 2026.
 - La **fecha de revisión** se cambia desde el panel: **Textos → «Restricciones para camiones: fecha de revisión»**. Si se deja vacía, sale el 17 de octubre de 2026. No ha hecho falta tocar Supabase (es un texto más de la tabla `paginas`).

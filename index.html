@@ -12,9 +12,9 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link rel="stylesheet" href="fuentes.css?v=28">
-<script src="lectura.js?v=28"></script>
-<link rel="stylesheet" href="styles.css?v=28">
+<link rel="stylesheet" href="fuentes.css?v=29">
+<script src="lectura.js?v=29"></script>
+<link rel="stylesheet" href="styles.css?v=29">
 </head>
 <body class="publica">
 
@@ -204,6 +204,7 @@
       <textarea id="buzon-texto" maxlength="1000" rows="5" placeholder="Escribe aquí tu pregunta o sugerencia"></textarea>
       <div class="cuenta-car" aria-live="polite"><span id="buzon-cuenta">0</span> de 1000 letras</div>
       <input class="trampa" id="buzon-web" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <label class="check consentimiento"><input type="checkbox" id="buzon-acepto"><span>He leído la <a href="#privacidad">política de privacidad</a> y acepto que traten mis datos para que la Sección Sindical lea mi mensaje y pueda responderlo en «Dudas», sin saber quién lo envía.</span></label>
       <button class="btn" id="buzon-enviar" type="button"><span data-i="correo"></span>Enviar de forma anónima</button>
       <p class="msg" id="buzon-msg" role="status"></p>
       <p class="fecha-txt">Las respuestas que sirvan a todos se publicarán aquí, en las preguntas frecuentes. <a href="#privacidad">Qué se guarda</a>.</p>
@@ -251,12 +252,16 @@
   </footer>
 </main>
 
+<div class="aviso-privacidad oculto" id="aviso-privacidad" role="region" aria-label="Aviso de privacidad">
+  <p>Esta web usa solo lo necesario para funcionar. Puedes leer cómo tratamos tus datos en <a href="#privacidad">Privacidad</a> y en el <a href="#aviso-legal">Aviso legal</a>.</p>
+  <button class="btn" type="button" id="aviso-privacidad-ok">Entendido</button>
+</div>
 <div class="barra-acciones" id="barra-acciones"></div>
 
-<script src="lib/supabase.js?v=28"></script>
-<script src="iconos.js?v=28"></script>
-<script src="config.js?v=28"></script>
-<script src="render.js?v=28"></script>
-<script src="app.js?v=28"></script>
+<script src="lib/supabase.js?v=29"></script>
+<script src="iconos.js?v=29"></script>
+<script src="config.js?v=29"></script>
+<script src="render.js?v=29"></script>
+<script src="app.js?v=29"></script>
 </body>
 </html>

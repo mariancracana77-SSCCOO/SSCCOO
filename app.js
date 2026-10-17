@@ -37,6 +37,26 @@ function irA() {
 
 window.addEventListener("hashchange", irA);
 
+// ---------- Aviso de privacidad (informativo, no bloquea) ----------
+// Sale la primera vez, encima de la barra de abajo. Con «Entendido» no vuelve a salir en este móvil
+// (si el navegador no deja guardar, vuelve a salir la próxima vez que se abra la web).
+(function avisoPrivacidad() {
+  const caja = $("aviso-privacidad"), CLAVE = "ccoo-aviso-privacidad";
+  let visto = false;
+  try { visto = localStorage.getItem(CLAVE) === "1"; } catch (_) {}
+  if (visto || !caja) return;
+  const colocar = () => { const barra = $("barra-acciones"); caja.style.bottom = (barra ? barra.getBoundingClientRect().height : 0) + "px"; document.body.style.setProperty("--alto-aviso", caja.offsetHeight + "px"); };
+  caja.classList.remove("oculto"); document.body.classList.add("con-aviso-priv"); colocar();
+  addEventListener("resize", colocar); setTimeout(colocar, 300);
+  // la barra de abajo se rellena después y cambia de alto con la letra grande: se recoloca sola
+  const obs = "ResizeObserver" in window ? new ResizeObserver(colocar) : null;
+  if (obs) { obs.observe($("barra-acciones")); obs.observe(caja); }
+  $("aviso-privacidad-ok").addEventListener("click", () => {
+    try { localStorage.setItem(CLAVE, "1"); } catch (_) {}
+    caja.classList.add("oculto"); document.body.classList.remove("con-aviso-priv"); removeEventListener("resize", colocar); if (obs) obs.disconnect();
+  });
+})();
+
 // Barra de pestañas: en el móvil caben 2 o 3 de 12 y no se notaba que se puede deslizar.
 // Una flecha a cada lado (y la sombra) solo cuando hay más secciones escondidas por ese lado.
 function flechasPestanas() {
@@ -498,6 +518,7 @@ $("buzon-enviar").onclick = async () => {
   if ($("buzon-web").value) { $("buzon-texto").value = ""; return msg2("buzon-msg", "Enviado. Gracias.", true); } // relleno por un programa automático
   if (texto.length < 5) return msg2("buzon-msg", "Escribe un poco más para que se entienda.");
   if (PARECE_DATO.test(texto)) return msg2("buzon-msg", "Quita el email o el teléfono: el buzón es anónimo.");
+  if (!$("buzon-acepto").checked) { $("buzon-acepto").focus(); return msg2("buzon-msg", "Para enviarlo, marca la casilla de la política de privacidad."); }
   const clave = "ccoo-buzon-" + hoyISO(); let n = 0;
   try { n = +localStorage.getItem(clave) || 0; } catch (_) {}
   if (n >= 3) return msg2("buzon-msg", "Ya has enviado 3 mensajes hoy desde este móvil. Prueba mañana o habla con un delegado.");
@@ -506,7 +527,7 @@ $("buzon-enviar").onclick = async () => {
   b.disabled = false;
   if (error) return msg2("buzon-msg", /[a-záéíóú]/i.test(error.message || "") && !/fetch|network/i.test(error.message) ? error.message : "No se ha podido enviar. Comprueba la conexión y vuelve a intentarlo.");
   try { Object.keys(localStorage).filter(k => k.startsWith("ccoo-buzon-") && k !== clave).forEach(k => localStorage.removeItem(k)); localStorage.setItem(clave, String(n + 1)); } catch (_) {}
-  $("buzon-texto").value = ""; $("buzon-cuenta").textContent = "0";
+  $("buzon-texto").value = ""; $("buzon-cuenta").textContent = "0"; $("buzon-acepto").checked = false;
   msg2("buzon-msg", "Enviado. Gracias. Lo leerá la Sección Sindical.", true);
 };
 
@@ -652,11 +673,37 @@ async function instalar() {
   if (ES_IOS) modal("Instalar en iPhone", `<ol><li>Abre esta página en <b>Safari</b>.</li><li>Pulsa el botón <b>Compartir</b> (el cuadrado con una flecha hacia arriba).</li><li>Elige <b>«Añadir a pantalla de inicio»</b> y pulsa <b>Añadir</b>.</li><li>Abre la app desde el icono nuevo y activa los avisos.</li></ol>`);
   else modal("Instalar la app", `<ol><li>Abre esta página en <b>Chrome</b>.</li><li>Pulsa el menú <b>⋮</b> (arriba a la derecha).</li><li>Elige <b>«Instalar aplicación»</b> o <b>«Añadir a pantalla de inicio»</b>.</li></ol><p class="fecha-txt">No hace falta descargar nada de fuera: es la propia web, sin avisos de seguridad.</p>`);
 }
+// Antes de activar los avisos: casilla de consentimiento (sin marcar). Si la marca y pulsa «Activar avisos»,
+// se pide el permiso del navegador en ese mismo toque (algunos móviles solo lo permiten así) y se devuelve esa promesa.
+function consentimientoAvisos() {
+  return new Promise((resolver) => {
+    const v = document.createElement("div");
+    v.className = "modal-velo";
+    v.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="cons-tit"><h2 id="cons-tit">Activar los avisos en este móvil</h2>
+      <p>Para mandarte los avisos se guarda en el servidor una dirección técnica de este móvil, no tu nombre ni tu teléfono. Puedes quitarlos cuando quieras.</p>
+      <label class="check consentimiento"><input type="checkbox" id="cons-avisos"><span>He leído la <a href="#privacidad">política de privacidad</a> y acepto que traten mis datos para enviarme a este móvil los avisos de la Sección Sindical.</span></label>
+      <p class="msg" id="cons-msg" role="status"></p>
+      <div class="botones"><button class="btn" type="button" data-si>Activar avisos</button><button class="btn sec" type="button" data-no>Ahora no</button></div></div>`;
+    const cerrar = (r) => { v.remove(); resolver(r); };
+    v.onclick = (e) => {
+      if (e.target.closest('a[href="#privacidad"]')) return cerrar(null); // va a leer la política: se cierra y no se activa nada
+      if (e.target === v || e.target.closest("[data-no]")) return cerrar(null);
+      if (e.target.closest("[data-si]")) {
+        if (!v.querySelector("#cons-avisos").checked) { v.querySelector("#cons-avisos").focus(); v.querySelector("#cons-msg").textContent = "Para activar los avisos, marca la casilla de la política de privacidad."; v.querySelector("#cons-msg").className = "msg err"; return; }
+        cerrar(Notification.requestPermission());
+      }
+    };
+    document.body.appendChild(v);
+    v.querySelector("#cons-avisos").focus();
+  });
+}
 const b64aBytes = (b) => { const p = "=".repeat((4 - b.length % 4) % 4), s = atob((b + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from([...s].map(c => c.charCodeAt(0))); };
 async function activarAvisos() {
   if (ES_IOS && !INSTALADA()) return modal("Primero, instala la app", "<p>En iPhone, los avisos solo funcionan si la app está instalada.</p><ol><li>Pulsa <b>Compartir</b> en Safari.</li><li>Elige <b>«Añadir a pantalla de inicio»</b>.</li><li>Abre la app desde el icono y pulsa otra vez <b>Activar avisos</b>.</li></ol>");
   if (!PUSH_OK) return modal("Este navegador no admite avisos", "<p>Prueba a abrir la web con Chrome (Android) o instalarla en el iPhone con Safari.</p>");
-  const perm = await Notification.requestPermission();
+  const pidePermiso = await consentimientoAvisos();
+  if (!pidePermiso) return; // no ha marcado la casilla o ha dicho «Ahora no»: no se guarda nada
+  const perm = await pidePermiso;
   if (perm !== "granted") return modal("Avisos bloqueados", "<p>Has bloqueado los avisos para esta web. Para activarlos, entra en los ajustes del navegador → Configuración de sitios → Notificaciones, y permite esta página.</p>");
   const reg = await navigator.serviceWorker.ready;
   const suscribirse = () => reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64aBytes(VAPID_PUBLICA) });
