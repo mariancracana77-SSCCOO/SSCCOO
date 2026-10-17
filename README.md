@@ -131,6 +131,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 32: restricciones en otro idioma, con el traductor del móvil
+- El traductor de Google por enlace (v31) no funciona con algunas webs oficiales (la alemana, BALM, da «No se puede traducir esta página»). Ahora todos los botones abren la página oficial directamente (siempre al día) y, en las que no están en español, pone «Al abrirla, tu móvil te ofrece traducirla al español». El aviso de arriba explica cómo: en Android «Traducir» o los tres puntos y «Traducir»; en iPhone, «aA» y «Traducir».
+- Cambios: `render.js`, `app.js`, `admin.js`, `styles.css`.
+
 ## Versión 31: restricciones en otros idiomas, traducidas al español
 - En «Zona Conductores», los países cuya página oficial no está en español (Alemania, Italia, Portugal, Rumanía) se abren **traducidos al español por Google**. Es la página oficial en ese momento, así que siempre está al día sin hacer nada. Debajo de cada uno hay un enlace «Ver la página original». El aviso de arriba explica que es una traducción automática.
 - Se decide con el campo «Idioma de la página» del panel: si no pone «español», se abre traducida.

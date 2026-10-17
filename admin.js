@@ -194,7 +194,7 @@ SECCIONES.restricciones = {
     { k: "pais", l: "País o zona", t: "text", req: true, ph: "Ej: Francia" },
     { k: "url", l: "Enlace a la página oficial", t: "url", req: true, ph: "https://…", ayuda: "Pon solo páginas oficiales y gratuitas (gobierno, tráfico, policía)." },
     { k: "fuente", l: "Quién lo publica", t: "text", opc: true, ph: "Ej: Bison Futé (Gobierno de Francia)" },
-    { k: "idioma", l: "Idioma de la página", t: "text", opc: true, ph: "Ej: En francés", ayuda: "Si no pone «español», en la web se abre traducida al español automáticamente (con Google) y debajo sale un enlace a la original. Si la página ya está en español, escribe «En español»." },
+    { k: "idioma", l: "Idioma de la página", t: "text", opc: true, ph: "Ej: En francés", ayuda: "Si no pone «español», en la web se explica cómo traducirla con el móvil al abrirla. Si la página ya está en español, escribe «En español»." },
     { k: "orden", l: "Posición en la lista", t: "number" },
     { checks: [{ k: "visible", l: "Se ve en la web (desmárcalo para ocultarlo sin borrarlo)", def: true }] },
   ],

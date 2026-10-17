@@ -201,17 +201,14 @@ window.delegadoHTML = (d) => {
     </div></div>`;
 };
 // Un país de «Restricciones para camiones» (Zona Conductores). Lo usan la web y la vista previa del panel.
-// Si la página no está en español, el botón la abre traducida por Google (es la página oficial de ese momento,
-// así que siempre está al día) y debajo hay un enlace a la original.
+// Siempre abre la página oficial (siempre al día). Si no está en español, se avisa de que el navegador del móvil
+// la traduce: el traductor de Google por enlace (translate.goog) lo bloquean algunas webs oficiales (BALM, v31).
 window.restrTraducida = (r) => !!String(r.idioma || "").trim() && !/espa[nñ]ol|castellano/i.test(r.idioma);
 window.restriccionHTML = (r) => {
   let dom = ""; try { dom = new URL(r.url).hostname.replace(/^www\./, ""); } catch (_) {}
-  const trad = restrTraducida(r) && /^https?:\/\//i.test(r.url || "");
-  const href = trad ? "https://translate.google.com/translate?sl=auto&tl=es&u=" + encodeURIComponent(r.url) : r.url;
-  const linea = trad ? ["Traducida al español por Google", dom] : [r.idioma, dom];
-  return `<div class="panel restr-item"><a class="enlace-util" href="${esc(urlSegura(href))}" target="_blank" rel="noopener">
-    <span class="ic">${icono(trad ? "idioma" : "lugar", "p")}</span><span class="txt"><b>${esc(r.pais || "País")}</b>${r.fuente ? `<small>${esc(r.fuente)}</small>` : ""}<span class="dom">${linea.filter(Boolean).map(esc).join(" · ")}</span></span>${icono("der", "p")}</a>
-    ${trad ? `<a class="restr-original" href="${esc(urlSegura(r.url))}" target="_blank" rel="noopener">Ver la página original (${esc(String(r.idioma).replace(/^en\s+/i, "en "))})</a>` : ""}</div>`;
+  const trad = restrTraducida(r);
+  return `<a class="panel enlace-util" href="${esc(urlSegura(r.url))}" target="_blank" rel="noopener">
+    <span class="ic">${icono(trad ? "idioma" : "lugar", "p")}</span><span class="txt"><b>${esc(r.pais || "País")}</b>${r.fuente ? `<small>${esc(r.fuente)}</small>` : ""}<span class="dom">${[r.idioma, dom].filter(Boolean).map(esc).join(" · ")}</span>${trad ? `<span class="restr-trad">Al abrirla, tu móvil te ofrece traducirla al español.</span>` : ""}</span>${icono("der", "p")}</a>`;
 };
 window.enlaceHTML = (e) => {
   let dom = ""; try { dom = new URL(e.url).hostname.replace(/^www\./, ""); } catch (_) {}
