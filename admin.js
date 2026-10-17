@@ -1205,13 +1205,14 @@ const TEXTOS = [
   { slug: "contacto", l: "Contacto", ayuda: "Email, teléfono, horario, delegados…" },
   { slug: "aviso_legal", l: "Aviso legal", ayuda: "Quién es el responsable de la web. Enlazado abajo en la web. Conviene que lo revise el servicio jurídico de CCOO." },
   { slug: "privacidad", l: "Privacidad y cookies", ayuda: "Qué datos se tratan y cómo. Si cambias algo de la web (por ejemplo, un formulario), actualízalo." },
+  { slug: "restricciones_revisado", l: "Restricciones para camiones: fecha de revisión", t: "date", ayuda: "Sale en Zona Conductores como «Revisado por última vez». Cámbiala cuando compruebes que los enlaces oficiales siguen bien. Si la dejas vacía, sale el 17 de octubre de 2026." },
 ];
 async function pintaTextos() {
   $("zona").innerHTML = `<div class="sec-cab"><div><h1>Textos</h1><p>Los textos fijos de la web, que cambian poco.</p></div></div><div id="textos"><p class="fecha-txt">Cargando…</p></div>`;
   const { data } = await sb.from("paginas").select("*");
   const p = Object.fromEntries((data || []).map(x => [x.slug, x]));
   $("textos").innerHTML = `<div class="panel tarjeta-ajuste" style="max-width:780px">
-    ${TEXTOS.map(t => `<label for="t-${t.slug}">${t.l}</label><textarea id="t-${t.slug}" style="min-height:100px">${esc(p[t.slug]?.contenido || "")}</textarea>
+    ${TEXTOS.map(t => `<label for="t-${t.slug}">${t.l}</label>${t.t === "date" ? `<input type="date" id="t-${t.slug}" value="${esc(p[t.slug]?.contenido || "")}">` : `<textarea id="t-${t.slug}" style="min-height:100px">${esc(p[t.slug]?.contenido || "")}</textarea>`}
       <p class="ayuda">${t.ayuda ? t.ayuda + " " : ""}${p[t.slug]?.actualizado ? "Cambiado " + haceTxt(p[t.slug].actualizado) + "." : ""}</p>`).join("")}
     ${FORMATO}
     <div class="botones"><button class="btn" id="b-textos">${icono("check", "p")}Guardar textos</button></div>

@@ -131,6 +131,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 28: restricciones de circulación para camiones (Zona Conductores)
+- En el apartado **Zona Conductores** sale arriba el bloque **«Restricciones de circulación para camiones»**: un aviso («Estos enlaces llevan a páginas oficiales. Antes de salir, comprueba la información en la fuente oficial. Revisado por última vez: …»), una frase de para qué sirve y un botón grande por país que abre la página oficial en una pestaña nueva: España (DGT), Cataluña (Servei Català de Trànsit), Francia (Bison Futé), Alemania (BALM), Italia (Ministerio de Infraestructuras y Transportes), Portugal (Infraestruturas de Portugal) y Rumanía (Policía Rumana). Fuentes comprobadas el 17 de octubre de 2026.
+- La **fecha de revisión** se cambia desde el panel: **Textos → «Restricciones para camiones: fecha de revisión»**. Si se deja vacía, sale el 17 de octubre de 2026. No ha hecho falta tocar Supabase (es un texto más de la tabla `paginas`).
+- Arreglado: los contadores ocultos de las pestañas ensanchaban la página por dentro (no se notaba al usarla, pero no era correcto).
+- Cambios: `index.html`, `app.js`, `styles.css`, `admin.js`.
+
 ## Versión 27: ocultar un apartado del Convenio sin borrarlo
 - En el panel, cada apartado del Convenio tiene la casilla **«Se ve en la web»**. Desmarcándola, el apartado desaparece de la web (lista, filtros, buscador y «Sabías que»), pero se conserva y se puede volver a publicar. En el panel sale «Oculto en la web» y «Guardado sin publicar».
 - Base de datos: columna nueva `convenio_secciones.visible` (`boolean`, por defecto `true`). Se guardó antes una copia del esquema; los 11 apartados siguen visibles y los permisos no han cambiado. Lo oculto lo filtra la web: quien pida los datos directamente al servidor todavía podría leerlo (no es información privada).

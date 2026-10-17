@@ -359,11 +359,39 @@ function pintaPestanasApartados() {
   tras.insertAdjacentHTML("afterend", D.apartados.map(a => `<a href="#ap-${esc(a.slug)}" data-v="ap-${esc(a.slug)}" data-ap>${esc(a.titulo)}</a>`).join(""));
   flechasPestanas();
 }
+// ---------- Zona Conductores: restricciones de circulación para camiones ----------
+// Solo fuentes oficiales y gratuitas, comprobadas el 17/10/2026. La fecha de revisión la cambia el admin
+// en el panel (Textos > «Restricciones para camiones: fecha de revisión», slug «restricciones_revisado»).
+const APARTADO_CONDUCTORES = "zona-conductores"; // dirección del apartado (no cambia aunque se renombre)
+const RESTRICCIONES_REVISADO = "2026-10-17";
+const RESTRICCIONES = [
+  { pais: "España", fuente: "DGT (Dirección General de Tráfico)", idioma: "En español", url: "https://www.dgt.es/conoce-el-estado-del-trafico/restricciones-a-la-circulacion/" },
+  { pais: "Cataluña", fuente: "Servei Català de Trànsit (Generalitat de Catalunya)", idioma: "En español", url: "https://transit.gencat.cat/es/informacio-viaria/professionals-transport/mesures-especials/index.html" },
+  { pais: "Francia", fuente: "Bison Futé (Gobierno de Francia): calendario para camiones", idioma: "También en español", url: "https://www.bison-fute.gouv.fr/brochure-poids-lourds,11832.html" },
+  { pais: "Alemania", fuente: "BALM (Oficina Federal de Logística y Movilidad)", idioma: "En alemán", url: "https://www.balm.bund.de/DE/Themen/RechtsentwicklungRechtsvorschriften/Rechtsvorschriften/Strassenverkehrsrecht/LKW-Fahrverbote/LKW-Fahrverbote_node.html" },
+  { pais: "Italia", fuente: "Ministerio de Infraestructuras y Transportes: calendario de cada año", idioma: "En italiano", url: "https://www.mit.gov.it/taxonomy/term/1511" },
+  { pais: "Portugal", fuente: "Infraestruturas de Portugal: camiones en la VCI de Oporto", idioma: "En portugués", url: "https://www.infraestruturasdeportugal.pt/pt-pt/regime-circulacao-VCI-isencao-pagamento-taxas-portagem-CREP" },
+  { pais: "Rumanía", fuente: "Policía Rumana: avisos de tráfico y restricciones para pesados", idioma: "En rumano", url: "https://politiaromana.ro/ro/info-trafic" },
+];
+function restriccionesHTML() {
+  const f = String(D.paginas.restricciones_revisado || "").trim();
+  const revisado = fechaLarga((/^\d{4}-\d{2}-\d{2}$/.test(f) ? f : RESTRICCIONES_REVISADO) + "T12:00:00");
+  const dominio = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (_) { return ""; } };
+  return `<section class="restricciones" aria-labelledby="tit-restr">
+    <h2 class="tit-seccion" id="tit-restr">Restricciones de circulación para camiones</h2>
+    <p class="aviso-oficial">${icono("alerta", "p")}<span>Estos enlaces llevan a páginas oficiales. Antes de salir, comprueba la información en la fuente oficial. Revisado por última vez: ${esc(revisado)}.</span></p>
+    <p class="restr-intro">Días y horas en que los camiones no pueden circular en cada país. Ábrelo antes de un viaje para planificar la ruta.</p>
+    <div class="lista-restr">${RESTRICCIONES.map(r => `<a class="panel enlace-util" href="${esc(urlSegura(r.url))}" target="_blank" rel="noopener">
+      <span class="ic">${icono("lugar", "p")}</span><span class="txt"><b>${esc(r.pais)}</b><small>${esc(r.fuente)}</small><span class="dom">${esc(r.idioma)} · ${esc(dominio(r.url))}</span></span>${icono("der", "p")}</a>`).join("")}</div>
+  </section>`;
+}
+
 function pintaApartado() {
   const a = D.apartados.find(x => x.slug === estado.ap);
-  if (!a) { $("ap-titulo").textContent = D.apartados.length || !cargar.listo ? "Cargando…" : "Apartado no encontrado"; $("lista-ap").innerHTML = ""; $("ap-desc").textContent = ""; $("fechas-ap").innerHTML = ""; return; }
+  if (!a) { $("ap-extra").innerHTML = ""; $("ap-titulo").textContent = D.apartados.length || !cargar.listo ? "Cargando…" : "Apartado no encontrado"; $("lista-ap").innerHTML = ""; $("ap-desc").textContent = ""; $("fechas-ap").innerHTML = ""; return; }
   $("ap-titulo").textContent = a.titulo;
   $("ap-desc").textContent = a.descripcion || "";
+  $("ap-extra").innerHTML = a.slug === APARTADO_CONDUCTORES ? restriccionesHTML() : "";
   const todas = D.publicaciones.filter(x => x.apartado_id === a.id);
   pintaFechas("fechas-ap", "ap", todas, x => x.fecha, () => pintaApartado());
   const qr = $("buscar-ap").value.trim(), q = normal(qr);

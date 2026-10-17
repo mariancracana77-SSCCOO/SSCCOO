@@ -619,6 +619,7 @@ html[data-letra] .cab-tablon .pestanas-web a { font-size: 1.12rem; }
 /* Flechas de la barra de pestañas: en cualquier pantalla, pero solo si no caben todas y solo hacia
    donde hay más secciones escondidas (con 12 pestañas ya no caben ni en un portátil). */
 .pestanas-caja { position: relative; max-width: 1100px; margin: 0 auto; }
+.pestanas-web { position: relative; } /* que los textos ocultos de los contadores no se escapen de la barra y ensanchen la página */
 .pestanas-web { padding-right: 40px; }
 .pestanas-web.hay-der { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 64px), transparent calc(100% - 20px)); mask-image: linear-gradient(90deg, #000 calc(100% - 64px), transparent calc(100% - 20px)); }
 .pestanas-web.hay-izq { -webkit-mask-image: linear-gradient(90deg, transparent 20px, #000 64px); mask-image: linear-gradient(90deg, transparent 20px, #000 64px); }
@@ -949,3 +950,13 @@ html { overscroll-behavior-y: contain; } /* el gesto de actualizar lo hace la we
 @keyframes girar { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .tirar, .tirar .icono { transition: none; } .tirar.cargando .icono { animation: none; } }
 .tirar.ver { height: max(44px, calc(var(--tirar, 0px) * .5)); }
+
+/* ===== v28: Zona Conductores, restricciones para camiones ===== */
+.restricciones { margin: 6px 0 22px; }
+.aviso-oficial { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 10px; padding: 12px 14px; border-radius: 12px; background: var(--ambar-suave); border: 1px solid var(--ambar-rotulo); color: var(--tinta); font-weight: 600; }
+.aviso-oficial .icono { flex: none; margin-top: 2px; }
+.restr-intro { margin: 0 0 12px; color: var(--suave); }
+.lista-restr { display: grid; gap: 10px; }
+@media (min-width: 760px) { .lista-restr { grid-template-columns: 1fr 1fr; } }
+.lista-restr .enlace-util { min-height: 64px; }
+.lista-restr .enlace-util b { font-size: 1.12rem; }
