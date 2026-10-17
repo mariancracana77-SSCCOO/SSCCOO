@@ -200,6 +200,12 @@ window.delegadoHTML = (d) => {
         ${d.email ? `<a class="accion" href="mailto:${esc(d.email)}">${icono("correo", "p")}Email</a>` : ""}</div>` : ""}
     </div></div>`;
 };
+// Un país de «Restricciones para camiones» (Zona Conductores). Lo usan la web y la vista previa del panel.
+window.restriccionHTML = (r) => {
+  let dom = ""; try { dom = new URL(r.url).hostname.replace(/^www\./, ""); } catch (_) {}
+  return `<a class="panel enlace-util" href="${esc(urlSegura(r.url))}" target="_blank" rel="noopener">
+    <span class="ic">${icono("lugar", "p")}</span><span class="txt"><b>${esc(r.pais || "País")}</b>${r.fuente ? `<small>${esc(r.fuente)}</small>` : ""}<span class="dom">${[r.idioma, dom].filter(Boolean).map(esc).join(" · ")}</span></span>${icono("der", "p")}</a>`;
+};
 window.enlaceHTML = (e) => {
   let dom = ""; try { dom = new URL(e.url).hostname.replace(/^www\./, ""); } catch (_) {}
   return `<a class="panel enlace-util" href="${esc(urlSegura(e.url))}" target="_blank" rel="noopener">

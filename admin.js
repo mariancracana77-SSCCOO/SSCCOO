@@ -186,9 +186,25 @@ SECCIONES.categorias = {
   extracto: () => "", chips: (x) => [eurosTxt(x.precio_extra) + " la hora", Number(x.precio_extra_festiva) ? eurosTxt(x.precio_extra_festiva) + " en festivo" : null], fechas: (x) => [null, x.actualizado],
 };
 
+// Restricciones para camiones (Zona Conductores de la web). Se editan en la página «Restricciones camiones».
+SECCIONES.restricciones = {
+  nombre: "Restricciones para camiones", icono: "lugar", tabla: "restricciones", orden: ["orden", true], uno: "país", nuevo: "Añadir país", lista: "aviso", campoColor: "_", oculta: true, volver: "camiones",
+  intro: "", tituloDe: (x) => x.pais,
+  campos: [
+    { k: "pais", l: "País o zona", t: "text", req: true, ph: "Ej: Francia" },
+    { k: "url", l: "Enlace a la página oficial", t: "url", req: true, ph: "https://…", ayuda: "Pon solo páginas oficiales y gratuitas (gobierno, tráfico, policía)." },
+    { k: "fuente", l: "Quién lo publica", t: "text", opc: true, ph: "Ej: Bison Futé (Gobierno de Francia)" },
+    { k: "idioma", l: "Idioma de la página", t: "text", opc: true, ph: "Ej: En francés" },
+    { k: "orden", l: "Posición en la lista", t: "number" },
+    { checks: [{ k: "visible", l: "Se ve en la web (desmárcalo para ocultarlo sin borrarlo)", def: true }] },
+  ],
+  previa: (x) => `<div class="lista-restr">${restriccionHTML(x)}</div>`,
+  extracto: (x) => x.fuente, chips: (x) => [x.visible === false && "Oculto en la web", x.idioma, x.url && x.url.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]], fechas: (x) => [null, x.actualizado],
+};
+
 // Una sección del panel por cada apartado
 const seccionApartado = (a) => ({
-  nombre: a.titulo, icono: a.icono || "carpeta", tabla: "publicaciones", filtro: { apartado_id: a.id }, orden: ["fecha", false], uno: "publicación", nuevo: "Publicar en " + a.titulo, lista: "aviso", campoColor: "_",
+  slug: a.slug, nombre: a.titulo, icono: a.icono || "carpeta", tabla: "publicaciones", filtro: { apartado_id: a.id }, orden: ["fecha", false], uno: "publicación", nuevo: "Publicar en " + a.titulo, lista: "aviso", campoColor: "_",
   intro: (a.descripcion ? a.descripcion + " " : "") + "Lo que publiques aquí sale en la web, ordenado por año y mes.",
   campos: [
     { k: "titulo", l: "Título", t: "text", req: true, ph: "Ej: Reunión con la empresa por el parking" },
@@ -214,8 +230,8 @@ function construirPaginas() {
   const base = Object.keys(SECCIONES).filter(k => !/^ap\d+$/.test(k) && k !== "apartados" && !SECCIONES[k].oculta), i = base.indexOf("actas") + 1;
   base.splice(base.indexOf("convenio") + 1, 0, "calculadoras");
   if (base.includes("recurrentes")) { base.splice(base.indexOf("recurrentes"), 1); base.splice(base.indexOf("plantillas") + 1, 0, "recurrentes"); }
-  const orden = [...base.slice(0, i), ...APARTADOS.map(a => "ap" + a.id), ...base.slice(i), "apartados"];
-  PAGINAS = { resumen: { nombre: "Inicio", icono: "resumen" }, ...Object.fromEntries(orden.map(k => [k, k === "calculadoras" ? { nombre: "Calculadoras", icono: "reloj" } : { nombre: SECCIONES[k].nombre, icono: SECCIONES[k].icono }])),
+  const orden = [...base.slice(0, i), ...APARTADOS.map(a => "ap" + a.id), ...base.slice(i), "apartados", "camiones"];
+  PAGINAS = { resumen: { nombre: "Inicio", icono: "resumen" }, ...Object.fromEntries(orden.map(k => [k, k === "calculadoras" ? { nombre: "Calculadoras", icono: "reloj" } : k === "camiones" ? { nombre: "Restricciones camiones", icono: "lugar" } : { nombre: SECCIONES[k].nombre, icono: SECCIONES[k].icono }])),
     buzon: { nombre: "Buzón anónimo", icono: "correo" }, historial: { nombre: "Historial", icono: "reloj" }, textos: { nombre: "Textos", icono: "texto" }, ajustes: { nombre: "Ajustes", icono: "ajustes" } };
 }
 construirPaginas();
@@ -328,6 +344,7 @@ function abrir(k) {
   if (k === "resumen") pintaResumen();
   else if (k === "buzon") pintaBuzon();
   else if (k === "calculadoras") pintaCalculadoras();
+  else if (k === "camiones") pintaCamiones();
   else if (k === "historial") pintaHistorial();
   else if (k === "textos") pintaTextos();
   else if (k === "ajustes") pintaAjustes();
@@ -549,7 +566,7 @@ async function pintaSeccion(k) {
   if (k === "calendario" && VISTA_CAL.modo === "mes") return pintaCalAdm();
   $("zona").innerHTML = `<div class="sec-cab">
       <div><h1>${esc(s.nombre)}</h1><p id="cuenta">${esc(s.intro)}</p></div>
-      <div class="botones" style="margin:0">${k === "avisos" ? `<button class="btn sec" id="b-recurrentes">${icono("reloj2", "p")}Avisos que se repiten</button>` : ""}<button class="btn btn-nuevo" id="b-nuevo">${icono("mas", "p")}${s.nuevo}</button></div>
+      <div class="botones" style="margin:0">${k === "avisos" ? `<button class="btn sec" id="b-recurrentes">${icono("reloj2", "p")}Avisos que se repiten</button>` : ""}${s.slug === "zona-conductores" ? `<button class="btn sec" id="b-camiones">${icono("lugar", "p")}Restricciones para camiones</button>` : ""}<button class="btn btn-nuevo" id="b-nuevo">${icono("mas", "p")}${s.nuevo}</button></div>
     </div>
     ${k === "calendario" ? cambioVistaCal() : ""}
     <div class="herramientas"><div class="buscador">${icono("buscar", "p")}<input id="buscar" type="search" placeholder="Buscar en ${s.nombre.toLowerCase()} (también fechas: 12/10, octubre…)" aria-label="Buscar"></div></div>
@@ -557,6 +574,7 @@ async function pintaSeccion(k) {
     <div class="lista-adm" id="lista"><p class="fecha-txt">Cargando…</p></div>`;
   $("b-nuevo").onclick = () => abrirEditor(k);
   if ($("b-recurrentes")) $("b-recurrentes").onclick = () => abrir("recurrentes");
+  if ($("b-camiones")) $("b-camiones").onclick = () => abrir("camiones");
   enlazarVistaCal();
   try { await Promise.all([cargarDatos(k), TABLAS_LEIDAS.includes(s.tabla) ? cargarLecturas() : null, k === "apartados" ? contarPublicaciones() : null]); } catch (e) { $("lista").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
   const ff = FILTRO_ADM[k] ||= {};
@@ -767,7 +785,7 @@ $("ed-guardar").onclick = async () => {
     if (c.req && c.t !== "archivo" && c.t !== "archivos" && !fila[c.k]) { cambiarPestana("form"); $("f-" + c.k)?.focus(); return msg("ed-msg", "Falta: " + c.l.toLowerCase() + "."); }
   }
   if (["avisos"].includes(ED.k) && /\[[^\]]{1,30}\]/.test((fila.titulo || "") + (fila.contenido || "")) && !confirm("El aviso todavía tiene partes entre [corchetes] sin rellenar. ¿Publicar igualmente?")) return;
-  if (ED.k === "enlaces" && fila.url && !/^https?:\/\//.test(fila.url)) fila.url = "https://" + fila.url;
+  if (["enlaces", "restricciones"].includes(ED.k) && fila.url && !/^https?:\/\//.test(fila.url)) fila.url = "https://" + fila.url;
   if (s.filtro) Object.assign(fila, s.filtro);
   if (fila.publicado === false && !ED.orig) fila.notificar = false;
   if (ED.k === "apartados") {
@@ -1038,14 +1056,14 @@ SECCIONES.recurrentes = {
 const NOMBRE_TABLA = { comunicados: "el aviso", eventos: "la fecha", convenio_secciones: "el apartado del convenio", actas: "el acta", documentos: "el documento",
   preguntas: "la pregunta frecuente", plantillas: "la plantilla", delegados: "el delegado", enlaces: "el enlace", apartados: "el apartado de la web",
   publicaciones: "la publicación", opciones: "la opción de lista", calc_permisos: "el permiso de la calculadora", calc_categorias: "el precio de horas extra",
-  avisos_recurrentes: "el aviso que se repite", buzon: "el mensaje del buzón", paginas: "el texto", calc_ajustes: "el ajuste de la calculadora", admins: "el administrador" };
+  avisos_recurrentes: "el aviso que se repite", buzon: "el mensaje del buzón", paginas: "el texto", calc_ajustes: "el ajuste de la calculadora", admins: "el administrador", restricciones: "el país de restricciones para camiones" };
 const VERBO = { crear: "creó", cambiar: "cambió", borrar: "borró" };
 const BOTON_DESHACER = { borrar: "Recuperar", cambiar: "Volver a como estaba", crear: "Deshacer (quitarlo)" };
 const CAMPOS_NOMBRE = { titulo: "Título", contenido: "Texto", categoria: "Categoría", urgente: "Urgente", fijado: "Fijado", adjuntos: "Archivos", fecha: "Fecha", hora: "Hora", hora_fin: "Hora de fin",
   lugar: "Lugar", descripcion: "Descripción", tipo: "Tipo", resumen: "Resumen", acuerdos: "Acuerdos", pregunta: "Pregunta", respuesta: "Respuesta", nombre: "Nombre", cargo: "Cargo",
   telefono: "Teléfono", email: "Email", url: "Dirección", orden: "Posición", visible: "Se ve en la web", publicado: "Publicado", publicar_en: "Programado", importante: "Importante",
-  leido: "Leído", archivado: "Archivado", valor: "Valor", dias: "Días", unidad: "Unidad", precio_extra: "Precio hora extra", precio_extra_festiva: "Precio festivo", activo: "Activo" };
-const nombreDe = (r) => r && (r.titulo || r.nombre || r.pregunta || (r.texto && r.texto.slice(0, 60)) || r.slug || r.clave || r.email || r.id);
+  leido: "Leído", archivado: "Archivado", valor: "Valor", dias: "Días", unidad: "Unidad", precio_extra: "Precio hora extra", precio_extra_festiva: "Precio festivo", activo: "Activo", pais: "País", fuente: "Quién lo publica", idioma: "Idioma" };
+const nombreDe = (r) => r && (r.titulo || r.nombre || r.pais || r.pregunta || (r.texto && r.texto.slice(0, 60)) || r.slug || r.clave || r.email || r.id);
 const valorTxt = (v) => v == null || v === "" ? "(vacío)" : Array.isArray(v) ? v.length + (v.length === 1 ? " archivo" : " archivos") : typeof v === "boolean" ? (v ? "Sí" : "No") : String(v).length > 140 ? String(v).slice(0, 139) + "…" : String(v);
 const FILTRO_HIST = { tabla: "", accion: "", max: 60 };
 async function pintaHistorial() {
@@ -1153,6 +1171,31 @@ async function pintaCalculadoras() {
   hacerOrdenable($("lista-permisos"), "permisos"); hacerOrdenable($("lista-categorias"), "categorias");
 }
 
+// ---------- Restricciones para camiones (Zona Conductores) ----------
+async function pintaCamiones() {
+  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Restricciones para camiones</h1><p>Los enlaces oficiales que salen en el apartado «Zona Conductores» de la web: días y horas en que los camiones no pueden circular en cada país.</p></div></div>
+    <section class="panel tarjeta-ajuste"><h2>Fecha de revisión</h2>
+      <label for="rv-fecha">Revisado por última vez</label><input type="date" id="rv-fecha">
+      <p class="ayuda">Sale en la web. Cámbiala cuando compruebes que los enlaces siguen funcionando. Si la dejas vacía, sale el 17 de octubre de 2026.</p>
+      <div class="botones"><button class="btn sec" id="rv-hoy">${icono("calendario", "p")}Poner hoy</button><button class="btn" id="rv-guardar">${icono("check", "p")}Guardar fecha</button></div><p class="msg" id="rv-msg"></p></section>
+    <section class="panel tarjeta-ajuste"><div class="sec-cab" style="margin:0 0 10px"><div><h2>Países</h2><p>Toca un país para cambiarlo, ocultarlo o borrarlo.</p></div><button class="btn" data-nuevo="restricciones">${icono("mas", "p")}Añadir país</button></div><div class="lista-adm" id="lista-restricciones"><p class="fecha-txt">Cargando…</p></div></section>
+    ${SECCIONES[Object.keys(SECCIONES).find(k => SECCIONES[k].slug === "zona-conductores")] ? "" : `<p class="msg err">No hay ningún apartado «Zona Conductores» en la web, así que esta lista no se ve. Créalo en «Apartados de la web».</p>`}`;
+  $("zona").querySelector("[data-nuevo]").onclick = () => abrirEditor("restricciones");
+  $("rv-hoy").onclick = () => { $("rv-fecha").value = hoyISO(); };
+  try {
+    const [pg] = await Promise.all([sb.from("paginas").select("contenido").eq("slug", "restricciones_revisado").maybeSingle(), cargarDatos("restricciones")]);
+    $("rv-fecha").value = /^\d{4}-\d{2}-\d{2}$/.test(pg.data?.contenido || "") ? pg.data.contenido : "";
+  } catch (e) { $("lista-restricciones").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
+  $("rv-guardar").onclick = async () => {
+    const { error } = await sb.from("paginas").upsert({ slug: "restricciones_revisado", contenido: $("rv-fecha").value, actualizado: new Date().toISOString() });
+    msg("rv-msg", error ? "No se ha podido guardar: " + error.message : "Guardado. Ya se ve en la web.", !error);
+  };
+  const l = datos.restricciones;
+  $("lista-restricciones").innerHTML = l.length ? l.map(x => filaOrden("restricciones", x)).join("") : `<div class="panel vacio">${icono("lugar")}No hay ningún país. Pulsa «Añadir país». Sin países, el bloque no sale en la web.</div>`;
+  enlazarItems($("lista-restricciones"));
+  if (l.length > 1) hacerOrdenable($("lista-restricciones"), "restricciones");
+}
+
 // ---------- Buzón anónimo ----------
 let BUZON_SIN_LEER = 0, BUZON_A_PREGUNTA = null, VISTA_BUZON = "nuevos";
 async function contarBuzon() {
@@ -1205,14 +1248,17 @@ const TEXTOS = [
   { slug: "contacto", l: "Contacto", ayuda: "Email, teléfono, horario, delegados…" },
   { slug: "aviso_legal", l: "Aviso legal", ayuda: "Quién es el responsable de la web. Enlazado abajo en la web. Conviene que lo revise el servicio jurídico de CCOO." },
   { slug: "privacidad", l: "Privacidad y cookies", ayuda: "Qué datos se tratan y cómo. Si cambias algo de la web (por ejemplo, un formulario), actualízalo." },
-  { slug: "restricciones_revisado", l: "Restricciones para camiones: fecha de revisión", t: "date", ayuda: "Sale en Zona Conductores como «Revisado por última vez». Cámbiala cuando compruebes que los enlaces oficiales siguen bien. Si la dejas vacía, sale el 17 de octubre de 2026." },
+  { slug: "aviso_privacidad_texto", l: "Aviso de privacidad (la franja de abajo la primera vez)", corto: true, ayuda: "Detrás sale siempre «Puedes leer cómo tratamos tus datos en Privacidad y en el Aviso legal». Si lo dejas vacío, sale: «Esta web usa solo lo necesario para funcionar.»" },
+  { slug: "consentimiento_buzon", l: "Casilla del buzón anónimo", corto: true, ayuda: "Lo que acepta el trabajador al enviar una duda. Las palabras «política de privacidad» salen como enlace. Si lo dejas vacío, sale el texto de siempre." },
+  { slug: "consentimiento_avisos", l: "Casilla al activar los avisos en el móvil", corto: true, ayuda: "Lo que acepta el trabajador al activar los avisos. Las palabras «política de privacidad» salen como enlace. Si lo dejas vacío, sale el texto de siempre." },
 ];
 async function pintaTextos() {
   $("zona").innerHTML = `<div class="sec-cab"><div><h1>Textos</h1><p>Los textos fijos de la web, que cambian poco.</p></div></div><div id="textos"><p class="fecha-txt">Cargando…</p></div>`;
   const { data } = await sb.from("paginas").select("*");
   const p = Object.fromEntries((data || []).map(x => [x.slug, x]));
   $("textos").innerHTML = `<div class="panel tarjeta-ajuste" style="max-width:780px">
-    ${TEXTOS.map(t => `<label for="t-${t.slug}">${t.l}</label>${t.t === "date" ? `<input type="date" id="t-${t.slug}" value="${esc(p[t.slug]?.contenido || "")}">` : `<textarea id="t-${t.slug}" style="min-height:100px">${esc(p[t.slug]?.contenido || "")}</textarea>`}
+    <p class="ayuda">La lista de países y la fecha de las restricciones para camiones se cambian en <a href="#camiones" id="t-ir-camiones">Restricciones camiones</a>.</p>
+    ${TEXTOS.map(t => `<label for="t-${t.slug}">${t.l}</label>${t.t === "date" ? `<input type="date" id="t-${t.slug}" value="${esc(p[t.slug]?.contenido || "")}">` : `<textarea id="t-${t.slug}" style="min-height:${t.corto ? 70 : 100}px" ${t.corto ? 'maxlength="400"' : ""}>${esc(p[t.slug]?.contenido || "")}</textarea>`}
       <p class="ayuda">${t.ayuda ? t.ayuda + " " : ""}${p[t.slug]?.actualizado ? "Cambiado " + haceTxt(p[t.slug].actualizado) + "." : ""}</p>`).join("")}
     ${FORMATO}
     <div class="botones"><button class="btn" id="b-textos">${icono("check", "p")}Guardar textos</button></div>
@@ -1222,6 +1268,7 @@ async function pintaTextos() {
     const { error } = await sb.from("paginas").upsert(filas);
     error ? msg("m-textos", "No se ha podido guardar: " + error.message) : aviso("Textos guardados. Ya se ven en la web.");
   };
+  $("t-ir-camiones").onclick = (e) => { e.preventDefault(); abrir("camiones"); };
 }
 
 // ---------- Ajustes: listas editables y personas que publican ----------
@@ -1520,7 +1567,7 @@ async function prepararPlantillas() {
 }
 
 // ---------- Copia de seguridad y archivo ----------
-const TABLAS_COPIA = ["comunicados", "eventos", "convenio_secciones", "actas", "documentos", "preguntas", "plantillas", "apartados", "publicaciones", "buzon", "avisos_recurrentes", "calc_permisos", "calc_categorias", "calc_ajustes", "paginas", "opciones", "admins"];
+const TABLAS_COPIA = ["comunicados", "eventos", "convenio_secciones", "actas", "documentos", "preguntas", "plantillas", "apartados", "publicaciones", "buzon", "avisos_recurrentes", "calc_permisos", "calc_categorias", "calc_ajustes", "restricciones", "paginas", "opciones", "admins"];
 async function prepararCopiaYArchivo() {
   const { data } = await sb.from("paginas").select("slug, contenido, actualizado").in("slug", ["archivo_meses", "ultima_copia"]);
   const p = Object.fromEntries((data || []).map(x => [x.slug, x]));

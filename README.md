@@ -131,6 +131,13 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 30: todo lo nuevo se cambia desde el panel
+- Página nueva en el panel **«Restricciones camiones»** (en el menú «Más» y con un botón dentro del apartado «Zona Conductores»): añadir, cambiar, ocultar, borrar y reordenar países y enlaces, y cambiar la **fecha de revisión** (con botón «Poner hoy»). Si un enlace se escribe sin `https://`, se añade solo. Si no queda ningún país, el bloque no sale en la web.
+- **Textos** tiene tres campos nuevos: el texto del **aviso de privacidad** y las dos **casillas de consentimiento** (buzón y avisos en el móvil). Vacíos, salen los de siempre. Las palabras «política de privacidad» siempre son un enlace (si no se escriben, se añade al final).
+- Base de datos: tabla nueva `restricciones` (país, quién lo publica, idioma, enlace, posición, se ve). Lectura pública; crear, cambiar y borrar solo administradores. Apunta los cambios en el Historial (se puede recuperar lo borrado) y entra en la copia de seguridad. Se rellenó con los 7 países de la v28. No se ha borrado ni renombrado nada.
+- Si la tabla no se puede leer, la web enseña la lista de la v28 que va dentro del código.
+- Cambios: `index.html`, `app.js`, `admin.js`, `render.js`, `admin.html`, `cartel.html`, `config.js`, `sw.js`.
+
 ## Versión 29: aviso de privacidad y casillas de consentimiento
 - **Aviso de privacidad** abajo, encima de la barra fija, solo la primera vez: «Esta web usa solo lo necesario para funcionar. Puedes leer cómo tratamos tus datos en Privacidad y en el Aviso legal.», con los dos enlaces y el botón «Entendido». No bloquea nada: se puede navegar con él puesto. Al pulsar «Entendido» no vuelve a salir en ese móvil (si el navegador no deja guardar, vuelve a salir la próxima vez).
 - **Casilla sin marcar** antes de enviar datos: en el **buzón anónimo** de «Dudas» y al **activar los avisos en el móvil** (sale una ventana antes del permiso del navegador). Sin marcarla no se envía nada y el mensaje dice qué falta.

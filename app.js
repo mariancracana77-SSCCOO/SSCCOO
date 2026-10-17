@@ -380,11 +380,12 @@ function pintaPestanasApartados() {
   flechasPestanas();
 }
 // ---------- Zona Conductores: restricciones de circulación para camiones ----------
-// Solo fuentes oficiales y gratuitas, comprobadas el 17/10/2026. La fecha de revisión la cambia el admin
-// en el panel (Textos > «Restricciones para camiones: fecha de revisión», slug «restricciones_revisado»).
+// Solo fuentes oficiales y gratuitas, comprobadas el 17/10/2026. La lista sale de la tabla «restricciones»
+// y la fecha de revisión de paginas.restricciones_revisado: las dos se cambian en el panel («Restricciones camiones»).
+// RESTRICCIONES_RESERVA solo se usa si la tabla no se puede leer (por ejemplo, sin conexión y sin caché).
 const APARTADO_CONDUCTORES = "zona-conductores"; // dirección del apartado (no cambia aunque se renombre)
 const RESTRICCIONES_REVISADO = "2026-10-17";
-const RESTRICCIONES = [
+const RESTRICCIONES_RESERVA = [
   { pais: "España", fuente: "DGT (Dirección General de Tráfico)", idioma: "En español", url: "https://www.dgt.es/conoce-el-estado-del-trafico/restricciones-a-la-circulacion/" },
   { pais: "Cataluña", fuente: "Servei Català de Trànsit (Generalitat de Catalunya)", idioma: "En español", url: "https://transit.gencat.cat/es/informacio-viaria/professionals-transport/mesures-especials/index.html" },
   { pais: "Francia", fuente: "Bison Futé (Gobierno de Francia): calendario para camiones", idioma: "También en español", url: "https://www.bison-fute.gouv.fr/brochure-poids-lourds,11832.html" },
@@ -394,15 +395,15 @@ const RESTRICCIONES = [
   { pais: "Rumanía", fuente: "Policía Rumana: avisos de tráfico y restricciones para pesados", idioma: "En rumano", url: "https://politiaromana.ro/ro/info-trafic" },
 ];
 function restriccionesHTML() {
+  const lista = D.restricciones || RESTRICCIONES_RESERVA;
+  if (!lista.length) return "";
   const f = String(D.paginas.restricciones_revisado || "").trim();
   const revisado = fechaLarga((/^\d{4}-\d{2}-\d{2}$/.test(f) ? f : RESTRICCIONES_REVISADO) + "T12:00:00");
-  const dominio = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (_) { return ""; } };
   return `<section class="restricciones" aria-labelledby="tit-restr">
     <h2 class="tit-seccion" id="tit-restr">Restricciones de circulación para camiones</h2>
     <p class="aviso-oficial">${icono("alerta", "p")}<span>Estos enlaces llevan a páginas oficiales. Antes de salir, comprueba la información en la fuente oficial. Revisado por última vez: ${esc(revisado)}.</span></p>
     <p class="restr-intro">Días y horas en que los camiones no pueden circular en cada país. Ábrelo antes de un viaje para planificar la ruta.</p>
-    <div class="lista-restr">${RESTRICCIONES.map(r => `<a class="panel enlace-util" href="${esc(urlSegura(r.url))}" target="_blank" rel="noopener">
-      <span class="ic">${icono("lugar", "p")}</span><span class="txt"><b>${esc(r.pais)}</b><small>${esc(r.fuente)}</small><span class="dom">${esc(r.idioma)} · ${esc(dominio(r.url))}</span></span>${icono("der", "p")}</a>`).join("")}</div>
+    <div class="lista-restr">${lista.map(restriccionHTML).join("")}</div>
   </section>`;
 }
 
@@ -546,7 +547,7 @@ function pintaInfo() {
 // ---------- Carga de datos ----------
 async function cargar(idNuevo) {
   await cargarOpciones();
-  const [a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca] = await Promise.all([
+  const [a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs] = await Promise.all([
     sb.from("comunicados").select("*").order("fecha", { ascending: false }).limit(200),
     sb.from("eventos").select("*").order("fecha"),
     sb.from("convenio_secciones").select("*").order("orden").order("id"),
@@ -561,6 +562,7 @@ async function cargar(idNuevo) {
     sb.from("calc_permisos").select("*").order("orden").order("id"),
     sb.from("calc_categorias").select("*").order("orden").order("id"),
     sb.from("calc_ajustes").select("*"),
+    sb.from("restricciones").select("*").order("orden").order("id"),
   ]);
   if (a.error) {
     document.querySelectorAll("#inicio-rotulo, #lista-avisos").forEach(el =>
@@ -572,9 +574,11 @@ async function cargar(idNuevo) {
   const ahoraMs = Date.now();
   D.avisos = (a.data || []).filter(x => !x.publicar_en || new Date(x.publicar_en).getTime() <= ahoraMs); D.eventos = e.data || []; D.convenio = (c.data || []).filter(x => x.visible !== false); D.docs = d.data || []; D.actas = ac.data || [];
   D.paginas = Object.fromEntries((p.data || []).map(x => [x.slug, x.contenido]));
+  pintaTextosPrivacidad();
   D.preguntas = pr.data || []; D.delegados = dl.data || []; D.enlaces = en.data || [];
   D.apartados = (aps.data || []).filter(x => x.visible !== false);
   D.publicaciones = (pubs.data || []).filter(x => x.publicado !== false && D.apartados.some(ap => ap.id === x.apartado_id)); cargar.listo = true;
+  D.restricciones = rs.error ? null : (rs.data || []).filter(x => x.visible !== false); // null: se usa la lista de reserva
   D.calc = { permisos: cp.data || [], categorias: cc.data || [], ajustes: Object.fromEntries((ca.data || []).map(x => [x.clave, x.valor])) };
   if (!$("calc-zona").contains(document.activeElement)) pintaCalcula(); // no borrar lo que se está escribiendo
   pintaPestanasApartados(); pintaApartado();
@@ -673,6 +677,19 @@ async function instalar() {
   if (ES_IOS) modal("Instalar en iPhone", `<ol><li>Abre esta página en <b>Safari</b>.</li><li>Pulsa el botón <b>Compartir</b> (el cuadrado con una flecha hacia arriba).</li><li>Elige <b>«Añadir a pantalla de inicio»</b> y pulsa <b>Añadir</b>.</li><li>Abre la app desde el icono nuevo y activa los avisos.</li></ol>`);
   else modal("Instalar la app", `<ol><li>Abre esta página en <b>Chrome</b>.</li><li>Pulsa el menú <b>⋮</b> (arriba a la derecha).</li><li>Elige <b>«Instalar aplicación»</b> o <b>«Añadir a pantalla de inicio»</b>.</li></ol><p class="fecha-txt">No hace falta descargar nada de fuera: es la propia web, sin avisos de seguridad.</p>`);
 }
+// Textos del aviso de privacidad y de las casillas: se pueden cambiar en el panel (Textos). Vacíos = estos.
+const TXT_CONSENTIMIENTO = {
+  aviso: "Esta web usa solo lo necesario para funcionar.",
+  buzon: "He leído la política de privacidad y acepto que traten mis datos para que la Sección Sindical lea mi mensaje y pueda responderlo en «Dudas», sin saber quién lo envía.",
+  avisos: "He leído la política de privacidad y acepto que traten mis datos para enviarme a este móvil los avisos de la Sección Sindical.",
+};
+const textoPagina = (slug, def) => String(D.paginas?.[slug] || "").trim() || def;
+// La casilla siempre lleva el enlace a la política: si el texto no la nombra, se añade al final
+const conPolitica = (t) => esc(t).includes("política de privacidad") ? esc(t).replace("política de privacidad", '<a href="#privacidad">política de privacidad</a>') : esc(t) + ' (<a href="#privacidad">política de privacidad</a>)';
+function pintaTextosPrivacidad() {
+  if ($("aviso-privacidad-txt")) $("aviso-privacidad-txt").textContent = textoPagina("aviso_privacidad_texto", TXT_CONSENTIMIENTO.aviso);
+  if ($("buzon-acepto-txt")) $("buzon-acepto-txt").innerHTML = conPolitica(textoPagina("consentimiento_buzon", TXT_CONSENTIMIENTO.buzon));
+}
 // Antes de activar los avisos: casilla de consentimiento (sin marcar). Si la marca y pulsa «Activar avisos»,
 // se pide el permiso del navegador en ese mismo toque (algunos móviles solo lo permiten así) y se devuelve esa promesa.
 function consentimientoAvisos() {
@@ -681,7 +698,7 @@ function consentimientoAvisos() {
     v.className = "modal-velo";
     v.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="cons-tit"><h2 id="cons-tit">Activar los avisos en este móvil</h2>
       <p>Para mandarte los avisos se guarda en el servidor una dirección técnica de este móvil, no tu nombre ni tu teléfono. Puedes quitarlos cuando quieras.</p>
-      <label class="check consentimiento"><input type="checkbox" id="cons-avisos"><span>He leído la <a href="#privacidad">política de privacidad</a> y acepto que traten mis datos para enviarme a este móvil los avisos de la Sección Sindical.</span></label>
+      <label class="check consentimiento"><input type="checkbox" id="cons-avisos"><span>${conPolitica(textoPagina("consentimiento_avisos", TXT_CONSENTIMIENTO.avisos))}</span></label>
       <p class="msg" id="cons-msg" role="status"></p>
       <div class="botones"><button class="btn" type="button" data-si>Activar avisos</button><button class="btn sec" type="button" data-no>Ahora no</button></div></div>`;
     const cerrar = (r) => { v.remove(); resolver(r); };
