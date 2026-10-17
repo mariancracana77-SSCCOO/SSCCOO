@@ -131,6 +131,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 31: restricciones en otros idiomas, traducidas al español
+- En «Zona Conductores», los países cuya página oficial no está en español (Alemania, Italia, Portugal, Rumanía) se abren **traducidos al español por Google**. Es la página oficial en ese momento, así que siempre está al día sin hacer nada. Debajo de cada uno hay un enlace «Ver la página original». El aviso de arriba explica que es una traducción automática.
+- Se decide con el campo «Idioma de la página» del panel: si no pone «español», se abre traducida.
+- Se han vuelto a añadir Alemania, Italia, Portugal y Rumanía (se habían borrado porque salían en otro idioma).
+- Cambios: `render.js`, `app.js`, `admin.js`, `styles.css` (y la versión en los HTML, `config.js` y `sw.js`).
+
 ## Versión 30: todo lo nuevo se cambia desde el panel
 - Página nueva en el panel **«Restricciones camiones»** (en el menú «Más» y con un botón dentro del apartado «Zona Conductores»): añadir, cambiar, ocultar, borrar y reordenar países y enlaces, y cambiar la **fecha de revisión** (con botón «Poner hoy»). Si un enlace se escribe sin `https://`, se añade solo. Si no queda ningún país, el bloque no sale en la web.
 - **Textos** tiene tres campos nuevos: el texto del **aviso de privacidad** y las dos **casillas de consentimiento** (buzón y avisos en el móvil). Vacíos, salen los de siempre. Las palabras «política de privacidad» siempre son un enlace (si no se escriben, se añade al final).

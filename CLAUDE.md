@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, GitHub Pages, con `.nojekyll`)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **30**
+- Versión actual: **31**
 
 ## Reglas del proyecto (no negociables)
 - Responder siempre en **español**, claro y sin tecnicismos innecesarios.
@@ -35,7 +35,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
   - `html, body { overflow-x: clip }`: con `hidden` deja de funcionar la cabecera `sticky`.
   - Barra de pestañas (`.pestanas-caja` > `.pestanas-web`): flechas `.pest-flecha` a cada lado con `flechasPestanas()` (clases `hay-izq`/`hay-der` y máscara), en cualquier ancho, solo si no caben todas. Recalcular al añadir pestañas (`pintaPestanasApartados`).
   - Aviso de privacidad (`#aviso-privacidad`, IIFE `avisoPrivacidad` en `app.js`): informativo y no bloqueante, encima de `#barra-acciones` (se recoloca con ResizeObserver); localStorage `ccoo-aviso-privacidad` en try/catch. Consentimiento con casilla sin marcar: buzón (`#buzon-acepto`) y avisos push (`consentimientoAvisos()`, que pide `Notification.requestPermission()` dentro del mismo toque). Los datos de prueba dan el aviso por visto salvo con `window.__PRUEBA_AVISO`.
-  - Zona Conductores: en el apartado con slug `zona-conductores` (`APARTADO_CONDUCTORES`) se pinta en `#ap-extra` el bloque de restricciones para camiones (`restriccionesHTML`, tarjeta `restriccionHTML` en `render.js`): lista de la tabla `restricciones` (solo `visible`); si la consulta falla, `RESTRICCIONES_RESERVA`; si está vacía, no sale. Solo enlaces oficiales y gratuitos. La fecha de revisión sale de `paginas.restricciones_revisado`; si no hay, `RESTRICCIONES_REVISADO`.
+  - Zona Conductores: en el apartado con slug `zona-conductores` (`APARTADO_CONDUCTORES`) se pinta en `#ap-extra` el bloque de restricciones para camiones (`restriccionesHTML`, tarjeta `restriccionHTML` en `render.js`): lista de la tabla `restricciones` (solo `visible`); si la consulta falla, `RESTRICCIONES_RESERVA`; si está vacía, no sale. Solo enlaces oficiales y gratuitos. Si `idioma` no dice español/castellano (`restrTraducida`), el botón abre la página por `translate.google.com/translate?sl=auto&tl=es&u=…` (siempre al día) y se añade el enlace `.restr-original`. La fecha de revisión sale de `paginas.restricciones_revisado`; si no hay, `RESTRICCIONES_REVISADO`.
   - Textos de privacidad editables (`TXT_CONSENTIMIENTO`, `pintaTextosPrivacidad`, `conPolitica`): `paginas.aviso_privacidad_texto`, `consentimiento_buzon`, `consentimiento_avisos`; vacíos = los de siempre. «política de privacidad» se convierte en enlace (o se añade).
   - Festivos: filas normales de `eventos` con `tipo = "Festivo"` (00:00–23:59). `esFestivo()` los saca de «Lo último», del recuento de novedades y del contador de la pestaña. Al cargarlos en bloque, `notificar = false` y `notificado = true` para no mandar avisos.
 - `admin.html` + `admin.js` + `admin.css`: panel (Resumen con visitas, Calendario mensual, secciones, Textos, Ajustes: canales Telegram/WhatsApp, copia ZIP, archivo, administradores, listas; asistente de actas con Gemini a partir de fotos/archivos).

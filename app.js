@@ -401,7 +401,7 @@ function restriccionesHTML() {
   const revisado = fechaLarga((/^\d{4}-\d{2}-\d{2}$/.test(f) ? f : RESTRICCIONES_REVISADO) + "T12:00:00");
   return `<section class="restricciones" aria-labelledby="tit-restr">
     <h2 class="tit-seccion" id="tit-restr">Restricciones de circulación para camiones</h2>
-    <p class="aviso-oficial">${icono("alerta", "p")}<span>Estos enlaces llevan a páginas oficiales. Antes de salir, comprueba la información en la fuente oficial. Revisado por última vez: ${esc(revisado)}.</span></p>
+    <p class="aviso-oficial">${icono("alerta", "p")}<span>Estos enlaces llevan a páginas oficiales. Antes de salir, comprueba la información en la fuente oficial. Revisado por última vez: ${esc(revisado)}.${lista.some(restrTraducida) ? " Las páginas en otros idiomas se abren traducidas al español por Google: es una traducción automática, si algo no está claro mira la página original." : ""}</span></p>
     <p class="restr-intro">Días y horas en que los camiones no pueden circular en cada país. Ábrelo antes de un viaje para planificar la ruta.</p>
     <div class="lista-restr">${lista.map(restriccionHTML).join("")}</div>
   </section>`;
