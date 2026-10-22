@@ -1337,10 +1337,12 @@ html[data-contraste="alto"] .cita-panel b { color: #ffc233; text-shadow: none; }
 .pest-flecha.sub:hover { color: #fff; filter: brightness(1.15); }
 @keyframes sub-empuja { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
 @media (prefers-reduced-motion: reduce) { .pest-flecha.sub.der { animation: none; } }
-.subpestanas a { flex: none; display: inline-flex; align-items: center; min-height: 38px; padding: 6px 15px; border-radius: 999px; border: 1.5px solid #6b7480; background: rgba(255, 255, 255, .07); color: #fff; text-decoration: none; font-weight: 700; font-size: .92rem; white-space: nowrap; }
+/* v58: los subapartados en el rojo del logo con letra blanca; el que se está viendo, en blanco con letra roja */
+.subpestanas a { flex: none; display: inline-flex; align-items: center; min-height: 38px; padding: 6px 15px; border-radius: 999px; border: 2px solid var(--rojo); background: var(--rojo); color: #fff; text-decoration: none; font-weight: 700; font-size: .92rem; white-space: nowrap; box-shadow: 0 1px 4px rgba(0, 0, 0, .4); }
 .subpestanas a:hover { border-color: #fff; color: #fff; }
-.subpestanas a.activa { background: var(--rojo); border-color: var(--rojo); color: #fff; }
-.subpestanas a .cuenta-pestana { background: #fff; color: var(--rojo); }
+.subpestanas a.activa { background: #fff; border-color: #fff; color: #ab1012; }
+.subpestanas a .cuenta-pestana { background: #fff; color: #ab1012; }
+.pest-flecha.sub { border: 2px solid #fff; }
 .subpestanas a.activa .cuenta-pestana { display: none; }
 html[data-letra] .subpestanas a { font-size: .92rem; }
 
