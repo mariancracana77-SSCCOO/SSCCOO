@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, GitHub Pages, con `.nojekyll`)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **52**
+- Versión actual: **53**
 
 ## Reglas del proyecto (no negociables)
 - **No publicar nada en GitHub sin que la usuaria lo confirme antes** (enseñar lo que cambia y esperar a «publica»).
@@ -68,6 +68,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
   - Contraseña sin email (v51): códigos de rescate (Ajustes, «Si te olvidas de la contraseña», `prepararRescate`; en la pantalla de entrar «Tengo un código de rescate», `#s-rescate`) y «Poner contraseña nueva» a otro administrador (`modalClaveOtro`). Todo pasa por la edge function `cuenta` (verify_jwt desactivado porque `usar_codigo` va sin sesión; las demás acciones comprueban `is_admin()` dentro) y la tabla `codigos_rescate` (solo el sha-256 de email+código; sin políticas). «He olvidado» también abre `#s-olvido` para el código del email (`verifyOtp` tipo recovery; la plantilla «Reset password» de Supabase debe llevar `{{ .Token }}`).
   - Verificación en dos pasos (TOTP de Supabase): `iniciar()` mira `mfa.getAuthenticatorAssuranceLevel()` y, si hace falta, enseña `#s-codigo` antes de `iniciarPanel()`. En Ajustes, `pinta2p()` activa (QR + clave + código) o desactiva. El servidor lo exige: `is_admin()` pide `aal2` a quien tenga un factor verificado. Si alguien pierde el móvil: borrar su factor en Supabase (Authentication > Users > la cuenta > MFA) o por SQL en `auth.mfa_factors`.
   - Corrector de ortografía (`revisarOrtografia`, `difHTML`): al pulsar Guardar, los campos de texto que han cambiado (salvo `NO_CORREGIR`) van a la edge function `corregir`; si propone cambios, modal con «Corregir y guardar / Guardar sin corregir / Volver a editar». Si falla o tarda más de 15 s, se guarda sin más. Textareas e inputs de texto con `spellcheck`.
+  - Revisar la ortografía de todo (v53, página `ortografia`, `pintaOrtografia`, `empiezaOrtografia`, `aplicaOrto`): tandas de hasta 10 campos/6000 letras a `corregir` (claves `c_aa`…), 1,5 s entre tandas, un reintento a los 20 s. Aplica campo a campo solo si el texto en la base sigue igual. Excluye `NO_CORREGIR_TODO` y la tabla `paginas`. Lo revisado se guarda por huella en localStorage `ccoo-revisado`.
   - «Apartados de la web» (`SECCIONES.apartados`) crea apartados. Cada uno genera una sección dinámica `ap<id>` (`seccionApartado`, tabla `publicaciones` filtrada por `apartado_id`) que se coloca tras Actas (`construirPaginas`).
 - `config.js`: cliente Supabase, `VERSION_WEB`, `WEB_URL`, `VAPID_PUBLICA`, ayudas (textoHTML, compartir, ICS, lectura «Aa», `urlSegura`).
 - `render.js`: plantillas HTML de tarjetas. `iconos.js`: iconos SVG. `styles.css`: estilos (al final, bloques «Tablón», portada, modales, filtro de fechas, tema oscuro manual).
