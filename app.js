@@ -204,7 +204,7 @@ function pintaInicio() {
   if ($("ir-ultimo")) $("ir-ultimo").onclick = () => $("lo-ultimo").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
   // Próximas paradas
   $("inicio-paradas").innerHTML = `<h2 class="tit-seccion">Próximas paradas <a href="#calendario">Ver todas</a></h2>` + (prox.length
-    ? `<ol class="ruta"><li class="ruta-hoy"><span class="ruta-camion" aria-hidden="true"><img src="camion.webp" alt="" width="70" height="36"></span>
+    ? `<ol class="ruta"><li class="ruta-hoy"><span class="ruta-aqui" aria-hidden="true"></span>
         <span class="cuando">Estás aquí · ${esc(new Date().toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" }))}</span></li>${prox.slice(0, 3).map(e => `<li class="${e.fecha === hoy ? "hoy" : ""}"><a href="#calendario" data-dia="${e.fecha}">
         <span class="cuando">${esc(cuandoEvento(e))}</span><b>${esc(e.titulo)}</b>${e.lugar ? `<small>${icono("lugar", "p")}${esc(e.lugar)}</small>` : ""}</a></li>`).join("")}</ol>`
     : `<p class="ruta-vacia">No hay fechas próximas.</p>`);
@@ -788,10 +788,14 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) carg
   }, { passive: true });
 })();
 
-// ---------- Volver arriba (en listas largas): el camión sube la pantalla ----------
+// ---------- Volver arriba (en listas largas): botón con un aro que marca lo que se ha bajado ----------
 (function () {
   const b = $("arriba"); if (!b) return;
-  addEventListener("scroll", () => b.classList.toggle("ver", scrollY > innerHeight * 1.5), { passive: true });
+  // El aro se va llenando según lo que se ha bajado
+  addEventListener("scroll", () => {
+    b.classList.toggle("ver", scrollY > innerHeight * 1.5);
+    b.style.setProperty("--prog", Math.min(100, Math.round(scrollY / Math.max(1, document.documentElement.scrollHeight - innerHeight) * 100)));
+  }, { passive: true });
   b.onclick = () => {
     b.classList.add("sube"); setTimeout(() => b.classList.remove("sube", "ver"), 700);
     scrollTo({ top: 0, behavior: QUIETO() ? "auto" : "smooth" });
