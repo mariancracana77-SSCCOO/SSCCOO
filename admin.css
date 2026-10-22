@@ -117,6 +117,8 @@ body.admin { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
   display: flex; gap: 10px; align-items: center; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--tarjeta); border-top: 1px solid var(--linea);
 }
 .ed-pie .msg { flex: 1; margin: 0; font-size: .9rem; min-width: 0; }
+/* En el móvil el mensaje («Revisando la ortografía…», «Guardado») va en su propia línea encima de los botones: al lado se quedaba en una columna de una sílaba por línea. */
+@media (max-width: 700px) { .ed-pie { flex-wrap: wrap; } .ed-pie .msg:not(:empty) { order: -1; flex: 1 1 100%; } }
 .ed-pie .btn { padding: 12px 18px; }
 @media (max-width: 520px) { .ed-pie #ed-borrar span { display: none; } .ed-pie #ed-borrar { padding: 12px; } .ed-pie #ed-cancelar { display: none; } }
 
@@ -510,3 +512,11 @@ body.admin .btn-cab.aa { min-width: 44px; }
 /* v45: en oscuro las categorías llevan fondo rojo del logo: letra blanca encima */
 :root[data-theme="dark"] :is(.sel-color, .ev-mini) { color: #fff; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) :is(.sel-color, .ev-mini) { color: #fff; } }
+
+/* v50: en el móvil con la letra grande (también la del sistema Android) las tarjetas de Ajustes y las listas
+   se salían por la derecha: una columna de rejilla sin minmax(0, …) se ensancha con el contenido más largo. */
+.rejilla-ajustes, .lista-adm { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1100px) { .rejilla-ajustes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.tarjeta-ajuste, .fila-orden { min-width: 0; }
+.tarjeta-ajuste input, .tarjeta-ajuste select, .tarjeta-ajuste textarea { min-width: 0; max-width: 100%; }
+.lista-adm .tit, .lista-adm .extracto, .tarjeta-ajuste b { overflow-wrap: anywhere; }
