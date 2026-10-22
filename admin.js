@@ -302,17 +302,15 @@ async function iniciarPanel() {
   const h = location.hash.slice(1);
   abrir(PAGINAS[h] ? h : "resumen");
 }
-let fallosLogin = 0, esperaHasta = 0;
+// Sin bloqueo por intentos fallidos en el panel (v50: al padre le dejaba esperando y parecía que la cuenta se había bloqueado).
+// Contra quien pruebe contraseñas ya protege Supabase, que frena muchos intentos seguidos desde el mismo sitio.
 $("b-entrar").onclick = async () => {
-  const falta = Math.ceil((esperaHasta - Date.now()) / 1000);
-  if (falta > 0) return msg("m-login", `Demasiados intentos. Espera ${falta} segundos.`);
   msg("m-login", "Entrando…", true);
   const { error } = await sb.auth.signInWithPassword({ email: $("email").value.trim(), password: $("pass").value });
-  if (!error) { fallosLogin = 0; return; }
-  fallosLogin++;
-  if (fallosLogin >= 5) esperaHasta = Date.now() + Math.min(300, 15 * 2 ** (fallosLogin - 5)) * 1000;
+  if (!error) return;
   msg("m-login", /confirm/i.test(error.message) ? "Falta confirmar la cuenta: abre el email que te ha llegado y pulsa el enlace."
-    : /rate|too many/i.test(error.message) ? "Demasiados intentos. Espera unos minutos." : "Email o contraseña incorrectos.");
+    : /rate|too many/i.test(error.message) ? "Muchos intentos seguidos. Espera un par de minutos y vuelve a probar."
+    : "Email o contraseña incorrectos. Si no la recuerdas, pulsa «He olvidado la contraseña» una sola vez.");
 };
 $("pass").onkeydown = (e) => { if (e.key === "Enter") $("b-entrar").click(); };
 // Contraseña segura: 10 caracteres o más, con letras y números, y que no sea de las típicas
@@ -329,14 +327,38 @@ $("b-registro").onclick = async () => {
     : /weak|pwned|leaked/i.test(error.message) ? "Esa contraseña aparece en filtraciones de internet. Elige otra." : error.message);
   msg("m-login", "Cuenta creada. Abre el email de confirmación, pulsa el enlace y luego entra aquí.", true);
 };
+// Supabase solo envía unos pocos emails por hora (gratis): si se pulsa muchas veces, deja de enviarlos un rato.
+// Por eso el botón se queda parado 2 minutos tras enviar y el aviso explica qué hacer.
 $("b-olvido").onclick = async () => {
-  const { error } = await sb.auth.resetPasswordForEmail($("email").value.trim(), { redirectTo: aqui });
-  error ? msg("m-login", error.message) : msg("m-login", "Te hemos enviado un email para cambiar la contraseña.", true);
+  const email = $("email").value.trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return msg("m-login", "Escribe arriba tu email y vuelve a pulsar.");
+  let ultimo = 0; try { ultimo = +localStorage.getItem("ccoo-olvido") || 0; } catch (_) {}
+  const falta = Math.ceil((ultimo + 120000 - Date.now()) / 1000);
+  if (falta > 0) return msg("m-login", `Ya se ha enviado el email hace un momento. Mira en Gmail (también en «Spam» o «Promociones»). Si no llega, vuelve a pulsar dentro de ${falta} segundos.`);
+  msg("m-login", "Enviando…", true);
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: aqui });
+  if (error) return msg("m-login", /rate|429|too many/i.test(error.message + error.status)
+    ? "Se han pedido demasiados emails seguidos y hay que esperar una hora. Si ya te llegó alguno, abre el último que llegó (los anteriores dejan de valer)."
+    : "No se ha podido enviar: " + error.message);
+  try { localStorage.setItem("ccoo-olvido", String(Date.now())); } catch (_) {}
+  msg("m-login", `Email enviado a ${email}. Ábrelo en este mismo móvil, pulsa el enlace y escribe la contraseña nueva. Si no llega en 5 minutos, mira en «Spam». Si pides otro, solo vale el último.`, true);
 };
+// Si el enlace del email ya se usó o ha caducado, Supabase vuelve aquí con el error en la dirección
+(() => {
+  const h = new URLSearchParams(location.hash.slice(1));
+  if (!h.get("error") && !h.get("error_code")) return;
+  history.replaceState(null, "", location.pathname);
+  setTimeout(() => msg("m-login", /expired|invalid/i.test(h.get("error_code") + h.get("error_description"))
+    ? "Ese enlace ya no vale: ha caducado o ya se usó. Pulsa «He olvidado la contraseña» una vez y abre el email nuevo."
+    : "No se ha podido abrir el enlace. Pulsa «He olvidado la contraseña» y prueba con el email nuevo."), 0);
+})();
 $("b-nueva").onclick = async () => {
   const f = fallaPass($("nueva").value); if (f) return msg("m-rec", f);
   const { error } = await sb.auth.updateUser({ password: $("nueva").value });
-  error ? msg("m-rec", error.message) : (msg("m-rec", "Contraseña guardada.", true), setTimeout(() => location.replace(aqui), 1200));
+  if (error) return msg("m-rec", /same|different/i.test(error.message) ? "Es la misma que ya tenías: puedes entrar con ella. Si quieres otra, escribe una distinta."
+    : /weak|pwned|leaked/i.test(error.message) ? "Esa contraseña aparece en filtraciones de internet. Elige otra."
+    : /session|expired|jwt/i.test(error.message) ? "El enlace ha caducado. Vuelve a la pantalla de entrar y pulsa «He olvidado la contraseña» una vez." : "No se ha podido guardar: " + error.message);
+  msg("m-rec", "Contraseña guardada. Ya estás dentro.", true); setTimeout(() => location.replace(aqui), 1200);
 };
 const salir = async () => { if (await confirmarSalida()) { await sb.auth.signOut(); location.replace(aqui); } };
 
@@ -1487,6 +1509,14 @@ async function pintaAjustes() {
       <select id="meses-archivo">${[[1, "1 mes"], [2, "2 meses"], [3, "3 meses"], [6, "6 meses"], [12, "1 año"], [0, "Nunca"]].map(([v, t]) => `<option value="${v}">${t}</option>`).join("")}</select>
       <div class="msg" id="m-archivo"></div>
     </div>
+    <div class="panel tarjeta-ajuste" id="ajuste-clave">
+      <h2>Cambiar mi contraseña</h2>
+      <p class="ayuda">Para tu cuenta (${esc(window.MI_EMAIL || "")}). Al menos 10 caracteres, con letras y números. Apúntala en un sitio seguro.</p>
+      <label for="clave-nueva">Contraseña nueva</label><input id="clave-nueva" type="password" autocomplete="new-password">
+      <label for="clave-repite">Repítela</label><input id="clave-repite" type="password" autocomplete="new-password">
+      <div class="botones"><button class="btn" id="b-clave">Guardar la contraseña nueva</button></div>
+      <div class="msg" id="m-clave"></div>
+    </div>
     <div class="panel tarjeta-ajuste" id="ajuste-2p">
       <h2>Verificación en dos pasos</h2>
       <p class="ayuda">Para entrar en el panel, además de la contraseña se pide un código que cambia cada 30 segundos y sale en una app del móvil. Así, aunque alguien sepa la contraseña, no puede publicar. Es para tu cuenta (${esc(window.MI_EMAIL || "")}).</p>
@@ -1524,7 +1554,7 @@ async function pintaAjustes() {
   });
   document.querySelectorAll("[data-guardar]").forEach(b => b.onclick = () => guardarLista(b.dataset.guardar));
   document.querySelectorAll("[id^=nn-]").forEach(i => i.onkeydown = (e) => { if (e.key === "Enter") document.querySelector(`[data-anadir="${i.id.slice(3)}"]`).click(); });
-  cargarAdmins(); cargarCanales(); prepararCopiaYArchivo();
+  cargarAdmins(); cargarCanales(); prepararCopiaYArchivo(); prepararClave();
   $("b-limpiar").onclick = limpiarArchivos;
 }
 function selColor(v, id) {
@@ -1577,6 +1607,21 @@ async function guardarLista(k) {
     }
     await pintaAjustes(); aviso("Guardado. Ya se ve en la web.");
   } catch (e) { msg("m-" + k, "No se ha podido guardar: " + e.message); }
+}
+// Cambiar la contraseña sin depender del email
+function prepararClave() {
+  $("b-clave").onclick = async () => {
+    const p = $("clave-nueva").value, f = fallaPass(p);
+    if (f) return msg("m-clave", f);
+    if (p !== $("clave-repite").value) return msg("m-clave", "Las dos contraseñas no coinciden.");
+    msg("m-clave", "Guardando…", true);
+    const { error } = await sb.auth.updateUser({ password: p });
+    if (error) return msg("m-clave", /same|different/i.test(error.message) ? "Es la misma que ya tenías. Escribe otra."
+      : /weak|pwned|leaked/i.test(error.message) ? "Esa contraseña aparece en filtraciones de internet. Elige otra."
+      : /reauth|recent/i.test(error.message) ? "Por seguridad, sal del panel, vuelve a entrar y cámbiala en seguida." : "No se ha podido cambiar: " + error.message);
+    $("clave-nueva").value = $("clave-repite").value = "";
+    msg("m-clave", "Contraseña cambiada. La próxima vez entra con la nueva.", true);
+  };
 }
 async function cargarAdmins() {
   const { data, error } = await sb.from("admins").select("email").order("email");
