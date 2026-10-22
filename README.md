@@ -91,6 +91,11 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Próxima cita** (el rótulo de Inicio cuando no hay nada urgente): diseño nuevo de carretera. El título sale en un panel luminoso de autopista (letras blancas de puntos y luces rojas que parpadean en las esquinas) y, debajo, en un poste, dos señales en el rojo del logo: el lugar con los días que faltan (como los kilómetros de una señal) y el día y la hora. Prefiere reuniones y asambleas a los festivos y, si es la misma cita que la cuenta atrás, no se repite.
 - **Animación de entrada**: ahora empieza cuando la página ha cargado (en la app instalada, Android tapaba los primeros segundos con su pantalla y la animación terminaba sin verse) y sale aunque el móvil tenga «quitar animaciones» (lo activa el ahorro de batería). Se sigue saltando tocándola.
 
+## Versión 53: revisar la ortografía de todo
+- Panel: botón **«Revisar la ortografía»** (Inicio y menú Herramientas). Pasa lo publicado por el corrector (Gemini gratis) en tandas pequeñas y enseña cada propuesta marcada: Aplicar, Dejar como está o Abrir. También «Aplicar todos».
+- No cambia nada sin aprobarlo, no pisa un texto que haya cambiado mientras tanto y todo queda en el Historial. No toca textos legales, nombres, lugares, enlaces, emails, teléfonos ni opciones de encuestas.
+- Recuerda lo ya revisado en ese navegador (localStorage `ccoo-revisado`) para no repetirlo.
+
 ## Versión 52: pestañas agrupadas, subapartados y «Mis descansos»
 - **Pestañas agrupadas**: de 15 a 10 (Inicio, Avisos, Calendario, Comité de empresa, Convenio y leyes, Zona Conductores, PRL, Documentos, Nosotros, Afíliate). Lo de dentro sale en una segunda fila (Actas dentro de Comité; Convenio, Calcula, Decretos y leyes e Info laboral dentro de Convenio y leyes; Dudas dentro de Nosotros).
 - **Subapartados**: en el panel, al crear un apartado, «Dónde sale en la web» (pestaña principal o dentro de otro). Menú del panel agrupado igual y buscador de secciones en «Más».

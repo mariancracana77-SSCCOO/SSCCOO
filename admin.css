@@ -575,3 +575,18 @@ body.admin .btn-cab.aa { min-width: 44px; }
 .hoja-buscar { margin: 0 0 6px; position: sticky; top: -10px; z-index: 1; background: var(--tarjeta); padding: 6px 0; }
 .hoja [hidden] { display: none !important; }
 .hoja-buscar + .hoja-sep { display: none; }
+
+/* v53: revisar la ortografía de todo */
+.orto-elegir { display: grid; gap: 10px; margin-bottom: 14px; }
+.orto-secs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr)); gap: 2px 14px; }
+.orto-barra { height: 8px; border-radius: 9px; background: var(--fondo); overflow: hidden; }
+.orto-barra span { display: block; height: 100%; width: 0; background: var(--rojo); transition: width .3s; }
+.orto-prop { display: grid; gap: 10px; min-width: 0; }
+.orto-prop.hecho { opacity: .7; }
+.orto-cab { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; min-width: 0; }
+.orto-cab b { overflow-wrap: anywhere; }
+.orto-cab small { color: var(--suave); }
+.orto-prop .corr-dif { overflow-wrap: anywhere; white-space: pre-wrap; }
+#orto-todos { margin: 0 0 12px; }
+.orto-que summary { cursor: pointer; font-weight: 700; padding: 4px 0; }
+.orto-que[open] summary { margin-bottom: 8px; }
