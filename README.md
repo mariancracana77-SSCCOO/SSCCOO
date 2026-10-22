@@ -131,6 +131,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 39: logo más nítido
+- El logo sale ahora de una imagen original más nítida que pasó la usuaria (mismo dibujo): se recorta el círculo, se quita el fondo, se limpian los blancos y se afina. Se rehacen todos los iconos, la tarjeta al compartir y las capturas.
+
 ## Versión 38: vuelve el logo de siempre, más nítido
 - Se recupera el logo original (el de la v36 y anteriores), sin cambiar el dibujo: solo más nítido, con los blancos limpios y sin el fondo grisáceo de alrededor (ahora es transparente fuera del círculo). Se quita `logo.svg`.
 - Se mantienen los iconos para Android (sobre fondo oscuro), iPhone y pestaña del navegador, la pantalla de carga oscura, la tarjeta al compartir y las capturas, todo con este logo.
