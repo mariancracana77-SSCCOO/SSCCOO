@@ -1484,3 +1484,8 @@ html[data-letra] .subpestanas a { font-size: .92rem; }
 [data-bloque][hidden], #desc-conduccion[hidden] { display: none !important; }
 .desc-perso .check { display: flex; align-items: center; gap: 10px; font-weight: 400; font-size: 1rem; margin: 0; }
 .desc-perso .check input { margin: 0; flex: none; min-height: 0; width: 20px; height: 20px; }
+/* v61: «Leer más» en los textos largos */
+.recortado { max-height: 11.5em; overflow: hidden; -webkit-mask-image: linear-gradient(#000 calc(100% - 3.2em), transparent); mask-image: linear-gradient(#000 calc(100% - 3.2em), transparent); }
+.leer-mas { display: inline-flex; align-items: center; gap: 6px; margin: 6px 0 2px; padding: 8px 14px; min-height: 40px; border-radius: 99px; border: 1.5px solid var(--rojo); background: transparent; color: var(--rojo-ic); font: inherit; font-weight: 700; cursor: pointer; }
+.leer-mas:hover { background: var(--rojo); color: #fff; }
+@media print { .recortado { max-height: none; -webkit-mask-image: none; mask-image: none; } .leer-mas { display: none; } }
