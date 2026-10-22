@@ -25,9 +25,9 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="fuentes.css?v=41">
-<script src="lectura.js?v=41"></script>
-<link rel="stylesheet" href="styles.css?v=41">
+<link rel="stylesheet" href="fuentes.css?v=42">
+<script src="lectura.js?v=42"></script>
+<link rel="stylesheet" href="styles.css?v=42">
 </head>
 <body class="publica">
 
@@ -80,7 +80,7 @@
 
 <header class="cab-tablon">
   <div class="cab-fila">
-    <img src="logo.png" alt="Logo de la Sección Sindical CCOO Calsina Carré">
+    <img class="cab-logo" id="cab-logo" src="logo.png" alt="Logo de la Sección Sindical CCOO Calsina Carré">
     <div class="cab-titulo">
       <span class="nombre">CCOO Calsina Carré</span>
       <span class="sub">Sección Sindical</span>
@@ -107,7 +107,8 @@
   <button class="pest-flecha der" type="button" aria-label="Ver más secciones" hidden><span data-i="der"></span></button>
   </div>
   <div class="banda-novedad oculto" id="banda-novedad" role="status" aria-live="polite"></div>
-  <div class="tirar" id="tirar" aria-live="polite"><span class="tirar-ic" data-i="abajo"></span><span class="txt"></span></div>
+  <div class="sin-red oculto" id="sin-red" role="status" aria-live="polite"><span class="sr-camion" aria-hidden="true"><img src="camion.webp" alt="" width="70" height="36"><i></i></span><span class="txt"></span></div>
+  <div class="tirar" id="tirar" aria-live="polite"><span class="tirar-camion" aria-hidden="true"><img src="camion.webp" alt="" width="70" height="36"><i></i></span><span class="txt"></span></div>
 </header>
 
 <div class="toast" id="toast" role="status"></div>
@@ -118,7 +119,7 @@
   <section class="vista" id="v-inicio">
     <h1 class="sr-only">Tablón: lo último de la Sección Sindical</h1>
     <div class="portada">
-      <div class="zona-rotulo"><div id="inicio-rotulo"><div class="esq esq-rotulo" aria-hidden="true"></div><span class="sr-only">Cargando…</span></div><div id="cuenta-atras"></div><div id="inicio-novedades"></div></div>
+      <div class="zona-rotulo"><div id="inicio-rotulo"><div class="esq esq-rotulo" aria-hidden="true"></div><span class="sr-only">Cargando…</span></div><div id="cuenta-atras"></div><div id="inicio-novedades"></div><a class="buscar-portada" href="#buscar"><span data-i="buscar"></span><span>Buscar avisos, actas, documentos…</span></a><div id="inicio-encuesta"></div></div>
       <aside class="portada-lateral" aria-label="Próximas fechas y accesos">
         <section class="paradas" id="inicio-paradas"><div class="esq esq-titulo" aria-hidden="true"></div><div class="esq esq-linea" aria-hidden="true"></div><div class="esq esq-linea" aria-hidden="true"></div></section>
         <section class="sabias" id="sabias-que"></section>
@@ -317,11 +318,12 @@
   <button class="btn" type="button" id="aviso-privacidad-ok">Entendido</button>
 </div>
 <div class="barra-acciones" id="barra-acciones"></div>
+<button class="arriba-btn" id="arriba" type="button" aria-label="Volver arriba" title="Volver arriba"><svg class="arriba-aro" viewBox="0 0 52 52" aria-hidden="true"><circle class="aro-fondo" cx="26" cy="26" r="23"/><circle class="aro-prog" cx="26" cy="26" r="23" pathLength="100"/></svg><span data-i="arriba"></span></button>
 
-<script src="lib/supabase.js?v=41"></script>
-<script src="iconos.js?v=41"></script>
-<script src="config.js?v=41"></script>
-<script src="render.js?v=41"></script>
-<script src="app.js?v=41"></script>
+<script src="lib/supabase.js?v=42"></script>
+<script src="iconos.js?v=42"></script>
+<script src="config.js?v=42"></script>
+<script src="render.js?v=42"></script>
+<script src="app.js?v=42"></script>
 </body>
 </html>

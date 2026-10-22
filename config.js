@@ -3,7 +3,7 @@
 window.SUPABASE_URL = "https://kdfedwcskymaitvpryvg.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_RLt0HuAMskXkKl2hxhUF2w_sCexGznp";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "41"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "42"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/SSCCOO/";
 // Clave pública de las notificaciones (la privada solo está en el servidor)
 window.VAPID_PUBLICA = "BMMdZjehtNipsScHJ__kzOIn9XCgIpya3UDDRlexxOAWJU-J6ZICDlf72ItPOebzl-SfzoU234pd82Chp87Vm1w";
@@ -85,9 +85,12 @@ window.descargarICS = (e) => {
   let ini, fin;
   if (e.hora && !window.esTodoElDia?.(e)) { ini = `DTSTART;TZID=Europe/Madrid:${d}T${hm(e.hora)}`; fin = `DTEND;TZID=Europe/Madrid:${d}T${hm(e.hora_fin || (String(+e.hora.slice(0, 2) + 1).padStart(2, "0") + e.hora.slice(2)))}`; }
   else { const sig = new Date(fechaDia(e.fecha).getTime() + 86400000); ini = `DTSTART;VALUE=DATE:${d}`; fin = `DTEND;VALUE=DATE:${sig.getFullYear()}${String(sig.getMonth() + 1).padStart(2, "0")}${String(sig.getDate()).padStart(2, "0")}`; }
+  // Avisos del calendario del móvil: el día antes y 2 horas antes (si es de todo el día, la tarde anterior a las 18:00)
+  const alarma = (t, txt) => ["BEGIN:VALARM", "TRIGGER:" + t, "ACTION:DISPLAY", "DESCRIPTION:" + escI(txt), "END:VALARM"];
+  const alarmas = ini.includes("VALUE=DATE") ? alarma("-PT6H", "Mañana: " + e.titulo) : [...alarma("-P1D", "Mañana: " + e.titulo), ...alarma("-PT2H", e.titulo)];
   const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//CCOO Calsina Carre//ES", "BEGIN:VEVENT", `UID:evento-${e.id || d}@ccoo-calsina`, `DTSTAMP:${ahora}`, ini, fin,
     `SUMMARY:${escI(e.titulo)}`, e.lugar ? `LOCATION:${escI(e.lugar)}` : "", `DESCRIPTION:${escI((e.descripcion || "") + "\nSección Sindical CCOO Calsina Carré")}`,
-    "BEGIN:VALARM", "TRIGGER:-PT2H", "ACTION:DISPLAY", `DESCRIPTION:${escI(e.titulo)}`, "END:VALARM", "END:VEVENT", "END:VCALENDAR"].filter(Boolean).join("\r\n");
+    ...alarmas, "END:VEVENT", "END:VCALENDAR"].filter(Boolean).join("\r\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" }));
   a.download = (e.titulo || "evento").replace(/[^\wáéíóúñ ]+/gi, "").slice(0, 40) + ".ics";
@@ -119,7 +122,13 @@ window.abrirLectura = () => {
     <div class="botones"><button class="btn" data-cerrar>Listo</button></div></div>`;
   v.onclick = (e) => {
     const b = e.target.closest("[data-g]");
-    if (b) { L[b.dataset.g] = b.dataset.v; try { localStorage.setItem("ccoo-lectura", JSON.stringify(L)); } catch (_) {} aplicarLectura();
+    if (b) { L[b.dataset.g] = b.dataset.v; try { localStorage.setItem("ccoo-lectura", JSON.stringify(L)); } catch (_) {}
+      // Al cambiar los colores, el nuevo se extiende en círculo desde el botón (si el navegador lo permite y no se ha pedido reducir movimiento)
+      if (b.dataset.g === "tema" && document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        const r = b.getBoundingClientRect(), h = document.documentElement;
+        h.style.setProperty("--vt-x", (r.left + r.width / 2) + "px"); h.style.setProperty("--vt-y", (r.top + r.height / 2) + "px");
+        document.startViewTransition(() => aplicarLectura());
+      } else aplicarLectura();
       v.querySelectorAll(`[data-g="${b.dataset.g}"]`).forEach(x => x.classList.toggle("activa", x === b)); return; }
     if (e.target === v || e.target.closest("[data-cerrar]")) v.remove();
   };

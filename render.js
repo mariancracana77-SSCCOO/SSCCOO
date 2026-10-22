@@ -91,7 +91,7 @@ window.eventoHTML = (e, conCartel) => `<div class="evento">
     </div>
     ${e.descripcion ? `<div>${textoHTML(e.descripcion)}</div>` : ""}
     <div class="acciones-tarjeta acciones-evento">
-      <button class="accion" data-ics="${e.id}">${icono("calendario", "p")}Añadir a mi calendario</button>
+      <button class="accion" data-ics="${e.id}">${icono("calendario", "p")}Añadir a mi calendario <small>(te avisa el día antes)</small></button>
       <a class="accion wa" href="${enlaceWhatsApp(textoCompartir(e.titulo, fechaDia(e.fecha).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }) + (e.hora ? ", " + horaEvento(e).toLowerCase() : "") + (e.lugar ? " · " + e.lugar : ""), "calendario"))}" target="_blank" rel="noopener">${icono("whatsapp", "p")}WhatsApp</a>
     </div></div></div>`;
 
@@ -221,4 +221,23 @@ window.enlaceHTML = (e) => {
   let dom = ""; try { dom = new URL(e.url).hostname.replace(/^www\./, ""); } catch (_) {}
   return `<a class="panel enlace-util" href="${esc(urlSegura(e.url))}" target="_blank" rel="noopener">
     <span class="ic">${icono("idioma", "p")}</span><span class="txt"><b>${esc(e.titulo || "Enlace")}</b>${e.descripcion ? `<small>${esc(e.descripcion)}</small>` : ""}<span class="dom">${esc(dom)}</span></span>${icono("der", "p")}</a>`;
+};
+
+// ---------- Encuestas anónimas ----------
+// Las opciones van una por línea. Solo se guarda cuántos votos tiene cada opción (ni quién, ni cuándo).
+// Lo usan la portada y la vista previa del panel.
+window.opcionesEncuesta = (x) => String(x.opciones || "").split("\n").map(o => o.trim()).filter(Boolean).slice(0, 6);
+window.encuestaAbierta = (x) => x.publicada !== false && (!x.cierra || x.cierra >= hoyISO());
+window.encuestaHTML = (x, votos = {}, miVoto = 0, nuevo = false) => {
+  const ops = opcionesEncuesta(x), abierta = encuestaAbierta(x), res = !!miVoto || !abierta;
+  const total = ops.reduce((n, _, i) => n + (+votos[i + 1] || 0), 0);
+  const cierre = x.cierra ? (abierta ? "Se cierra el " + fechaLarga(x.cierra + "T12:00:00") : "Encuesta cerrada") : "";
+  const cuerpo = res
+    ? ops.map((o, i) => { const n = +votos[i + 1] || 0, pc = total ? Math.round(n * 100 / total) : 0;
+        return `<div class="enc-res ${miVoto === i + 1 ? "mio" : ""}"><div class="enc-fila"><span>${esc(o)}${miVoto === i + 1 ? " <small>(tu voto)</small>" : ""}</span><b>${pc}%</b></div>
+          <div class="enc-barra"><i style="width:${pc}%"></i></div></div>`; }).join("") + `<p class="enc-pie">${total} ${total === 1 ? "voto" : "votos"}${cierre ? " · " + esc(cierre) : ""}</p>`
+    : ops.map((o, i) => `<button type="button" class="enc-op" data-voto="${x.id}:${i + 1}">${esc(o)}</button>`).join("")
+      + `<p class="enc-pie">Nadie puede saber qué votas: solo se cuentan los votos. Un voto por móvil.${cierre ? " " + esc(cierre) + "." : ""}</p>`;
+  return `<section class="encuesta ${res ? "con-res" : ""} ${nuevo ? "recien" : ""}" data-enc="${x.id}">
+    <small class="enc-tipo">${icono("encuesta", "p")}Encuesta anónima</small><h3>${esc(x.pregunta || "Pregunta")}</h3>${cuerpo}<p class="enc-msg" role="status"></p></section>`;
 };

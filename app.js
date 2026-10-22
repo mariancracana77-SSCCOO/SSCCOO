@@ -1,8 +1,11 @@
 // ===== Web pública: Sección Sindical CCOO Calsina Carré =====
 const $ = (id) => document.getElementById(id);
-const D = { avisos: [], eventos: [], convenio: [], docs: [], actas: [], preguntas: [], delegados: [], enlaces: [], apartados: [], publicaciones: [], calc: { permisos: [], categorias: [], ajustes: {} }, paginas: {} };
+const D = { avisos: [], eventos: [], convenio: [], docs: [], actas: [], preguntas: [], delegados: [], enlaces: [], apartados: [], publicaciones: [], encuestas: [], votos: {}, calc: { permisos: [], categorias: [], ajustes: {} }, paginas: {} };
 const estado = { catAviso: "Todos", catConv: "Todos", tipoActa: "Todos", catDoc: "Todos", catPreg: "Todos", archivo: false, mes: new Date(), diaSel: hoyISO(),
   fechas: { avisos: {}, actas: {}, docs: {}, ap: {} }, ap: null, calc: "vacaciones", permiso: null };
+
+// En el navegador con la sesión del panel abierta no se cuentan visitas ni lecturas (las pruebas del administrador no inflan las cifras)
+const ES_ADMIN = (() => { try { return Object.keys(localStorage).some(k => /^sb-.*-auth-token$/.test(k)); } catch (_) { return false; } })();
 
 // ---------- Iconos fijos ----------
 document.querySelectorAll("[data-i]").forEach(el => el.outerHTML = icono(el.dataset.i));
@@ -23,7 +26,13 @@ function irA() {
   if (aDelegados) setTimeout(() => ($("lista-delegados").children.length ? $("tit-delegados") : $("txt-contacto"))?.scrollIntoView({ block: "start" }), 50);
   if (legal) setTimeout(() => $("leg-" + legal)?.scrollIntoView({ block: "start" }), 50);
   if (avisoDirecto) setTimeout(() => { const el = $(avisoDirecto); if (el) { el.scrollIntoView({ block: "start" }); el.classList.add("nuevo"); } }, 300);
-  document.querySelectorAll(".vista").forEach(s => s.classList.toggle("activa", s.id === "v-" + v));
+  // La vista nueva entra desde el lado de su pestaña (más a la derecha en la barra: entra por la derecha)
+  const orden = [...document.querySelectorAll(".pestanas-web a")].map(b => b.dataset.v), clave = ap ? "ap-" + ap : v;
+  const iAntes = orden.indexOf(irA.antes), iAhora = orden.indexOf(clave), lado = iAntes < 0 || iAhora < 0 || iAntes === iAhora ? "" : iAhora > iAntes ? "desde-der" : "desde-izq";
+  const cambia = irA.antes !== undefined && irA.antes !== clave; irA.antes = clave;
+  document.querySelectorAll(".vista").forEach(s => { s.classList.toggle("activa", s.id === "v-" + v); s.classList.remove("desde-der", "desde-izq"); });
+  if (lado && cambia) $("v-" + v)?.classList.add(lado);
+  if (v === "inicio" && cambia) animaPortada();
   document.querySelectorAll(".pestanas-web a").forEach(b => {
     const on = b.dataset.v === (ap ? "ap-" + ap : v); b.classList.toggle("activa", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current");
     if (on) b.scrollIntoView({ inline: "center", block: "nearest" });
@@ -165,7 +174,10 @@ function pintaInicio() {
   const prox = D.eventos.filter(e => e.fecha >= hoy).sort((a, b) => (a.fecha + (a.hora || "")).localeCompare(b.fecha + (b.hora || "")));
   // Rótulo: lo urgente; si no hay, la próxima cita; si no, «todo en orden»
   let rot;
-  if (urg) rot = `<a class="rotulo" href="#aviso-${urg.id}"><span class="rot-tipo urgente">${icono("alerta", "p")}Urgente</span>
+  // Lo urgente lleva además una tira como los paneles luminosos de las autopistas (texto de puntos ámbar que pasa)
+  const led = "AVISO URGENTE · " + String(urg?.titulo || "").toUpperCase() + " · ";
+  if (urg) rot = `<a class="rotulo es-urgente" href="#aviso-${urg.id}"><span class="rot-tipo urgente">${icono("alerta", "p")}Urgente</span>
+      <span class="rot-led" aria-hidden="true"><span class="rot-led-txt" style="animation-duration:${Math.max(8, Math.round(led.length * .28))}s"><span>${esc(led)}</span><span>${esc(led)}</span></span></span>
       <span class="rot-l1">${esc(urg.titulo)}</span><span class="rot-l2">${esc(resumenPlano(urg.contenido, 110))}</span>
       <span class="rot-ir">Ver el aviso completo${icono("der", "p")}</span></a>`;
   else if (prox[0]) { const e = prox[0];
@@ -192,7 +204,8 @@ function pintaInicio() {
   if ($("ir-ultimo")) $("ir-ultimo").onclick = () => $("lo-ultimo").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
   // Próximas paradas
   $("inicio-paradas").innerHTML = `<h2 class="tit-seccion">Próximas paradas <a href="#calendario">Ver todas</a></h2>` + (prox.length
-    ? `<ol class="ruta">${prox.slice(0, 3).map(e => `<li class="${e.fecha === hoy ? "hoy" : ""}"><a href="#calendario" data-dia="${e.fecha}">
+    ? `<ol class="ruta"><li class="ruta-hoy"><span class="ruta-aqui" aria-hidden="true"></span>
+        <span class="cuando">Estás aquí · ${esc(new Date().toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" }))}</span></li>${prox.slice(0, 3).map(e => `<li class="${e.fecha === hoy ? "hoy" : ""}"><a href="#calendario" data-dia="${e.fecha}">
         <span class="cuando">${esc(cuandoEvento(e))}</span><b>${esc(e.titulo)}</b>${e.lugar ? `<small>${icono("lugar", "p")}${esc(e.lugar)}</small>` : ""}</a></li>`).join("")}</ol>`
     : `<p class="ruta-vacia">No hay fechas próximas.</p>`);
   // Lo último
@@ -213,6 +226,7 @@ function pintaInicio() {
   if (items.length > max) html += `<button class="btn sec ver-mas" id="ver-mas">Ver más</button>`;
   $("inicio-feed").innerHTML = items.length ? html : html + vacio("avisos", "Todavía no hay nada publicado.");
   if ($("ver-mas")) $("ver-mas").onclick = () => { estado.feedMax = max + 20; pintaInicio(); };
+  if (aparece) $("inicio-feed").querySelectorAll(".item-tablon").forEach(el => { if (el.getBoundingClientRect().top > innerHeight) { el.classList.add("por-ver"); aparece.observe(el); } });
   // Accesos
   const acc = [["avisos", "avisos", "Avisos"], ...D.apartados.map(a => ["ap-" + a.slug, a.icono || "carpeta", a.titulo]), ["convenio", "convenio", "Convenio"], ["calcula", "reloj", "Calcula"], ["calendario", "calendario", "Calendario"], ["actas", "actas", "Actas"], ["documentos", "carpeta", "Documentos"], ["preguntas", "pregunta", "Dudas"]];
   $("inicio-accesos").innerHTML = `<h2 class="tit-seccion">Ir a</h2><nav class="accesos-tablon" aria-label="Accesos rápidos">${acc.map(([v, ic, t]) =>
@@ -230,16 +244,66 @@ function pintaCuentaAtras(enRotulo) {
   const ahora = new Date(), e = D.eventos.filter(x => x.importante && finDe(x) > ahora).sort((a, b) => inicioDe(a) - inicioDe(b))[0];
   if (!e) { $("cuenta-atras").innerHTML = ""; return; }
   const ms = inicioDe(e) - ahora, min = Math.floor(ms / 60000), dias = Math.floor(min / 1440), horas = Math.floor((min % 1440) / 60), mins = min % 60;
-  const bloque = (n, t) => `<span class="ca-bloque"><b>${n}</b><small>${t}</small></span>`;
+  // Marcador: si una cifra cambia respecto a la vez anterior, gira (como los paneles de las estaciones)
+  const antes = pintaCuentaAtras.antes || {}, ahoraV = {};
+  const bloque = (n, t) => { const k = t.replace(/s$/, ""); ahoraV[k] = n; const gira = antes.id === e.id && antes[k] !== undefined && antes[k] !== n;
+    return `<span class="ca-bloque"><b class="${gira ? "gira" : ""}" data-n="${n}">${n}</b><small>${t}</small></span>`; };
   const cifras = ms <= 0 ? `<span class="ca-ahora">${esTodoElDia(e) || !e.hora ? "Es hoy" : "Está pasando ahora"}</span>`
     : dias > 0 ? bloque(dias, dias === 1 ? "día" : "días") + bloque(horas, horas === 1 ? "hora" : "horas")
     : bloque(horas, horas === 1 ? "hora" : "horas") + bloque(mins, "min");
   const mismo = enRotulo && enRotulo.id === e.id;
+  pintaCuentaAtras.antes = { ...ahoraV, id: e.id };
   $("cuenta-atras").innerHTML = `<a class="cuenta-atras" href="#calendario" data-dia="${e.fecha}" aria-label="${ms > 0 ? "Faltan " + (dias ? dias + " días y " : "") + horas + " horas para " : ""}${esc(e.titulo)}">
     <span class="ca-txt"><small>${ms > 0 ? "Faltan" : "Cita importante"}</small>${mismo ? "" : `<b>${esc(e.titulo)}</b>`}<small>${esc(cuandoEvento(e))}${e.lugar ? " · " + esc(e.lugar) : ""}</small></span>
     <span class="ca-cifras" aria-hidden="true">${cifras}</span></a>`;
   $("cuenta-atras").querySelector("[data-dia]").onclick = () => irADia(e.fecha);
   pintaCuentaAtras.t = setInterval(() => pintaCuentaAtras(enRotulo), 60000);
+}
+
+const aparece = "IntersectionObserver" in window && !matchMedia("(prefers-reduced-motion: reduce)").matches
+  ? new IntersectionObserver((l) => l.forEach(en => { if (en.isIntersecting) { en.target.classList.replace("por-ver", "aparece"); aparece.unobserve(en.target); } }), { rootMargin: "0px 0px -40px 0px" }) : null;
+
+// ---------- Encuestas anónimas (en la portada) ----------
+// Se guarda en este móvil qué se votó (para enseñar los resultados y no votar dos veces); al servidor solo va +1 a esa opción.
+const leeVotos = () => { try { return JSON.parse(localStorage.getItem("ccoo-votos") || "{}") || {}; } catch (_) { return {}; } };
+function pintaEncuestas(recien) {
+  const hace15 = new Date(Date.now() - 15 * 864e5).toISOString().slice(0, 10), mios = leeVotos();
+  const l = D.encuestas.filter(x => encuestaAbierta(x) || (x.cierra && x.cierra >= hace15)).slice(0, 3);
+  $("inicio-encuesta").innerHTML = l.map(x => encuestaHTML(x, D.votos[x.id] || {}, +mios[x.id] || 0, x.id === recien)).join("");
+}
+$("inicio-encuesta").addEventListener("click", async (ev) => {
+  const b = ev.target.closest("[data-voto]"); if (!b) return;
+  const [id, op] = b.dataset.voto.split(":").map(Number), caja = b.closest(".encuesta");
+  caja.querySelectorAll(".enc-op").forEach(x => x.disabled = true); b.classList.add("elegida");
+  const { error } = await sb.rpc("votar_encuesta", { p_id: id, p_opcion: op });
+  if (error) { caja.querySelector(".enc-msg").textContent = error.message || "No se ha podido votar. Prueba otra vez."; caja.querySelectorAll(".enc-op").forEach(x => x.disabled = false); b.classList.remove("elegida"); return; }
+  const v = leeVotos(); v[id] = op; try { localStorage.setItem("ccoo-votos", JSON.stringify(v)); } catch (_) {}
+  const t = (D.votos[id] = D.votos[id] || {}); t[op] = (+t[op] || 0) + 1;
+  pintaEncuestas(id);
+  const nueva = document.querySelector(`.encuesta[data-enc="${id}"] h3`);
+  if (nueva) nueva.insertAdjacentHTML("afterend", `<p class="enc-gracias"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m7 12.5 3.2 3.2L17 9"/></svg>Gracias por participar</p>`);
+  try { navigator.vibrate?.(30); } catch (_) {}
+});
+
+// ---------- Animaciones de la portada ----------
+// Al abrir la web (tras la pantalla del camión) y al volver a Inicio: la línea de «Próximas paradas» se dibuja,
+// el rótulo urgente da un destello, las cifras de la cuenta atrás corren como un marcador y, si hay novedades, la campana se mueve.
+const QUIETO = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+function sacudeCampana() {
+  if (QUIETO()) return; const c = document.querySelector(".campana"); if (!c) return;
+  c.classList.remove("sacude"); void c.offsetWidth; c.classList.add("sacude"); setTimeout(() => c.classList.remove("sacude"), 1300);
+}
+function animaPortada() {
+  if (QUIETO() || $("bienvenida")?.isConnected && !$("bienvenida").classList.contains("fuera")) return;
+  const v = $("v-inicio"); v.classList.remove("anima"); void v.offsetWidth; v.classList.add("anima");
+  clearTimeout(animaPortada.t); animaPortada.t = setTimeout(() => v.classList.remove("anima"), 2600);
+  v.querySelectorAll(".ca-bloque b[data-n]").forEach(b => {
+    const fin = +b.dataset.n, t0 = performance.now(), dur = 900;
+    if (!(fin > 0)) return;
+    const paso = (t) => { const k = Math.min(1, (t - t0) / dur); b.textContent = Math.round(fin * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(paso); };
+    requestAnimationFrame(paso);
+  });
+  if (document.querySelector("#inicio-novedades .n")) setTimeout(sacudeCampana, 900);
 }
 
 // «Sabías que…»: un apartado del convenio distinto cada día (el mismo para todos ese día)
@@ -544,10 +608,28 @@ function pintaInfo() {
   $("lista-enlaces").innerHTML = D.enlaces.map(enlaceHTML).join("");
 }
 
+// ---------- Copia de lo último cargado (para verlo sin cobertura) ----------
+// Solo contenido público de la web; se guarda en este móvil y se sustituye en cada carga correcta.
+function guardaCopia(r) { try { localStorage.setItem("ccoo-copia", JSON.stringify({ t: Date.now(), r: r.map(x => x.data || []) })); } catch (_) {} }
+function leeCopia() { try { const c = JSON.parse(localStorage.getItem("ccoo-copia") || "null"); return c && Array.isArray(c.r) && c.r.length === 17 ? c : null; } catch (_) { return null; } }
+function sinRed(on, desde) {
+  const b = $("sin-red"); if (!b) return;
+  if (on) {
+    const hace = desde ? haceTxt(new Date(desde).toISOString()) : "";
+    b.querySelector(".txt").innerHTML = `<b>Sin cobertura.</b> ${desde ? "Estás viendo lo que se cargó " + esc(hace) + "." : "Se cargará en cuanto vuelva la conexión."}`;
+    b.classList.remove("oculto", "arranca"); sinRed.on = true;
+  } else if (sinRed.on) {
+    sinRed.on = false; b.querySelector(".txt").innerHTML = "<b>Vuelve la conexión.</b> Actualizando…"; b.classList.add("arranca");
+    setTimeout(() => b.classList.add("oculto"), 1600);
+  }
+}
+addEventListener("offline", () => sinRed(true, leeCopia()?.t));
+addEventListener("online", () => { cargar().then(() => sinRed(false), () => {}); });
+
 // ---------- Carga de datos ----------
 async function cargar(idNuevo) {
   await cargarOpciones();
-  const [a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs] = await Promise.all([
+  let [a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs, enc, vot] = await Promise.all([
     sb.from("comunicados").select("*").order("fecha", { ascending: false }).limit(200),
     sb.from("eventos").select("*").order("fecha"),
     sb.from("convenio_secciones").select("*").order("orden").order("id"),
@@ -563,12 +645,21 @@ async function cargar(idNuevo) {
     sb.from("calc_categorias").select("*").order("orden").order("id"),
     sb.from("calc_ajustes").select("*"),
     sb.from("restricciones").select("*").order("orden").order("id"),
+    sb.from("encuestas").select("*").order("creado", { ascending: false }).limit(20),
+    sb.from("encuesta_votos").select("*"),
   ]);
   if (a.error) {
-    document.querySelectorAll("#inicio-rotulo, #lista-avisos").forEach(el =>
-      el.innerHTML = vacio("alerta", "No se ha podido conectar. Comprueba tu conexión a internet y vuelve a abrir la página."));
-    return;
-  }
+    // Sin cobertura: se enseña lo último que se cargó en este móvil (si lo hay) y se avisa con el camión aparcado
+    const copia = leeCopia();
+    sinRed(true, copia && copia.t);
+    if (!copia) {
+      document.querySelectorAll("#inicio-rotulo, #lista-avisos").forEach(el =>
+        el.innerHTML = vacio("alerta", "No se ha podido conectar. En cuanto vuelva la conexión se cargará sola."));
+      return;
+    }
+    if (cargar.listo) return; // ya hay datos en pantalla: se quedan
+    [a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs, enc, vot] = copia.r.map(x => ({ data: x, error: null }));
+  } else { guardaCopia([a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs, enc, vot]); sinRed(false); }
   // La web enseña solo lo publicado, también si en este móvil está abierta la sesión del panel
   // (el servidor a un administrador le da todo: avisos programados, publicaciones y apartados ocultos)
   const ahoraMs = Date.now();
@@ -579,10 +670,12 @@ async function cargar(idNuevo) {
   D.apartados = (aps.data || []).filter(x => x.visible !== false);
   D.publicaciones = (pubs.data || []).filter(x => x.publicado !== false && D.apartados.some(ap => ap.id === x.apartado_id)); cargar.listo = true;
   D.restricciones = rs.error ? null : (rs.data || []).filter(x => x.visible !== false); // null: se usa la lista de reserva
+  D.encuestas = (enc.data || []).filter(x => x.publicada !== false);
+  D.votos = {}; (vot.data || []).forEach(v => { (D.votos[v.encuesta_id] = D.votos[v.encuesta_id] || {})[v.opcion] = v.n; });
   D.calc = { permisos: cp.data || [], categorias: cc.data || [], ajustes: Object.fromEntries((ca.data || []).map(x => [x.clave, x.valor])) };
   if (!$("calc-zona").contains(document.activeElement)) pintaCalcula(); // no borrar lo que se está escribiendo
   pintaPestanasApartados(); pintaApartado();
-  pintaInicio(); pintaAvisos(idNuevo); pintaCalendario(); pintaConvenio(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaInfo(); pintaCanales(); pintaContadores();
+  pintaInicio(); pintaEncuestas(); pintaAvisos(idNuevo); pintaCalendario(); pintaConvenio(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaInfo(); pintaCanales(); pintaContadores();
   if (/^#aviso-\d+$/.test(location.hash) && !cargar.hecho) { cargar.hecho = true; irA(); }
 }
 // Pantalla de bienvenida: dura lo que tarda el camión en formar el logo (4,3 s) y se quita al terminar de cargar.
@@ -596,6 +689,7 @@ function quitarBienvenida() {
     const listas = document.querySelectorAll("#inicio-feed, #inicio-paradas, .accesos-tablon, [id^='lista-']");
     if (!quieto) listas.forEach(el => el.classList.add("anima-entra"));
     bv.classList.add("fuera");
+    if (!location.hash || location.hash === "#inicio") animaPortada();
     setTimeout(() => { bv.remove(); listas.forEach(el => el.classList.remove("anima-entra")); }, 1200);
   }, quieto || quitarBienvenida.ya ? 0 : Math.max(0, 4300 - performance.now()));
 }
@@ -619,6 +713,7 @@ function pintaBandaNovedad() {
   const b = $("banda-novedad"), n = PEND.length;
   b.classList.toggle("oculto", !n);
   if (!n) { b.innerHTML = ""; return; }
+  sacudeCampana();
   b.innerHTML = `<button id="ver-novedad" type="button"><span class="pt" aria-hidden="true"></span>
     <span class="txt">${n === 1 ? `Hay 1 novedad: <b>${esc(PEND[0].titulo || QUE[PEND[0].t])}</b>` : `Hay ${n} novedades`}</span><span class="ver">Ver</span></button>`;
   $("ver-novedad").onclick = verNovedades;
@@ -671,6 +766,47 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) carg
     setTimeout(() => { quitar(); ocupado = false; }, 800);
   });
 })();
+
+// ---------- Deslizar a los lados para pasar de pestaña (móvil) ----------
+// No salta si el dedo empieza en algo que ya se desliza a los lados (pestañas, filtros, galerías…), en un campo de texto o con una ventana abierta.
+(function () {
+  if (!("ontouchstart" in window)) return;
+  let x0 = null, y0 = 0, t0 = 0;
+  const seDesliza = (el) => { for (; el && el !== document.body; el = el.parentElement) { const cs = getComputedStyle(el); if (/(auto|scroll)/.test(cs.overflowX) && el.scrollWidth > el.clientWidth + 2) return true; } return false; };
+  addEventListener("touchstart", (e) => {
+    const t = e.target;
+    x0 = (e.touches.length === 1 && !document.querySelector(".modal-velo") && !t.closest("input, textarea, select, .barra-acciones, .bienvenida") && !seDesliza(t)) ? e.touches[0].clientX : null;
+    y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  addEventListener("touchend", (e) => {
+    if (x0 == null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+    if (Math.abs(dx) < 80 || Math.abs(dx) < Math.abs(dy) * 2 || Date.now() - t0 > 700) return;
+    const orden = [...document.querySelectorAll(".pestanas-web a")].map(b => b.dataset.v), i = orden.indexOf(irA.antes);
+    const sig = orden[i + (dx < 0 ? 1 : -1)];
+    if (i >= 0 && sig) location.hash = sig;
+  }, { passive: true });
+})();
+
+// ---------- Volver arriba (en listas largas): botón con un aro que marca lo que se ha bajado ----------
+(function () {
+  const b = $("arriba"); if (!b) return;
+  // El aro se va llenando según lo que se ha bajado
+  addEventListener("scroll", () => {
+    b.classList.toggle("ver", scrollY > innerHeight * 1.5);
+    b.style.setProperty("--prog", Math.min(100, Math.round(scrollY / Math.max(1, document.documentElement.scrollHeight - innerHeight) * 100)));
+  }, { passive: true });
+  b.onclick = () => {
+    b.classList.add("sube"); setTimeout(() => b.classList.remove("sube", "ver"), 700);
+    scrollTo({ top: 0, behavior: QUIETO() ? "auto" : "smooth" });
+  };
+})();
+
+// ---------- El logo de la cabecera da una vuelta al tocarlo ----------
+$("cab-logo").addEventListener("click", () => {
+  if (QUIETO()) return; const l = $("cab-logo");
+  l.classList.remove("vuelta"); void l.offsetWidth; l.classList.add("vuelta");
+});
 
 // ---------- Instalar como app y activar avisos ----------
 const ES_IOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -913,6 +1049,7 @@ $("buscar-todo").oninput = buscarTodo;
 // ---------- Estadísticas anónimas: secciones visitadas y lo que se lee ----------
 // Solo se suma 1 en el servidor; aquí se recuerda (en esta visita) qué se ha contado ya, para no contarlo dos veces.
 function contarUnaVez(clave, enviar) {
+  if (ES_ADMIN) return;
   try {
     const hechos = JSON.parse(sessionStorage.getItem("ccoo-contado") || "[]");
     if (hechos.includes(clave)) return;
@@ -934,14 +1071,25 @@ new MutationObserver(vigilar).observe(document.querySelector("main"), { childLis
 document.addEventListener("click", (ev) => { const a = ev.target.closest("[data-abre]"); if (a) contarLectura(a.dataset.abre); });
 
 // ---------- Contador anónimo de visitas ----------
-// Solo suma 1 a las visitas del día (y 1 a «móviles distintos» la primera vez de hoy en este móvil).
+// Solo suma 1 a las visitas del día, y 1 a «móviles distintos» la primera vez de hoy, de esta semana y de este mes en este móvil.
 // No se guarda nada que identifique a nadie: ni IP, ni nombres, ni un identificador del móvil.
+// En el navegador donde está abierta la sesión del panel no se cuenta nada (ES_ADMIN, arriba del todo).
 (function contarVisita() {
+  if (ES_ADMIN) return;
+  const primera = (prefijo, clave) => { // true solo la primera vez de ese día/semana/mes en este móvil
+    if (localStorage.getItem(clave)) return false;
+    Object.keys(localStorage).filter(k => k.startsWith(prefijo)).forEach(k => localStorage.removeItem(k)); localStorage.setItem(clave, "1"); return true;
+  };
   try {
     if (sessionStorage.getItem("ccoo-contada")) return; // una vez por cada vez que se abre la web
     sessionStorage.setItem("ccoo-contada", "1");
-    const clave = "ccoo-dia-" + hoyISO(), nuevo = !localStorage.getItem(clave);
-    if (nuevo) { Object.keys(localStorage).filter(k => k.startsWith("ccoo-dia-")).forEach(k => localStorage.removeItem(k)); localStorage.setItem(clave, "1"); }
+    const d = new Date(), lunes = new Date(d.getFullYear(), d.getMonth(), d.getDate() - (d.getDay() + 6) % 7);
+    const nuevo = primera("ccoo-dia-", "ccoo-dia-" + hoyISO());
     sb.rpc("contar_visita", { p_nuevo: nuevo }).then(() => {}, () => {});
+    // Desde dónde se abre (app instalada o navegador): solo para saber cuánta gente tiene la app
+    const app = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+    sb.rpc("contar_origen", { p_origen: app ? "app" : "navegador" }).then(() => {}, () => {});
+    if (primera("ccoo-sem-", "ccoo-sem-" + isoDe(lunes))) sb.rpc("contar_movil", { p_tipo: "semana" }).then(() => {}, () => {});
+    if (primera("ccoo-mes-", "ccoo-mes-" + hoyISO().slice(0, 7))) sb.rpc("contar_movil", { p_tipo: "mes" }).then(() => {}, () => {});
   } catch (_) { sb.rpc("contar_visita", { p_nuevo: false }).then(() => {}, () => {}); }
 })();

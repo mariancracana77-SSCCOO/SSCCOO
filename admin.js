@@ -127,6 +127,21 @@ const SECCIONES = {
     previa: (x) => delegadoHTML(x), tituloDe: (x) => x.nombre,
     extracto: (x) => [x.cargo, x.detalle].filter(Boolean).join(" · "), chips: (x) => [x.telefono && "Con teléfono", x.email && "Con email"], fechas: (x) => [null, x.actualizado],
   },
+  encuestas: {
+    nombre: "Encuestas", icono: "encuesta", tabla: "encuestas", orden: ["creado", false], uno: "encuesta", nuevo: "Nueva encuesta", lista: "aviso", campoColor: "_",
+    intro: "Preguntas para la plantilla. Salen en la portada; se vota tocando una opción y nadie puede saber qué ha votado cada uno: solo se cuentan los votos (un voto por móvil).",
+    campos: [
+      { k: "pregunta", l: "Pregunta", t: "text", req: true, ph: "Ej: ¿Qué turno preferís para la asamblea?" },
+      { k: "opciones", l: "Opciones", t: "textarea", req: true, corto: true, ayuda: "Una opción por línea, de 2 a 6. Cuando ya haya votos, no cambies el orden ni quites opciones: los votos van por posición." },
+      { k: "cierra", l: "Se cierra el día", t: "date", opc: true, ayuda: "Déjalo vacío para que siga abierta hasta que la ocultes. Cerrada, se ven los resultados en la portada 15 días más." },
+      { checks: [{ k: "publicada", l: "Se ve en la web (desmárcalo para ocultarla sin borrarla)", def: true }] },
+    ],
+    previa: (x) => encuestaHTML(x, VOTOS[x.id] || {}, 0),
+    tituloDe: (x) => x.pregunta,
+    extracto: (x) => { const v = VOTOS[x.id] || {}; return opcionesEncuesta(x).map((o, i) => `${o}: ${+v[i + 1] || 0}`).join(" · "); },
+    chips: (x) => { const v = VOTOS[x.id] || {}, n = Object.values(v).reduce((a, b) => a + b, 0); return [n + (n === 1 ? " voto" : " votos"), x.publicada === false ? "Oculta" : encuestaAbierta(x) ? (x.cierra ? "Abierta hasta el " + fechaLarga(x.cierra + "T12:00:00") : "Abierta") : "Cerrada"]; },
+    fechas: (x) => [x.creado, x.actualizado],
+  },
   enlaces: {
     nombre: "Enlaces", icono: "idioma", tabla: "enlaces", orden: ["orden", true], uno: "enlace", nuevo: "Nuevo enlace", lista: "aviso", campoColor: "_",
     intro: "Webs útiles para la plantilla (sindicato, Seguridad Social, SEPE…). Salen en «Nosotros».",
@@ -453,6 +468,14 @@ async function pintaResumen() {
   if ($("anadir-prox")) $("anadir-prox").onclick = (e) => { e.preventDefault(); abrirEditor("calendario"); };
 }
 
+// Votos de las encuestas: solo el recuento por opción
+let VOTOS = {};
+async function cargarVotos() {
+  const { data, error } = await sb.from("encuesta_votos").select("*");
+  if (error) throw error;
+  VOTOS = {}; (data || []).forEach(v => { (VOTOS[v.encuesta_id] = VOTOS[v.encuesta_id] || {})[v.opcion] = v.n; });
+}
+
 // ---------- Listas ----------
 async function cargarDatos(k) {
   const s = SECCIONES[k];
@@ -602,7 +625,7 @@ async function pintaSeccion(k) {
   if ($("b-recurrentes")) $("b-recurrentes").onclick = () => abrir("recurrentes");
   if ($("b-camiones")) $("b-camiones").onclick = () => abrir("camiones");
   enlazarVistaCal();
-  try { await Promise.all([cargarDatos(k), TABLAS_LEIDAS.includes(s.tabla) ? cargarLecturas() : null, k === "apartados" ? contarPublicaciones() : null]); } catch (e) { $("lista").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
+  try { await Promise.all([cargarDatos(k), TABLAS_LEIDAS.includes(s.tabla) ? cargarLecturas() : null, k === "apartados" ? contarPublicaciones() : null, k === "encuestas" ? cargarVotos() : null]); } catch (e) { $("lista").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
   const ff = FILTRO_ADM[k] ||= {};
   const pinta = () => {
     if (FECHA_DE[k]) pintaFechasAdm(datos[k], k, ff, pinta);
@@ -862,6 +885,10 @@ $("ed-guardar").onclick = async () => {
     if (c.req && c.t !== "archivo" && c.t !== "archivos" && !fila[c.k]) { cambiarPestana("form"); $("f-" + c.k)?.focus(); return msg("ed-msg", "Falta: " + c.l.toLowerCase() + "."); }
   }
   if (["avisos"].includes(ED.k) && /\[[^\]]{1,30}\]/.test((fila.titulo || "") + (fila.contenido || "")) && !confirm("El aviso todavía tiene partes entre [corchetes] sin rellenar. ¿Publicar igualmente?")) return;
+  if (ED.k === "encuestas") {
+    const n = opcionesEncuesta(fila).length;
+    if (n < 2 || n > 6) { cambiarPestana("form"); $("f-opciones")?.focus(); return msg("ed-msg", "Pon de 2 a 6 opciones, una por línea."); }
+  }
   if (!(await revisarOrtografia(s, fila))) return;
   if (["enlaces", "restricciones"].includes(ED.k) && fila.url && !/^https?:\/\//.test(fila.url)) fila.url = "https://" + fila.url;
   if (s.filtro) Object.assign(fila, s.filtro);
@@ -1938,28 +1965,46 @@ async function pintaEstadisticas() {
 }
 
 // ---------- Visitas (anónimas) ----------
+// Últimos 7 días: cuántas veces se abre desde la app instalada y cuántas desde el navegador
+function origenHTML(filas) {
+  const app = filas.filter(x => x.origen === "app").reduce((n, x) => n + x.n, 0), nav = filas.filter(x => x.origen === "navegador").reduce((n, x) => n + x.n, 0), t = app + nav;
+  if (!t) return `<p class="ayuda">Desde la app o desde el navegador: se cuenta desde la versión 42.</p>`;
+  const pa = Math.round(app * 100 / t);
+  return `<div class="origen"><b>Desde dónde se abre (últimos 7 días)</b>
+    <div class="origen-barra" role="img" aria-label="Desde la app ${pa} %, desde el navegador ${100 - pa} %"><i style="width:${pa}%"></i></div>
+    <div class="origen-ley"><span><i class="app"></i>App instalada: ${app} (${pa} %)</span><span><i></i>Navegador: ${nav} (${100 - pa} %)</span></div>
+    <p class="ayuda">En iPhone, quien entra el mismo día por la app y por Safari cuenta como 2 móviles distintos. En Android, no.</p></div>`;
+}
 async function pintaVisitas() {
   const desde = isoLocal(new Date(Date.now() - 13 * 86400000));
-  const { data, error } = await sb.from("visitas_dia").select("*").gte("dia", desde).order("dia");
+  const hoyD = new Date(), lunes = isoLocal(new Date(hoyD.getFullYear(), hoyD.getMonth(), hoyD.getDate() - (hoyD.getDay() + 6) % 7)), mes = hoyISO().slice(0, 7);
+  const [{ data, error }, per, ori] = await Promise.all([sb.from("visitas_dia").select("*").gte("dia", desde).order("dia"),
+    sb.from("moviles_periodo").select("*").in("periodo", ["S" + lunes, "M" + mes]),
+    sb.from("visitas_origen").select("*").gte("dia", isoLocal(new Date(Date.now() - 6 * 86400000)))]);
+  const unicos = Object.fromEntries((per.data || []).map(x => [x.periodo, x.n]));
   if (!$("visitas")) return;
   if (error) { $("visitas").innerHTML = `<p class="fecha-txt">No se han podido cargar las visitas.</p>`; return; }
   const porDia = Object.fromEntries((data || []).map(v => [v.dia, v]));
   const dias = [...Array(14)].map((_, i) => isoLocal(new Date(Date.now() - (13 - i) * 86400000)));
   const hoy = porDia[hoyISO()] || { visitas: 0, dispositivos: 0 }, ayer = porDia[dias[12]] || { visitas: 0, dispositivos: 0 };
-  const semana = dias.slice(7).reduce((n, d) => n + (porDia[d]?.dispositivos || 0), 0);
+  const veces7 = dias.slice(7).reduce((n, d) => n + (porDia[d]?.visitas || 0), 0);
+  const cifra = (v) => v === undefined ? "–" : v;
   const max = Math.max(1, ...dias.map(d => porDia[d]?.dispositivos || 0));
   $("visitas").innerHTML = `<div class="cifras">
       <div><b>${hoy.dispositivos}</b><span>móviles distintos hoy</span></div>
       <div><b>${hoy.visitas}</b><span>veces abierta hoy</span></div>
-      <div><b>${ayer.dispositivos}</b><span>ayer</span></div>
-      <div><b>${semana}</b><span>últimos 7 días</span></div>
+      <div><b>${cifra(unicos["S" + lunes])}</b><span>móviles distintos esta semana</span></div>
+      <div><b>${cifra(unicos["M" + mes])}</b><span>móviles distintos este mes</span></div>
+      <div><b>${ayer.dispositivos}</b><span>móviles distintos ayer</span></div>
+      <div><b>${veces7}</b><span>veces abierta en 7 días</span></div>
     </div>
     <div class="barras" role="img" aria-label="Móviles distintos por día, últimos 14 días">${dias.map(d => {
       const v = porDia[d]?.dispositivos || 0, f = fechaDia(d);
       return `<div class="barra-dia ${d === hoyISO() ? "hoy" : ""}" title="${f.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}: ${v} móvil(es), ${porDia[d]?.visitas || 0} visitas">
         <span class="valor">${v || ""}</span><span class="col" style="height:${Math.round(v / max * 100)}%"></span><span class="et">${f.toLocaleDateString("es-ES", { weekday: "narrow" })}<br>${f.getDate()}</span></div>`;
     }).join("")}</div>
-    <p class="ayuda">Cuenta de forma anónima: no se sabe quién entra, solo cuántos. «Móviles distintos» cuenta cada móvil una vez al día.</p>`;
+    ${origenHTML(ori.data || [])}
+    <p class="ayuda">Cuenta de forma anónima: no se sabe quién entra, solo cuántos. «Móviles distintos» cuenta cada móvil una sola vez en ese día, semana o mes, aunque entre muchas veces; «veces abierta» suma todas las veces que se abre. La semana y el mes se cuentan desde la versión 42 («–» si aún no hay datos). No cuenta el navegador donde está abierto este panel.</p>`;
 }
 
 // Selector de color: el recuadro toma el color elegido
