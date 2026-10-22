@@ -1375,3 +1375,16 @@ html[data-letra] .subpestanas a { font-size: .9rem; }
 .desc-opciones .check { align-items: flex-start; }
 #desc-avisar-caja[hidden] { display: none !important; }
 .desc-opciones .check { font-weight: 600; }
+
+/* v52: el TIPO vuelve a tener su color (Convocatoria rojo, Sindicato verde…), solo en la etiqueta de tipo.
+   Todo lo demás sigue en el rojo del logo. Fondo de color con letra blanca: se lee igual en claro y en oscuro. */
+.c-rojo { --tc: #ab1012; } .c-azul { --tc: #1e4f9c; } .c-ambar { --tc: #8a5a00; } .c-verde { --tc: #1f6b3a; }
+.c-morado { --tc: #6a3d9a; } .c-turquesa { --tc: #0b6e6e; } .c-rosa { --tc: #a3226f; } .c-gris { --tc: #59636f; }
+:root .etq.tipo, :root:root .etq.tipo { background: var(--tc, var(--rojo)); color: #fff; }
+:root .etq.tipo::before, :root:root .etq.tipo::before { background: #fff; }
+
+/* v52: iconos de «Ir a» (cuadros del final de Inicio) en rojo, también en oscuro: cuadradito rojo con el dibujo en blanco */
+.accesos-tablon .icono, :root:root .accesos-tablon .icono { width: 40px; height: 40px; padding: 8px; border-radius: 10px; background: var(--rojo); color: #fff; box-sizing: border-box; }
+/* v52: el motivo de la próxima cita (su descripción), debajo de las señales */
+.cita-motivo { display: grid; gap: 2px; width: 100%; margin: 4px 0 12px; padding: 10px 12px; border-left: 4px solid #ffb000; background: rgba(0, 0, 0, .28); border-radius: 4px; color: #fff; font-size: .98rem; line-height: 1.35; }
+.cita-motivo b { font-family: var(--cond); font-size: .85rem; letter-spacing: .08em; text-transform: uppercase; color: #ffc233; }

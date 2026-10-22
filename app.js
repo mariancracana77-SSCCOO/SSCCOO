@@ -246,6 +246,7 @@ function pintaInicio() {
       <span class="cita-panel"><i class="cita-luz"></i><i class="cita-luz"></i><b>${esc(e.titulo)}</b></span>
       <span class="cita-poste"><span class="cita-placa"><span>${icono("lugar", "p")}${esc(e.lugar || "Faltan")}<b>${dias}</b></span></span>
         <span class="cita-placa hora"><span>${icono("reloj", "p")}${esc(fecha)}</span></span></span>
+      ${e.descripcion ? `<span class="cita-motivo"><b>Motivo</b>${esc(resumenPlano(e.descripcion, 180))}</span>` : ""}
       <span class="sr-only">${faltan > 1 ? "Faltan " + faltan + " días" : ""}</span>
       <span class="rot-ir">Ver en el calendario${icono("der", "p")}</span></a>`; }
   else rot = `<div class="rotulo"><span class="rot-tipo">Sin avisos urgentes</span><span class="rot-l1">Todo en orden</span><span class="rot-l2">Aquí verás lo importante en cuanto se publique.</span></div>`;
