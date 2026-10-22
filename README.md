@@ -131,6 +131,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 43: avisos de encuestas, compartirlas, icono de notificación y cartel nuevo
+- **Encuestas**: al publicar una se avisa en los móviles y en Telegram, como los avisos (casilla «Avisar…»; columnas `notificar`/`notificado` en `encuestas` y la función `notificar` las incluye). Cada encuesta tiene enlace directo (`#encuesta-<id>`) y botón «Compartir la encuesta» por WhatsApp.
+- **Icono pequeño de las notificaciones**: `badge-96.png`, el camión del logo en blanco (Android lo pinta en un solo color; antes salía un cuadrado).
+- **Cartel para el tablón** (`cartel.html`) rehecho con el estilo de la web: QR grande con el logo en el centro (nivel H, comprobado que se lee), qué ofrece la app y los pasos para Android e iPhone.
+- **Guía del panel** actualizada (página aparte, con capturas).
+
 ## Versión 42: encuestas anónimas y más animaciones
 - **Encuestas anónimas**: en el panel, «Encuestas» (pregunta, de 2 a 6 opciones, día de cierre opcional). Salen en la portada; se vota tocando una opción y se ven los resultados en barras. Al servidor solo va «+1 a esta opción» (tablas `encuestas` y `encuesta_votos`, función `votar_encuesta`): nadie puede saber qué votó cada uno. Un voto por móvil (se recuerda en el propio móvil). Cerradas, los resultados se ven 15 días más.
 - **Visitas más fiables** (Inicio del panel): «móviles distintos esta semana» y «este mes» cuentan cada móvil una sola vez (antes «últimos 7 días» sumaba los móviles de cada día, y un mismo móvil contaba hasta 7 veces). Tabla `moviles_periodo` y función `contar_movil`. Además, el navegador donde está abierta la sesión del panel ya no cuenta visitas ni lecturas. Nuevo: «Desde dónde se abre (últimos 7 días)», cuántas veces desde la app instalada y cuántas desde el navegador (tabla `visitas_origen`, función `contar_origen`).

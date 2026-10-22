@@ -134,7 +134,7 @@ const SECCIONES = {
       { k: "pregunta", l: "Pregunta", t: "text", req: true, ph: "Ej: ¿Qué turno preferís para la asamblea?" },
       { k: "opciones", l: "Opciones", t: "textarea", req: true, corto: true, ayuda: "Una opción por línea, de 2 a 6. Cuando ya haya votos, no cambies el orden ni quites opciones: los votos van por posición." },
       { k: "cierra", l: "Se cierra el día", t: "date", opc: true, ayuda: "Déjalo vacío para que siga abierta hasta que la ocultes. Cerrada, se ven los resultados en la portada 15 días más." },
-      { checks: [{ k: "publicada", l: "Se ve en la web (desmárcalo para ocultarla sin borrarla)", def: true }] },
+      { checks: [{ k: "publicada", l: "Se ve en la web (desmárcalo para ocultarla sin borrarla)", def: true }, { k: "notificar", l: "Avisar en los móviles y en el canal de Telegram", def: true, soloNuevo: true }] },
     ],
     previa: (x) => encuestaHTML(x, VOTOS[x.id] || {}, 0),
     tituloDe: (x) => x.pregunta,
@@ -892,7 +892,7 @@ $("ed-guardar").onclick = async () => {
   if (!(await revisarOrtografia(s, fila))) return;
   if (["enlaces", "restricciones"].includes(ED.k) && fila.url && !/^https?:\/\//.test(fila.url)) fila.url = "https://" + fila.url;
   if (s.filtro) Object.assign(fila, s.filtro);
-  if (fila.publicado === false && !ED.orig) fila.notificar = false;
+  if ((fila.publicado === false || fila.publicada === false) && !ED.orig) fila.notificar = false;
   if (ED.k === "apartados") {
     fila.descripcion = fila.descripcion || "";
     if (!ED.orig) { // dirección de la pestaña: #ap-comite-de-empresa (no cambia aunque luego se cambie el nombre)
@@ -929,7 +929,7 @@ $("ed-guardar").onclick = async () => {
       return aviso("Apartado creado. Ahora pulsa «Publicar» para subir textos, fotos y documentos.");
     }
     abrir(["resumen", "calendario"].includes(actual) ? actual : (s.volver || k));
-    if (fila.publicado === false || (k === "convenio" && fila.visible === false)) return aviso(editado ? "Cambios guardados. Está oculto: no se ve en la web." : "Guardado sin publicar: no se ve en la web y no se ha avisado a nadie. Para publicarlo, ábrelo y marca «Se ve en la web».");
+    if (fila.publicado === false || fila.publicada === false || (k === "convenio" && fila.visible === false)) return aviso(editado ? "Cambios guardados. Está oculto: no se ve en la web." : "Guardado sin publicar: no se ve en la web y no se ha avisado a nadie. Para publicarlo, ábrelo y marca «Se ve en la web».");
     if (editado || s.oculta) return aviso(editado ? "Cambios guardados. Ya se ven en la web." : "Guardado. Ya se ve en la web.");
     // Avisar a los móviles y a Telegram
     let res = null;

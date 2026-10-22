@@ -1240,3 +1240,4 @@ body.con-aviso-priv .arriba-btn { --alto-aviso-on: var(--alto-aviso, 0px); }
 @media (prefers-reduced-motion: reduce) {
   .paradas .ruta li.hoy a::before, #v-inicio.anima .paradas .ruta::before, #v-inicio.anima .ruta-aqui { animation: none; }
 }
+.enc-compartir { margin-top: 10px; }
