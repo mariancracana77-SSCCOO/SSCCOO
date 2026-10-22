@@ -91,6 +91,13 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Próxima cita** (el rótulo de Inicio cuando no hay nada urgente): diseño nuevo de carretera. El título sale en un panel luminoso de autopista (letras blancas de puntos y luces rojas que parpadean en las esquinas) y, debajo, en un poste, dos señales en el rojo del logo: el lugar con los días que faltan (como los kilómetros de una señal) y el día y la hora. Prefiere reuniones y asambleas a los festivos y, si es la misma cita que la cuenta atrás, no se repite.
 - **Animación de entrada**: ahora empieza cuando la página ha cargado (en la app instalada, Android tapaba los primeros segundos con su pantalla y la animación terminaba sin verse) y sale aunque el móvil tenga «quitar animaciones» (lo activa el ahorro de batería). Se sigue saltando tocándola.
 
+## Versión 58: más traducciones y subapartados en rojo
+- **Traducir**: también el rótulo de Inicio (lo urgente o la próxima cita), la lista «Lo último» (un botón para toda la lista) y cada fecha del calendario.
+- **Mis descansos en tu idioma**: selector de idioma arriba; toda la calculadora (explicaciones, avisos y fechas) sale traducida. La copia en PDF sigue en español.
+- **Avisos al móvil en tu idioma**: el idioma elegido (en Mis descansos o en «Avisos activados») hace que las notificaciones lleguen traducidas.
+- **Horas por compensar**: ahora sale también el total.
+- **Subapartados**: botones en el rojo del logo con letra blanca; el que estás viendo, en blanco.
+
 ## Versión 57: avisos para no perder los descansos
 - **Mis descansos**: explica cuándo se pueden borrar los datos guardados en el móvil. En el navegador: al borrar el historial, en incógnito, en iPhone tras unos días sin entrar o al cambiar de móvil. En la app: al desinstalarla, borrar sus datos o cambiar de móvil. Recomienda la copia en PDF.
 

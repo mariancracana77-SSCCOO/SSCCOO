@@ -242,35 +242,36 @@ function pintaInicio() {
   let rot;
   // Lo urgente lleva además una tira como los paneles luminosos de las autopistas (texto de puntos ámbar que pasa)
   const led = "AVISO URGENTE · " + String(urg?.titulo || "").toUpperCase() + " · ";
-  if (urg) rot = `<a class="rotulo es-urgente" href="#aviso-${urg.id}"><span class="rot-tipo urgente">${icono("alerta", "p")}Urgente</span>
+  if (urg) rot = `<div class="rot-caja" data-reg-lista><a class="rotulo es-urgente" href="#aviso-${urg.id}" data-reg="comunicados:${urg.id}"><span class="rot-tipo urgente">${icono("alerta", "p")}Urgente</span>
       <span class="rot-led" aria-hidden="true"><span class="rot-led-txt" style="animation-duration:${Math.max(8, Math.round(led.length * .28))}s"><span>${esc(led)}</span><span>${esc(led)}</span></span></span>
-      <span class="rot-l1">${esc(urg.titulo)}</span><span class="rot-l2">${esc(resumenPlano(urg.contenido, 110))}</span>
-      <span class="rot-ir">Ver el aviso completo${icono("der", "p")}</span></a>`;
+      <span class="rot-l1" data-campo="titulo" data-plano>${esc(urg.titulo)}</span><span class="rot-l2" data-campo="contenido" data-resumen="110">${esc(resumenPlano(urg.contenido, 110))}</span>
+      <span class="rot-ir">Ver el aviso completo${icono("der", "p")}</span></a>${botonTraducir("lista")}</div>`;
   // Próxima cita como en la carretera: el título en un panel luminoso de autopista (letras blancas de puntos y luces
   // que parpadean en las esquinas) y, debajo, en un poste, la señal del lugar con los días que faltan (como los km)
   // y la de día y hora. (Un festivo solo sale si no hay ninguna reunión o asamblea por delante.)
   else if (prox[0]) { const e = prox.find(x => !esFestivo(x)) || prox[0], d = fechaDia(e.fecha), faltan = Math.round((d - fechaDia(hoy)) / DIA);
     const dias = faltan === 0 ? "Hoy" : faltan === 1 ? "Mañana" : `${faltan}<small>días</small>`;
     const fecha = may(DIA_CORTO[d.getDay()]) + " " + d.getDate() + " " + MES_CORTO[d.getMonth()] + (e.hora ? " · " + horaEvento(e) : "");
-    rot = `<a class="rotulo cita" href="#calendario" data-dia="${e.fecha}"><span class="cita-et">Próxima parada</span>
-      <span class="cita-panel"><i class="cita-luz"></i><i class="cita-luz"></i><b>${esc(e.titulo)}</b></span>
-      <span class="cita-poste"><span class="cita-placa"><span>${icono("lugar", "p")}${esc(e.lugar || "Faltan")}<b>${dias}</b></span></span>
+    rot = `<div class="rot-caja" data-reg-lista><a class="rotulo cita" href="#calendario" data-dia="${e.fecha}" data-reg="eventos:${e.id}"><span class="cita-et">Próxima parada</span>
+      <span class="cita-panel"><i class="cita-luz"></i><i class="cita-luz"></i><b data-campo="titulo" data-plano>${esc(e.titulo)}</b></span>
+      <span class="cita-poste"><span class="cita-placa"><span>${icono("lugar", "p")}${e.lugar ? `<span data-campo="lugar" data-plano>${esc(e.lugar)}</span>` : "Faltan"}<b>${dias}</b></span></span>
         <span class="cita-placa hora"><span>${icono("reloj", "p")}${esc(fecha)}</span></span></span>
-      ${e.descripcion ? `<span class="cita-motivo"><b>Motivo</b>${esc(resumenPlano(e.descripcion, 180))}</span>` : ""}
+      ${e.descripcion ? `<span class="cita-motivo"><b>Motivo</b><span data-campo="descripcion" data-resumen="180">${esc(resumenPlano(e.descripcion, 180))}</span></span>` : ""}
       <span class="sr-only">${faltan > 1 ? "Faltan " + faltan + " días" : ""}</span>
-      <span class="rot-ir">Ver en el calendario${icono("der", "p")}</span></a>`; }
+      <span class="rot-ir">Ver en el calendario${icono("der", "p")}</span></a>${botonTraducir("lista")}</div>`; }
   else rot = `<div class="rotulo"><span class="rot-tipo">Sin avisos urgentes</span><span class="rot-l1">Todo en orden</span><span class="rot-l2">Aquí verás lo importante en cuanto se publique.</span></div>`;
   $("inicio-rotulo").innerHTML = rot;
+  reaplicaIdioma($("inicio-rotulo").querySelector("[data-reg-lista]"), "rotulo");
   // Todo lo publicado, por fecha
   const ICONOS = { aviso: ["avisos", "c-verde"], fecha: ["calendario", "c-azul"], acta: ["actas", "c-ambar"], doc: ["carpeta", "c-rojo"], conv: ["convenio", "c-morado"], preg: ["pregunta", "c-gris"], pub: ["carpeta", "c-turquesa"] };
   const items = [
-    ...D.avisos.filter(a => a !== urg).map(a => ({ f: a.fecha, k: "aviso", que: "Aviso" + (a.fijado ? " · fijado" : ""), t: a.titulo, s: resumenPlano(a.contenido, 90), h: "#aviso-" + a.id, adj: (a.adjuntos || []).length, foto: (a.adjuntos || []).find(esImagen) })),
-    ...D.eventos.filter(e => e.fecha >= hoy && !esFestivo(e)).map(e => ({ f: e.creado, k: "fecha", que: "Fecha · " + cuandoEvento(e), t: e.titulo, s: e.lugar || "", h: "#calendario", dia: e.fecha })),
-    ...D.actas.map(a => ({ f: a.creado, k: "acta", que: "Acta" + (a.fecha ? " · " + fechaDia(a.fecha).toLocaleDateString("es-ES", { day: "numeric", month: "long" }) : ""), t: a.titulo, s: a.acuerdos ? (a.acuerdos.split("\n").filter(l => l.trim()).length + " acuerdo(s)") : resumenPlano(a.resumen, 90), h: "#actas" })),
-    ...D.docs.map(d => ({ f: d.fecha, k: "doc", que: "Documento · " + tipoArchivo(d.tipo_archivo, d.nombre_archivo).txt, t: d.titulo, s: d.descripcion || "", url: d.url, id: d.id })),
-    ...D.publicaciones.map(x => { const ap = D.apartados.find(y => y.id === x.apartado_id); return ap && { f: x.creado, k: "pub", ic: ap.icono, foto: (x.adjuntos || []).find(esImagen), que: ap.titulo, t: x.titulo, s: (x.adjuntos || []).length ? (x.adjuntos.length + " archivo(s)") : resumenPlano(x.contenido, 90), h: "#ap-" + ap.slug }; }).filter(Boolean),
-    ...D.convenio.filter(c => ahora - new Date(c.actualizado) < 30 * DIA).map(c => ({ f: c.actualizado, k: "conv", que: "Convenio · actualizado", t: c.titulo, s: c.resumen || "", h: "#convenio" })),
-    ...D.preguntas.filter(q => ahora - new Date(q.creado) < 30 * DIA).map(q => ({ f: q.creado, k: "preg", que: "Pregunta frecuente", t: q.pregunta, s: "", h: "#preguntas" })),
+    ...D.avisos.filter(a => a !== urg).map(a => ({ reg: "comunicados:" + a.id, cs: "contenido", rs: 90, f: a.fecha, k: "aviso", que: "Aviso" + (a.fijado ? " · fijado" : ""), t: a.titulo, s: resumenPlano(a.contenido, 90), h: "#aviso-" + a.id, adj: (a.adjuntos || []).length, foto: (a.adjuntos || []).find(esImagen) })),
+    ...D.eventos.filter(e => e.fecha >= hoy && !esFestivo(e)).map(e => ({ reg: "eventos:" + e.id, cs: "lugar", f: e.creado, k: "fecha", que: "Fecha · " + cuandoEvento(e), t: e.titulo, s: e.lugar || "", h: "#calendario", dia: e.fecha })),
+    ...D.actas.map(a => ({ reg: "actas:" + a.id, cs: a.acuerdos ? "" : "resumen", rs: 90, f: a.creado, k: "acta", que: "Acta" + (a.fecha ? " · " + fechaDia(a.fecha).toLocaleDateString("es-ES", { day: "numeric", month: "long" }) : ""), t: a.titulo, s: a.acuerdos ? (a.acuerdos.split("\n").filter(l => l.trim()).length + " acuerdo(s)") : resumenPlano(a.resumen, 90), h: "#actas" })),
+    ...D.docs.map(d => ({ reg: "documentos:" + d.id, cs: "descripcion", f: d.fecha, k: "doc", que: "Documento · " + tipoArchivo(d.tipo_archivo, d.nombre_archivo).txt, t: d.titulo, s: d.descripcion || "", url: d.url, id: d.id })),
+    ...D.publicaciones.map(x => { const ap = D.apartados.find(y => y.id === x.apartado_id); return ap && { reg: "publicaciones:" + x.id, cs: (x.adjuntos || []).length ? "" : "contenido", rs: 90, f: x.creado, k: "pub", ic: ap.icono, foto: (x.adjuntos || []).find(esImagen), que: ap.titulo, t: x.titulo, s: (x.adjuntos || []).length ? (x.adjuntos.length + " archivo(s)") : resumenPlano(x.contenido, 90), h: "#ap-" + ap.slug }; }).filter(Boolean),
+    ...D.convenio.filter(c => ahora - new Date(c.actualizado) < 30 * DIA).map(c => ({ reg: "convenio_secciones:" + c.id, cs: "resumen", f: c.actualizado, k: "conv", que: "Convenio · actualizado", t: c.titulo, s: c.resumen || "", h: "#convenio" })),
+    ...D.preguntas.filter(q => ahora - new Date(q.creado) < 30 * DIA).map(q => ({ reg: "preguntas:" + q.id, ct: "pregunta", f: q.creado, k: "preg", que: "Pregunta frecuente", t: q.pregunta, s: "", h: "#preguntas" })),
   ].filter(x => x.f).sort((a, b) => new Date(b.f) - new Date(a.f));
   const nNuevas = items.filter(x => esDesdeUltima(x.f)).length + (urg && esDesdeUltima(urg.fecha) ? 1 : 0);
   $("inicio-novedades").innerHTML = nNuevas
@@ -286,20 +287,21 @@ function pintaInicio() {
   // Lo último
   const max = estado.feedMax || 20;
   const grupo = (f) => { const d = (ahora - new Date(f)) / DIA; return d < 1 && partesFecha(f).iso === hoy ? "Hoy" : d < 7 ? "Esta semana" : d < 31 ? "Este mes" : "Antes"; };
-  let html = `<h2 class="tit-seccion">Lo último${nNuevas ? ` <span>${nNuevas} sin ver</span>` : ""}</h2>`, g = null;
+  let html = `<h2 class="tit-seccion">Lo último${nNuevas ? ` <span>${nNuevas} sin ver</span>` : ""}${items.length ? botonTraducir("lista") : ""}</h2>`, g = null;
   items.slice(0, max).forEach(x => {
     const gr = grupo(x.f);
     if (gr !== g) { html += `<h3 class="grupo-tablon">${gr}</h3>`; g = gr; }
     const [icDef, cl] = ICONOS[x.k], ic = x.ic || icDef;
     const attrs = x.url ? `href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener" data-abre="documentos:${x.id}"` : `href="${x.h}"${x.dia ? ` data-dia="${x.dia}"` : ""}`;
-    html += `<a class="item-tablon ${esDesdeUltima(x.f) ? "es-nuevo" : ""}" ${attrs}>
+    html += `<a class="item-tablon ${esDesdeUltima(x.f) ? "es-nuevo" : ""}" ${attrs} data-reg="${x.reg}">
       ${x.foto ? `<span class="ic foto"><img src="${esc(urlSegura(x.foto.url))}" alt="" loading="lazy"></span>` : `<span class="ic ${cl}">${icono(ic, "p")}</span>`}
       <span class="txt"><small>${esDesdeUltima(x.f) ? '<span class="marca-nuevo">Nuevo</span>' : ""}<span>${esc(x.que)} · ${haceTxt(x.f)}</span></small>
-        <b>${esc(x.t || "Sin título")}</b>${x.s ? `<span class="res">${esc(x.s)}</span>` : ""}${x.adj ? `<span class="res adj">${icono("clip", "p")} ${x.adj} archivo(s)</span>` : ""}</span>
+        <b data-campo="${x.ct || "titulo"}" data-plano>${esc(x.t || "Sin título")}</b>${x.s ? `<span class="res"${x.cs ? ` data-campo="${x.cs}" ${x.rs ? `data-resumen="${x.rs}"` : "data-plano"}` : ""}>${esc(x.s)}</span>` : ""}${x.adj ? `<span class="res adj">${icono("clip", "p")} ${x.adj} archivo(s)</span>` : ""}</span>
     </a>`;
   });
   if (items.length > max) html += `<button class="btn sec ver-mas" id="ver-mas">Ver más</button>`;
   $("inicio-feed").innerHTML = items.length ? html : html + vacio("avisos", "Todavía no hay nada publicado.");
+  $("inicio-feed").setAttribute("data-reg-lista", ""); reaplicaIdioma($("inicio-feed"), "feed");
   if ($("ver-mas")) $("ver-mas").onclick = () => { estado.feedMax = max + 20; pintaInicio(); };
   if (aparece) $("inicio-feed").querySelectorAll(".item-tablon").forEach(el => { if (el.getBoundingClientRect().top > innerHeight) { el.classList.add("por-ver"); aparece.observe(el); } });
   // Accesos
@@ -956,6 +958,22 @@ function consentimientoAvisos() {
     v.querySelector("#cons-avisos").focus();
   });
 }
+// Idioma que elige el trabajador para «Mis descansos» y para los avisos al móvil (v58). Se guarda en el móvil
+// («ccoo-mi-idioma») y, si tiene los avisos activados, también junto a su suscripción (RPC idioma_push): así la
+// función «notificar» le manda cada aviso traducido.
+window.miIdioma = () => { try { const v = localStorage.getItem("ccoo-mi-idioma") || ""; return IDIOMAS[v] ? v : ""; } catch (_) { return ""; } };
+window.ponMiIdioma = (idi) => {
+  idi = IDIOMAS[idi] ? idi : "";
+  try { idi ? localStorage.setItem("ccoo-mi-idioma", idi) : localStorage.removeItem("ccoo-mi-idioma"); } catch (_) {}
+  sincronizaIdiomaPush(); dispatchEvent(new Event("mi-idioma"));
+};
+function sincronizaIdiomaPush() {
+  let ep = ""; try { ep = localStorage.getItem("ccoo-push") || ""; } catch (_) {}
+  if (ep) sb.rpc("idioma_push", { p_endpoint: ep, p_idioma: miIdioma() || null }).then(() => {}, () => {});
+}
+const opcionesIdioma = () => `<option value="">Español</option>` + Object.entries(IDIOMAS).map(([k, n]) => `<option value="${k}" ${k === miIdioma() ? "selected" : ""}>${esc(n)}</option>`).join("");
+const selectIdiomaAvisos = (id) => `<label class="idioma-avisos">${icono("idioma", "p")}<span>Idioma de los avisos</span><select id="${id}" aria-label="Idioma de los avisos (Language)">${opcionesIdioma()}</select></label>`;
+addEventListener("change", (ev) => { if (ev.target.closest?.(".idioma-avisos select")) ponMiIdioma(ev.target.value); });
 const b64aBytes = (b) => { const p = "=".repeat((4 - b.length % 4) % 4), s = atob((b + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from([...s].map(c => c.charCodeAt(0))); };
 async function activarAvisos() {
   if (ES_IOS && !INSTALADA()) return modal("Primero, instala la app", "<p>En iPhone, los avisos solo funcionan si la app está instalada.</p><ol><li>Pulsa <b>Compartir</b> en Safari.</li><li>Elige <b>«Añadir a pantalla de inicio»</b>.</li><li>Abre la app desde el icono y pulsa otra vez <b>Activar avisos</b>.</li></ol>");
@@ -988,7 +1006,7 @@ async function activarAvisos() {
     const j = sub.toJSON();
     const { error } = await sb.rpc("suscribir_push", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
     if (error) throw error;
-    guardarEndpoint(j.endpoint);
+    guardarEndpoint(j.endpoint); sincronizaIdiomaPush();
     suscrito = true; pintaBanda();
     avisar("Avisos activados en este móvil", "inicio");
   } catch (e) { modal("No se han podido guardar los avisos", `<p>Comprueba la conexión y vuelve a intentarlo.</p><p class="fecha-txt">${esc(e.message || e)}</p>`); }
@@ -1011,7 +1029,7 @@ async function comprobarSuscripcion() {
   if (!PUSH_OK || Notification.permission !== "granted") return;
   const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
   suscrito = !!sub;
-  if (sub) { const j = sub.toJSON(); sb.rpc("suscribir_push", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth }).then(() => {}, () => {}); guardarEndpoint(j.endpoint); } // por si se borró
+  if (sub) { const j = sub.toJSON(); guardarEndpoint(j.endpoint); sb.rpc("suscribir_push", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth }).then(() => sincronizaIdiomaPush(), () => {}); } // por si se borró
   pintaBanda();
 }
 function pintaBanda() {
@@ -1030,16 +1048,17 @@ function pintaBanda() {
   $("banda-app").innerHTML = banda;
   // En «Nosotros», el estado completo
   $("banda-app-info").innerHTML = `<div class="panel banda ${suscrito ? "avisos-on" : ""}"><span class="ic">${icono(suscrito ? "check" : "campana")}</span>
-      <div class="txt"><b>${suscrito ? "Avisos activados en este móvil" : "Avisos en el móvil"}</b><p>${suscrito ? "Te llegará una notificación con cada novedad." : "Actívalos para enterarte al momento de cada aviso."}</p></div>
+      <div class="txt"><b>${suscrito ? "Avisos activados en este móvil" : "Avisos en el móvil"}</b><p>${suscrito ? "Te llegará una notificación con cada novedad." : "Actívalos para enterarte al momento de cada aviso."}</p>${suscrito ? selectIdiomaAvisos("info-idioma") : ""}</div>
       <div class="botones">${suscrito ? `<button class="btn sec peq" data-acc="desactivar">Desactivar</button>` : `<button class="btn peq" data-acc="${iosSinInstalar ? "instalar" : "activar"}">${iosSinInstalar ? "Instalar la app" : "Activar avisos"}</button>`}${inst ? "" : ` <button class="btn sec peq" data-acc="instalar">Instalar</button>`}</div></div>`;
   document.querySelectorAll("[data-acc]").forEach(b => b.onclick = () => ({
     instalar, activar: activarAvisos, desactivar: desactivarAvisos,
-    estado: () => modal("Avisos activados", `<p>Este móvil recibe una notificación con cada aviso, acta, documento o fecha nueva.</p>`,
+    estado: () => modal("Avisos activados", `<p>Este móvil recibe una notificación con cada aviso, acta, documento o fecha nueva.</p>${selectIdiomaAvisos("m-idioma")}<p class="fecha-txt">Si eliges otro idioma, los avisos te llegan traducidos automáticamente.</p>`,
       `<button class="enlace-desact" id="m-desact">Desactivar los avisos en este móvil</button>`,
       `<span class="modal-ic ok">${icono("check")}</span>`) || setTimeout(() => { const d = document.getElementById("m-desact"); if (d) d.onclick = () => { document.querySelector(".modal-velo")?.remove(); desactivarAvisos(); }; }, 0),
   })[b.dataset.acc]());
 }
 $("cab-instalar").onclick = instalar;
+addEventListener("mi-idioma", () => document.querySelectorAll(".idioma-avisos select").forEach(s => { s.value = miIdioma(); }));
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").then(r => { r.update(); return comprobarSuscripcion(); }).catch(() => {});
 pintaBanda();
 
@@ -1074,38 +1093,46 @@ function colocaMenuIdiomas(menu, btn) {
   const hueco = btn.getBoundingClientRect().top - cab - 12;
   menu.style.maxHeight = Math.max(120, Math.floor(hueco)) + "px";
 }
+// Menú de idiomas. La lista sale con el último idioma elegido el primero.
+function menuIdiomas(caja, btn) {
+  let ult = ""; try { ult = localStorage.getItem("ccoo-ultimo-idioma") || ""; } catch (_) {}
+  const lista = Object.entries(IDIOMAS).sort((x, y) => (y[0] === ult) - (x[0] === ult));
+  caja.insertAdjacentHTML("beforeend", `<div class="menu-idiomas" role="menu">${lista.map(([k, n]) => `<button role="menuitem" data-idioma="${k}" class="${k === ult ? "activo" : ""}" ${k === "ar" ? 'dir="rtl"' : ""}>${n}</button>`).join("")}</div>`);
+  colocaMenuIdiomas(caja.querySelector(".menu-idiomas"), btn);
+}
 document.addEventListener("click", async (ev) => {
   const btn = ev.target.closest("[data-traducir]");
   const opc = ev.target.closest("[data-idioma]");
   document.querySelectorAll(".menu-idiomas").forEach(m => { if (!m.contains(ev.target)) m.remove(); });
   if (btn) {
-    ev.preventDefault();
-    const caja = btn.parentElement, reg = btn.closest("[data-reg]");
-    if (reg.dataset.idiomaActual) { // volver al original
-      reg.querySelectorAll("[data-campo]").forEach(el => { el.innerHTML = el.dataset.original; el.removeAttribute("dir"); delete el.dataset.original; });
-      delete reg.dataset.idiomaActual; btn.innerHTML = icono("idioma", "p") + "Traducir"; return;
+    ev.preventDefault(); ev.stopPropagation();
+    const caja = btn.parentElement;
+    if (btn.dataset.traducir === "lista") { // bloque entero (Inicio)
+      const cont = btn.closest("[data-reg-lista]");
+      if (cont.dataset.idiomaLista) { originalLista(cont); return; }
+    } else {
+      const reg = btn.closest("[data-reg]");
+      if (reg.dataset.idiomaActual) { originalReg(reg); return; } // volver al original
     }
-    if (caja.querySelector(".menu-idiomas")) return;
-    let ult = ""; try { ult = localStorage.getItem("ccoo-ultimo-idioma") || ""; } catch (_) {}
-    const lista = Object.entries(IDIOMAS).sort((x, y) => (y[0] === ult) - (x[0] === ult));
-    caja.insertAdjacentHTML("beforeend", `<div class="menu-idiomas" role="menu">${lista.map(([k, n]) => `<button role="menuitem" data-idioma="${k}" class="${k === ult ? "activo" : ""}" ${k === "ar" ? 'dir="rtl"' : ""}>${n}</button>`).join("")}</div>`);
-    colocaMenuIdiomas(caja.querySelector(".menu-idiomas"), btn);
+    if (!caja.querySelector(".menu-idiomas")) menuIdiomas(caja, btn);
     return;
   }
-  if (opc && opc.closest("[data-reg]")) {
-    ev.preventDefault();
-    const reg = opc.closest("[data-reg]"), idioma = opc.dataset.idioma;
+  if (opc && opc.closest(".traducir")) {
+    ev.preventDefault(); ev.stopPropagation();
+    const idioma = opc.dataset.idioma, boton = opc.closest(".traducir").querySelector("[data-traducir]");
     opc.closest(".menu-idiomas").remove();
     try { localStorage.setItem("ccoo-ultimo-idioma", idioma); } catch (_) {}
-    try { await traduceReg(reg, idioma); if (reg.tagName === "DETAILS") reg.open = true; }
-    catch (e) { avisar(e.message, location.hash.slice(1) || "inicio"); }
+    try {
+      if (boton.dataset.traducir === "lista") await traduceLista(boton.closest("[data-reg-lista]"), idioma);
+      else { const reg = boton.closest("[data-reg]"); await traduceReg(reg, idioma); if (reg.tagName === "DETAILS") reg.open = true; }
+    } catch (e) { avisar(e.message, location.hash.slice(1) || "inicio"); }
   }
-});
+}, true);
 // Traduce una tarjeta (aviso, acta, convenio, duda, publicación) con la función «traducir» (Gemini, guarda cada traducción
 // en el servidor). Aquí también se recuerda lo ya traducido mientras la web está abierta, para no volver a pedirlo al repintar.
 const TRADUCIDO = new Map();
 async function traduceReg(reg, idioma) {
-  const [tabla, id] = reg.dataset.reg.split(":"), clave = reg.dataset.reg + ":" + idioma, boton = reg.querySelector("[data-traducir]");
+  const [tabla, id] = reg.dataset.reg.split(":"), clave = reg.dataset.reg + ":" + idioma, boton = reg.querySelector("[data-traducir='']");
   if (reg.dataset.idiomaActual === idioma) return;
   if (boton) { boton.innerHTML = icono("idioma", "p") + "Traduciendo…"; boton.disabled = true; }
   try {
@@ -1119,13 +1146,40 @@ async function traduceReg(reg, idioma) {
     reg.querySelectorAll("[data-campo]").forEach(el => {
       const t = texto[el.dataset.campo]; if (t == null) return;
       if (el.dataset.original == null) el.dataset.original = el.innerHTML;
-      el.innerHTML = (el.tagName === "H3" || el.hasAttribute("data-plano")) ? esc(t) : textoHTML(t);
+      el.innerHTML = el.dataset.resumen ? esc(resumenPlano(t, +el.dataset.resumen)) : (el.tagName === "H3" || el.hasAttribute("data-plano")) ? esc(t) : textoHTML(t);
       if (idioma === "ar") el.setAttribute("dir", "rtl"); else el.removeAttribute("dir");
     });
     reg.dataset.idiomaActual = idioma;
     if (boton) boton.innerHTML = icono("idioma", "p") + "Ver en español";
   } catch (e) { if (boton) boton.innerHTML = icono("idioma", "p") + "Traducir"; throw e; }
   finally { if (boton) boton.disabled = false; }
+}
+const originalReg = (reg) => {
+  reg.querySelectorAll("[data-campo]").forEach(el => { if (el.dataset.original != null) { el.innerHTML = el.dataset.original; delete el.dataset.original; } el.removeAttribute("dir"); });
+  delete reg.dataset.idiomaActual; const b = reg.querySelector("[data-traducir='']"); if (b) b.innerHTML = icono("idioma", "p") + "Traducir";
+};
+// Bloques de Inicio (el rótulo y «Lo último»): un solo botón traduce todo lo de dentro, de dos en dos.
+// El idioma se recuerda mientras la web está abierta para volver a aplicarlo al repintar (datos nuevos, «Ver más»).
+const IDIOMA_LISTA = {};
+async function traduceLista(cont, idioma) {
+  if (!cont) return;
+  const boton = cont.querySelector("[data-traducir='lista']"), regs = [...cont.querySelectorAll("[data-reg]")];
+  cont.dataset.idiomaLista = idioma; if (cont.dataset.lista) IDIOMA_LISTA[cont.dataset.lista] = idioma;
+  if (boton) { boton.innerHTML = icono("idioma", "p") + "Traduciendo…"; boton.disabled = true; }
+  let fallos = 0, i = 0;
+  const sigue = async () => { while (i < regs.length) { const r = regs[i++]; if (cont.dataset.idiomaLista !== idioma) return; try { await traduceReg(r, idioma); } catch (_) { fallos++; } } };
+  await Promise.all([sigue(), sigue()]);
+  if (boton) { boton.disabled = false; boton.innerHTML = icono("idioma", "p") + "Ver en español"; }
+  if (fallos && fallos === regs.length) { originalLista(cont); throw new Error("No se ha podido traducir ahora mismo. Prueba más tarde."); }
+}
+function originalLista(cont) {
+  delete cont.dataset.idiomaLista; if (cont.dataset.lista) delete IDIOMA_LISTA[cont.dataset.lista];
+  cont.querySelectorAll("[data-reg]").forEach(originalReg);
+  const b = cont.querySelector("[data-traducir='lista']"); if (b) b.innerHTML = icono("idioma", "p") + "Traducir";
+}
+function reaplicaIdioma(cont, nombre) {
+  if (!cont) return; cont.dataset.lista = nombre;
+  if (IDIOMA_LISTA[nombre]) traduceLista(cont, IDIOMA_LISTA[nombre]).catch(() => {});
 }
 
 // v56: se quitó el botón de idioma de toda la web (cortaba «Calsina Carré» en la cabecera y traducir todo iba lento).

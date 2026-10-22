@@ -81,18 +81,19 @@ window.tarjetaAviso = (a, { corto = false, nuevo = false, resaltar = "" } = {}) 
 // Hora de un evento en texto: "Todo el día" si va de 00:00 a 23:59 (festivos)
 window.esTodoElDia = (e) => !!e.hora && e.hora.slice(0, 5) === "00:00" && (!e.hora_fin || e.hora_fin.slice(0, 5) >= "23:59");
 window.horaEvento = (e) => !e.hora ? "" : esTodoElDia(e) ? "Todo el día" : e.hora.slice(0, 5) + (e.hora_fin ? "–" + e.hora_fin.slice(0, 5) : "");
-window.eventoHTML = (e, conCartel) => `<div class="evento">
+window.eventoHTML = (e, conCartel) => `<div class="evento" data-reg="eventos:${e.id}">
   ${conCartel ? cartel(e.fecha, e.tipo, "evento") : ""}
   <div><span class="etq tipo ${claseTipo(e.tipo, "evento")}">${esc(e.tipo)}</span>
-    <h4>${esc(e.titulo || "Sin título")}</h4>
+    <h4 data-campo="titulo" data-plano>${esc(e.titulo || "Sin título")}</h4>
     <div class="info">
       ${e.hora ? `<span>${icono("reloj", "p")}${esc(horaEvento(e))}</span>` : ""}
-      ${e.lugar ? `<span>${icono("lugar", "p")}${esc(e.lugar)}</span>` : ""}
+      ${e.lugar ? `<span>${icono("lugar", "p")}<span data-campo="lugar" data-plano>${esc(e.lugar)}</span></span>` : ""}
     </div>
-    ${e.descripcion ? `<div>${textoHTML(e.descripcion)}</div>` : ""}
+    ${e.descripcion ? `<div data-campo="descripcion">${textoHTML(e.descripcion)}</div>` : ""}
     <div class="acciones-tarjeta acciones-evento">
       <button class="accion" data-ics="${e.id}">${icono("calendario", "p")}Añadir a mi calendario <small>(te avisa el día antes)</small></button>
       <a class="accion wa" href="${enlaceWhatsApp(textoCompartir(e.titulo, fechaDia(e.fecha).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }) + (e.hora ? ", " + horaEvento(e).toLowerCase() : "") + (e.lugar ? " · " + e.lugar : ""), "calendario"))}" target="_blank" rel="noopener">${icono("whatsapp", "p")}WhatsApp</a>
+      ${botonTraducir()}
     </div></div></div>`;
 
 // ---------- Convenio ----------
@@ -179,7 +180,8 @@ window.IDIOMAS = { ca: "Català", en: "English", ro: "Română", ar: "العرب
 // WhatsApp y Compartir (lo que sea: aviso, acta, publicación). «Compartir» usa el menú del móvil (app.js, data-compartir).
 window.botonesCompartir = (tipo, id, titulo, cuerpo, ancla) => `<a class="accion wa" href="${enlaceWhatsApp(textoCompartir(titulo, cuerpo || "", ancla))}" target="_blank" rel="noopener">${icono("whatsapp", "p")}WhatsApp</a>
   <button class="accion" data-compartir="${tipo}" data-id="${id}">${icono("compartir", "p")}Compartir</button>`;
-window.botonTraducir = () => `<span class="traducir"><button class="accion" data-traducir aria-haspopup="true">${icono("idioma", "p")}Traducir</button></span>`;
+// tipo "lista": traduce de una vez todo lo que hay dentro del bloque [data-reg-lista] (Inicio)
+window.botonTraducir = (tipo) => `<span class="traducir"><button class="accion" type="button" data-traducir="${tipo || ""}" aria-haspopup="true">${icono("idioma", "p")}Traducir</button></span>`;
 
 // ---------- Fechas para buscar ----------
 const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
