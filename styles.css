@@ -1260,28 +1260,36 @@ body.con-aviso-priv .arriba-btn { --alto-aviso-on: var(--alto-aviso, 0px); }
 :root .cab-tablon a.btn-tab { color: #fff; } /* que el buscador de la cabecera no coja el color de los enlaces en oscuro */
 :root:root a.buscar-portada { color: var(--suave); } /* el atajo al buscador se ve como un campo, no como un enlace */
 
-/* v45: «Próxima cita» como hoja de ruta: el camión del logo por la carretera hacia la parada de la cita (como «Próximas paradas») */
+/* v45: «Próxima cita» como en la carretera: panel luminoso de autopista con el título (letras blancas de puntos y luces
+   rojas que parpadean en las esquinas) y un poste con dos señales en el rojo del logo: lugar + días que faltan, y día y hora */
 .rotulo.cita { gap: 0; }
-.cita-cab { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; }
-.cita-falta { font-size: .95rem; color: #c9ced4; white-space: nowrap; }
-.cita-falta b { font-family: var(--cond); font-size: 1.35rem; color: #fff; text-transform: uppercase; letter-spacing: .02em; }
-.cita-tit { font-family: var(--cond); font-weight: 700; font-size: 2rem; line-height: 1.02; text-transform: uppercase; letter-spacing: .01em; color: #fff; margin: 10px 0 8px; overflow-wrap: anywhere; }
-.cita-datos { display: flex; flex-wrap: wrap; gap: 6px 16px; color: #dfe3e8; font-size: 1rem; }
-.cita-datos > span { display: inline-flex; gap: 6px; align-items: center; }
-.cita-datos .icono { color: #fff; opacity: .75; }
-.cita-via { position: relative; display: flex; align-items: center; width: 100%; margin-top: 16px; }
-.cita-asfalto { position: relative; flex: 1; height: 30px; margin-right: -6px; background: #2c333c; border-radius: 6px 0 0 6px; }
-.cita-asfalto::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px;
-  background: repeating-linear-gradient(90deg, rgba(255,255,255,.75) 0 12px, transparent 12px 22px); }
-.cita-camion { position: absolute; bottom: 6px; left: calc((100% - 66px) * var(--avance)); width: 66px; height: auto; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
-.cita-parada { position: relative; z-index: 1; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 58px; height: 58px;
-  border-radius: 50%; background: #fff; border: 6px solid var(--rojo); color: var(--asfalto); font-family: var(--cond); font-weight: 700; line-height: .9; text-transform: uppercase; }
-.cita-parada b { font-size: 1.45rem; }
-.cita-parada small { font-size: .78rem; letter-spacing: .06em; }
-#v-inicio.anima .cita-camion { animation: cita-arranca 1.4s .2s cubic-bezier(.3, .6, .25, 1) both; }
-@keyframes cita-arranca { from { left: 0; } }
-@media (prefers-reduced-motion: reduce) { #v-inicio.anima .cita-camion { animation: none; } }
-html[data-letra] .cita-tit { font-size: 1.8rem; }
+.cita-et { font-size: .78rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #aeb4bc; margin-bottom: 12px; }
+.cita-panel { position: relative; display: block; width: 100%; margin-bottom: 14px; padding: 16px 14px 14px; background: #000; border: 4px solid #2a2f36; border-radius: 6px;
+  box-shadow: inset 0 0 0 2px #0d0f12, 0 3px 0 #1b1f24; }
+.cita-panel::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle, transparent 1.1px, rgba(0, 0, 0, .72) 1.5px) 0 0 / 3px 3px; }
+.cita-panel b { display: block; font-family: var(--cond); font-weight: 700; font-size: 1.95rem; line-height: 1.05; letter-spacing: .07em; text-transform: uppercase; text-align: center;
+  color: #fff6ea; text-shadow: 0 0 6px rgba(255, 240, 220, .55), 0 0 14px rgba(255, 240, 220, .55); overflow-wrap: anywhere; }
+.cita-luz { position: absolute; z-index: 1; top: 5px; left: 6px; width: 9px; height: 9px; border-radius: 50%; background: #3a0a0b; animation: cita-luz 1s steps(1) infinite; }
+.cita-luz + .cita-luz { left: auto; right: 6px; animation-delay: .5s; }
+@keyframes cita-luz { 50% { background: #ff2a2a; box-shadow: 0 0 8px 2px rgba(255, 40, 40, .8); } }
+.cita-poste { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: 100%; padding: 0 0 22px 14px; }
+.cita-poste::before { content: ""; position: absolute; left: 4px; top: 0; bottom: 0; width: 9px; border-radius: 3px 3px 0 0; background: linear-gradient(90deg, #8a929c, #d3d8de 45%, #7a828c); }
+.cita-poste::after { content: ""; position: absolute; left: -8px; bottom: 0; width: 34px; height: 5px; border-radius: 3px; background: #2c333c; }
+.cita-placa { position: relative; width: 100%; max-width: 100%; background: #fff; padding: 3px; clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 50%, calc(100% - 22px) 100%, 0 100%); }
+.cita-placa > span { display: flex; align-items: center; gap: 10px; background: var(--rojo); color: #fff; font-family: var(--cond); font-weight: 700; font-size: 1.2rem; text-transform: uppercase; letter-spacing: .03em;
+  padding: 6px 34px 5px 12px; clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0 100%); }
+.cita-placa b { margin-left: auto; padding-left: 14px; font-size: 1.45rem; white-space: nowrap; }
+.cita-placa b small { font-size: .95rem; margin-left: 3px; }
+.cita-placa.hora { width: auto; background: var(--rojo); }
+.cita-placa.hora > span { background: var(--asfalto); font-size: 1.05rem; letter-spacing: .05em; }
+.cita-placa .icono { flex: none; width: 18px; height: 18px; }
+/* Al entrar en Inicio, las señales salen del poste una detrás de otra */
+#v-inicio.anima .cita-placa { animation: cita-placa .5s cubic-bezier(.3, 1.3, .5, 1) both; transform-origin: left center; }
+#v-inicio.anima .cita-placa.hora { animation-delay: .2s; }
+@keyframes cita-placa { from { transform: scaleX(0); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .cita-luz, #v-inicio.anima .cita-placa { animation: none; } .cita-luz:first-child { background: #ff2a2a; } }
+html[data-contraste="alto"] .cita-panel::after { display: none; }
+html[data-contraste="alto"] .cita-panel b { text-shadow: none; color: #fff; }
 
 /* Armonía sobre negro: cifras y fechas en blanco, el rojo del logo para los acentos (el rojo encendido queda para lo urgente) */
 .t-dia, .resultado-calc .rc-num, .ca-bloque b, .ca-ahora { color: #fff; }
@@ -1297,3 +1305,4 @@ html[data-letra] .cita-tit { font-size: 1.8rem; }
 :root[data-theme="dark"] .documento > .ic { background: var(--rojo); color: #fff; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) :is(.conv-intro, .instalar-panel, .banda:not(.avisos-on), .enlace-util, .enlace-faq, .doc, .adjunto, .acceso) .ic,
   :root:not([data-theme="light"]) .documento > .ic { background: var(--rojo); color: #fff; } }
+@media (min-width: 700px) { .cita-placa:not(.hora) { width: min(100%, 520px); } }
