@@ -80,7 +80,7 @@
 
 <header class="cab-tablon">
   <div class="cab-fila">
-    <img src="logo.png" alt="Logo de la Sección Sindical CCOO Calsina Carré">
+    <img class="cab-logo" id="cab-logo" src="logo.png" alt="Logo de la Sección Sindical CCOO Calsina Carré">
     <div class="cab-titulo">
       <span class="nombre">CCOO Calsina Carré</span>
       <span class="sub">Sección Sindical</span>
@@ -107,6 +107,7 @@
   <button class="pest-flecha der" type="button" aria-label="Ver más secciones" hidden><span data-i="der"></span></button>
   </div>
   <div class="banda-novedad oculto" id="banda-novedad" role="status" aria-live="polite"></div>
+  <div class="sin-red oculto" id="sin-red" role="status" aria-live="polite"><span class="sr-camion" aria-hidden="true"><img src="camion.webp" alt="" width="70" height="36"><i></i></span><span class="txt"></span></div>
   <div class="tirar" id="tirar" aria-live="polite"><span class="tirar-camion" aria-hidden="true"><img src="camion.webp" alt="" width="70" height="36"><i></i></span><span class="txt"></span></div>
 </header>
 
@@ -317,6 +318,7 @@
   <button class="btn" type="button" id="aviso-privacidad-ok">Entendido</button>
 </div>
 <div class="barra-acciones" id="barra-acciones"></div>
+<button class="arriba-btn" id="arriba" type="button" aria-label="Volver arriba" title="Volver arriba"><span data-i="arriba"></span><img src="camion.webp" alt="" width="70" height="36"></button>
 
 <script src="lib/supabase.js?v=42"></script>
 <script src="iconos.js?v=42"></script>

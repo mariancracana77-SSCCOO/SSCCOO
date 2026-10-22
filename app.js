@@ -174,7 +174,10 @@ function pintaInicio() {
   const prox = D.eventos.filter(e => e.fecha >= hoy).sort((a, b) => (a.fecha + (a.hora || "")).localeCompare(b.fecha + (b.hora || "")));
   // Rótulo: lo urgente; si no hay, la próxima cita; si no, «todo en orden»
   let rot;
+  // Lo urgente lleva además una tira como los paneles luminosos de las autopistas (texto de puntos ámbar que pasa)
+  const led = "AVISO URGENTE · " + String(urg?.titulo || "").toUpperCase() + " · ";
   if (urg) rot = `<a class="rotulo es-urgente" href="#aviso-${urg.id}"><span class="rot-tipo urgente">${icono("alerta", "p")}Urgente</span>
+      <span class="rot-led" aria-hidden="true"><span class="rot-led-txt" style="animation-duration:${Math.max(8, Math.round(led.length * .28))}s"><span>${esc(led)}</span><span>${esc(led)}</span></span></span>
       <span class="rot-l1">${esc(urg.titulo)}</span><span class="rot-l2">${esc(resumenPlano(urg.contenido, 110))}</span>
       <span class="rot-ir">Ver el aviso completo${icono("der", "p")}</span></a>`;
   else if (prox[0]) { const e = prox[0];
@@ -201,7 +204,8 @@ function pintaInicio() {
   if ($("ir-ultimo")) $("ir-ultimo").onclick = () => $("lo-ultimo").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
   // Próximas paradas
   $("inicio-paradas").innerHTML = `<h2 class="tit-seccion">Próximas paradas <a href="#calendario">Ver todas</a></h2>` + (prox.length
-    ? `<ol class="ruta">${prox.slice(0, 3).map(e => `<li class="${e.fecha === hoy ? "hoy" : ""}"><a href="#calendario" data-dia="${e.fecha}">
+    ? `<ol class="ruta"><li class="ruta-hoy"><span class="ruta-camion" aria-hidden="true"><img src="camion.webp" alt="" width="70" height="36"></span>
+        <span class="cuando">Estás aquí · ${esc(new Date().toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" }))}</span></li>${prox.slice(0, 3).map(e => `<li class="${e.fecha === hoy ? "hoy" : ""}"><a href="#calendario" data-dia="${e.fecha}">
         <span class="cuando">${esc(cuandoEvento(e))}</span><b>${esc(e.titulo)}</b>${e.lugar ? `<small>${icono("lugar", "p")}${esc(e.lugar)}</small>` : ""}</a></li>`).join("")}</ol>`
     : `<p class="ruta-vacia">No hay fechas próximas.</p>`);
   // Lo último
@@ -222,6 +226,7 @@ function pintaInicio() {
   if (items.length > max) html += `<button class="btn sec ver-mas" id="ver-mas">Ver más</button>`;
   $("inicio-feed").innerHTML = items.length ? html : html + vacio("avisos", "Todavía no hay nada publicado.");
   if ($("ver-mas")) $("ver-mas").onclick = () => { estado.feedMax = max + 20; pintaInicio(); };
+  if (aparece) $("inicio-feed").querySelectorAll(".item-tablon").forEach(el => { if (el.getBoundingClientRect().top > innerHeight) { el.classList.add("por-ver"); aparece.observe(el); } });
   // Accesos
   const acc = [["avisos", "avisos", "Avisos"], ...D.apartados.map(a => ["ap-" + a.slug, a.icono || "carpeta", a.titulo]), ["convenio", "convenio", "Convenio"], ["calcula", "reloj", "Calcula"], ["calendario", "calendario", "Calendario"], ["actas", "actas", "Actas"], ["documentos", "carpeta", "Documentos"], ["preguntas", "pregunta", "Dudas"]];
   $("inicio-accesos").innerHTML = `<h2 class="tit-seccion">Ir a</h2><nav class="accesos-tablon" aria-label="Accesos rápidos">${acc.map(([v, ic, t]) =>
@@ -255,6 +260,9 @@ function pintaCuentaAtras(enRotulo) {
   pintaCuentaAtras.t = setInterval(() => pintaCuentaAtras(enRotulo), 60000);
 }
 
+const aparece = "IntersectionObserver" in window && !matchMedia("(prefers-reduced-motion: reduce)").matches
+  ? new IntersectionObserver((l) => l.forEach(en => { if (en.isIntersecting) { en.target.classList.replace("por-ver", "aparece"); aparece.unobserve(en.target); } }), { rootMargin: "0px 0px -40px 0px" }) : null;
+
 // ---------- Encuestas anónimas (en la portada) ----------
 // Se guarda en este móvil qué se votó (para enseñar los resultados y no votar dos veces); al servidor solo va +1 a esa opción.
 const leeVotos = () => { try { return JSON.parse(localStorage.getItem("ccoo-votos") || "{}") || {}; } catch (_) { return {}; } };
@@ -272,6 +280,9 @@ $("inicio-encuesta").addEventListener("click", async (ev) => {
   const v = leeVotos(); v[id] = op; try { localStorage.setItem("ccoo-votos", JSON.stringify(v)); } catch (_) {}
   const t = (D.votos[id] = D.votos[id] || {}); t[op] = (+t[op] || 0) + 1;
   pintaEncuestas(id);
+  const nueva = document.querySelector(`.encuesta[data-enc="${id}"] h3`);
+  if (nueva) nueva.insertAdjacentHTML("afterend", `<p class="enc-gracias"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m7 12.5 3.2 3.2L17 9"/></svg>Gracias por participar</p>`);
+  try { navigator.vibrate?.(30); } catch (_) {}
 });
 
 // ---------- Animaciones de la portada ----------
@@ -597,10 +608,28 @@ function pintaInfo() {
   $("lista-enlaces").innerHTML = D.enlaces.map(enlaceHTML).join("");
 }
 
+// ---------- Copia de lo último cargado (para verlo sin cobertura) ----------
+// Solo contenido público de la web; se guarda en este móvil y se sustituye en cada carga correcta.
+function guardaCopia(r) { try { localStorage.setItem("ccoo-copia", JSON.stringify({ t: Date.now(), r: r.map(x => x.data || []) })); } catch (_) {} }
+function leeCopia() { try { const c = JSON.parse(localStorage.getItem("ccoo-copia") || "null"); return c && Array.isArray(c.r) && c.r.length === 17 ? c : null; } catch (_) { return null; } }
+function sinRed(on, desde) {
+  const b = $("sin-red"); if (!b) return;
+  if (on) {
+    const hace = desde ? haceTxt(new Date(desde).toISOString()) : "";
+    b.querySelector(".txt").innerHTML = `<b>Sin cobertura.</b> ${desde ? "Estás viendo lo que se cargó " + esc(hace) + "." : "Se cargará en cuanto vuelva la conexión."}`;
+    b.classList.remove("oculto", "arranca"); sinRed.on = true;
+  } else if (sinRed.on) {
+    sinRed.on = false; b.querySelector(".txt").innerHTML = "<b>Vuelve la conexión.</b> Actualizando…"; b.classList.add("arranca");
+    setTimeout(() => b.classList.add("oculto"), 1600);
+  }
+}
+addEventListener("offline", () => sinRed(true, leeCopia()?.t));
+addEventListener("online", () => { cargar().then(() => sinRed(false), () => {}); });
+
 // ---------- Carga de datos ----------
 async function cargar(idNuevo) {
   await cargarOpciones();
-  const [a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs, enc, vot] = await Promise.all([
+  let [a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs, enc, vot] = await Promise.all([
     sb.from("comunicados").select("*").order("fecha", { ascending: false }).limit(200),
     sb.from("eventos").select("*").order("fecha"),
     sb.from("convenio_secciones").select("*").order("orden").order("id"),
@@ -620,10 +649,17 @@ async function cargar(idNuevo) {
     sb.from("encuesta_votos").select("*"),
   ]);
   if (a.error) {
-    document.querySelectorAll("#inicio-rotulo, #lista-avisos").forEach(el =>
-      el.innerHTML = vacio("alerta", "No se ha podido conectar. Comprueba tu conexión a internet y vuelve a abrir la página."));
-    return;
-  }
+    // Sin cobertura: se enseña lo último que se cargó en este móvil (si lo hay) y se avisa con el camión aparcado
+    const copia = leeCopia();
+    sinRed(true, copia && copia.t);
+    if (!copia) {
+      document.querySelectorAll("#inicio-rotulo, #lista-avisos").forEach(el =>
+        el.innerHTML = vacio("alerta", "No se ha podido conectar. En cuanto vuelva la conexión se cargará sola."));
+      return;
+    }
+    if (cargar.listo) return; // ya hay datos en pantalla: se quedan
+    [a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs, enc, vot] = copia.r.map(x => ({ data: x, error: null }));
+  } else { guardaCopia([a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs, enc, vot]); sinRed(false); }
   // La web enseña solo lo publicado, también si en este móvil está abierta la sesión del panel
   // (el servidor a un administrador le da todo: avisos programados, publicaciones y apartados ocultos)
   const ahoraMs = Date.now();
@@ -730,6 +766,43 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) carg
     setTimeout(() => { quitar(); ocupado = false; }, 800);
   });
 })();
+
+// ---------- Deslizar a los lados para pasar de pestaña (móvil) ----------
+// No salta si el dedo empieza en algo que ya se desliza a los lados (pestañas, filtros, galerías…), en un campo de texto o con una ventana abierta.
+(function () {
+  if (!("ontouchstart" in window)) return;
+  let x0 = null, y0 = 0, t0 = 0;
+  const seDesliza = (el) => { for (; el && el !== document.body; el = el.parentElement) { const cs = getComputedStyle(el); if (/(auto|scroll)/.test(cs.overflowX) && el.scrollWidth > el.clientWidth + 2) return true; } return false; };
+  addEventListener("touchstart", (e) => {
+    const t = e.target;
+    x0 = (e.touches.length === 1 && !document.querySelector(".modal-velo") && !t.closest("input, textarea, select, .barra-acciones, .bienvenida") && !seDesliza(t)) ? e.touches[0].clientX : null;
+    y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  addEventListener("touchend", (e) => {
+    if (x0 == null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+    if (Math.abs(dx) < 80 || Math.abs(dx) < Math.abs(dy) * 2 || Date.now() - t0 > 700) return;
+    const orden = [...document.querySelectorAll(".pestanas-web a")].map(b => b.dataset.v), i = orden.indexOf(irA.antes);
+    const sig = orden[i + (dx < 0 ? 1 : -1)];
+    if (i >= 0 && sig) location.hash = sig;
+  }, { passive: true });
+})();
+
+// ---------- Volver arriba (en listas largas): el camión sube la pantalla ----------
+(function () {
+  const b = $("arriba"); if (!b) return;
+  addEventListener("scroll", () => b.classList.toggle("ver", scrollY > innerHeight * 1.5), { passive: true });
+  b.onclick = () => {
+    b.classList.add("sube"); setTimeout(() => b.classList.remove("sube", "ver"), 700);
+    scrollTo({ top: 0, behavior: QUIETO() ? "auto" : "smooth" });
+  };
+})();
+
+// ---------- El logo de la cabecera da una vuelta al tocarlo ----------
+$("cab-logo").addEventListener("click", () => {
+  if (QUIETO()) return; const l = $("cab-logo");
+  l.classList.remove("vuelta"); void l.offsetWidth; l.classList.add("vuelta");
+});
 
 // ---------- Instalar como app y activar avisos ----------
 const ES_IOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);

@@ -122,7 +122,13 @@ window.abrirLectura = () => {
     <div class="botones"><button class="btn" data-cerrar>Listo</button></div></div>`;
   v.onclick = (e) => {
     const b = e.target.closest("[data-g]");
-    if (b) { L[b.dataset.g] = b.dataset.v; try { localStorage.setItem("ccoo-lectura", JSON.stringify(L)); } catch (_) {} aplicarLectura();
+    if (b) { L[b.dataset.g] = b.dataset.v; try { localStorage.setItem("ccoo-lectura", JSON.stringify(L)); } catch (_) {}
+      // Al cambiar los colores, el nuevo se extiende en círculo desde el botón (si el navegador lo permite y no se ha pedido reducir movimiento)
+      if (b.dataset.g === "tema" && document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        const r = b.getBoundingClientRect(), h = document.documentElement;
+        h.style.setProperty("--vt-x", (r.left + r.width / 2) + "px"); h.style.setProperty("--vt-y", (r.top + r.height / 2) + "px");
+        document.startViewTransition(() => aplicarLectura());
+      } else aplicarLectura();
       v.querySelectorAll(`[data-g="${b.dataset.g}"]`).forEach(x => x.classList.toggle("activa", x === b)); return; }
     if (e.target === v || e.target.closest("[data-cerrar]")) v.remove();
   };
