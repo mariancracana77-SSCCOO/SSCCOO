@@ -131,6 +131,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 33: fechas en rojo en modo noche
+- En modo noche, las fechas de «Próximas paradas» (por ejemplo «VIE 23 OCT»), los enlaces «Ver todas», los iconos de «Ir a» y otros detalles salían en rosa. Ahora son rojo vivo (#ff4d4d), que se sigue leyendo bien sobre el fondo oscuro.
+- Cambios: `styles.css` (y la versión en los HTML, `config.js` y `sw.js`).
+
 ## Versión 32: restricciones en otro idioma, con el traductor del móvil
 - El traductor de Google por enlace (v31) no funciona con algunas webs oficiales (la alemana, BALM, da «No se puede traducir esta página»). Ahora todos los botones abren la página oficial directamente (siempre al día) y, en las que no están en español, pone «Al abrirla, tu móvil te ofrece traducirla al español». El aviso de arriba explica cómo: en Android «Traducir» o los tres puntos y «Traducir»; en iPhone, «aA» y «Traducir».
 - Cambios: `render.js`, `app.js`, `admin.js`, `styles.css`.
