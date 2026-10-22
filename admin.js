@@ -25,7 +25,7 @@ const SECCIONES = {
       { k: "titulo", l: "Título", t: "text", req: true, ph: "Ej: Convocatoria de asamblea" },
       { k: "categoria", l: "Categoría", t: "select", lista: "aviso" },
       { k: "contenido", l: "Texto del aviso", t: "textarea", formato: true },
-      { k: "adjuntos", l: "Archivos adjuntos", t: "archivos", opc: true },
+      { k: "adjuntos", l: "Archivos adjuntos", t: "archivos", opc: true, ayuda: "Si añades una foto o un cartel, la primera foto sale en grande en el aviso y en «Lo último»." },
       { checks: [{ k: "urgente", l: "Urgente: sale en rojo y arriba del todo en Inicio" }, { k: "fijado", l: "Fijar arriba de la lista de avisos" }, { k: "notificar", l: "Avisar en los móviles y en el canal de Telegram", def: true, soloNuevo: true }] },
       { k: "publicar_en", l: "Programar la publicación", t: "datetime-local", opc: true, ayuda: "Déjalo vacío para publicar ahora. Si pones día y hora, se publicará y avisará solo en ese momento." },
     ],
@@ -240,7 +240,7 @@ let actual = "resumen", datos = {};
 
 // ---------- Sesión ----------
 let iniciado = false;
-const mostrar = (s) => { ["s-login", "s-recuperar", "s-panel"].forEach(x => $(x).classList.toggle("oculto", x !== s)); document.body.classList.toggle("sin-nav", s !== "s-panel"); };
+const mostrar = (s) => { ["s-login", "s-recuperar", "s-codigo", "s-panel"].forEach(x => $(x).classList.toggle("oculto", x !== s)); document.body.classList.toggle("sin-nav", s !== "s-panel"); };
 sb.auth.onAuthStateChange((ev, ses) => {
   if (ev === "PASSWORD_RECOVERY") return mostrar("s-recuperar");
   if (!ses) { iniciado = false; return mostrar("s-login"); }
@@ -250,7 +250,33 @@ sb.auth.onAuthStateChange((ev, ses) => {
   iniciado = true; window.MI_EMAIL = ses.user.email;
   setTimeout(iniciar, 0);
 });
+// Verificación en dos pasos: si la cuenta la tiene activada, antes del panel se pide el código de la app del móvil.
+// El servidor también lo exige (is_admin() solo da permiso con la sesión verificada), así que saltarse esta pantalla no sirve.
 async function iniciar() {
+  try {
+    const { data: n } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (n && n.nextLevel === "aal2" && n.currentLevel !== "aal2") {
+      mostrar("s-codigo"); $("codigo").value = ""; setTimeout(() => $("codigo").focus(), 50);
+      return;
+    }
+  } catch (e) { console.warn("2 pasos", e); }
+  await iniciarPanel();
+}
+const factorTotp = async () => { const { data } = await sb.auth.mfa.listFactors(); return (data?.totp || []).find(f => f.status === "verified"); };
+$("b-codigo").onclick = async () => {
+  const c = $("codigo").value.replace(/\D/g, "");
+  if (c.length !== 6) return msg("m-codigo", "Escribe las 6 cifras que salen en la app.");
+  msg("m-codigo", "Comprobando…", true);
+  const f = await factorTotp();
+  if (!f) return iniciarPanel();
+  const { error } = await sb.auth.mfa.challengeAndVerify({ factorId: f.id, code: c });
+  if (error) { $("codigo").select(); return msg("m-codigo", /rate|too many/i.test(error.message) ? "Demasiados intentos. Espera un minuto." : "Código incorrecto o caducado. Escribe el que sale ahora en la app."); }
+  msg("m-codigo", "", true); iniciarPanel();
+};
+$("codigo").onkeydown = (e) => { if (e.key === "Enter") $("b-codigo").click(); };
+$("codigo").oninput = () => { if ($("codigo").value.replace(/\D/g, "").length === 6) $("b-codigo").click(); };
+$("b-codigo-salir").onclick = async () => { await sb.auth.signOut(); location.replace(aqui); };
+async function iniciarPanel() {
   mostrar("s-panel");
   const { data } = await sb.rpc("is_admin");
   window.ES_ADMIN = !!data;
@@ -626,7 +652,7 @@ function campoHTML(c, v) {
     return `<label for="${id}">${c.l}</label><select id="${id}">${ops.map(o => `<option ${o === v ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>
       <p class="ayuda">¿Falta una opción? Añádela en Ajustes.</p>`;
   }
-  if (c.t === "textarea") return `<label for="${id}">${c.l}${opc}</label><textarea id="${id}" ${c.corto ? 'style="min-height:90px"' : ""}>${esc(v || "")}</textarea>${ayuda}${c.formato ? FORMATO : ""}`;
+  if (c.t === "textarea") return `<label for="${id}">${c.l}${opc}</label><textarea id="${id}" spellcheck="true" autocapitalize="sentences" autocorrect="on" ${c.corto ? 'style="min-height:90px"' : ""}>${esc(v || "")}</textarea>${ayuda}${c.formato ? FORMATO : ""}`;
   if (c.t === "archivos" || c.t === "archivo") {
     const multi = c.t === "archivos";
     return `<label>${c.l}${opc}</label>
@@ -634,14 +660,14 @@ function campoHTML(c, v) {
         ${icono("subir")}<b>${multi ? "Toca para elegir archivos" : "Toca para elegir el archivo"}</b>
         <span>${multi ? "Puedes elegir varios a la vez. " : ""}PDF, fotos, Word, Excel o PowerPoint · máx. ${MAX_MB} MB</span>
         <input type="file" id="${id}" ${multi ? "multiple" : ""} accept="${ACEPTA_ARCHIVOS}">
-      </label>
+      </label>${ayuda}
       <div class="archivos" id="lista-${c.k}"></div>`;
   }
   if (c.t === "datetime-local") {
     const loc = v ? new Date(new Date(v) - new Date(v).getTimezoneOffset() * 6e4).toISOString().slice(0, 16) : "";
     return `<label for="${id}">${c.l}${opc}</label><input id="${id}" type="datetime-local" value="${loc}">${ayuda}`;
   }
-  return `<label for="${id}">${c.l}${opc}</label><input id="${id}" type="${c.t}" value="${esc(v ?? "")}" ${c.ph ? `placeholder="${esc(c.ph)}"` : ""} ${c.paso ? `step="${c.paso}" min="0" inputmode="decimal"` : ""}>${ayuda}`;
+  return `<label for="${id}">${c.l}${opc}</label><input id="${id}" type="${c.t}" value="${esc(v ?? "")}" ${c.t === "text" ? 'spellcheck="true" autocapitalize="sentences" autocorrect="on"' : ""} ${c.ph ? `placeholder="${esc(c.ph)}"` : ""} ${c.paso ? `step="${c.paso}" min="0" inputmode="decimal"` : ""}>${ayuda}`;
 }
 const camposPlanos = (s) => s.campos.flatMap(c => c.fila || c.checks?.map(x => ({ ...x, t: "check" })) || [c]);
 
@@ -724,6 +750,57 @@ function pintaArchivos(c) {
   $("lista-" + c.k).querySelectorAll("[data-qp]").forEach(b => b.onclick = (e) => { e.preventDefault(); ED.pendientes.splice(+b.dataset.qp, 1); pintaArchivos(c); actualizarPrevia(); });
 }
 
+// ---------- Corrector de ortografía (Gemini, gratis) ----------
+// Al guardar, los títulos y textos que han cambiado pasan por la función «corregir». Si propone cambios,
+// se enseñan marcados y se elige: corregir y guardar, guardar sin corregir o volver a editar.
+// Si el corrector no responde (sin conexión, límite gratuito…), se guarda igual sin molestar.
+const NO_CORREGIR = ["url", "email", "telefono", "slug", "icono", "fuente", "idioma", "pais"];
+function difHTML(a, b) {
+  const A = a.split(/(\s+)/), B = b.split(/(\s+)/);
+  if (A.length * B.length > 3e6) return `<ins>${esc(b)}</ins>`;
+  const L = Array.from({ length: A.length + 1 }, () => new Uint16Array(B.length + 1));
+  for (let i = A.length - 1; i >= 0; i--) for (let j = B.length - 1; j >= 0; j--) L[i][j] = A[i] === B[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+  let i = 0, j = 0, h = "";
+  while (i < A.length || j < B.length) {
+    if (i < A.length && j < B.length && A[i] === B[j]) { h += esc(A[i]); i++; j++; }
+    else if (i < A.length && (j >= B.length || L[i + 1][j] >= L[i][j + 1])) { if (!/^\s+$/.test(A[i])) h += `<del>${esc(A[i])}</del> `; i++; }
+    else { h += /^\s+$/.test(B[j]) ? esc(B[j]) : `<ins>${esc(B[j])}</ins>`; j++; }
+  }
+  return h;
+}
+async function revisarOrtografia(s, fila) {
+  const campos = camposPlanos(s).filter(c => (c.t === "text" || c.t === "textarea") && !NO_CORREGIR.includes(c.k)
+    && typeof fila[c.k] === "string" && /\p{L}{3}/u.test(fila[c.k]) && fila[c.k] !== (ED.orig?.[c.k] ?? ""));
+  if (!campos.length) return true;
+  const btn = $("ed-guardar"); btn.disabled = true;
+  msg("ed-msg", "Revisando la ortografía…", true);
+  let res = null;
+  try {
+    const r = await Promise.race([
+      sb.functions.invoke("corregir", { body: { textos: Object.fromEntries(campos.map(c => [c.k, fila[c.k]])) } }),
+      new Promise(ok => setTimeout(() => ok({}), 15000))]);
+    res = r?.data?.textos || null;
+  } catch (e) { console.warn("corrector", e); }
+  btn.disabled = false; msg("ed-msg", "");
+  if (!res) return true;
+  const cambios = campos.filter(c => typeof res[c.k] === "string" && res[c.k] !== fila[c.k]);
+  if (!cambios.length) return true;
+  return new Promise(ok => {
+    const v = document.createElement("div"); v.className = "modal-velo";
+    v.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="corr-t"><h2 id="corr-t">Revisa la ortografía</h2>
+      <p class="ayuda">El corrector propone estos cambios: <ins>en verde, lo nuevo</ins>; <del>tachado, lo que se quita</del>.</p>
+      ${cambios.map(c => `<div class="corr-campo"><b>${esc(c.l)}</b><div class="corr-dif">${difHTML(fila[c.k], res[c.k])}</div></div>`).join("")}
+      <div class="botones"><button class="btn" data-r="si">${icono("check", "p")}Corregir y guardar</button><button class="btn sec" data-r="no">Guardar sin corregir</button><button class="btn sec" data-r="volver">Volver a editar</button></div></div>`;
+    const fin = (r) => {
+      v.remove();
+      if (r === "si") cambios.forEach(c => { fila[c.k] = res[c.k]; const el = $("f-" + c.k); if (el) el.value = res[c.k]; });
+      ok(r !== "volver");
+    };
+    v.querySelectorAll("[data-r]").forEach(b => b.onclick = () => fin(b.dataset.r));
+    v.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.stopPropagation(); fin("volver"); } });
+    document.body.appendChild(v); v.querySelector("[data-r=si]").focus();
+  });
+}
 function leerFormulario() {
   const s = SECCIONES[ED.k], fila = {};
   for (const c of camposPlanos(s)) {
@@ -785,6 +862,7 @@ $("ed-guardar").onclick = async () => {
     if (c.req && c.t !== "archivo" && c.t !== "archivos" && !fila[c.k]) { cambiarPestana("form"); $("f-" + c.k)?.focus(); return msg("ed-msg", "Falta: " + c.l.toLowerCase() + "."); }
   }
   if (["avisos"].includes(ED.k) && /\[[^\]]{1,30}\]/.test((fila.titulo || "") + (fila.contenido || "")) && !confirm("El aviso todavía tiene partes entre [corchetes] sin rellenar. ¿Publicar igualmente?")) return;
+  if (!(await revisarOrtografia(s, fila))) return;
   if (["enlaces", "restricciones"].includes(ED.k) && fila.url && !/^https?:\/\//.test(fila.url)) fila.url = "https://" + fila.url;
   if (s.filtro) Object.assign(fila, s.filtro);
   if (fila.publicado === false && !ED.orig) fila.notificar = false;
@@ -1281,6 +1359,55 @@ const LISTAS = {
   pregunta: { l: "Categorías de las preguntas", ayuda: "Son los filtros de Preguntas frecuentes.", tabla: "preguntas", col: "categoria" },
 };
 let filasLista = {};
+// ---------- Verificación en dos pasos (Ajustes) ----------
+async function pinta2p() {
+  const z = $("zona-2p"); if (!z) return;
+  const { data, error } = await sb.auth.mfa.listFactors();
+  if (error) { z.innerHTML = `<p class="fecha-txt">No se ha podido comprobar. Vuelve a abrir Ajustes en un momento.</p>`; return; }
+  const activo = (data.totp || []).find(f => f.status === "verified");
+  if (activo) {
+    z.innerHTML = `<p class="msg ok" style="margin:0">${icono("check", "p")} Activada desde el ${new Date(activo.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}.</p>
+      <p class="ayuda">Si cambias de móvil, desactívala aquí antes y vuelve a activarla con el nuevo.</p>
+      <div class="botones" style="margin-top:8px"><button class="btn sec" id="b-2p-quitar">${icono("borrar", "p")}Desactivar</button></div>`;
+    $("b-2p-quitar").onclick = async () => {
+      if (!confirm("¿Desactivar la verificación en dos pasos? Para entrar solo hará falta la contraseña.")) return;
+      const { error } = await sb.auth.mfa.unenroll({ factorId: activo.id });
+      if (error) return msg("m-2p", "No se ha podido desactivar. Sal, vuelve a entrar con el código y prueba otra vez.");
+      await sb.auth.refreshSession(); msg("m-2p", "Desactivada.", true); pinta2p();
+    };
+    return;
+  }
+  z.innerHTML = `<div class="botones"><button class="btn" id="b-2p-activar">${icono("admin", "p")}Activar</button></div>`;
+  $("b-2p-activar").onclick = async () => {
+    msg("m-2p", "Preparando…", true);
+    // Si quedó un intento a medias, se quita antes de empezar otro
+    for (const f of (data.all || []).filter(f => f.factor_type === "totp" && f.status !== "verified")) await sb.auth.mfa.unenroll({ factorId: f.id });
+    const { data: e, error } = await sb.auth.mfa.enroll({ factorType: "totp", issuer: "CCOO Calsina", friendlyName: "Móvil " + Date.now() });
+    if (error) return msg("m-2p", "No se ha podido empezar: " + error.message);
+    msg("m-2p", "", true);
+    z.innerHTML = `<ol class="pasos-2p">
+        <li>Instala en el móvil la app gratuita <b>Google Authenticator</b> (en Play Store o App Store).</li>
+        <li>En la app, toca <b>+</b> y <b>Escanear un código QR</b>, y escanea este código:
+          <img class="qr-2p" src="${esc(e.totp.qr_code)}" alt="Código QR para la app de códigos">
+          Si estás usando el panel en el mismo móvil, toca <b>Introducir clave de configuración</b> y escribe esta clave (nombre: CCOO Calsina):
+          <div class="clave-2p" id="clave-2p">${esc(e.totp.secret)}</div>
+          <button class="btn sec peq" id="b-2p-copiar" style="margin-top:6px">${icono("copia", "p")}Copiar la clave</button></li>
+        <li>Escribe el código de 6 cifras que sale en la app:
+          <input id="codigo-2p" inputmode="numeric" autocomplete="one-time-code" maxlength="6" class="codigo-2p" aria-label="Código de 6 cifras"></li>
+      </ol>
+      <div class="botones"><button class="btn" id="b-2p-ok">${icono("check", "p")}Comprobar y activar</button><button class="btn sec" id="b-2p-no">Cancelar</button></div>`;
+    $("b-2p-copiar").onclick = async () => { try { await navigator.clipboard.writeText(e.totp.secret); aviso("Clave copiada"); } catch (_) { aviso("Mantén pulsada la clave para copiarla"); } };
+    $("b-2p-no").onclick = async () => { await sb.auth.mfa.unenroll({ factorId: e.id }); msg("m-2p", "", true); pinta2p(); };
+    $("b-2p-ok").onclick = async () => {
+      const c = $("codigo-2p").value.replace(/\D/g, "");
+      if (c.length !== 6) return msg("m-2p", "Escribe las 6 cifras que salen en la app.");
+      const { error } = await sb.auth.mfa.challengeAndVerify({ factorId: e.id, code: c });
+      if (error) return msg("m-2p", "Código incorrecto o caducado. Escribe el que sale ahora en la app.");
+      msg("m-2p", "Activada. A partir de ahora, al entrar en el panel te pedirá el código de la app.", true); pinta2p();
+    };
+  };
+}
+
 async function pintaAjustes() {
   await cargarOpciones();
   const todas = window.OPC_FILAS || [];
@@ -1291,6 +1418,7 @@ async function pintaAjustes() {
     <a href="#ajuste-canales">${icono("telegram", "p")}Telegram y WhatsApp</a>
     <a href="#ajuste-copia">${icono("copia", "p")}Copia de seguridad</a>
     <a href="#ajuste-archivo">${icono("archivo2", "p")}Archivo</a>
+    <a href="#ajuste-2p">${icono("admin", "p")}Dos pasos</a>
     <a href="#ajuste-admins">${icono("admin", "p")}Quién publica</a>
     <a href="#ajuste-listas">${icono("filtro", "p")}Filtros y categorías</a>
   </nav>
@@ -1331,6 +1459,12 @@ async function pintaAjustes() {
       <label for="meses-archivo">Archivar los avisos de hace más de…</label>
       <select id="meses-archivo">${[[1, "1 mes"], [2, "2 meses"], [3, "3 meses"], [6, "6 meses"], [12, "1 año"], [0, "Nunca"]].map(([v, t]) => `<option value="${v}">${t}</option>`).join("")}</select>
       <div class="msg" id="m-archivo"></div>
+    </div>
+    <div class="panel tarjeta-ajuste" id="ajuste-2p">
+      <h2>Verificación en dos pasos</h2>
+      <p class="ayuda">Para entrar en el panel, además de la contraseña se pide un código que cambia cada 30 segundos y sale en una app del móvil. Así, aunque alguien sepa la contraseña, no puede publicar. Es para tu cuenta (${esc(window.MI_EMAIL || "")}).</p>
+      <div id="zona-2p" style="margin-top:10px"><p class="fecha-txt">Comprobando…</p></div>
+      <div class="msg" id="m-2p"></div>
     </div>
     <div class="panel tarjeta-ajuste" id="ajuste-admins">
       <h2>Quién puede publicar</h2>
@@ -1428,6 +1562,7 @@ async function cargarAdmins() {
     const { error } = await sb.from("admins").delete().eq("email", b.dataset.email);
     error ? msg("m-admins", error.message) : (aviso("Permiso quitado."), cargarAdmins());
   });
+  pinta2p();
   $("b-admin").onclick = async () => {
     const e = $("nuevo-admin").value.trim().toLowerCase();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) return msg("m-admins", "Escribe un email válido.");

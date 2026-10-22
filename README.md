@@ -131,6 +131,15 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 36: más profesional y más segura
+- **Vista previa al compartir**: al mandar el enlace de la web por WhatsApp o Telegram sale una tarjeta con el logo y el nombre (`og.png`).
+- **Instalar la app** en Android enseña capturas de la app (carpeta `capturas/`, en `manifest.json`).
+- **Foto destacada en los avisos**: la primera foto que se adjunta sale en grande arriba del aviso y como miniatura en «Lo último»; las demás, en galería, y los documentos, en lista.
+- **Verificación en dos pasos** en el panel (Ajustes > Verificación en dos pasos): con la app gratuita Google Authenticator. Si está activada, al entrar se pide el código de 6 cifras. El servidor también lo exige: `is_admin()` solo da permiso con la sesión verificada a quien la tenga activada (las cuentas sin dos pasos siguen igual).
+- **Corrector de ortografía**: al guardar, los títulos y textos que han cambiado pasan por un corrector (Gemini gratis, función `corregir`). Si propone cambios, se ven marcados (verde lo nuevo, tachado lo que se quita) y se elige «Corregir y guardar», «Guardar sin corregir» o «Volver a editar». Si el corrector no responde, se guarda igual. Además, los campos de texto tienen el corrector del propio móvil activado.
+- Textos: en Privacidad ya no salen los datos personales del secretario (dice que la web está en proceso y que es anónima); en Aviso legal, la nota «[COMPLETAR…]» se cambia por «web en proceso».
+- Cambios: `index.html`, `manifest.json`, `og.png`, `capturas/`, `render.js`, `app.js`, `styles.css`, `admin.html`, `admin.js`, `admin.css` (y la versión en `cartel.html`, `config.js` y `sw.js`). En Supabase: función `is_admin()` y función nueva `corregir`.
+
 ## Versión 35: el rojo del modo noche, del mismo tono que el de CCOO
 - El rojo de los textos en modo noche pasa de #ff4d4d (algo anaranjado) a #ff2d50: el mismo tono que el rojo CCOO (#c4122f), solo más luminoso para que se lea sobre el fondo oscuro (el #c4122f exacto se queda en 3,1:1, por debajo del 4,5:1 recomendado para texto).
 - Cambios: `styles.css`, `admin.css` (y la versión en los HTML, `config.js` y `sw.js`).

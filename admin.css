@@ -4,6 +4,11 @@ body.admin { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
 .login { max-width: 440px; margin: 30px auto; padding: 26px; }
 .login h1 { font-size: 1.9rem; margin-bottom: 6px; }
 .login p { color: var(--suave); margin: 0 0 6px; }
+.codigo-2p { font-size: 1.6rem; letter-spacing: .35em; text-align: center; font-variant-numeric: tabular-nums; }
+.qr-2p { display: block; width: 200px; height: 200px; margin: 10px 0; background: #fff; padding: 8px; border-radius: 8px; }
+.clave-2p { font-family: ui-monospace, monospace; font-size: 1.05rem; word-break: break-all; background: var(--fondo); border: 1px solid var(--linea); border-radius: 8px; padding: 8px 10px; user-select: all; }
+.pasos-2p { margin: 8px 0 0; padding-left: 22px; }
+.pasos-2p li { margin-bottom: 8px; }
 .enlaces-login { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
 .enlaces-login button { background: none; border: 0; color: var(--azul); cursor: pointer; padding: 0; font-weight: 600; }
 
@@ -483,3 +488,12 @@ body.admin .btn, body.admin .indice-ajustes a { min-height: 44px; }
 body.admin .btn-cab.aa { min-width: 44px; }
 /* Enlace «Ver calendario» junto al título del bloque: zona táctil de 44 px */
 .titulo-bloque a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; }
+
+/* Corrector de ortografía */
+.corr-campo { margin: 12px 0; }
+.corr-campo b { display: block; font-size: .9rem; color: var(--suave); margin-bottom: 4px; }
+.corr-dif { white-space: pre-wrap; background: var(--fondo); border: 1px solid var(--linea); border-radius: 8px; padding: 10px 12px; line-height: 1.5; max-height: 40vh; overflow: auto; }
+.modal ins, .corr-dif ins { background: #d6f5e0; color: #0b5d2a; text-decoration: none; border-radius: 3px; padding: 0 2px; font-weight: 700; }
+.modal del, .corr-dif del { background: #fbe0e4; color: #9a0d24; border-radius: 3px; padding: 0 2px; }
+:root[data-theme="dark"] .modal ins { background: #10301f; color: #5fd08f; } :root[data-theme="dark"] .modal del { background: #3a1219; color: #ff2d50; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .modal ins { background: #10301f; color: #5fd08f; } :root:not([data-theme="light"]) .modal del { background: #3a1219; color: #ff2d50; } }

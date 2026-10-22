@@ -22,6 +22,9 @@ window.tipoArchivo = (tipo, nombre) => {
 };
 window.tamanoTxt = (b) => !b ? "" : b < 1024 * 1024 ? Math.max(1, Math.round(b / 1024)) + " KB" : (b / 1048576).toFixed(1).replace(".", ",") + " MB";
 
+window.esImagen = (a) => (a.tipo || "").startsWith("image/") && !/hei[cf]/.test(a.tipo);
+window.fotoSrc = (u) => /^blob:/.test(u || "") ? u : urlSegura(u); // blob: solo en la vista previa del panel
+window.galeriaHTML = (fotos) => !fotos.length ? "" : `<div class="galeria ${fotos.length === 1 ? "una" : ""}">${fotos.map(f => `<a href="${esc(fotoSrc(f.url))}" target="_blank" rel="noopener" aria-label="Ver la foto ${esc(f.nombre || "")} en grande"><img src="${esc(fotoSrc(f.url))}" alt="" loading="lazy"></a>`).join("")}</div>`;
 window.adjuntosHTML = (lista) => {
   if (!lista || !lista.length) return "";
   return `<div class="adjuntos">${lista.map(a => {
@@ -51,7 +54,10 @@ window.fechasHTML = (publicado, actualizado, palabra = "Publicado") => {
 const etqNuevo = (d) => esNuevo(d) ? `<span class="etq nuevo">${icono("nuevo", "p")}Nuevo</span>` : "";
 
 // ---------- Avisos ----------
-window.tarjetaAviso = (a, { corto = false, nuevo = false, resaltar = "" } = {}) => `
+// La primera foto de un aviso sale grande arriba; las demás, en galería; los documentos, en lista
+window.tarjetaAviso = (a, { corto = false, nuevo = false, resaltar = "" } = {}) => {
+  const adj = a.adjuntos || [], fotos = adj.filter(esImagen), docs = adj.filter(x => !esImagen(x));
+  return `
   <article class="panel aviso ${a.urgente ? "urgente" : ""} ${a.fijado ? "fijado" : ""} ${nuevo ? "nuevo" : ""}" id="aviso-${a.id}" data-reg="comunicados:${a.id}" data-lectura="comunicados:${a.id}">
     <div class="cab">
       ${a.urgente ? `<span class="etq urgente">${icono("alerta", "p")}Urgente</span>` : ""}
@@ -59,15 +65,17 @@ window.tarjetaAviso = (a, { corto = false, nuevo = false, resaltar = "" } = {}) 
       <span class="etq tipo ${claseTipo(a.categoria, "aviso")}">${esc(a.categoria)}</span>
       ${a.urgente ? "" : etqNuevo(a.fecha)}
     </div>
+    ${!corto && fotos.length ? `<a class="aviso-foto" href="${esc(fotoSrc(fotos[0].url))}" target="_blank" rel="noopener" aria-label="Ver la foto en grande"><img src="${esc(fotoSrc(fotos[0].url))}" alt="" loading="lazy"></a>` : ""}
     <h3 data-campo="titulo">${esc(a.titulo || "Sin título")}</h3>
     <div class="cuerpo ${corto ? "corto" : ""}" data-campo="contenido">${textoHTML(a.contenido, resaltar)}</div>
-    ${corto ? (a.adjuntos?.length ? `<div class="fecha-txt" style="margin-top:8px">${icono("clip", "p")} ${a.adjuntos.length} archivo(s) adjunto(s)</div>` : "") : adjuntosHTML(a.adjuntos)}
+    ${corto ? (adj.length ? `<div class="fecha-txt" style="margin-top:8px">${icono("clip", "p")} ${adj.length} archivo(s) adjunto(s)</div>` : "") : galeriaHTML(fotos.slice(1)) + adjuntosHTML(docs)}
     <div class="pie-tarjeta">${fechasHTML(a.fecha, a.actualizado)}
       ${corto ? "" : `<span class="acciones-tarjeta">
         <a class="accion wa" href="${enlaceWhatsApp(textoCompartir(a.titulo, a.contenido, "aviso-" + a.id))}" target="_blank" rel="noopener">${icono("whatsapp", "p")}WhatsApp</a>
         <button class="accion" data-compartir="aviso" data-id="${a.id}">${icono("compartir", "p")}Compartir</button>
         ${botonTraducir()}</span>`}</div>
   </article>`;
+};
 
 // ---------- Calendario ----------
 // Hora de un evento en texto: "Todo el día" si va de 00:00 a 23:59 (festivos)
@@ -126,17 +134,16 @@ window.docHTML = (d) => {
 
 // ---------- Apartados (Comité de empresa, etc.) ----------
 // Una publicación: fecha, título, texto, galería de fotos y documentos
-window.esImagen = (a) => (a.tipo || "").startsWith("image/") && !/hei[cf]/.test(a.tipo);
 window.publicacionHTML = (x, qr = "") => {
   const adj = x.adjuntos || [], fotos = adj.filter(esImagen), docs = adj.filter(a => !esImagen(a));
-  const d = x.fecha ? fechaDia(x.fecha) : null, src = (u) => /^blob:/.test(u || "") ? u : urlSegura(u); // blob: solo en la vista previa del panel
+  const d = x.fecha ? fechaDia(x.fecha) : null;
   return `<article class="panel publicacion" id="pub-${x.id}" data-lectura="publicaciones:${x.id}">
     ${d ? `<div class="pub-fecha"><b>${d.getDate()}</b>${MESES[d.getMonth()].slice(0, 3)}</div>` : ""}
     <div class="pub-cuerpo">
       <h3>${esc(x.titulo || "Sin título")}</h3>
       ${d ? `<div class="fecha-txt">${fechaLarga(x.fecha + "T12:00:00")}</div>` : ""}
       ${x.contenido ? `<div class="pub-texto">${textoHTML(x.contenido, qr)}</div>` : ""}
-      ${fotos.length ? `<div class="galeria ${fotos.length === 1 ? "una" : ""}">${fotos.map(f => `<a href="${esc(src(f.url))}" target="_blank" rel="noopener" aria-label="Ver la foto ${esc(f.nombre || "")} en grande"><img src="${esc(src(f.url))}" alt="" loading="lazy"></a>`).join("")}</div>` : ""}
+      ${galeriaHTML(fotos)}
       ${adjuntosHTML(docs)}
     </div></article>`;
 };

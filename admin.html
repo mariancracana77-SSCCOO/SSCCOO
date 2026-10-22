@@ -12,10 +12,10 @@
 <link rel="icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link rel="stylesheet" href="fuentes.css?v=35">
-<script src="lectura.js?v=35"></script>
-<link rel="stylesheet" href="styles.css?v=35">
-<link rel="stylesheet" href="admin.css?v=35">
+<link rel="stylesheet" href="fuentes.css?v=36">
+<script src="lectura.js?v=36"></script>
+<link rel="stylesheet" href="styles.css?v=36">
+<link rel="stylesheet" href="admin.css?v=36">
 </head>
 <body class="admin">
 <header class="cabecera">
@@ -49,6 +49,18 @@
     <input id="nueva" type="password" autocomplete="new-password">
     <div class="botones"><button class="btn" id="b-nueva">Guardar contraseña</button></div>
     <div class="msg" id="m-rec"></div>
+  </section>
+</main>
+
+<main class="contenedor solo-login oculto" id="s-codigo">
+  <section class="panel login">
+    <h1>Código de seguridad</h1>
+    <p>Abre la app de códigos del móvil (Google Authenticator) y escribe las 6 cifras de «CCOO Calsina».</p>
+    <label for="codigo">Código de 6 cifras</label>
+    <input id="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" class="codigo-2p">
+    <div class="botones"><button class="btn" id="b-codigo" style="flex:1">Entrar</button></div>
+    <div class="enlaces-login"><button id="b-codigo-salir">Salir y entrar con otra cuenta</button></div>
+    <div class="msg" id="m-codigo"></div>
   </section>
 </main>
 
@@ -90,10 +102,10 @@
   </div>
 </section>
 
-<script src="lib/supabase.js?v=35"></script>
-<script src="iconos.js?v=35"></script>
-<script src="config.js?v=35"></script>
-<script src="render.js?v=35"></script>
-<script src="admin.js?v=35"></script>
+<script src="lib/supabase.js?v=36"></script>
+<script src="iconos.js?v=36"></script>
+<script src="config.js?v=36"></script>
+<script src="render.js?v=36"></script>
+<script src="admin.js?v=36"></script>
 </body>
 </html>

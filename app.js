@@ -177,11 +177,11 @@ function pintaInicio() {
   // Todo lo publicado, por fecha
   const ICONOS = { aviso: ["avisos", "c-verde"], fecha: ["calendario", "c-azul"], acta: ["actas", "c-ambar"], doc: ["carpeta", "c-rojo"], conv: ["convenio", "c-morado"], preg: ["pregunta", "c-gris"], pub: ["carpeta", "c-turquesa"] };
   const items = [
-    ...D.avisos.filter(a => a !== urg).map(a => ({ f: a.fecha, k: "aviso", que: "Aviso" + (a.fijado ? " · fijado" : ""), t: a.titulo, s: resumenPlano(a.contenido, 90), h: "#aviso-" + a.id, adj: (a.adjuntos || []).length })),
+    ...D.avisos.filter(a => a !== urg).map(a => ({ f: a.fecha, k: "aviso", que: "Aviso" + (a.fijado ? " · fijado" : ""), t: a.titulo, s: resumenPlano(a.contenido, 90), h: "#aviso-" + a.id, adj: (a.adjuntos || []).length, foto: (a.adjuntos || []).find(esImagen) })),
     ...D.eventos.filter(e => e.fecha >= hoy && !esFestivo(e)).map(e => ({ f: e.creado, k: "fecha", que: "Fecha · " + cuandoEvento(e), t: e.titulo, s: e.lugar || "", h: "#calendario", dia: e.fecha })),
     ...D.actas.map(a => ({ f: a.creado, k: "acta", que: "Acta" + (a.fecha ? " · " + fechaDia(a.fecha).toLocaleDateString("es-ES", { day: "numeric", month: "long" }) : ""), t: a.titulo, s: a.acuerdos ? (a.acuerdos.split("\n").filter(l => l.trim()).length + " acuerdo(s)") : resumenPlano(a.resumen, 90), h: "#actas" })),
     ...D.docs.map(d => ({ f: d.fecha, k: "doc", que: "Documento · " + tipoArchivo(d.tipo_archivo, d.nombre_archivo).txt, t: d.titulo, s: d.descripcion || "", url: d.url, id: d.id })),
-    ...D.publicaciones.map(x => { const ap = D.apartados.find(y => y.id === x.apartado_id); return ap && { f: x.creado, k: "pub", ic: ap.icono, que: ap.titulo, t: x.titulo, s: (x.adjuntos || []).length ? (x.adjuntos.length + " archivo(s)") : resumenPlano(x.contenido, 90), h: "#ap-" + ap.slug }; }).filter(Boolean),
+    ...D.publicaciones.map(x => { const ap = D.apartados.find(y => y.id === x.apartado_id); return ap && { f: x.creado, k: "pub", ic: ap.icono, foto: (x.adjuntos || []).find(esImagen), que: ap.titulo, t: x.titulo, s: (x.adjuntos || []).length ? (x.adjuntos.length + " archivo(s)") : resumenPlano(x.contenido, 90), h: "#ap-" + ap.slug }; }).filter(Boolean),
     ...D.convenio.filter(c => ahora - new Date(c.actualizado) < 30 * DIA).map(c => ({ f: c.actualizado, k: "conv", que: "Convenio · actualizado", t: c.titulo, s: c.resumen || "", h: "#convenio" })),
     ...D.preguntas.filter(q => ahora - new Date(q.creado) < 30 * DIA).map(q => ({ f: q.creado, k: "preg", que: "Pregunta frecuente", t: q.pregunta, s: "", h: "#preguntas" })),
   ].filter(x => x.f).sort((a, b) => new Date(b.f) - new Date(a.f));
@@ -205,7 +205,7 @@ function pintaInicio() {
     const [icDef, cl] = ICONOS[x.k], ic = x.ic || icDef;
     const attrs = x.url ? `href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener" data-abre="documentos:${x.id}"` : `href="${x.h}"${x.dia ? ` data-dia="${x.dia}"` : ""}`;
     html += `<a class="item-tablon ${esDesdeUltima(x.f) ? "es-nuevo" : ""}" ${attrs}>
-      <span class="ic ${cl}">${icono(ic, "p")}</span>
+      ${x.foto ? `<span class="ic foto"><img src="${esc(urlSegura(x.foto.url))}" alt="" loading="lazy"></span>` : `<span class="ic ${cl}">${icono(ic, "p")}</span>`}
       <span class="txt"><small>${esDesdeUltima(x.f) ? '<span class="marca-nuevo">Nuevo</span>' : ""}<span>${esc(x.que)} · ${haceTxt(x.f)}</span></small>
         <b>${esc(x.t || "Sin título")}</b>${x.s ? `<span class="res">${esc(x.s)}</span>` : ""}${x.adj ? `<span class="res adj">${icono("clip", "p")} ${x.adj} archivo(s)</span>` : ""}</span>
     </a>`;
