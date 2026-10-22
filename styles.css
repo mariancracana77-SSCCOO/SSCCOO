@@ -990,9 +990,14 @@ body.publica.con-aviso-priv { padding-bottom: calc(84px + var(--alto-aviso, 90px
 .bienvenida.fuera { opacity: 0; visibility: hidden; pointer-events: none; }
 @keyframes bv-seguro { to { opacity: 0; visibility: hidden; pointer-events: none; } }
 .bv-logo-caja { position: relative; width: min(240px, 62vw); aspect-ratio: 1; }
-.bv-logo { position: absolute; inset: 0; width: 100%; height: 100%; clip-path: circle(0% at 54.8% 52.7%); animation: bv-revela 1.1s 2.15s cubic-bezier(.25, .8, .25, 1) forwards; }
-@keyframes bv-revela { from { clip-path: circle(0% at 54.8% 52.7%); transform: scale(.94); } to { clip-path: circle(75% at 54.8% 52.7%); transform: none; } }
-.bv-camion { position: absolute; left: 29.785%; top: 39.941%; width: 50.049%; height: 25.586%; animation: bv-funde .7s 2.35s ease forwards; }
+/* El logo nace del camión: un círculo de borde difuminado que crece (sin corte seco) mientras el camión se funde */
+@property --bv-r { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+.bv-logo { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; --bv-r: 0%;
+  -webkit-mask: radial-gradient(circle at 54.8% 52.7%, #000 calc(var(--bv-r) - 22%), transparent var(--bv-r));
+  mask: radial-gradient(circle at 54.8% 52.7%, #000 calc(var(--bv-r) - 22%), transparent var(--bv-r));
+  animation: bv-revela 1.5s 2s cubic-bezier(.22, .61, .36, 1) forwards; }
+@keyframes bv-revela { 0% { --bv-r: 8%; opacity: 0; transform: scale(.96); } 25% { opacity: 1; } 100% { --bv-r: 100%; opacity: 1; transform: none; } }
+.bv-camion { position: absolute; left: 29.785%; top: 39.941%; width: 50.049%; height: 25.586%; animation: bv-funde 1s 2.25s ease-in-out forwards; }
 @keyframes bv-funde { to { opacity: 0; } }
 .bv-escala { width: 100%; height: 100%; transform: scale(2); animation: bv-encoge .7s 1.6s cubic-bezier(.45, 0, .2, 1) forwards; }
 @keyframes bv-encoge { to { transform: none; } }
@@ -1027,9 +1032,9 @@ body.publica.con-aviso-priv { padding-bottom: calc(84px + var(--alto-aviso, 90px
 .bv-carretera { position: absolute; top: 75.9%; left: 50%; width: 100vw; height: 4px; transform: translateX(-50%);
   background: repeating-linear-gradient(90deg, #FFB000 0 22px, transparent 22px 40px); animation: bv-carretera .4s linear 3, bv-funde .45s 1.15s forwards; }
 @keyframes bv-carretera { to { background-position: -40px 0; } }
-.bv-onda { position: absolute; inset: 0; border-radius: 50%; border: 3px solid var(--rojo); opacity: 0; animation: bv-onda .9s 2.95s ease-out; }
+.bv-onda { position: absolute; inset: 0; border-radius: 50%; border: 3px solid var(--rojo); opacity: 0; animation: bv-onda 1s 3.15s ease-out; }
 @keyframes bv-onda { from { opacity: .8; transform: scale(.97); } to { opacity: 0; transform: scale(1.3); } }
-.bv-nombre { font-family: var(--cond); font-weight: 700; font-size: 1.7rem; letter-spacing: .02em; opacity: 0; animation: bv-sube .6s 2.9s ease-out forwards; }
+.bv-nombre { font-family: var(--cond); font-weight: 700; font-size: 1.7rem; letter-spacing: .02em; opacity: 0; animation: bv-sube .6s 3.05s ease-out forwards; }
 @keyframes bv-sube { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .bv-carga { width: min(200px, 60vw); height: 5px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; }
 .bv-carga span { display: block; width: 40%; height: 100%; border-radius: 3px; background: var(--rojo); animation: bv-barra 1.3s ease-in-out infinite; }
@@ -1037,7 +1042,7 @@ body.publica.con-aviso-priv { padding-bottom: calc(84px + var(--alto-aviso, 90px
 @media (prefers-reduced-motion: reduce) {
   .bienvenida * { animation: none !important; }
   .bienvenida { transition: none; }
-  .bv-logo { clip-path: none; }
+  .bv-logo { -webkit-mask: none; mask: none; opacity: 1; }
   .bv-camion, .bv-carretera { display: none; }
   .bv-nombre { opacity: 1; }
 }
