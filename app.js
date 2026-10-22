@@ -181,9 +181,17 @@ function pintaInicio() {
       <span class="rot-led" aria-hidden="true"><span class="rot-led-txt" style="animation-duration:${Math.max(8, Math.round(led.length * .28))}s"><span>${esc(led)}</span><span>${esc(led)}</span></span></span>
       <span class="rot-l1">${esc(urg.titulo)}</span><span class="rot-l2">${esc(resumenPlano(urg.contenido, 110))}</span>
       <span class="rot-ir">Ver el aviso completo${icono("der", "p")}</span></a>`;
-  else if (prox[0]) { const e = prox[0];
-    rot = `<a class="rotulo" href="#calendario" data-dia="${e.fecha}"><span class="rot-tipo">Próxima cita</span>
-      <span class="rot-l1">${esc(e.titulo)}</span><span class="rot-l2">${esc(cuandoEvento(e))}${e.lugar ? " · " + esc(e.lugar) : ""}</span>
+  // Próxima cita como en la carretera: el título en un panel luminoso de autopista (letras blancas de puntos y luces
+  // que parpadean en las esquinas) y, debajo, en un poste, la señal del lugar con los días que faltan (como los km)
+  // y la de día y hora. (Un festivo solo sale si no hay ninguna reunión o asamblea por delante.)
+  else if (prox[0]) { const e = prox.find(x => !esFestivo(x)) || prox[0], d = fechaDia(e.fecha), faltan = Math.round((d - fechaDia(hoy)) / DIA);
+    const dias = faltan === 0 ? "Hoy" : faltan === 1 ? "Mañana" : `${faltan}<small>días</small>`;
+    const fecha = may(DIA_CORTO[d.getDay()]) + " " + d.getDate() + " " + MES_CORTO[d.getMonth()] + (e.hora ? " · " + horaEvento(e) : "");
+    rot = `<a class="rotulo cita" href="#calendario" data-dia="${e.fecha}"><span class="cita-et">Próxima parada</span>
+      <span class="cita-panel"><i class="cita-luz"></i><i class="cita-luz"></i><b>${esc(e.titulo)}</b></span>
+      <span class="cita-poste"><span class="cita-placa"><span>${icono("lugar", "p")}${esc(e.lugar || "Faltan")}<b>${dias}</b></span></span>
+        <span class="cita-placa hora"><span>${icono("reloj", "p")}${esc(fecha)}</span></span></span>
+      <span class="sr-only">${faltan > 1 ? "Faltan " + faltan + " días" : ""}</span>
       <span class="rot-ir">Ver en el calendario${icono("der", "p")}</span></a>`; }
   else rot = `<div class="rotulo"><span class="rot-tipo">Sin avisos urgentes</span><span class="rot-l1">Todo en orden</span><span class="rot-l2">Aquí verás lo importante en cuanto se publique.</span></div>`;
   $("inicio-rotulo").innerHTML = rot;
@@ -232,7 +240,7 @@ function pintaInicio() {
   const acc = [["avisos", "avisos", "Avisos"], ...D.apartados.map(a => ["ap-" + a.slug, a.icono || "carpeta", a.titulo]), ["convenio", "convenio", "Convenio"], ["calcula", "reloj", "Calcula"], ["calendario", "calendario", "Calendario"], ["actas", "actas", "Actas"], ["documentos", "carpeta", "Documentos"], ["preguntas", "pregunta", "Dudas"]];
   $("inicio-accesos").innerHTML = `<h2 class="tit-seccion">Ir a</h2><nav class="accesos-tablon" aria-label="Accesos rápidos">${acc.map(([v, ic, t]) =>
     `<a href="#${esc(v)}">${icono(esc(ic))}<b>${esc(t)}</b></a>`).join("")}</nav>`;
-  pintaCuentaAtras(urg ? null : prox[0]);
+  pintaCuentaAtras(urg ? null : prox.find(x => !esFestivo(x)) || prox[0]);
   pintaSabias();
   document.querySelectorAll("#v-inicio [data-dia]").forEach(l => l.onclick = () => irADia(l.dataset.dia));
 }
@@ -252,10 +260,11 @@ function pintaCuentaAtras(enRotulo) {
   const cifras = ms <= 0 ? `<span class="ca-ahora">${esTodoElDia(e) || !e.hora ? "Es hoy" : "Está pasando ahora"}</span>`
     : dias > 0 ? bloque(dias, dias === 1 ? "día" : "días") + bloque(horas, horas === 1 ? "hora" : "horas")
     : bloque(horas, horas === 1 ? "hora" : "horas") + bloque(mins, "min");
-  const mismo = enRotulo && enRotulo.id === e.id;
+  // Si la cita importante ya es la del rótulo (que dice cuántos días faltan), no se repite debajo
+  if (enRotulo && enRotulo.id === e.id) { $("cuenta-atras").innerHTML = ""; return; }
   pintaCuentaAtras.antes = { ...ahoraV, id: e.id };
   $("cuenta-atras").innerHTML = `<a class="cuenta-atras" href="#calendario" data-dia="${e.fecha}" aria-label="${ms > 0 ? "Faltan " + (dias ? dias + " días y " : "") + horas + " horas para " : ""}${esc(e.titulo)}">
-    <span class="ca-txt"><small>${ms > 0 ? "Faltan" : "Cita importante"}</small>${mismo ? "" : `<b>${esc(e.titulo)}</b>`}<small>${esc(cuandoEvento(e))}${e.lugar ? " · " + esc(e.lugar) : ""}</small></span>
+    <span class="ca-txt"><small>${ms > 0 ? "Faltan" : "Cita importante"}</small><b>${esc(e.titulo)}</b><small>${esc(cuandoEvento(e))}${e.lugar ? " · " + esc(e.lugar) : ""}</small></span>
     <span class="ca-cifras" aria-hidden="true">${cifras}</span></a>`;
   $("cuenta-atras").querySelector("[data-dia]").onclick = () => irADia(e.fecha);
   pintaCuentaAtras.t = setInterval(() => pintaCuentaAtras(enRotulo), 60000);
@@ -682,11 +691,14 @@ async function cargar(idNuevo) {
   if (/^#aviso-\d+$/.test(location.hash) && !cargar.hecho) { cargar.hecho = true; irA(); }
 }
 // Pantalla de bienvenida: dura lo que tarda el camión en formar el logo (4,3 s) y se quita al terminar de cargar.
-// Tocarla la salta.
+// Tocarla la salta. Sale aunque el móvil tenga «quitar animaciones» (muchos lo activan solos con el ahorro de batería).
+// La animación no empieza hasta que la página ha cargado: en la app instalada, Android tapa los primeros segundos
+// con su propia pantalla y, si empezaba antes, terminaba sin que se viera.
 // Al quitarla, lo que hay en pantalla entra escalonado (solo esta vez, no en cada actualización).
 function quitarBienvenida() {
   const bv = $("bienvenida"); if (!bv || bv.classList.contains("fuera")) return;
-  const quieto = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!quitarBienvenida.ya && quitarBienvenida.t0 == null) { quitarBienvenida.pend = true; return; }
+  const quieto = QUIETO();
   clearTimeout(quitarBienvenida.t);
   quitarBienvenida.t = setTimeout(() => {
     const listas = document.querySelectorAll("#inicio-feed, #inicio-paradas, .accesos-tablon, [id^='lista-']");
@@ -694,8 +706,16 @@ function quitarBienvenida() {
     bv.classList.add("fuera");
     if (!location.hash || location.hash === "#inicio") animaPortada();
     setTimeout(() => { bv.remove(); listas.forEach(el => el.classList.remove("anima-entra")); }, 1200);
-  }, quieto || quitarBienvenida.ya ? 0 : Math.max(0, 4300 - performance.now()));
+  }, quitarBienvenida.ya ? 0 : Math.max(0, 4300 - (performance.now() - quitarBienvenida.t0)));
 }
+function empiezaBienvenida() {
+  const bv = $("bienvenida"); if (!bv || quitarBienvenida.t0 != null) return;
+  quitarBienvenida.t0 = performance.now();
+  bv.classList.add("bv-anda");
+  if (quitarBienvenida.pend) quitarBienvenida();
+}
+if (document.readyState === "complete") requestAnimationFrame(empiezaBienvenida);
+else { addEventListener("load", () => requestAnimationFrame(empiezaBienvenida), { once: true }); setTimeout(empiezaBienvenida, 3000); }
 if ($("bienvenida")) $("bienvenida").addEventListener("click", () => { quitarBienvenida.ya = true; quitarBienvenida(); });
 cargar().finally(quitarBienvenida);
 

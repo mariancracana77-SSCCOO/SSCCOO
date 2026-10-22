@@ -88,48 +88,8 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 
 ## Versión 12: portada con más vida
 - Saludo con la fecha y un resumen de la semana (avisos, actas, documentos y citas nuevas).
-- **Próxima cita** destacada con el día en grande y el botón «Añadir a mi calendario».
-- Accesos rápidos a Convenio, Actas, Docs y Dudas.
-- En el listado, las fechas llevan su día y mes, y cada tipo tiene su color.
-
-## Versión 13
-- Ventana «Avisos activados» más clara: «Entendido» grande y «Desactivar los avisos en este móvil» como enlace pequeño debajo, para no pulsarlo sin querer.
-- En modo oscuro, el icono del calendario de los filtros de fecha ya se ve.
-
-## Versión 14
-- Filtro de fechas (año, mes, día exacto) reordenado en recuadros bien alineados, en la web y en el panel: ya no se superponen ni se salen de la pantalla en móviles pequeños.
-- Los correos y enlaces largos (por ejemplo en «Nosotros») bajan de línea en vez de empujar la pantalla hacia un lado.
-
-## Versión 15
-- Arreglado el contador de visitas del día (no se enviaba).
-- Arreglado el borrado de suscripciones antiguas de avisos (evita duplicados).
-
-## Versión 16: seguridad y páginas legales
-- **Aviso legal** y **Privacidad y cookies**: enlazados abajo en la web y editables en el panel, en Textos. Hay que completar la entidad de CCOO responsable y su NIF.
-- Solo pueden crear cuenta en el panel los emails que un administrador haya añadido antes.
-- Contraseñas del panel: mínimo 10 caracteres, con letras y números. Tras 5 fallos seguidos, hay que esperar.
-- Protección contra código inyectado (CSP), enlaces filtrados y la web no se puede meter dentro de otra.
-- Librerías y fuentes alojadas en la propia web: no dependen de servidores externos y no avisan a Google de cada visita.
-- Nuevos archivos: `lectura.js`, `cartel.js`, `fuentes.css`, carpetas `lib/` y `fuentes/`. **Súbelos también a GitHub.**
-- `CLAUDE.md`: contexto para seguir el proyecto con Claude Code.
-
-## Versión 18: diseño «Rótulo de línea» y apartados nuevos
-- **Diseño nuevo**, inspirado en los rótulos de los autobuses y en los paneles de salidas:
-  - Cabecera oscura con pestañas grandes.
-  - Lo urgente sale arriba como un **rótulo ámbar**. Si no hay nada urgente, sale la próxima cita.
-  - «**N novedades desde tu última visita**»: cada móvil recuerda cuándo entró por última vez y marca lo nuevo con la etiqueta «Nuevo». No se envía nada a ningún sitio.
-  - **Próximas paradas**: las próximas fechas sobre una línea roja, como un mapa de ruta.
-  - En el calendario, las próximas fechas salen como un **panel de salidas**.
-  - Abajo, siempre a mano: **«Hablar con un delegado»** y la campana de avisos.
-  - Letra nueva **Atkinson Hyperlegible**, pensada para leer bien con poca visión y alojada en la propia web. Letra base más grande.
-- **Apartados que crea el admin desde el panel**: en «Apartados de la web» se crean secciones nuevas.
-  - Ya está creado **«Comité de empresa»**.
-  - Cada apartado sale como una pestaña en la web y tiene su propia lista en el panel para publicar texto, fotos y documentos, con su fecha.
-  - Las fotos se ven en galería.
-  - Al publicar se avisa en los móviles y en Telegram, igual que con los avisos.
-- **Clasificación por año y mes**: en Avisos, Actas, Documentos y los apartados, los desplegables de fecha se cambian por botones de año y, dentro de cada año, de mes, con cuántos hay. Las listas van separadas por meses («Octubre de 2026»). En el panel, igual.
-- Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
-- Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
+- **Próxima cita** (el rótulo de Inicio cuando no hay nada urgente): diseño nuevo de carretera. El título sale en un panel luminoso de autopista (letras blancas de puntos y luces rojas que parpadean en las esquinas) y, debajo, en un poste, dos señales en el rojo del logo: el lugar con los días que faltan (como los kilómetros de una señal) y el día y la hora. Prefiere reuniones y asambleas a los festivos y, si es la misma cita que la cuenta atrás, no se repite.
+- **Animación de entrada**: ahora empieza cuando la página ha cargado (en la app instalada, Android tapaba los primeros segundos con su pantalla y la animación terminaba sin verse) y sale aunque el móvil tenga «quitar animaciones» (lo activa el ahorro de batería). Se sigue saltando tocándola.
 
 ## Versión 44: cartel con el rojo del logo
 - El cartel para el tablón (`cartel.html`) cambia los detalles amarillos por el rojo del logo (#AB1012; «Calsina Carré» en el tono claro #E0262B para que se lea sobre la cabecera oscura).
