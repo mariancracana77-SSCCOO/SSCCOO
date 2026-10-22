@@ -114,7 +114,7 @@ h1, h2, h3 { font-family: var(--cond); line-height: 1.1; margin: 0; }
 .destacado h2 { font-size: 1.9rem; font-weight: 700; margin-bottom: 10px; }
 .destacado .cuerpo { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .enlace-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; font-weight: 700; text-decoration: none; color: var(--rojo); background: none; border: 0; padding: 0; cursor: pointer; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .enlace-btn { color: #ff6b81; } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .enlace-btn { color: #ff4d4d; } }
 
 .proxima { padding: 20px; display: flex; gap: 16px; align-items: center; }
 .cartel { font-family: var(--cond); text-align: center; min-width: 74px; border-radius: var(--radio); background: var(--c, var(--azul)); color: #fff; padding: 8px 6px 6px; }
@@ -258,7 +258,7 @@ mark { background: var(--ambar-suave); color: inherit; border-radius: 3px; paddi
   padding: 9px 2px 8px; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: .7rem; font-weight: 600;
 }
 .nav button.activa { color: var(--rojo); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .nav button.activa { color: #ff6b81; } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .nav button.activa { color: #ff4d4d; } }
 @media (min-width: 1000px) {
   body { padding-bottom: 0; padding-left: 230px; }
   .nav {
@@ -431,7 +431,7 @@ a.proxima:hover { border-color: var(--azul); }
 .delegado .txt { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .delegado b { font-family: var(--cond); font-size: 1.3rem; line-height: 1.1; }
 .delegado .cargo { color: var(--rojo); font-weight: 600; font-size: .92rem; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .delegado .cargo { color: #ff6b81; } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .delegado .cargo { color: #ff4d4d; } }
 .delegado small { color: var(--suave); }
 .delegado .acciones-tarjeta { margin-top: 8px; }
 .lista-enlaces { display: grid; gap: 10px; }
@@ -478,7 +478,7 @@ body.publica { background: #f4f5f7; padding: 0 0 calc(84px + env(safe-area-inset
 .pestanas-web a { flex: none; color: var(--suave); text-decoration: none; font-weight: 700; font-size: .95rem; padding: 6px 0 10px; border-bottom: 3px solid transparent; }
 .pestanas-web a:hover { color: var(--tinta); }
 .pestanas-web a.activa { color: var(--rojo); border-bottom-color: var(--rojo); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pestanas-web a.activa { color: #ff6b81; border-bottom-color: #ff6b81; } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pestanas-web a.activa { color: #ff4d4d; border-bottom-color: #ff4d4d; } }
 
 body.publica .contenedor { padding-top: 14px; }
 body.publica #v-inicio { max-width: 720px; margin: 0 auto; }
@@ -520,12 +520,12 @@ body.publica .pie { padding-bottom: 20px; }
 :root[data-theme="dark"] a { color: #7fa8e8; }
 :root[data-theme="dark"] .etq.fijado { color: var(--ambar); }
 :root[data-theme="dark"] .c-turquesa { --cs: #0e2c2c; } :root[data-theme="dark"] .c-rosa { --cs: #33142a; } :root[data-theme="dark"] .c-gris { --c: #9aa5b5; }
-:root[data-theme="dark"] .enlace-btn { color: #ff6b81; }
-:root[data-theme="dark"] .nav button.activa { color: #ff6b81; }
+:root[data-theme="dark"] .enlace-btn { color: #ff4d4d; }
+:root[data-theme="dark"] .nav button.activa { color: #ff4d4d; }
 :root[data-theme="dark"] .accion.wa { color: #4cd486; }
-:root[data-theme="dark"] .delegado .cargo { color: #ff6b81; }
+:root[data-theme="dark"] .delegado .cargo { color: #ff4d4d; }
 :root[data-theme="dark"] body.publica { background: var(--fondo); }
-:root[data-theme="dark"] .pestanas-web a.activa { color: #ff6b81; border-bottom-color: #ff6b81; }
+:root[data-theme="dark"] .pestanas-web a.activa { color: #ff4d4d; border-bottom-color: #ff4d4d; }
 
 /* ====== Ajustes de lectura (botón Aa) ====== */
 html[data-letra="grande"] { font-size: 112.5%; }
@@ -750,7 +750,7 @@ body.publica { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
 .fila-tablero:last-child { border-bottom: 0; }
 .fila-tablero:hover { background: #12161b; }
 .fila-tablero:focus-visible { outline-color: var(--ambar-rotulo); outline-offset: -3px; }
-.fila-tablero.c-rojo { --t: #ff7a8c; } .fila-tablero.c-azul { --t: #8fb3ff; } .fila-tablero.c-ambar { --t: #ffb000; } .fila-tablero.c-verde { --t: #5fd08f; }
+.fila-tablero.c-rojo { --t: #ff4d4d; } .fila-tablero.c-azul { --t: #8fb3ff; } .fila-tablero.c-ambar { --t: #ffb000; } .fila-tablero.c-verde { --t: #5fd08f; }
 .fila-tablero.c-morado { --t: #c7a6f2; } .fila-tablero.c-turquesa { --t: #5fd0d0; } .fila-tablero.c-rosa { --t: #f39ac9; }
 .t-dia { font-family: var(--cond); font-weight: 700; font-size: 1.6rem; line-height: 1; text-transform: uppercase; color: var(--ambar-rotulo); }
 .t-dia small { display: block; font-weight: 600; font-size: 1.02rem; color: var(--ambar-claro); margin-top: 4px; letter-spacing: .02em; }

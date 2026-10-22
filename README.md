@@ -131,6 +131,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 34: más rojo en modo noche
+- Lo que aún salía rosado en modo noche ahora es el mismo rojo vivo (#ff4d4d): la pestaña elegida y su subrayado, los botones-enlace («Leer más», «Ver»…), el cargo de los delegados, las fechas rojas del panel «Próximas fechas» del Calendario y, en el panel, el icono de «borrado» del Historial. El color «Rosa» que se elige para un tipo de evento sigue siendo rosa a propósito.
+- Cambios: `styles.css`, `admin.css` (y la versión en los HTML, `config.js` y `sw.js`).
+
 ## Versión 33: fechas en rojo en modo noche
 - En modo noche, las fechas de «Próximas paradas» (por ejemplo «VIE 23 OCT»), los enlaces «Ver todas», los iconos de «Ir a» y otros detalles salían en rosa. Ahora son rojo vivo (#ff4d4d), que se sigue leyendo bien sobre el fondo oscuro.
 - Cambios: `styles.css` (y la versión en los HTML, `config.js` y `sw.js`).
