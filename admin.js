@@ -806,7 +806,7 @@ function campoHTML(c, v) {
     return `<label for="${id}">${c.l}</label><select id="${id}">${ops.map(o => `<option ${o === v ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>
       <p class="ayuda">¿Falta una opción? Añádela en Ajustes.</p>`;
   }
-  if (c.t === "textarea") return `<label for="${id}">${c.l}${opc}</label><textarea id="${id}" spellcheck="true" autocapitalize="sentences" autocorrect="on" ${c.corto ? 'style="min-height:90px"' : ""}>${esc(v || "")}</textarea>${ayuda}${c.formato ? FORMATO : ""}`;
+  if (c.t === "textarea") return `<label for="${id}">${c.l}${opc}</label>${c.formato ? `<div class="fmt-barra" role="toolbar" aria-label="Formato del texto"><button type="button" class="btn sec peq" data-fmt="negrita" data-para="${id}"><b>N</b> Negrita</button><button type="button" class="btn sec peq" data-fmt="lista" data-para="${id}">• Lista</button></div>` : ""}<textarea id="${id}" class="crece" spellcheck="true" autocapitalize="sentences" autocorrect="on" ${c.corto ? 'style="min-height:90px"' : ""}>${esc(v || "")}</textarea>${ayuda}${c.formato ? `<details class="formato-mas"><summary>¿Cómo dar formato al texto?</summary>${FORMATO}</details>` : ""}`;
   if (c.t === "archivos" || c.t === "archivo") {
     const multi = c.t === "archivos";
     return `<label>${c.l}${opc}</label>
@@ -864,6 +864,7 @@ function abrirEditor(k, orig = null, preset = {}) {
     el.addEventListener("change", () => { ED.sucio = true; actualizarPrevia(); });
   });
   ofrecerBorrador();
+  $("ed-form").querySelectorAll("textarea.crece").forEach(t => { if (t.style.minHeight) t.classList.add("corta"); requestAnimationFrame(() => creceTexto(t)); });
   if (s.asistente && !orig) prepararAsistente();
   if (k === "avisos" && !orig) prepararPlantillas();
   actualizarPrevia();
@@ -874,6 +875,27 @@ function abrirEditor(k, orig = null, preset = {}) {
   setTimeout(() => (!orig && !s.asistente ? $("ed-form").querySelector("input:not([type=file]), textarea") : null)?.focus(), 50);
 }
 
+// Cajas de texto que crecen con lo escrito (en el móvil no hay que deslizar dentro de una caja pequeña)
+const creceTexto = (t) => { t.style.height = "auto"; t.style.height = Math.min(Math.max(t.scrollHeight + 2, t.classList.contains("corta") ? 90 : 140), innerHeight * 0.7) + "px"; };
+document.addEventListener("input", (e) => { if (e.target.matches?.("textarea.crece")) creceTexto(e.target); });
+// Botones de formato: «Negrita» pone **…** a lo elegido (o a la palabra donde está el cursor); «Lista» pone «- » al principio de las líneas
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-fmt]"); if (!b) return;
+  e.preventDefault();
+  const t = $(b.dataset.para); if (!t) return;
+  let i = t.selectionStart, f = t.selectionEnd; const v = t.value;
+  if (b.dataset.fmt === "negrita") {
+    if (i === f) { while (i > 0 && /\S/.test(v[i - 1])) i--; while (f < v.length && /\S/.test(v[f])) f++; }
+    const sel = v.slice(i, f);
+    const nuevo = /^\*\*[\s\S]*\*\*$/.test(sel) ? sel.slice(2, -2) : "**" + (sel || "texto") + "**";
+    t.setRangeText(nuevo, i, f, "select");
+  } else {
+    const ini = v.lastIndexOf("\n", i - 1) + 1, fin = v.indexOf("\n", f) < 0 ? v.length : v.indexOf("\n", f);
+    const lineas = v.slice(ini, fin).split("\n"), todas = lineas.every(l => /^- /.test(l));
+    t.setRangeText(lineas.map(l => todas ? l.replace(/^- /, "") : /^- /.test(l) ? l : "- " + l).join("\n"), ini, fin, "select");
+  }
+  t.focus(); t.dispatchEvent(new Event("input", { bubbles: true }));
+});
 function prepararArchivos(c) {
   const input = $("f-" + c.k), dz = $("dz-" + c.k), multi = c.t === "archivos";
   const añadir = (files) => {
@@ -979,6 +1001,7 @@ function actualizarPrevia() {
   $("ed-previa").innerHTML = s.previa(x);
   $("ed-previa").querySelectorAll("[data-canal]").forEach(b => b.onclick = () => { PREVIA_CANAL = b.dataset.canal; actualizarPrevia(); });
   aplicarCondiciones();
+  $("ed-form").querySelectorAll("textarea.crece").forEach(t => { if (t.offsetParent && t !== document.activeElement) creceTexto(t); }); // p. ej. tras el asistente o un borrador
   if (["avisos", "recurrentes"].includes(ED.k)) avisoTitulo(f);
   $("ed-previa").querySelectorAll("a").forEach(a => a.onclick = (e) => { if (a.getAttribute("href") === "#" || a.href.startsWith("blob:")) e.preventDefault(); });
 }
