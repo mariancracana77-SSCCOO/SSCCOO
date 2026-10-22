@@ -94,7 +94,7 @@ h1, h2, h3 { font-family: var(--cond); line-height: 1.1; margin: 0; }
 
 /* colores de categorías y tipos (se eligen en Ajustes) */
 /* v45: todas en el rojo del logo (la mezcla de colores no gustaba; el tipo ya se lee en el texto) */
-.c-rojo, .c-azul, .c-ambar, .c-verde, .c-morado, .c-turquesa, .c-rosa, .c-gris { --c: var(--rojo-ic); --cs: var(--rojo-suave); }
+.c-rojo, .c-azul, .c-ambar, .c-verde, .c-morado, .c-turquesa, .c-rosa, .c-gris { --c: var(--rojo); --cs: var(--rojo-suave); }
 .etq.tipo { background: var(--cs); color: var(--c); }
 .etq.tipo::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
 
@@ -1306,3 +1306,7 @@ html[data-contraste="alto"] .cita-panel b { text-shadow: none; color: #fff; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) :is(.conv-intro, .instalar-panel, .banda:not(.avisos-on), .enlace-util, .enlace-faq, .doc, .adjunto, .acceso) .ic,
   :root:not([data-theme="light"]) .documento > .ic { background: var(--rojo); color: #fff; } }
 @media (min-width: 700px) { .cita-placa:not(.hora) { width: min(100%, 520px); } }
+/* En oscuro, --c sigue siendo el rojo del logo (fondos como la fecha de las actas) y lo que va encima del fondo rojo va en blanco */
+:root[data-theme="dark"] :is(.etq.tipo, .item-tablon .ic) { color: #fff; }
+:root[data-theme="dark"] .etq.tipo::before { background: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) :is(.etq.tipo, .item-tablon .ic) { color: #fff; } :root:not([data-theme="light"]) .etq.tipo::before { background: #fff; } }
