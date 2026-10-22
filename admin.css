@@ -512,3 +512,11 @@ body.admin .btn-cab.aa { min-width: 44px; }
 /* v45: en oscuro las categorías llevan fondo rojo del logo: letra blanca encima */
 :root[data-theme="dark"] :is(.sel-color, .ev-mini) { color: #fff; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) :is(.sel-color, .ev-mini) { color: #fff; } }
+
+/* v50: en el móvil con la letra grande (también la del sistema Android) las tarjetas de Ajustes y las listas
+   se salían por la derecha: una columna de rejilla sin minmax(0, …) se ensancha con el contenido más largo. */
+.rejilla-ajustes, .lista-adm { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1100px) { .rejilla-ajustes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.tarjeta-ajuste, .fila-orden { min-width: 0; }
+.tarjeta-ajuste input, .tarjeta-ajuste select, .tarjeta-ajuste textarea { min-width: 0; max-width: 100%; }
+.lista-adm .tit, .lista-adm .extracto, .tarjeta-ajuste b { overflow-wrap: anywhere; }

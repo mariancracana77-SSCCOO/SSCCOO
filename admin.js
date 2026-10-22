@@ -254,11 +254,12 @@ const EN_MOVIL = ["resumen", "avisos", "calendario", "actas"];
 let actual = "resumen", datos = {};
 
 // ---------- Sesión ----------
-let iniciado = false;
-const mostrar = (s) => { ["s-login", "s-recuperar", "s-codigo", "s-panel"].forEach(x => $(x).classList.toggle("oculto", x !== s)); document.body.classList.toggle("sin-nav", s !== "s-panel"); };
+let iniciado = false, CAMBIANDO_CLAVE = false;
+const mostrar = (s) => { ["s-login", "s-olvido", "s-recuperar", "s-codigo", "s-panel"].forEach(x => $(x).classList.toggle("oculto", x !== s)); document.body.classList.toggle("sin-nav", s !== "s-panel"); };
 sb.auth.onAuthStateChange((ev, ses) => {
   if (ev === "PASSWORD_RECOVERY") return mostrar("s-recuperar");
-  if (!ses) { iniciado = false; return mostrar("s-login"); }
+  if (!ses) { iniciado = false; return CAMBIANDO_CLAVE ? null : mostrar("s-login"); }
+  if (CAMBIANDO_CLAVE) return; // entrando con el código del email: primero se guarda la contraseña nueva
   // Supabase avisa de nuevo al volver a la pestaña o al refrescar la sesión: el panel solo se monta una vez,
   // así no se pierde lo que se está escribiendo ni los archivos elegidos.
   if (iniciado) return;
@@ -334,15 +335,55 @@ $("b-olvido").onclick = async () => {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return msg("m-login", "Escribe arriba tu email y vuelve a pulsar.");
   let ultimo = 0; try { ultimo = +localStorage.getItem("ccoo-olvido") || 0; } catch (_) {}
   const falta = Math.ceil((ultimo + 120000 - Date.now()) / 1000);
-  if (falta > 0) return msg("m-login", `Ya se ha enviado el email hace un momento. Mira en Gmail (también en «Spam» o «Promociones»). Si no llega, vuelve a pulsar dentro de ${falta} segundos.`);
+  if (falta > 0) return verOlvido(email, `Ya se ha enviado el email hace un momento. Mira en Gmail (también en «Spam» o «Promociones»). Si no llega, puedes pedir otro dentro de ${falta} segundos.`);
   msg("m-login", "Enviando…", true);
   const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: aqui });
   if (error) return msg("m-login", /rate|429|too many/i.test(error.message + error.status)
     ? "Se han pedido demasiados emails seguidos y hay que esperar una hora. Si ya te llegó alguno, abre el último que llegó (los anteriores dejan de valer)."
     : "No se ha podido enviar: " + error.message);
   try { localStorage.setItem("ccoo-olvido", String(Date.now())); } catch (_) {}
-  msg("m-login", `Email enviado a ${email}. Ábrelo en este mismo móvil, pulsa el enlace y escribe la contraseña nueva. Si no llega en 5 minutos, mira en «Spam». Si pides otro, solo vale el último.`, true);
+  msg("m-login", "", true);
+  verOlvido(email, `Email enviado. Si no llega en 5 minutos, mira en «Spam» o «Promociones».`);
 };
+// Contraseña nueva con el código del email, sin salir de la app (el enlace del email abre el navegador, no la app instalada)
+function verOlvido(email, aviso) {
+  $("olvido-email").textContent = email;
+  ["olvido-codigo", "olvido-nueva", "olvido-repite"].forEach(i => $(i).value = "");
+  mostrar("s-olvido"); msg("m-olvido", aviso || "", true);
+  setTimeout(() => $("olvido-codigo").focus(), 50);
+}
+$("b-tengo-codigo").onclick = () => {
+  const email = $("email").value.trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return msg("m-login", "Escribe arriba tu email y vuelve a pulsar.");
+  verOlvido(email);
+};
+$("b-olvido-volver").onclick = () => { msg("m-login", ""); mostrar("s-login"); };
+$("b-olvido-otro").onclick = () => { mostrar("s-login"); $("b-olvido").click(); };
+$("b-olvido-guardar").onclick = async () => {
+  const email = $("olvido-email").textContent, codigo = $("olvido-codigo").value.replace(/\D/g, ""), p = $("olvido-nueva").value;
+  if (codigo.length < 6) return msg("m-olvido", "Escribe el código de cifras que trae el email.");
+  const f = fallaPass(p); if (f) return msg("m-olvido", f);
+  if (p !== $("olvido-repite").value) return msg("m-olvido", "Las dos contraseñas no coinciden.");
+  const btn = $("b-olvido-guardar"); btn.disabled = true; msg("m-olvido", "Comprobando el código…", true);
+  CAMBIANDO_CLAVE = true;
+  try {
+    const { error: e1 } = await sb.auth.verifyOtp({ email, token: codigo, type: "recovery" });
+    if (e1) { CAMBIANDO_CLAVE = false; return msg("m-olvido", /expired|invalid|not found/i.test(e1.message) ? "El código no vale: está mal escrito, ha caducado o ya se usó. Mira que sea el del último email, o pulsa «Enviar otro email»." : /rate|too many/i.test(e1.message) ? "Muchos intentos seguidos. Espera un par de minutos." : "No se ha podido comprobar: " + e1.message); }
+    msg("m-olvido", "Guardando la contraseña…", true);
+    const { error: e2 } = await sb.auth.updateUser({ password: p });
+    if (e2 && !/same|different/i.test(e2.message)) {
+      await sb.auth.signOut(); // sigue CAMBIANDO_CLAVE: que no salte a la pantalla de entrar y se vea el aviso
+      return msg("m-olvido", /weak|pwned|leaked/i.test(e2.message) ? "Esa contraseña aparece en filtraciones de internet. Pide otro email y elige otra." : "No se ha podido guardar: " + e2.message);
+    }
+    CAMBIANDO_CLAVE = false;
+    aviso("Contraseña guardada. Ya estás dentro.");
+    const { data } = await sb.auth.getSession();
+    iniciado = true; window.MI_EMAIL = data?.session?.user?.email || email;
+    iniciar();
+  } finally { CAMBIANDO_CLAVE = false; btn.disabled = false; }
+};
+$("olvido-codigo").oninput = () => { if ($("olvido-codigo").value.replace(/\D/g, "").length >= 6 && !$("olvido-nueva").value) $("olvido-nueva").focus(); };
+$("olvido-repite").onkeydown = (e) => { if (e.key === "Enter") $("b-olvido-guardar").click(); };
 // Si el enlace del email ya se usó o ha caducado, Supabase vuelve aquí con el error en la dirección
 (() => {
   const h = new URLSearchParams(location.hash.slice(1));
