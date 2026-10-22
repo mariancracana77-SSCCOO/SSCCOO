@@ -1310,3 +1310,12 @@ html[data-contraste="alto"] .cita-panel b { text-shadow: none; color: #fff; }
 :root[data-theme="dark"] :is(.etq.tipo, .item-tablon .ic) { color: #fff; }
 :root[data-theme="dark"] .etq.tipo::before { background: #fff; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) :is(.etq.tipo, .item-tablon .ic) { color: #fff; } :root:not([data-theme="light"]) .etq.tipo::before { background: #fff; } }
+
+/* v47: «Próximas paradas» con el mismo diseño de carretera, pero en amarillo (al padre le gusta más así que en rojo):
+   carretera amarilla con su línea discontinua oscura, paradas con borde amarillo y fechas en etiqueta amarilla */
+.paradas .ruta::before { background: repeating-linear-gradient(180deg, rgba(21, 25, 30, .75) 0 8px, transparent 8px 16px) 50% 0 / 2px 100% no-repeat, #ffb000; }
+.paradas .ruta a::before { border-color: #ffb000; }
+.paradas .ruta li:nth-child(2) a::before { background: #ffb000; border-color: var(--fondo); box-shadow: 0 0 0 3px #ffb000; }
+@keyframes parada-hoy { 50% { box-shadow: 0 0 0 3px #ffb000, 0 0 0 9px rgba(255, 176, 0, .3); } }
+.paradas .ruta .cuando, .paradas .ruta li.hoy .cuando { background: #ffb000; color: #15191e !important; }
+.paradas .ruta li.hoy a::before { background: #ffb000; border-color: var(--fondo); }
