@@ -255,7 +255,7 @@ let actual = "resumen", datos = {};
 
 // ---------- Sesión ----------
 let iniciado = false, CAMBIANDO_CLAVE = false;
-const mostrar = (s) => { ["s-login", "s-olvido", "s-recuperar", "s-codigo", "s-panel"].forEach(x => $(x).classList.toggle("oculto", x !== s)); document.body.classList.toggle("sin-nav", s !== "s-panel"); };
+const mostrar = (s) => { ["s-login", "s-olvido", "s-rescate", "s-recuperar", "s-codigo", "s-panel"].forEach(x => $(x).classList.toggle("oculto", x !== s)); document.body.classList.toggle("sin-nav", s !== "s-panel"); };
 sb.auth.onAuthStateChange((ev, ses) => {
   if (ev === "PASSWORD_RECOVERY") return mostrar("s-recuperar");
   if (!ses) { iniciado = false; return CAMBIANDO_CLAVE ? null : mostrar("s-login"); }
@@ -357,6 +357,37 @@ $("b-tengo-codigo").onclick = () => {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return msg("m-login", "Escribe arriba tu email y vuelve a pulsar.");
   verOlvido(email);
 };
+// Código de rescate: contraseña nueva sin email (función «cuenta»). Los códigos se generan en Ajustes.
+const llamaCuenta = async (body) => {
+  const { data, error } = await sb.functions.invoke("cuenta", { body });
+  if (error) { let m = ""; try { m = (await error.context?.json())?.error; } catch (_) {} throw new Error(m || "No hay conexión o el servidor no responde. Prueba otra vez."); }
+  if (data?.error) throw new Error(data.error);
+  return data || {};
+};
+$("b-rescate").onclick = () => {
+  $("resc-email").value = $("email").value.trim();
+  ["resc-codigo", "resc-nueva", "resc-repite"].forEach(i => $(i).value = "");
+  msg("m-rescate", ""); mostrar("s-rescate"); setTimeout(() => $("resc-codigo").focus(), 50);
+};
+$("b-resc-volver").onclick = () => mostrar("s-login");
+$("b-resc-guardar").onclick = async () => {
+  const email = $("resc-email").value.trim(), codigo = $("resc-codigo").value.trim(), p = $("resc-nueva").value;
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return msg("m-rescate", "Escribe tu email.");
+  if (codigo.replace(/[^a-z0-9]/gi, "").length < 10) return msg("m-rescate", "Escribe el código completo: 10 letras y números.");
+  const f = fallaPass(p); if (f) return msg("m-rescate", f);
+  if (p !== $("resc-repite").value) return msg("m-rescate", "Las dos contraseñas no coinciden.");
+  const btn = $("b-resc-guardar"); btn.disabled = true; msg("m-rescate", "Comprobando el código…", true);
+  try {
+    const r = await llamaCuenta({ accion: "usar_codigo", email, codigo, clave: p });
+    msg("m-rescate", "Contraseña cambiada. Entrando…", true);
+    const { error } = await sb.auth.signInWithPassword({ email, password: p });
+    if (error) return msg("m-rescate", "La contraseña se ha cambiado, pero no ha podido entrar: vuelve atrás y entra con ella.");
+    aviso(r.quedan ? `Contraseña cambiada. Te quedan ${r.quedan} códigos de rescate.` : "Contraseña cambiada. Ya no te quedan códigos: genera otros en Ajustes.");
+    $("email").value = email;
+  } catch (e) { msg("m-rescate", e.message); }
+  finally { btn.disabled = false; }
+};
+$("resc-repite").onkeydown = (e) => { if (e.key === "Enter") $("b-resc-guardar").click(); };
 $("b-olvido-volver").onclick = () => { msg("m-login", ""); mostrar("s-login"); };
 $("b-olvido-otro").onclick = () => { mostrar("s-login"); $("b-olvido").click(); };
 $("b-olvido-guardar").onclick = async () => {
@@ -1609,6 +1640,14 @@ async function pintaAjustes() {
       <div class="botones"><button class="btn" id="b-clave">Guardar la contraseña nueva</button></div>
       <div class="msg" id="m-clave"></div>
     </div>
+    <div class="panel tarjeta-ajuste" id="ajuste-rescate">
+      <h2>Si te olvidas de la contraseña</h2>
+      <p class="ayuda">Genera 8 códigos de rescate y guárdalos en papel, en casa. Si un día no puedes entrar, en la pantalla de entrar pulsa «Tengo un código de rescate» y pon una contraseña nueva al momento, sin email y sin esperar. Cada código sirve una vez.</p>
+      <p id="resc-estado" class="fecha-txt">Comprobando…</p>
+      <div id="resc-lista"></div>
+      <div class="botones"><button class="btn" id="b-generar-resc">Generar códigos de rescate</button></div>
+      <div class="msg" id="m-resc"></div>
+    </div>
     <div class="panel tarjeta-ajuste" id="ajuste-2p">
       <h2>Verificación en dos pasos</h2>
       <p class="ayuda">Para entrar en el panel, además de la contraseña se pide un código que cambia cada 30 segundos y sale en una app del móvil. Así, aunque alguien sepa la contraseña, no puede publicar. Es para tu cuenta (${esc(window.MI_EMAIL || "")}).</p>
@@ -1646,7 +1685,7 @@ async function pintaAjustes() {
   });
   document.querySelectorAll("[data-guardar]").forEach(b => b.onclick = () => guardarLista(b.dataset.guardar));
   document.querySelectorAll("[id^=nn-]").forEach(i => i.onkeydown = (e) => { if (e.key === "Enter") document.querySelector(`[data-anadir="${i.id.slice(3)}"]`).click(); });
-  cargarAdmins(); cargarCanales(); prepararCopiaYArchivo(); prepararClave();
+  cargarAdmins(); cargarCanales(); prepararCopiaYArchivo(); prepararClave(); prepararRescate();
   $("b-limpiar").onclick = limpiarArchivos;
 }
 function selColor(v, id) {
@@ -1715,12 +1754,59 @@ function prepararClave() {
     msg("m-clave", "Contraseña cambiada. La próxima vez entra con la nueva.", true);
   };
 }
+function prepararRescate() {
+  const estado = () => llamaCuenta({ accion: "estado" }).then(r => {
+    if (!$("resc-estado")) return;
+    $("resc-estado").textContent = r.quedan ? `Te quedan ${r.quedan} códigos sin usar. Si los has perdido, genera otros: los de antes dejarán de valer.` : "Todavía no tienes códigos de rescate.";
+    $("b-generar-resc").textContent = r.quedan ? "Generar códigos nuevos" : "Generar códigos de rescate";
+  }).catch(() => { if ($("resc-estado")) $("resc-estado").textContent = ""; });
+  estado();
+  $("b-generar-resc").onclick = async () => {
+    if (/nuevos/.test($("b-generar-resc").textContent) && !confirm("Los códigos que tienes ahora dejarán de valer. ¿Generar otros?")) return;
+    const b = $("b-generar-resc"); b.disabled = true; msg("m-resc", "Generando…", true);
+    try {
+      const { codigos } = await llamaCuenta({ accion: "codigos" });
+      $("resc-lista").innerHTML = `<p class="ayuda"><b>Apúntalos ahora: no se volverán a enseñar.</b> Guárdalos en papel, lejos del móvil.</p>
+        <ol class="codigos-resc">${codigos.map(c => `<li>${esc(c)}</li>`).join("")}</ol>
+        <div class="botones"><button class="btn sec" id="b-copiar-resc">${icono("copia", "p")}Copiar los códigos</button></div>`;
+      $("b-copiar-resc").onclick = () => {
+        const t = `Códigos de rescate del panel CCOO Calsina Carré (${window.MI_EMAIL}). Cada uno sirve una vez:\n` + codigos.join("\n");
+        navigator.clipboard?.writeText(t).then(() => aviso("Copiados.")).catch(() => aviso("No se han podido copiar: apúntalos a mano.", true));
+      };
+      msg("m-resc", ""); estado();
+    } catch (e) { msg("m-resc", e.message); }
+    finally { b.disabled = false; }
+  };
+}
+// Poner contraseña nueva a otro administrador (por si no puede entrar), sin email
+function modalClaveOtro(email) {
+  const v = document.createElement("div"); v.className = "modal-velo";
+  v.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="clv-t"><h2 id="clv-t">Contraseña nueva</h2>
+    <p class="ayuda">Para ${esc(email)}. Dísela en persona; luego puede cambiarla en Ajustes.</p>
+    <label for="clv-nueva">Contraseña nueva <small>(10 o más, con letras y números)</small></label><input id="clv-nueva" type="password" autocomplete="new-password">
+    <label for="clv-repite">Repítela</label><input id="clv-repite" type="password" autocomplete="new-password">
+    <div class="msg" id="m-clv"></div>
+    <div class="botones"><button class="btn" data-r="si">Guardar</button><button class="btn sec" data-r="no">Cancelar</button></div></div>`;
+  const cerrar = () => v.remove();
+  v.querySelector("[data-r=no]").onclick = cerrar;
+  v.addEventListener("keydown", (e) => { if (e.key === "Escape") cerrar(); });
+  v.querySelector("[data-r=si]").onclick = async () => {
+    const p = v.querySelector("#clv-nueva").value, f = fallaPass(p);
+    if (f) return msg("m-clv", f);
+    if (p !== v.querySelector("#clv-repite").value) return msg("m-clv", "Las dos contraseñas no coinciden.");
+    msg("m-clv", "Guardando…", true);
+    try { await llamaCuenta({ accion: "poner_clave", email, clave: p }); cerrar(); aviso("Contraseña cambiada. Ya puede entrar con ella."); }
+    catch (e) { msg("m-clv", e.message); }
+  };
+  document.body.appendChild(v); v.querySelector("#clv-nueva").focus();
+}
 async function cargarAdmins() {
   const { data, error } = await sb.from("admins").select("email").order("email");
   if (error) { $("lista-admins").innerHTML = `<p class="msg err">${esc(error.message)}</p>`; return; }
   const yo = (window.MI_EMAIL || "").toLowerCase();
   $("lista-admins").innerHTML = data.map(a => `<div class="panel item"><div class="txt"><b>${esc(a.email)}</b>${a.email.toLowerCase() === yo ? '<span class="etq">Tú</span>' : ""}</div>
-      ${a.email.toLowerCase() === yo ? "" : `<button class="btn peligro peq" data-email="${esc(a.email)}" aria-label="Quitar permiso">${icono("borrar", "p")}</button>`}</div>`).join("");
+      ${a.email.toLowerCase() === yo ? "" : `<button class="btn sec peq" data-clave="${esc(a.email)}">${icono("editar", "p")}Poner contraseña nueva</button><button class="btn peligro peq" data-email="${esc(a.email)}" aria-label="Quitar permiso">${icono("borrar", "p")}</button>`}</div>`).join("");
+  $("lista-admins").querySelectorAll("[data-clave]").forEach(b => b.onclick = () => modalClaveOtro(b.dataset.clave));
   $("lista-admins").querySelectorAll("[data-email]").forEach(b => b.onclick = async () => {
     if (!confirm(`¿Quitar el permiso de publicar a ${b.dataset.email}?`)) return;
     const { error } = await sb.from("admins").delete().eq("email", b.dataset.email);
