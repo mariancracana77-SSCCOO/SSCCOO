@@ -1445,3 +1445,14 @@ html[data-letra] .subpestanas a { font-size: .92rem; }
 .tit-seccion .traducir { margin-left: auto; }
 .tit-seccion .traducir .accion { text-transform: none; letter-spacing: 0; font-size: .85rem; }
 .tit-seccion .traducir .menu-idiomas { text-transform: none; letter-spacing: 0; }
+/* v58: idioma de «Mis descansos» y de los avisos al móvil */
+.desc-cab { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.desc-cab .titulo-vista { margin-bottom: 0; }
+.desc-idioma, .idioma-avisos { display: inline-flex; align-items: center; gap: 6px; }
+.desc-idioma select, .idioma-avisos select { min-height: 40px; padding: 6px 10px; border-radius: 10px; border: 1.5px solid var(--linea); background: var(--tarjeta); color: var(--tinta); font: inherit; font-weight: 700; max-width: 100%; }
+.desc-idioma .icono, .idioma-avisos .icono { color: var(--rojo-ic); }
+.idioma-avisos { flex-wrap: wrap; margin: 6px 0 4px; font-weight: 600; }
+#desc-idioma-msg:empty { display: none; }
+.desc-total { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 6px 0 10px; padding: 10px 14px; border-radius: 10px; background: var(--rojo); color: #fff; font-weight: 700; }
+.desc-total b { font-family: var(--cond); font-size: 1.5rem; }
+.desc-idioma { font-weight: 600; font-size: .9rem; color: var(--suave); }

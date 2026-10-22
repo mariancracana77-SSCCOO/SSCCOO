@@ -958,6 +958,22 @@ function consentimientoAvisos() {
     v.querySelector("#cons-avisos").focus();
   });
 }
+// Idioma que elige el trabajador para «Mis descansos» y para los avisos al móvil (v58). Se guarda en el móvil
+// («ccoo-mi-idioma») y, si tiene los avisos activados, también junto a su suscripción (RPC idioma_push): así la
+// función «notificar» le manda cada aviso traducido.
+window.miIdioma = () => { try { const v = localStorage.getItem("ccoo-mi-idioma") || ""; return IDIOMAS[v] ? v : ""; } catch (_) { return ""; } };
+window.ponMiIdioma = (idi) => {
+  idi = IDIOMAS[idi] ? idi : "";
+  try { idi ? localStorage.setItem("ccoo-mi-idioma", idi) : localStorage.removeItem("ccoo-mi-idioma"); } catch (_) {}
+  sincronizaIdiomaPush(); dispatchEvent(new Event("mi-idioma"));
+};
+function sincronizaIdiomaPush() {
+  let ep = ""; try { ep = localStorage.getItem("ccoo-push") || ""; } catch (_) {}
+  if (ep) sb.rpc("idioma_push", { p_endpoint: ep, p_idioma: miIdioma() || null }).then(() => {}, () => {});
+}
+const opcionesIdioma = () => `<option value="">Español</option>` + Object.entries(IDIOMAS).map(([k, n]) => `<option value="${k}" ${k === miIdioma() ? "selected" : ""}>${esc(n)}</option>`).join("");
+const selectIdiomaAvisos = (id) => `<label class="idioma-avisos">${icono("idioma", "p")}<span>Idioma de los avisos</span><select id="${id}" aria-label="Idioma de los avisos (Language)">${opcionesIdioma()}</select></label>`;
+addEventListener("change", (ev) => { if (ev.target.closest?.(".idioma-avisos select")) ponMiIdioma(ev.target.value); });
 const b64aBytes = (b) => { const p = "=".repeat((4 - b.length % 4) % 4), s = atob((b + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from([...s].map(c => c.charCodeAt(0))); };
 async function activarAvisos() {
   if (ES_IOS && !INSTALADA()) return modal("Primero, instala la app", "<p>En iPhone, los avisos solo funcionan si la app está instalada.</p><ol><li>Pulsa <b>Compartir</b> en Safari.</li><li>Elige <b>«Añadir a pantalla de inicio»</b>.</li><li>Abre la app desde el icono y pulsa otra vez <b>Activar avisos</b>.</li></ol>");
@@ -990,7 +1006,7 @@ async function activarAvisos() {
     const j = sub.toJSON();
     const { error } = await sb.rpc("suscribir_push", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
     if (error) throw error;
-    guardarEndpoint(j.endpoint);
+    guardarEndpoint(j.endpoint); sincronizaIdiomaPush();
     suscrito = true; pintaBanda();
     avisar("Avisos activados en este móvil", "inicio");
   } catch (e) { modal("No se han podido guardar los avisos", `<p>Comprueba la conexión y vuelve a intentarlo.</p><p class="fecha-txt">${esc(e.message || e)}</p>`); }
@@ -1013,7 +1029,7 @@ async function comprobarSuscripcion() {
   if (!PUSH_OK || Notification.permission !== "granted") return;
   const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
   suscrito = !!sub;
-  if (sub) { const j = sub.toJSON(); sb.rpc("suscribir_push", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth }).then(() => {}, () => {}); guardarEndpoint(j.endpoint); } // por si se borró
+  if (sub) { const j = sub.toJSON(); guardarEndpoint(j.endpoint); sb.rpc("suscribir_push", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth }).then(() => sincronizaIdiomaPush(), () => {}); } // por si se borró
   pintaBanda();
 }
 function pintaBanda() {
@@ -1032,16 +1048,17 @@ function pintaBanda() {
   $("banda-app").innerHTML = banda;
   // En «Nosotros», el estado completo
   $("banda-app-info").innerHTML = `<div class="panel banda ${suscrito ? "avisos-on" : ""}"><span class="ic">${icono(suscrito ? "check" : "campana")}</span>
-      <div class="txt"><b>${suscrito ? "Avisos activados en este móvil" : "Avisos en el móvil"}</b><p>${suscrito ? "Te llegará una notificación con cada novedad." : "Actívalos para enterarte al momento de cada aviso."}</p></div>
+      <div class="txt"><b>${suscrito ? "Avisos activados en este móvil" : "Avisos en el móvil"}</b><p>${suscrito ? "Te llegará una notificación con cada novedad." : "Actívalos para enterarte al momento de cada aviso."}</p>${suscrito ? selectIdiomaAvisos("info-idioma") : ""}</div>
       <div class="botones">${suscrito ? `<button class="btn sec peq" data-acc="desactivar">Desactivar</button>` : `<button class="btn peq" data-acc="${iosSinInstalar ? "instalar" : "activar"}">${iosSinInstalar ? "Instalar la app" : "Activar avisos"}</button>`}${inst ? "" : ` <button class="btn sec peq" data-acc="instalar">Instalar</button>`}</div></div>`;
   document.querySelectorAll("[data-acc]").forEach(b => b.onclick = () => ({
     instalar, activar: activarAvisos, desactivar: desactivarAvisos,
-    estado: () => modal("Avisos activados", `<p>Este móvil recibe una notificación con cada aviso, acta, documento o fecha nueva.</p>`,
+    estado: () => modal("Avisos activados", `<p>Este móvil recibe una notificación con cada aviso, acta, documento o fecha nueva.</p>${selectIdiomaAvisos("m-idioma")}<p class="fecha-txt">Si eliges otro idioma, los avisos te llegan traducidos automáticamente.</p>`,
       `<button class="enlace-desact" id="m-desact">Desactivar los avisos en este móvil</button>`,
       `<span class="modal-ic ok">${icono("check")}</span>`) || setTimeout(() => { const d = document.getElementById("m-desact"); if (d) d.onclick = () => { document.querySelector(".modal-velo")?.remove(); desactivarAvisos(); }; }, 0),
   })[b.dataset.acc]());
 }
 $("cab-instalar").onclick = instalar;
+addEventListener("mi-idioma", () => document.querySelectorAll(".idioma-avisos select").forEach(s => { s.value = miIdioma(); }));
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").then(r => { r.update(); return comprobarSuscripcion(); }).catch(() => {});
 pintaBanda();
 
