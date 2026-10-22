@@ -135,7 +135,8 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Encuestas**: al publicar una se avisa en los móviles y en Telegram, como los avisos (casilla «Avisar…»; columnas `notificar`/`notificado` en `encuestas` y la función `notificar` las incluye). Cada encuesta tiene enlace directo (`#encuesta-<id>`) y botón «Compartir la encuesta» por WhatsApp.
 - **Icono pequeño de las notificaciones**: `badge-96.png`, el camión del logo en blanco (Android lo pinta en un solo color; antes salía un cuadrado).
 - **Cartel para el tablón** (`cartel.html`) rehecho con el estilo de la web: QR grande con el logo en el centro (nivel H, comprobado que se lee), qué ofrece la app y los pasos para Android e iPhone.
-- **Guía del panel** actualizada (página aparte, con capturas).
+- **Próximas paradas**: la carretera pasa a rojo CCOO (con la línea blanca discontinua), paradas blancas con borde rojo y la próxima en rojo; la fecha en etiqueta roja (la autopista amarilla no gustó).
+- **Guía del panel** actualizada (página aparte, con capturas, y en PDF).
 
 ## Versión 42: encuestas anónimas y más animaciones
 - **Encuestas anónimas**: en el panel, «Encuestas» (pregunta, de 2 a 6 opciones, día de cierre opcional). Salen en la portada; se vota tocando una opción y se ven los resultados en barras. Al servidor solo va «+1 a esta opción» (tablas `encuestas` y `encuesta_votos`, función `votar_encuesta`): nadie puede saber qué votó cada uno. Un voto por móvil (se recuerda en el propio móvil). Cerradas, los resultados se ven 15 días más.
