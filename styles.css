@@ -1352,6 +1352,7 @@ html[data-letra] .subpestanas a { font-size: .92rem; }
 .desc-banda { display: flex; gap: 12px; align-items: flex-start; background: var(--rojo-suave); border: 1px solid var(--rojo); border-radius: var(--radio-g); padding: 14px; margin-bottom: 12px; }
 .desc-banda > .icono { width: 28px; height: 28px; color: var(--rojo-ic); flex: none; }
 .desc-banda p { margin: 4px 0 10px; }
+.desc-riesgos { margin: 0 0 10px; padding-left: 20px; display: grid; gap: 2px; }
 .desc-estado, .desc-form, .desc-opciones { margin-bottom: 16px; display: grid; gap: 10px; }
 .desc-vacio { color: var(--suave); margin: 0; }
 .desc-prox { display: grid; gap: 4px; background: var(--asfalto); color: #fff; border-radius: var(--radio-g); padding: 16px 18px; border-left: 6px solid #ffb000; }
