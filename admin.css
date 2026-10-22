@@ -520,3 +520,33 @@ body.admin .btn-cab.aa { min-width: 44px; }
 .tarjeta-ajuste, .fila-orden { min-width: 0; }
 .tarjeta-ajuste input, .tarjeta-ajuste select, .tarjeta-ajuste textarea { min-width: 0; max-width: 100%; }
 .lista-adm .tit, .lista-adm .extracto, .tarjeta-ajuste b { overflow-wrap: anywhere; }
+
+/* Todos los archivos y fotos (v51) */
+.filtro-arch { margin-bottom: 8px; }
+.rejilla-arch { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 12px; }
+.arch-ficha { display: flex; flex-direction: column; gap: 8px; min-width: 0; background: var(--tarjeta); border: 1px solid var(--linea); border-radius: var(--radio-g); padding: 10px; box-shadow: var(--sombra); }
+.arch-ver { display: grid; place-items: center; aspect-ratio: 4 / 3; max-width: 100%; border-radius: 10px; overflow: hidden; background: var(--fondo); color: var(--rojo-ic); text-decoration: none; }
+.arch-ver img { width: 100%; height: 100%; object-fit: cover; }
+.arch-ic { display: grid; justify-items: center; gap: 6px; }
+.arch-ic .icono { width: 42px; height: 42px; }
+.arch-ic small { font-weight: 700; color: var(--suave); }
+.arch-txt { display: grid; gap: 2px; min-width: 0; }
+.arch-txt b { overflow-wrap: anywhere; line-height: 1.25; }
+.arch-txt small { color: var(--suave); overflow-wrap: anywhere; }
+.arch-ficha .btn { align-self: flex-start; }
+@media (max-width: 699px) {
+  .rejilla-arch { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .arch-ficha { display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: center; gap: 6px 12px; }
+  .arch-ver { width: 76px; aspect-ratio: 1; grid-row: span 2; }
+  .arch-ic .icono { width: 30px; height: 30px; }
+  .arch-ic small { font-size: .75rem; }
+}
+
+/* Códigos de rescate (v51) */
+.codigo-rescate { letter-spacing: .12em; text-transform: uppercase; font-size: 1.3rem; }
+.codigos-resc { columns: 2; column-gap: 24px; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 1.15rem; font-weight: 700; margin: 10px 0; padding-left: 1.6em; }
+.codigos-resc li { break-inside: avoid; padding: 3px 0; }
+@media (max-width: 380px) { .codigos-resc { columns: 1; } }
+#lista-admins .item { flex-wrap: wrap; gap: 8px; }
+#lista-admins .item .txt { flex: 1 1 100%; min-width: 0; }
+#lista-admins .item .txt b { overflow-wrap: anywhere; white-space: normal; text-overflow: clip; overflow: visible; }
