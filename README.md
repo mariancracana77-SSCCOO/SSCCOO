@@ -131,6 +131,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 45: manda el rojo del logo y la animación de entrada se ve siempre
+- **Colores**: el rojo de toda la web pasa a ser el del logo (#AB1012). Lo que era ámbar (subrayado de la pestaña, flechas, marcas «Nuevo», contadores, panel luminoso del urgente, calendario) y los iconos de colores de las listas pasan a rojo. Sobre fondo negro se usa el rojo encendido (#FF5A52) para que se lea. Las luces de emergencia del camión sin conexión siguen ámbar.
+- **Animación de entrada**: ahora empieza cuando la página ha cargado (en la app instalada, Android tapaba los primeros segundos con su pantalla y la animación terminaba sin verse) y sale aunque el móvil tenga «quitar animaciones» (lo activa el ahorro de batería). Se sigue saltando tocándola.
+
 ## Versión 44: cartel con el rojo del logo
 - El cartel para el tablón (`cartel.html`) cambia los detalles amarillos por el rojo del logo (#AB1012; «Calsina Carré» en el tono claro #E0262B para que se lea sobre la cabecera oscura).
 

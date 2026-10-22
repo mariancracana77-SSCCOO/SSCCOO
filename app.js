@@ -682,11 +682,14 @@ async function cargar(idNuevo) {
   if (/^#aviso-\d+$/.test(location.hash) && !cargar.hecho) { cargar.hecho = true; irA(); }
 }
 // Pantalla de bienvenida: dura lo que tarda el camión en formar el logo (4,3 s) y se quita al terminar de cargar.
-// Tocarla la salta.
+// Tocarla la salta. Sale aunque el móvil tenga «quitar animaciones» (muchos lo activan solos con el ahorro de batería).
+// La animación no empieza hasta que la página ha cargado: en la app instalada, Android tapa los primeros segundos
+// con su propia pantalla y, si empezaba antes, terminaba sin que se viera.
 // Al quitarla, lo que hay en pantalla entra escalonado (solo esta vez, no en cada actualización).
 function quitarBienvenida() {
   const bv = $("bienvenida"); if (!bv || bv.classList.contains("fuera")) return;
-  const quieto = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!quitarBienvenida.ya && quitarBienvenida.t0 == null) { quitarBienvenida.pend = true; return; }
+  const quieto = QUIETO();
   clearTimeout(quitarBienvenida.t);
   quitarBienvenida.t = setTimeout(() => {
     const listas = document.querySelectorAll("#inicio-feed, #inicio-paradas, .accesos-tablon, [id^='lista-']");
@@ -694,8 +697,16 @@ function quitarBienvenida() {
     bv.classList.add("fuera");
     if (!location.hash || location.hash === "#inicio") animaPortada();
     setTimeout(() => { bv.remove(); listas.forEach(el => el.classList.remove("anima-entra")); }, 1200);
-  }, quieto || quitarBienvenida.ya ? 0 : Math.max(0, 4300 - performance.now()));
+  }, quitarBienvenida.ya ? 0 : Math.max(0, 4300 - (performance.now() - quitarBienvenida.t0)));
 }
+function empiezaBienvenida() {
+  const bv = $("bienvenida"); if (!bv || quitarBienvenida.t0 != null) return;
+  quitarBienvenida.t0 = performance.now();
+  bv.classList.add("bv-anda");
+  if (quitarBienvenida.pend) quitarBienvenida();
+}
+if (document.readyState === "complete") requestAnimationFrame(empiezaBienvenida);
+else { addEventListener("load", () => requestAnimationFrame(empiezaBienvenida), { once: true }); setTimeout(empiezaBienvenida, 3000); }
 if ($("bienvenida")) $("bienvenida").addEventListener("click", () => { quitarBienvenida.ya = true; quitarBienvenida(); });
 cargar().finally(quitarBienvenida);
 
