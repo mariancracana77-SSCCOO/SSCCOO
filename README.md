@@ -91,6 +91,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Próxima cita** (el rótulo de Inicio cuando no hay nada urgente): diseño nuevo de carretera. El título sale en un panel luminoso de autopista (letras blancas de puntos y luces rojas que parpadean en las esquinas) y, debajo, en un poste, dos señales en el rojo del logo: el lugar con los días que faltan (como los kilómetros de una señal) y el día y la hora. Prefiere reuniones y asambleas a los festivos y, si es la misma cita que la cuenta atrás, no se repite.
 - **Animación de entrada**: ahora empieza cuando la página ha cargado (en la app instalada, Android tapaba los primeros segundos con su pantalla y la animación terminaba sin verse) y sale aunque el móvil tenga «quitar animaciones» (lo activa el ahorro de batería). Se sigue saltando tocándola.
 
+## Versión 56: cabecera sin cortar y subapartados más visibles
+- **Idioma**: se quita el botón de idioma de arriba (en el móvil cortaba «Calsina Carré» y traducir toda la web de golpe iba lento). Se traduce cada publicación con su botón «Traducir»; el último idioma elegido sale el primero del menú.
+- **Subapartados**: la segunda fila se ve más (letra blanca, borde claro, fondo propio) y, si hay más subapartados escondidos, sale una flecha roja redonda a ese lado.
+
 ## Versión 55: idioma de toda la web y colores del calendario
 - **Botón de idioma** junto a «Aa»: el trabajador elige su idioma (catalán, inglés, rumano, árabe, francés, portugués, alemán, polaco o serbio) y avisos, actas, convenio, dudas y publicaciones se traducen solos al verse. Se recuerda en el móvil; franja para volver al español.
 - **Calendario**: cada punto con el color de su tipo y etiquetas «Ver: Todo · Asamblea · Reunión…» que filtran.

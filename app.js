@@ -90,13 +90,14 @@ function marcaPestanas(clave) {
     if (on) b.scrollIntoView({ inline: "center", block: "nearest" });
   });
   const sub = $("subpestanas"), hay = g && g.miembros.length > 1;
-  sub.classList.toggle("oculto", !hay);
+  $("subpest-caja").classList.toggle("oculto", !hay);
   document.body.classList.toggle("con-subpestanas", !!hay);
-  if (!hay) { sub.innerHTML = ""; return; }
+  if (!hay) { sub.innerHTML = ""; flechasPestanas(); return; }
   sub.setAttribute("aria-label", "Dentro de " + g.titulo);
   sub.innerHTML = g.miembros.map(m => `<a href="#${esc(m.clave)}" data-v="${esc(m.clave)}" class="${m.clave === clave ? "activa" : ""}"${m.clave === clave ? ' aria-current="page"' : ""}>${esc(m.titulo)}</a>`).join("");
   sub.scrollLeft = 0; // se ve desde el principio; solo se mueve si la elegida no cabe
   const act = sub.querySelector(".activa"); if (act && act.offsetLeft + act.offsetWidth > sub.clientWidth) sub.scrollLeft = act.offsetLeft - 16;
+  flechasPestanas();
   if (cargar.listo) pintaContadores();
 }
 
@@ -122,18 +123,27 @@ function marcaPestanas(clave) {
 
 // Barra de pestañas: en el móvil caben 2 o 3 de 12 y no se notaba que se puede deslizar.
 // Una flecha a cada lado (y la sombra) solo cuando hay más secciones escondidas por ese lado.
+// Lo mismo en la segunda fila (subapartados), con flechas rojas para que se vea que hay más.
+const FILAS_PEST = [[".pestanas-caja", ".pestanas-web"], ["#subpest-caja", "#subpestanas"]];
 function flechasPestanas() {
-  const nav = document.querySelector(".pestanas-web"), izq = document.querySelector(".pest-flecha.izq"), der = document.querySelector(".pest-flecha.der");
-  if (!nav || !izq || !der) return;
-  const hayIzq = nav.scrollLeft > 4, hayDer = nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 4;
-  izq.hidden = !hayIzq; der.hidden = !hayDer;
-  nav.classList.toggle("hay-izq", hayIzq); nav.classList.toggle("hay-der", hayDer);
+  FILAS_PEST.forEach(([c, n]) => {
+    const caja = document.querySelector(c), nav = document.querySelector(n);
+    if (!caja || !nav) return;
+    const izq = caja.querySelector(":scope > .pest-flecha.izq"), der = caja.querySelector(":scope > .pest-flecha.der");
+    const hayIzq = nav.scrollLeft > 4, hayDer = nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 4;
+    izq.hidden = !hayIzq; der.hidden = !hayDer;
+    nav.classList.toggle("hay-izq", hayIzq); nav.classList.toggle("hay-der", hayDer);
+  });
 }
-document.querySelectorAll(".pest-flecha").forEach(b => b.addEventListener("click", () => {
-  const nav = document.querySelector(".pestanas-web"), lado = b.classList.contains("izq") ? -1 : 1;
-  nav.scrollBy({ left: lado * nav.clientWidth * 0.7, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-}));
-document.querySelector(".pestanas-web")?.addEventListener("scroll", flechasPestanas, { passive: true });
+FILAS_PEST.forEach(([c, n]) => {
+  const caja = document.querySelector(c), nav = document.querySelector(n);
+  if (!caja || !nav) return;
+  caja.querySelectorAll(":scope > .pest-flecha").forEach(b => b.addEventListener("click", () => {
+    const lado = b.classList.contains("izq") ? -1 : 1;
+    nav.scrollBy({ left: lado * nav.clientWidth * 0.7, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  }));
+  nav.addEventListener("scroll", flechasPestanas, { passive: true });
+});
 window.addEventListener("resize", flechasPestanas);
 irA();
 flechasPestanas();
@@ -1076,7 +1086,9 @@ document.addEventListener("click", async (ev) => {
       delete reg.dataset.idiomaActual; btn.innerHTML = icono("idioma", "p") + "Traducir"; return;
     }
     if (caja.querySelector(".menu-idiomas")) return;
-    caja.insertAdjacentHTML("beforeend", `<div class="menu-idiomas" role="menu">${Object.entries(IDIOMAS).map(([k, n]) => `<button role="menuitem" data-idioma="${k}" ${k === "ar" ? 'dir="rtl"' : ""}>${n}</button>`).join("")}</div>`);
+    let ult = ""; try { ult = localStorage.getItem("ccoo-ultimo-idioma") || ""; } catch (_) {}
+    const lista = Object.entries(IDIOMAS).sort((x, y) => (y[0] === ult) - (x[0] === ult));
+    caja.insertAdjacentHTML("beforeend", `<div class="menu-idiomas" role="menu">${lista.map(([k, n]) => `<button role="menuitem" data-idioma="${k}" class="${k === ult ? "activo" : ""}" ${k === "ar" ? 'dir="rtl"' : ""}>${n}</button>`).join("")}</div>`);
     colocaMenuIdiomas(caja.querySelector(".menu-idiomas"), btn);
     return;
   }
@@ -1084,6 +1096,7 @@ document.addEventListener("click", async (ev) => {
     ev.preventDefault();
     const reg = opc.closest("[data-reg]"), idioma = opc.dataset.idioma;
     opc.closest(".menu-idiomas").remove();
+    try { localStorage.setItem("ccoo-ultimo-idioma", idioma); } catch (_) {}
     try { await traduceReg(reg, idioma); if (reg.tagName === "DETAILS") reg.open = true; }
     catch (e) { avisar(e.message, location.hash.slice(1) || "inicio"); }
   }
@@ -1114,69 +1127,10 @@ async function traduceReg(reg, idioma) {
   } catch (e) { if (boton) boton.innerHTML = icono("idioma", "p") + "Traducir"; throw e; }
   finally { if (boton) boton.disabled = false; }
 }
-const originalReg = (reg) => {
-  reg.querySelectorAll("[data-campo]").forEach(el => { if (el.dataset.original != null) { el.innerHTML = el.dataset.original; delete el.dataset.original; } el.removeAttribute("dir"); });
-  delete reg.dataset.idiomaActual; const b = reg.querySelector("[data-traducir]"); if (b) b.innerHTML = icono("idioma", "p") + "Traducir";
-};
 
-// ---------- Idioma de toda la web (v55) ----------
-// Botón junto a «Aa»: el trabajador elige su idioma una vez (se recuerda en el móvil: localStorage «ccoo-idioma»)
-// y las tarjetas se traducen solas cuando aparecen en pantalla, de dos en dos para no saturar la traducción gratuita.
-// Los menús y botones de la web siguen en español; arriba sale una franja para volver al español.
-const BANDA_IDIOMA = { ca: ["Traduït automàticament al català", "Veure en castellà"], en: ["Automatically translated into English", "View in Spanish"], ro: ["Tradus automat în română", "Vezi în spaniolă"],
-  ar: ["تمت الترجمة تلقائيًا إلى العربية", "عرض بالإسبانية"], fr: ["Traduit automatiquement en français", "Voir en espagnol"], pt: ["Traduzido automaticamente para português", "Ver em espanhol"],
-  de: ["Automatisch ins Deutsche übersetzt", "Auf Spanisch ansehen"], pl: ["Automatycznie przetłumaczone na polski", "Zobacz po hiszpańsku"], sr: ["Аутоматски преведено на српски", "Погледај на шпанском"] };
-let IDIOMA = (() => { try { const v = localStorage.getItem("ccoo-idioma"); return IDIOMAS[v] ? v : ""; } catch (_) { return ""; } })();
-let colaIdioma = [], enCurso = 0, fallosIdioma = 0;
-const vigiaIdioma = "IntersectionObserver" in window ? new IntersectionObserver((es) => es.forEach(e => {
-  if (!e.isIntersecting) return; vigiaIdioma.unobserve(e.target);
-  if (IDIOMA && e.target.dataset.idiomaActual !== IDIOMA) { colaIdioma.push(e.target); sigueIdioma(); }
-}), { rootMargin: "300px 0px" }) : null;
-function sigueIdioma() {
-  while (enCurso < 2 && colaIdioma.length) {
-    const reg = colaIdioma.shift(), idioma = IDIOMA;
-    if (!idioma || !reg.isConnected || reg.dataset.idiomaActual === idioma) continue;
-    enCurso++;
-    traduceReg(reg, idioma).then(() => { fallosIdioma = 0; }, () => {
-      if (++fallosIdioma >= 3) { colaIdioma = []; pintaBandaIdioma("La traducción no está disponible ahora. Prueba más tarde."); }
-    }).finally(() => { enCurso--; sigueIdioma(); });
-  }
-}
-function vigilaIdioma() {
-  if (!IDIOMA || !vigiaIdioma) return;
-  document.querySelectorAll("main [data-reg]").forEach(r => { if (r.dataset.idiomaActual !== IDIOMA && !r.dataset.vigiaIdioma) { r.dataset.vigiaIdioma = "1"; vigiaIdioma.observe(r); } });
-}
-// Las listas se vuelven a pintar (filtros, búsquedas, datos nuevos): se vigilan también las tarjetas nuevas
-let tVigila = 0;
-new MutationObserver(() => { if (IDIOMA) { clearTimeout(tVigila); tVigila = setTimeout(vigilaIdioma, 250); } }).observe(document.querySelector("main") || document.body, { childList: true, subtree: true });
-function pintaBandaIdioma(error) {
-  const b = $("banda-idioma"), t = BANDA_IDIOMA[IDIOMA];
-  $("cab-idioma-txt").textContent = (IDIOMA || "es").toUpperCase();
-  b.classList.toggle("oculto", !IDIOMA);
-  if (!IDIOMA) { b.innerHTML = ""; return; }
-  b.setAttribute("dir", IDIOMA === "ar" ? "rtl" : "ltr");
-  b.innerHTML = `${icono("idioma", "p")}<span>${esc(error || t[0])}<small>Traducción automática: ante la duda, vale el texto en español.</small></span><button type="button" id="b-idioma-es">${esc(t[1])}</button>`;
-  $("b-idioma-es").onclick = () => ponIdioma("");
-}
-function ponIdioma(idioma) {
-  IDIOMA = IDIOMAS[idioma] ? idioma : ""; fallosIdioma = 0; colaIdioma = [];
-  try { IDIOMA ? localStorage.setItem("ccoo-idioma", IDIOMA) : localStorage.removeItem("ccoo-idioma"); } catch (_) {}
-  document.querySelectorAll("main [data-reg]").forEach(r => { delete r.dataset.vigiaIdioma; if (r.dataset.idiomaActual && r.dataset.idiomaActual !== IDIOMA) originalReg(r); });
-  pintaBandaIdioma(); vigilaIdioma();
-}
-$("cab-idioma").addEventListener("click", (ev) => {
-  ev.stopPropagation();
-  const viejo = document.querySelector(".menu-idiomas.global"); if (viejo) { viejo.remove(); return; }
-  document.querySelectorAll(".menu-idiomas").forEach(m => m.remove());
-  const m = document.createElement("div"); m.className = "menu-idiomas global"; m.setAttribute("role", "menu");
-  m.innerHTML = `<p class="menu-idiomas-tit">Idioma · Language</p>` + [["", "Español"], ...Object.entries(IDIOMAS)].map(([k, n]) => `<button role="menuitem" data-idioma-web="${k}" class="${k === IDIOMA ? "activo" : ""}" ${k === "ar" ? 'dir="rtl"' : ""}>${n}</button>`).join("");
-  document.body.appendChild(m);
-  const r = $("cab-idioma").getBoundingClientRect();
-  m.style.top = (r.bottom + 6) + "px"; m.style.right = Math.max(8, innerWidth - r.right) + "px";
-  m.querySelectorAll("[data-idioma-web]").forEach(b => b.onclick = () => { m.remove(); ponIdioma(b.dataset.idiomaWeb); });
-  setTimeout(() => document.addEventListener("click", function fuera(e) { if (!m.contains(e.target)) { m.remove(); document.removeEventListener("click", fuera); } }), 0);
-});
-pintaBandaIdioma();
+// v56: se quitó el botón de idioma de toda la web (cortaba «Calsina Carré» en la cabecera y traducir todo iba lento).
+// Se traduce cada tarjeta con su botón «Traducir»; el último idioma elegido sale el primero del menú.
+try { localStorage.removeItem("ccoo-idioma"); } catch (_) {}
 
 // ---------- Buscar en toda la web ----------
 function buscarTodo() {

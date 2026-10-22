@@ -1322,15 +1322,27 @@ html[data-contraste="alto"] .cita-panel b { color: #ffc233; text-shadow: none; }
 .cita-placa.hora .icono { color: #ffb000; }
 
 /* v52: segunda fila de pestañas con lo que va dentro de cada apartado (Actas en «Comité de empresa», subapartados…) */
-.subpestanas { display: flex; gap: 8px; padding: 8px 16px 10px; overflow-x: auto; scrollbar-width: none; max-width: 1100px; margin: 0 auto; border-top: 1px solid rgba(255, 255, 255, .08); }
+.subpest-caja { position: relative; max-width: 1100px; margin: 0 auto; border-top: 1px solid rgba(255, 255, 255, .12); background: rgba(255, 255, 255, .04); }
+.subpest-caja.oculto { display: none; }
+.subpestanas { display: flex; gap: 8px; padding: 9px 16px 11px; overflow-x: auto; scrollbar-width: none; scroll-behavior: smooth; }
 .subpestanas::-webkit-scrollbar { display: none; }
-.subpestanas.oculto { display: none; }
-.subpestanas a { flex: none; display: inline-flex; align-items: center; min-height: 36px; padding: 6px 14px; border-radius: 999px; border: 1.5px solid #3a414a; color: #d6dbe1; text-decoration: none; font-weight: 700; font-size: .9rem; white-space: nowrap; }
+.subpestanas.hay-der { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 70px), transparent calc(100% - 30px)); mask-image: linear-gradient(90deg, #000 calc(100% - 70px), transparent calc(100% - 30px)); }
+.subpestanas.hay-izq { -webkit-mask-image: linear-gradient(90deg, transparent 30px, #000 70px); mask-image: linear-gradient(90deg, transparent 30px, #000 70px); }
+.subpestanas.hay-izq.hay-der { -webkit-mask-image: linear-gradient(90deg, transparent 30px, #000 70px, #000 calc(100% - 70px), transparent calc(100% - 30px)); mask-image: linear-gradient(90deg, transparent 30px, #000 70px, #000 calc(100% - 70px), transparent calc(100% - 30px)); }
+/* flechas de la segunda fila: botón rojo redondo, para que se note que hay más subapartados */
+.pest-flecha.sub { top: 50%; bottom: auto; width: 34px; height: 34px; margin-top: -17px; border-radius: 50%; background: var(--rojo); color: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, .45); }
+.pest-flecha.sub.izq { left: 6px; }
+.pest-flecha.sub.der { right: 6px; animation: sub-empuja 1.6s ease-in-out 3; }
+.pest-flecha.sub .icono { width: 20px; height: 20px; }
+.pest-flecha.sub:hover { color: #fff; filter: brightness(1.15); }
+@keyframes sub-empuja { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
+@media (prefers-reduced-motion: reduce) { .pest-flecha.sub.der { animation: none; } }
+.subpestanas a { flex: none; display: inline-flex; align-items: center; min-height: 38px; padding: 6px 15px; border-radius: 999px; border: 1.5px solid #6b7480; background: rgba(255, 255, 255, .07); color: #fff; text-decoration: none; font-weight: 700; font-size: .92rem; white-space: nowrap; }
 .subpestanas a:hover { border-color: #fff; color: #fff; }
 .subpestanas a.activa { background: var(--rojo); border-color: var(--rojo); color: #fff; }
 .subpestanas a .cuenta-pestana { background: #fff; color: var(--rojo); }
 .subpestanas a.activa .cuenta-pestana { display: none; }
-html[data-letra] .subpestanas a { font-size: .9rem; }
+html[data-letra] .subpestanas a { font-size: .92rem; }
 
 /* v52: «Mis descansos» (Zona Conductores) */
 .desc-promo { display: flex; gap: 14px; align-items: center; text-decoration: none; color: var(--tinta); margin-bottom: 18px; border-left: 5px solid var(--rojo); }
@@ -1409,18 +1421,8 @@ html[data-letra] .subpestanas a { font-size: .9rem; }
 .desc-copias .btn { flex: 1 1 auto; }
 .desc-cifras > div { padding: 12px 14px; }
 
-/* v55: idioma de toda la web */
-.btn-tab.idioma-btn { width: auto; min-width: 44px; padding: 0 8px; display: inline-flex; gap: 4px; align-items: center; justify-content: center; }
-.btn-tab.idioma-btn b { font-family: var(--cond); font-size: .95rem; letter-spacing: .03em; }
-@media (max-width: 380px) { .btn-tab.idioma-btn .icono { display: none; } }
-.menu-idiomas.global { position: fixed; bottom: auto; left: auto; z-index: 60; grid-template-columns: 1fr 1fr; max-height: min(70vh, 420px); min-width: 230px; }
-.menu-idiomas-tit { grid-column: 1 / -1; margin: 4px 8px 6px; font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--suave); }
+/* Menú de idiomas de cada tarjeta: el último elegido, marcado */
 .menu-idiomas button.activo { background: var(--rojo); color: #fff; }
-.banda-idioma { display: flex; gap: 10px; align-items: center; max-width: 1100px; margin: 0 auto; padding: 8px 16px; background: #0b0e11; color: #fff; border-top: 1px solid rgba(255, 255, 255, .1); font-size: .92rem; }
-.banda-idioma.oculto { display: none; }
-.banda-idioma > span { flex: 1; min-width: 0; display: grid; }
-.banda-idioma small { color: #c9ced4; font-size: .78rem; }
-.banda-idioma button { flex: none; border: 1.5px solid #fff; background: transparent; color: #fff; border-radius: 999px; padding: 6px 12px; font-weight: 700; cursor: pointer; }
 
 /* v55: calendario con el color de cada tipo en los puntos y etiquetas que filtran de verdad */
 .dia .punto { background: var(--tc, var(--rojo)); }
