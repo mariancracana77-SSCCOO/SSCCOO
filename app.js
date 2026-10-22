@@ -417,7 +417,11 @@ function pintaCalendario() {
   const m = estado.mes, ini = new Date(m.getFullYear(), m.getMonth(), 1);
   $("cal-mes").textContent = may(ini.toLocaleDateString("es-ES", { month: "long" })) + " " + ini.getFullYear();
   const desfase = (ini.getDay() + 6) % 7, hoy = hoyISO(), porDia = {};
-  D.eventos.forEach(e => (porDia[e.fecha] ||= []).push(e));
+  // Filtro por tipo (las etiquetas de colores de debajo del mes): «Todos» o solo un tipo
+  const tipos = nombres("evento").filter(t => D.eventos.some(e => e.tipo === t));
+  if (estado.tipoCal && !tipos.includes(estado.tipoCal)) estado.tipoCal = "";
+  const EVS = D.eventos.filter(e => !estado.tipoCal || e.tipo === estado.tipoCal);
+  EVS.forEach(e => (porDia[e.fecha] ||= []).push(e));
   let html = "";
   for (let i = 0; i < 42; i++) {
     const d = new Date(m.getFullYear(), m.getMonth(), 1 - desfase + i), iso = isoDe(d);
@@ -436,11 +440,13 @@ function pintaCalendario() {
     pintaCalendario();
     if (innerWidth < 900) $("cal-detalle").scrollIntoView({ behavior: "smooth", block: "nearest" });
   });
-  $("cal-leyenda").innerHTML = nombres("evento").map(t => `<span class="etq tipo ${claseTipo(t, "evento")}">${esc(t)}</span>`).join("");
+  $("cal-leyenda").innerHTML = tipos.length < 2 ? "" : `<span class="leyenda-tit">Ver:</span><button type="button" class="filtro-cal ${estado.tipoCal ? "" : "activo"}" data-tipo-cal="" aria-pressed="${!estado.tipoCal}">Todo</button>` +
+    tipos.map(t => `<button type="button" class="filtro-cal etq tipo ${claseTipo(t, "evento")} ${estado.tipoCal === t ? "activo" : estado.tipoCal ? "apagado" : ""}" data-tipo-cal="${esc(t)}" aria-pressed="${estado.tipoCal === t}">${esc(t)}</button>`).join("");
+  $("cal-leyenda").querySelectorAll("[data-tipo-cal]").forEach(b => b.onclick = () => { estado.tipoCal = estado.tipoCal === b.dataset.tipoCal ? "" : b.dataset.tipoCal; pintaCalendario(); });
   const sel = porDia[estado.diaSel] || [];
   $("cal-detalle").innerHTML = `<h3>${may(fechaDia(estado.diaSel).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }))}</h3>` +
     (sel.length ? sel.map(e => eventoHTML(e)).join("") : `<p class="fecha-txt" style="margin:0">No hay nada programado este día.</p>`);
-  const prox = D.eventos.filter(e => e.fecha >= hoy).slice(0, 6);
+  const prox = EVS.filter(e => e.fecha >= hoy).slice(0, 6);
   // Próximas fechas como un panel de salidas: día y hora en ámbar, qué y dónde en blanco
   $("cal-proximas").innerHTML = prox.length ? `<div class="tablero-cab" aria-hidden="true"><span>Día</span><span>Qué y dónde</span></div>` + prox.map(e => {
     const d = fechaDia(e.fecha), dias = Math.round((d - fechaDia(hoy)) / 86400000);
@@ -448,7 +454,7 @@ function pintaCalendario() {
     const sub = (dias <= 1 ? d.getDate() + " " + MES_CORTO[d.getMonth()] : MES_CORTO[d.getMonth()]) + (e.hora ? " · " + (esTodoElDia(e) ? "todo el día" : e.hora.slice(0, 5)) : "");
     return `<button class="fila-tablero ${claseTipo(e.tipo, "evento")}" data-dia="${e.fecha}"><span class="t-dia">${esc(dia)}<small>${esc(sub)}</small></span>
       <span class="t-que"><span class="t-tipo">${esc(e.tipo)}</span><b>${esc(e.titulo || "Sin título")}</b>${e.lugar ? `<span class="t-lugar">${esc(e.lugar)}</span>` : ""}</span></button>`;
-  }).join("") : `<p class="fecha-txt" style="margin:0;padding:16px">No hay fechas próximas.</p>`;
+  }).join("") : `<p class="fecha-txt" style="margin:0;padding:16px">${estado.tipoCal ? "No hay fechas próximas de este tipo." : "No hay fechas próximas."}</p>`;
   $("cal-proximas").querySelectorAll("[data-dia]").forEach(b => b.onclick = () => { irADia(b.dataset.dia); $("cal-detalle").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); });
 }
 $("cal-ant").onclick = () => { estado.mes = new Date(estado.mes.getFullYear(), estado.mes.getMonth() - 1, 1); pintaCalendario(); };

@@ -1421,3 +1421,14 @@ html[data-letra] .subpestanas a { font-size: .9rem; }
 .banda-idioma > span { flex: 1; min-width: 0; display: grid; }
 .banda-idioma small { color: #c9ced4; font-size: .78rem; }
 .banda-idioma button { flex: none; border: 1.5px solid #fff; background: transparent; color: #fff; border-radius: 999px; padding: 6px 12px; font-weight: 700; cursor: pointer; }
+
+/* v55: calendario con el color de cada tipo en los puntos y etiquetas que filtran de verdad */
+.dia .punto { background: var(--tc, var(--rojo)); }
+:root:root .dia.sel .punto { box-shadow: 0 0 0 1.5px #fff; }
+.leyenda { align-items: center; }
+.leyenda-tit { font-weight: 700; color: var(--suave); font-size: .9rem; margin-right: 2px; }
+.filtro-cal { cursor: pointer; border: 2px solid transparent; font: inherit; font-weight: 700; font-size: .85rem; min-height: 34px; }
+.filtro-cal:not(.etq) { border-radius: 999px; padding: 4px 12px; background: var(--fondo); color: var(--tinta); border-color: var(--linea); }
+.filtro-cal.activo { outline: 3px solid var(--tinta); outline-offset: 1px; }
+.filtro-cal:not(.etq).activo { background: var(--tinta); color: var(--tarjeta); outline: none; }
+.filtro-cal.apagado { opacity: .45; }
