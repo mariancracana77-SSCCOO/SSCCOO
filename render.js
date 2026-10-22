@@ -238,6 +238,7 @@ window.encuestaHTML = (x, votos = {}, miVoto = 0, nuevo = false) => {
           <div class="enc-barra"><i style="width:${pc}%"></i></div></div>`; }).join("") + `<p class="enc-pie">${total} ${total === 1 ? "voto" : "votos"}${cierre ? " · " + esc(cierre) : ""}</p>`
     : ops.map((o, i) => `<button type="button" class="enc-op" data-voto="${x.id}:${i + 1}">${esc(o)}</button>`).join("")
       + `<p class="enc-pie">Nadie puede saber qué votas: solo se cuentan los votos. Un voto por móvil.${cierre ? " " + esc(cierre) + "." : ""}</p>`;
-  return `<section class="encuesta ${res ? "con-res" : ""} ${nuevo ? "recien" : ""}" data-enc="${x.id}">
-    <small class="enc-tipo">${icono("encuesta", "p")}Encuesta anónima</small><h3>${esc(x.pregunta || "Pregunta")}</h3>${cuerpo}<p class="enc-msg" role="status"></p></section>`;
+  const compartirB = abierta && x.id ? `<button type="button" class="accion enc-compartir" data-compartir-enc="${x.id}">${icono("whatsapp", "p")}Compartir la encuesta</button>` : "";
+  return `<section class="encuesta ${res ? "con-res" : ""} ${nuevo ? "recien" : ""}" data-enc="${x.id}" id="encuesta-${x.id}">
+    <small class="enc-tipo">${icono("encuesta", "p")}Encuesta anónima</small><h3>${esc(x.pregunta || "Pregunta")}</h3>${cuerpo}<p class="enc-msg" role="status"></p>${compartirB}</section>`;
 };

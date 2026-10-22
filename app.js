@@ -18,13 +18,14 @@ document.querySelector(".contacto-btn").innerHTML = icono("correo", "p") + "Escr
 const VISTAS = ["inicio", "avisos", "calendario", "convenio", "calcula", "actas", "documentos", "preguntas", "info", "buscar", "legal"];
 function irA() {
   const h = location.hash.slice(1), avisoDirecto = /^aviso-\d+$/.test(h) ? h : null;
-  const legal = h === "aviso-legal" || h === "privacidad" ? h : null, aDelegados = h === "delegados";
+  const legal = h === "aviso-legal" || h === "privacidad" ? h : null, aDelegados = h === "delegados", aEncuesta = /^encuesta-\d+$/.test(h) ? h : null;
   const ap = /^ap-[a-z0-9-]+$/.test(h) ? h.slice(3) : null;
   if (ap && ap !== estado.ap) { estado.ap = ap; estado.fechas.ap = {}; if ($("buscar-ap")) $("buscar-ap").value = ""; }
   const v = avisoDirecto ? "avisos" : legal ? "legal" : aDelegados ? "info" : ap ? "apartado" : (VISTAS.includes(h) ? h : "inicio");
   if (ap) pintaApartado();
   if (aDelegados) setTimeout(() => ($("lista-delegados").children.length ? $("tit-delegados") : $("txt-contacto"))?.scrollIntoView({ block: "start" }), 50);
   if (legal) setTimeout(() => $("leg-" + legal)?.scrollIntoView({ block: "start" }), 50);
+  if (aEncuesta) { const ir = () => { const el = $(aEncuesta); if (el) { el.scrollIntoView({ block: "center" }); el.classList.add("nuevo"); } else if (!cargar.listo) setTimeout(ir, 300); }; setTimeout(ir, 300); }
   if (avisoDirecto) setTimeout(() => { const el = $(avisoDirecto); if (el) { el.scrollIntoView({ block: "start" }); el.classList.add("nuevo"); } }, 300);
   // La vista nueva entra desde el lado de su pestaña (más a la derecha en la barra: entra por la derecha)
   const orden = [...document.querySelectorAll(".pestanas-web a")].map(b => b.dataset.v), clave = ap ? "ap-" + ap : v;
@@ -37,7 +38,7 @@ function irA() {
     const on = b.dataset.v === (ap ? "ap-" + ap : v); b.classList.toggle("activa", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current");
     if (on) b.scrollIntoView({ inline: "center", block: "nearest" });
   });
-  if (!avisoDirecto && !legal && !aDelegados) window.scrollTo(0, 0);
+  if (!avisoDirecto && !legal && !aDelegados && !aEncuesta) window.scrollTo(0, 0);
   const sec = ap ? "ap-" + ap : v;
   if (sec !== "inicio") { marcaVisto(sec); if (cargar.listo) pintaContadores(); }
   contarUnaVez("s:" + sec, () => sb.rpc("contar_seccion", { p_seccion: sec }));
@@ -272,6 +273,8 @@ function pintaEncuestas(recien) {
   $("inicio-encuesta").innerHTML = l.map(x => encuestaHTML(x, D.votos[x.id] || {}, +mios[x.id] || 0, x.id === recien)).join("");
 }
 $("inicio-encuesta").addEventListener("click", async (ev) => {
+  const c = ev.target.closest("[data-compartir-enc]");
+  if (c) { const x = D.encuestas.find(e => e.id == c.dataset.compartirEnc); if (x) compartir(x.pregunta, `*Encuesta anónima de la Sección Sindical*\n\n${limpioTxt(x.pregunta)}\n${opcionesEncuesta(x).map(o => "- " + o).join("\n")}\n\nVota aquí (nadie sabe qué votas): ${WEB_URL}#encuesta-${x.id}`); return; }
   const b = ev.target.closest("[data-voto]"); if (!b) return;
   const [id, op] = b.dataset.voto.split(":").map(Number), caja = b.closest(".encuesta");
   caja.querySelectorAll(".enc-op").forEach(x => x.disabled = true); b.classList.add("elegida");
