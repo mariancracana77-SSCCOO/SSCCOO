@@ -91,6 +91,11 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Próxima cita** (el rótulo de Inicio cuando no hay nada urgente): diseño nuevo de carretera. El título sale en un panel luminoso de autopista (letras blancas de puntos y luces rojas que parpadean en las esquinas) y, debajo, en un poste, dos señales en el rojo del logo: el lugar con los días que faltan (como los kilómetros de una señal) y el día y la hora. Prefiere reuniones y asambleas a los festivos y, si es la misma cita que la cuenta atrás, no se repite.
 - **Animación de entrada**: ahora empieza cuando la página ha cargado (en la app instalada, Android tapaba los primeros segundos con su pantalla y la animación terminaba sin verse) y sale aunque el móvil tenga «quitar animaciones» (lo activa el ahorro de batería). Se sigue saltando tocándola.
 
+## Versión 63: Mis descansos más ligero y «¿Dónde está…?»
+- **Mis descansos**: solo descansos (sin conducción ni pausas), en pestañas (Hoy, Apuntar, Lo apuntado, Ajustes), guía rápida plegable y traducible, y avisos de instalar/activar en una línea.
+- **¿Dónde está…?** en Dudas y en el buscador: cada sección y subapartado con su camino y botón para ir; entiende preguntas como «¿dónde está el buzón?».
+- **Vista PC**: nombres de archivo enteros, texto del acceso a Mis descansos y difuminado de «Leer más» solo cuando hace falta.
+
 ## Versión 62: buscador de toda la web
 - Busca también secciones y subapartados, publicaciones y archivos (por nombre o por dónde están). Cada resultado dice dónde está, lo buscado sale resaltado y hay saltos por grupo. Sin escribir nada: búsquedas útiles y el mapa de la web.
 
