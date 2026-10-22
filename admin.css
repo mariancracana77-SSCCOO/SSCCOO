@@ -561,3 +561,17 @@ body.admin .btn-cab.aa { min-width: 44px; }
 .archivos { grid-template-columns: minmax(0, 1fr); }
 .archivo-fila { min-width: 0; }
 .archivo-fila b { white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+/* v52: menú agrupado (apartado principal y, un poco metido, lo que va dentro) */
+#nav-admin .nav-cab { display: none; }
+@media (min-width: 1000px) {
+  #nav-admin .nav-cab { display: block; padding: 2px 14px 4px; font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--suave); }
+  #nav-admin button.sub { padding-left: 34px; font-size: .95em; }
+}
+.hoja button.sub { padding-left: 34px; font-size: 1rem; }
+.hoja button.sub .icono { width: 20px; height: 20px; opacity: .85; }
+.hoja-sep { height: 1px; background: var(--linea); margin: 4px 8px; }
+.hoja-cab { margin-top: 10px; }
+.hoja-buscar { margin: 0 0 6px; position: sticky; top: -10px; z-index: 1; background: var(--tarjeta); padding: 6px 0; }
+.hoja [hidden] { display: none !important; }
+.hoja-buscar + .hoja-sep { display: none; }
