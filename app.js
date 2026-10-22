@@ -417,7 +417,11 @@ function pintaCalendario() {
   const m = estado.mes, ini = new Date(m.getFullYear(), m.getMonth(), 1);
   $("cal-mes").textContent = may(ini.toLocaleDateString("es-ES", { month: "long" })) + " " + ini.getFullYear();
   const desfase = (ini.getDay() + 6) % 7, hoy = hoyISO(), porDia = {};
-  D.eventos.forEach(e => (porDia[e.fecha] ||= []).push(e));
+  // Filtro por tipo (las etiquetas de colores de debajo del mes): «Todos» o solo un tipo
+  const tipos = nombres("evento").filter(t => D.eventos.some(e => e.tipo === t));
+  if (estado.tipoCal && !tipos.includes(estado.tipoCal)) estado.tipoCal = "";
+  const EVS = D.eventos.filter(e => !estado.tipoCal || e.tipo === estado.tipoCal);
+  EVS.forEach(e => (porDia[e.fecha] ||= []).push(e));
   let html = "";
   for (let i = 0; i < 42; i++) {
     const d = new Date(m.getFullYear(), m.getMonth(), 1 - desfase + i), iso = isoDe(d);
@@ -436,11 +440,13 @@ function pintaCalendario() {
     pintaCalendario();
     if (innerWidth < 900) $("cal-detalle").scrollIntoView({ behavior: "smooth", block: "nearest" });
   });
-  $("cal-leyenda").innerHTML = nombres("evento").map(t => `<span class="etq tipo ${claseTipo(t, "evento")}">${esc(t)}</span>`).join("");
+  $("cal-leyenda").innerHTML = tipos.length < 2 ? "" : `<span class="leyenda-tit">Ver:</span><button type="button" class="filtro-cal ${estado.tipoCal ? "" : "activo"}" data-tipo-cal="" aria-pressed="${!estado.tipoCal}">Todo</button>` +
+    tipos.map(t => `<button type="button" class="filtro-cal etq tipo ${claseTipo(t, "evento")} ${estado.tipoCal === t ? "activo" : estado.tipoCal ? "apagado" : ""}" data-tipo-cal="${esc(t)}" aria-pressed="${estado.tipoCal === t}">${esc(t)}</button>`).join("");
+  $("cal-leyenda").querySelectorAll("[data-tipo-cal]").forEach(b => b.onclick = () => { estado.tipoCal = estado.tipoCal === b.dataset.tipoCal ? "" : b.dataset.tipoCal; pintaCalendario(); });
   const sel = porDia[estado.diaSel] || [];
   $("cal-detalle").innerHTML = `<h3>${may(fechaDia(estado.diaSel).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }))}</h3>` +
     (sel.length ? sel.map(e => eventoHTML(e)).join("") : `<p class="fecha-txt" style="margin:0">No hay nada programado este día.</p>`);
-  const prox = D.eventos.filter(e => e.fecha >= hoy).slice(0, 6);
+  const prox = EVS.filter(e => e.fecha >= hoy).slice(0, 6);
   // Próximas fechas como un panel de salidas: día y hora en ámbar, qué y dónde en blanco
   $("cal-proximas").innerHTML = prox.length ? `<div class="tablero-cab" aria-hidden="true"><span>Día</span><span>Qué y dónde</span></div>` + prox.map(e => {
     const d = fechaDia(e.fecha), dias = Math.round((d - fechaDia(hoy)) / 86400000);
@@ -448,7 +454,7 @@ function pintaCalendario() {
     const sub = (dias <= 1 ? d.getDate() + " " + MES_CORTO[d.getMonth()] : MES_CORTO[d.getMonth()]) + (e.hora ? " · " + (esTodoElDia(e) ? "todo el día" : e.hora.slice(0, 5)) : "");
     return `<button class="fila-tablero ${claseTipo(e.tipo, "evento")}" data-dia="${e.fecha}"><span class="t-dia">${esc(dia)}<small>${esc(sub)}</small></span>
       <span class="t-que"><span class="t-tipo">${esc(e.tipo)}</span><b>${esc(e.titulo || "Sin título")}</b>${e.lugar ? `<span class="t-lugar">${esc(e.lugar)}</span>` : ""}</span></button>`;
-  }).join("") : `<p class="fecha-txt" style="margin:0;padding:16px">No hay fechas próximas.</p>`;
+  }).join("") : `<p class="fecha-txt" style="margin:0;padding:16px">${estado.tipoCal ? "No hay fechas próximas de este tipo." : "No hay fechas próximas."}</p>`;
   $("cal-proximas").querySelectorAll("[data-dia]").forEach(b => b.onclick = () => { irADia(b.dataset.dia); $("cal-detalle").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); });
 }
 $("cal-ant").onclick = () => { estado.mes = new Date(estado.mes.getFullYear(), estado.mes.getMonth() - 1, 1); pintaCalendario(); };
@@ -1074,28 +1080,103 @@ document.addEventListener("click", async (ev) => {
     colocaMenuIdiomas(caja.querySelector(".menu-idiomas"), btn);
     return;
   }
-  if (opc) {
+  if (opc && opc.closest("[data-reg]")) {
     ev.preventDefault();
-    const reg = opc.closest("[data-reg]"), [tabla, id] = reg.dataset.reg.split(":"), idioma = opc.dataset.idioma;
-    const boton = reg.querySelector("[data-traducir]");
+    const reg = opc.closest("[data-reg]"), idioma = opc.dataset.idioma;
     opc.closest(".menu-idiomas").remove();
-    boton.innerHTML = icono("idioma", "p") + "Traduciendo…"; boton.disabled = true;
-    try {
-      const { data, error } = await sb.functions.invoke("traducir", { body: { tabla, id: +id, idioma } });
-      if (error || !data?.texto) { let m = "No se ha podido traducir ahora mismo."; try { m = (await error.context.json()).error || m; } catch (_) {} throw new Error(m); }
-      reg.querySelectorAll("[data-campo]").forEach(el => {
-        const t = data.texto[el.dataset.campo]; if (t == null) return;
-        if (el.dataset.original == null) el.dataset.original = el.innerHTML;
-        el.innerHTML = (el.tagName === "H3" || el.hasAttribute("data-plano")) ? esc(t) : textoHTML(t);
-        if (idioma === "ar") el.setAttribute("dir", "rtl"); else el.removeAttribute("dir");
-      });
-      if (reg.tagName === "DETAILS") reg.open = true;
-      reg.dataset.idiomaActual = idioma;
-      boton.innerHTML = icono("idioma", "p") + "Ver en español";
-    } catch (e) { boton.innerHTML = icono("idioma", "p") + "Traducir"; avisar(e.message, location.hash.slice(1) || "inicio"); }
-    boton.disabled = false;
+    try { await traduceReg(reg, idioma); if (reg.tagName === "DETAILS") reg.open = true; }
+    catch (e) { avisar(e.message, location.hash.slice(1) || "inicio"); }
   }
 });
+// Traduce una tarjeta (aviso, acta, convenio, duda, publicación) con la función «traducir» (Gemini, guarda cada traducción
+// en el servidor). Aquí también se recuerda lo ya traducido mientras la web está abierta, para no volver a pedirlo al repintar.
+const TRADUCIDO = new Map();
+async function traduceReg(reg, idioma) {
+  const [tabla, id] = reg.dataset.reg.split(":"), clave = reg.dataset.reg + ":" + idioma, boton = reg.querySelector("[data-traducir]");
+  if (reg.dataset.idiomaActual === idioma) return;
+  if (boton) { boton.innerHTML = icono("idioma", "p") + "Traduciendo…"; boton.disabled = true; }
+  try {
+    let texto = TRADUCIDO.get(clave);
+    if (!texto) {
+      const { data, error } = await sb.functions.invoke("traducir", { body: { tabla, id: +id, idioma } });
+      if (error || !data?.texto) { let m = "No se ha podido traducir ahora mismo."; try { m = (await error.context.json()).error || m; } catch (_) {} throw new Error(m); }
+      texto = data.texto; TRADUCIDO.set(clave, texto);
+    }
+    if (!reg.isConnected) return;
+    reg.querySelectorAll("[data-campo]").forEach(el => {
+      const t = texto[el.dataset.campo]; if (t == null) return;
+      if (el.dataset.original == null) el.dataset.original = el.innerHTML;
+      el.innerHTML = (el.tagName === "H3" || el.hasAttribute("data-plano")) ? esc(t) : textoHTML(t);
+      if (idioma === "ar") el.setAttribute("dir", "rtl"); else el.removeAttribute("dir");
+    });
+    reg.dataset.idiomaActual = idioma;
+    if (boton) boton.innerHTML = icono("idioma", "p") + "Ver en español";
+  } catch (e) { if (boton) boton.innerHTML = icono("idioma", "p") + "Traducir"; throw e; }
+  finally { if (boton) boton.disabled = false; }
+}
+const originalReg = (reg) => {
+  reg.querySelectorAll("[data-campo]").forEach(el => { if (el.dataset.original != null) { el.innerHTML = el.dataset.original; delete el.dataset.original; } el.removeAttribute("dir"); });
+  delete reg.dataset.idiomaActual; const b = reg.querySelector("[data-traducir]"); if (b) b.innerHTML = icono("idioma", "p") + "Traducir";
+};
+
+// ---------- Idioma de toda la web (v55) ----------
+// Botón junto a «Aa»: el trabajador elige su idioma una vez (se recuerda en el móvil: localStorage «ccoo-idioma»)
+// y las tarjetas se traducen solas cuando aparecen en pantalla, de dos en dos para no saturar la traducción gratuita.
+// Los menús y botones de la web siguen en español; arriba sale una franja para volver al español.
+const BANDA_IDIOMA = { ca: ["Traduït automàticament al català", "Veure en castellà"], en: ["Automatically translated into English", "View in Spanish"], ro: ["Tradus automat în română", "Vezi în spaniolă"],
+  ar: ["تمت الترجمة تلقائيًا إلى العربية", "عرض بالإسبانية"], fr: ["Traduit automatiquement en français", "Voir en espagnol"], pt: ["Traduzido automaticamente para português", "Ver em espanhol"],
+  de: ["Automatisch ins Deutsche übersetzt", "Auf Spanisch ansehen"], pl: ["Automatycznie przetłumaczone na polski", "Zobacz po hiszpańsku"], sr: ["Аутоматски преведено на српски", "Погледај на шпанском"] };
+let IDIOMA = (() => { try { const v = localStorage.getItem("ccoo-idioma"); return IDIOMAS[v] ? v : ""; } catch (_) { return ""; } })();
+let colaIdioma = [], enCurso = 0, fallosIdioma = 0;
+const vigiaIdioma = "IntersectionObserver" in window ? new IntersectionObserver((es) => es.forEach(e => {
+  if (!e.isIntersecting) return; vigiaIdioma.unobserve(e.target);
+  if (IDIOMA && e.target.dataset.idiomaActual !== IDIOMA) { colaIdioma.push(e.target); sigueIdioma(); }
+}), { rootMargin: "300px 0px" }) : null;
+function sigueIdioma() {
+  while (enCurso < 2 && colaIdioma.length) {
+    const reg = colaIdioma.shift(), idioma = IDIOMA;
+    if (!idioma || !reg.isConnected || reg.dataset.idiomaActual === idioma) continue;
+    enCurso++;
+    traduceReg(reg, idioma).then(() => { fallosIdioma = 0; }, () => {
+      if (++fallosIdioma >= 3) { colaIdioma = []; pintaBandaIdioma("La traducción no está disponible ahora. Prueba más tarde."); }
+    }).finally(() => { enCurso--; sigueIdioma(); });
+  }
+}
+function vigilaIdioma() {
+  if (!IDIOMA || !vigiaIdioma) return;
+  document.querySelectorAll("main [data-reg]").forEach(r => { if (r.dataset.idiomaActual !== IDIOMA && !r.dataset.vigiaIdioma) { r.dataset.vigiaIdioma = "1"; vigiaIdioma.observe(r); } });
+}
+// Las listas se vuelven a pintar (filtros, búsquedas, datos nuevos): se vigilan también las tarjetas nuevas
+let tVigila = 0;
+new MutationObserver(() => { if (IDIOMA) { clearTimeout(tVigila); tVigila = setTimeout(vigilaIdioma, 250); } }).observe(document.querySelector("main") || document.body, { childList: true, subtree: true });
+function pintaBandaIdioma(error) {
+  const b = $("banda-idioma"), t = BANDA_IDIOMA[IDIOMA];
+  $("cab-idioma-txt").textContent = (IDIOMA || "es").toUpperCase();
+  b.classList.toggle("oculto", !IDIOMA);
+  if (!IDIOMA) { b.innerHTML = ""; return; }
+  b.setAttribute("dir", IDIOMA === "ar" ? "rtl" : "ltr");
+  b.innerHTML = `${icono("idioma", "p")}<span>${esc(error || t[0])}<small>Traducción automática: ante la duda, vale el texto en español.</small></span><button type="button" id="b-idioma-es">${esc(t[1])}</button>`;
+  $("b-idioma-es").onclick = () => ponIdioma("");
+}
+function ponIdioma(idioma) {
+  IDIOMA = IDIOMAS[idioma] ? idioma : ""; fallosIdioma = 0; colaIdioma = [];
+  try { IDIOMA ? localStorage.setItem("ccoo-idioma", IDIOMA) : localStorage.removeItem("ccoo-idioma"); } catch (_) {}
+  document.querySelectorAll("main [data-reg]").forEach(r => { delete r.dataset.vigiaIdioma; if (r.dataset.idiomaActual && r.dataset.idiomaActual !== IDIOMA) originalReg(r); });
+  pintaBandaIdioma(); vigilaIdioma();
+}
+$("cab-idioma").addEventListener("click", (ev) => {
+  ev.stopPropagation();
+  const viejo = document.querySelector(".menu-idiomas.global"); if (viejo) { viejo.remove(); return; }
+  document.querySelectorAll(".menu-idiomas").forEach(m => m.remove());
+  const m = document.createElement("div"); m.className = "menu-idiomas global"; m.setAttribute("role", "menu");
+  m.innerHTML = `<p class="menu-idiomas-tit">Idioma · Language</p>` + [["", "Español"], ...Object.entries(IDIOMAS)].map(([k, n]) => `<button role="menuitem" data-idioma-web="${k}" class="${k === IDIOMA ? "activo" : ""}" ${k === "ar" ? 'dir="rtl"' : ""}>${n}</button>`).join("");
+  document.body.appendChild(m);
+  const r = $("cab-idioma").getBoundingClientRect();
+  m.style.top = (r.bottom + 6) + "px"; m.style.right = Math.max(8, innerWidth - r.right) + "px";
+  m.querySelectorAll("[data-idioma-web]").forEach(b => b.onclick = () => { m.remove(); ponIdioma(b.dataset.idiomaWeb); });
+  setTimeout(() => document.addEventListener("click", function fuera(e) { if (!m.contains(e.target)) { m.remove(); document.removeEventListener("click", fuera); } }), 0);
+});
+pintaBandaIdioma();
 
 // ---------- Buscar en toda la web ----------
 function buscarTodo() {

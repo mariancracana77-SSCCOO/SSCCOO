@@ -1408,3 +1408,28 @@ html[data-letra] .subpestanas a { font-size: .9rem; }
 .desc-copias { display: flex; gap: 8px; flex-wrap: wrap; }
 .desc-copias .btn { flex: 1 1 auto; }
 .desc-cifras > div { padding: 12px 14px; }
+
+/* v55: idioma de toda la web */
+.btn-tab.idioma-btn { width: auto; min-width: 44px; padding: 0 8px; display: inline-flex; gap: 4px; align-items: center; justify-content: center; }
+.btn-tab.idioma-btn b { font-family: var(--cond); font-size: .95rem; letter-spacing: .03em; }
+@media (max-width: 380px) { .btn-tab.idioma-btn .icono { display: none; } }
+.menu-idiomas.global { position: fixed; bottom: auto; left: auto; z-index: 60; grid-template-columns: 1fr 1fr; max-height: min(70vh, 420px); min-width: 230px; }
+.menu-idiomas-tit { grid-column: 1 / -1; margin: 4px 8px 6px; font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--suave); }
+.menu-idiomas button.activo { background: var(--rojo); color: #fff; }
+.banda-idioma { display: flex; gap: 10px; align-items: center; max-width: 1100px; margin: 0 auto; padding: 8px 16px; background: #0b0e11; color: #fff; border-top: 1px solid rgba(255, 255, 255, .1); font-size: .92rem; }
+.banda-idioma.oculto { display: none; }
+.banda-idioma > span { flex: 1; min-width: 0; display: grid; }
+.banda-idioma small { color: #c9ced4; font-size: .78rem; }
+.banda-idioma button { flex: none; border: 1.5px solid #fff; background: transparent; color: #fff; border-radius: 999px; padding: 6px 12px; font-weight: 700; cursor: pointer; }
+
+/* v55: calendario con el color de cada tipo en los puntos y etiquetas que filtran de verdad */
+.dia .punto { background: var(--tc, var(--rojo)); }
+:root:root .dia.sel .punto { box-shadow: 0 0 0 1.5px #fff; }
+.leyenda { align-items: center; }
+.leyenda-tit { font-weight: 700; color: var(--suave); font-size: .9rem; margin-right: 2px; }
+.filtro-cal { cursor: pointer; border: 2px solid transparent; font: inherit; font-weight: 700; font-size: .85rem; min-height: 34px; }
+.filtro-cal:not(.etq) { border-radius: 999px; padding: 4px 12px; background: var(--fondo); color: var(--tinta); border-color: var(--linea); }
+.filtro-cal.activo { outline: 3px solid var(--tinta); outline-offset: 1px; }
+.filtro-cal:not(.etq).activo { background: var(--tinta); color: var(--tarjeta); outline: none; }
+.filtro-cal.apagado { opacity: .45; }
+.dia .punto { width: 8px; height: 8px; }

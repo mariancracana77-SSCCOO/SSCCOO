@@ -91,6 +91,11 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Próxima cita** (el rótulo de Inicio cuando no hay nada urgente): diseño nuevo de carretera. El título sale en un panel luminoso de autopista (letras blancas de puntos y luces rojas que parpadean en las esquinas) y, debajo, en un poste, dos señales en el rojo del logo: el lugar con los días que faltan (como los kilómetros de una señal) y el día y la hora. Prefiere reuniones y asambleas a los festivos y, si es la misma cita que la cuenta atrás, no se repite.
 - **Animación de entrada**: ahora empieza cuando la página ha cargado (en la app instalada, Android tapaba los primeros segundos con su pantalla y la animación terminaba sin verse) y sale aunque el móvil tenga «quitar animaciones» (lo activa el ahorro de batería). Se sigue saltando tocándola.
 
+## Versión 55: idioma de toda la web y colores del calendario
+- **Botón de idioma** junto a «Aa»: el trabajador elige su idioma (catalán, inglés, rumano, árabe, francés, portugués, alemán, polaco o serbio) y avisos, actas, convenio, dudas y publicaciones se traducen solos al verse. Se recuerda en el móvil; franja para volver al español.
+- **Calendario**: cada punto con el color de su tipo y etiquetas «Ver: Todo · Asamblea · Reunión…» que filtran.
+- **Panel**: el selector de color de las etiquetas (Ajustes) y el calendario del panel enseñan el color de cada tipo.
+
 ## Versión 54: copia de descansos en PDF y editor más cómodo
 - **Mis descansos**: la copia se guarda en PDF (se lee e imprime) y se puede recuperar desde ese mismo PDF (las copias .json siguen valiendo). Pantalla con márgenes, fechas que caben y menos negrita.
 - **Editor del panel**: las cajas de texto crecen con lo escrito, botones «Negrita» y «Lista», ayuda de formato plegada y campos más grandes en el móvil.
