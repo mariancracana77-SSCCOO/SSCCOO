@@ -1388,3 +1388,23 @@ html[data-letra] .subpestanas a { font-size: .9rem; }
 /* v52: el motivo de la próxima cita (su descripción), debajo de las señales */
 .cita-motivo { display: grid; gap: 2px; width: 100%; margin: 4px 0 12px; padding: 10px 12px; border-left: 4px solid #ffb000; background: rgba(0, 0, 0, .28); border-radius: 4px; color: #fff; font-size: .98rem; line-height: 1.35; }
 .cita-motivo b { font-family: var(--cond); font-size: .85rem; letter-spacing: .08em; text-transform: uppercase; color: #ffc233; }
+
+/* v54: «Mis descansos» más cómodo: margen dentro de los recuadros, fechas que caben y menos negrita */
+.desc-estado, .desc-form, .desc-opciones { padding: 16px; gap: 14px; }
+.desc-estado .desc-prox { margin: 0; }
+.desc-bloque { display: grid; gap: 8px; padding-top: 14px; border-top: 1px solid var(--linea); }
+.desc-bloque h3 { margin: 0; }
+.desc-bloque .ayuda { margin: 0; }
+.desc-form .tit-seccion { margin: 0; }
+.desc-form .fila { grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 10px 12px; }
+.desc-form input[type="datetime-local"] { width: 100%; min-width: 0; font-size: 1rem; padding-right: 8px; }
+.desc-form .check, .desc-opciones .check { font-weight: 400; margin: 0; }
+.desc-opciones .check:first-child { font-weight: 700; }
+.desc-opciones #desc-avisar-caja { line-height: 1.45; }
+.desc-mas { border-top: 1px solid var(--linea); padding-top: 10px; }
+.desc-mas[open] summary { margin-bottom: 10px; }
+#v-descansos .aviso-oficial, #v-descansos .aviso-oficial span { font-weight: 400; }
+#v-descansos .aviso-oficial { margin-top: 16px; }
+.desc-copias { display: flex; gap: 8px; flex-wrap: wrap; }
+.desc-copias .btn { flex: 1 1 auto; }
+.desc-cifras > div { padding: 12px 14px; }

@@ -590,3 +590,16 @@ body.admin .btn-cab.aa { min-width: 44px; }
 #orto-todos { margin: 0 0 12px; }
 .orto-que summary { cursor: pointer; font-weight: 700; padding: 4px 0; }
 .orto-que[open] summary { margin-bottom: 8px; }
+
+/* v54: editor más cómodo en el móvil */
+textarea.crece { resize: vertical; overflow-y: auto; }
+.fmt-barra { display: flex; gap: 6px; flex-wrap: wrap; margin: 2px 0 6px; }
+.fmt-barra .btn { min-height: 38px; padding: 6px 12px; }
+.formato-mas { margin-top: 6px; }
+.formato-mas summary { cursor: pointer; color: var(--suave); font-size: .9rem; padding: 4px 0; }
+.formato-mas .formato { margin-top: 4px; }
+@media (max-width: 700px) {
+  .ed-form label { font-size: 1.02rem; }
+  .ed-form input:not([type="checkbox"]):not([type="radio"]), .ed-form select, .ed-form textarea { min-height: 48px; font-size: 16px; }
+  .ed-form .grupo-check .check { padding: 6px 0; }
+}
