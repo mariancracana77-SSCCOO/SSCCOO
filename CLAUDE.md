@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, GitHub Pages, con `.nojekyll`)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **43**
+- Versión actual: **44**
 
 ## Reglas del proyecto (no negociables)
 - **No publicar nada en GitHub sin que la usuaria lo confirme antes** (enseñar lo que cambia y esperar a «publica»).
@@ -66,7 +66,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 - `render.js`: plantillas HTML de tarjetas. `iconos.js`: iconos SVG. `styles.css`: estilos (al final, bloques «Tablón», portada, modales, filtro de fechas, tema oscuro manual).
 - `lectura.js`: aplica letra/contraste/tema antes de pintar + anti-iframe.
 - `sw.js`: service worker: archivos con `?v=N` primero desde la caché (no cambian nunca); HTML sin caché y el resto primero de la red, con la caché si no hay conexión. Solo guarda respuestas correctas (`r.ok`). Push.
-- `cartel.html` + `cartel.js` + `qr.js`: cartel A4 con QR para imprimir (v43: estilo de la web, QR nivel H con `icon-192.png` en el centro; si hay Telegram, `.con-tg` aprieta el diseño). `logo.png`, 192 px, para la web y el panel. Notificaciones: `icon-192.png` y `badge-96.png` (silueta blanca del camión; Android pinta el badge en un solo color).
+- `cartel.html` + `cartel.js` + `qr.js`: cartel A4 con QR para imprimir (v43: estilo de la web; v44: detalles en el rojo del logo #AB1012, no amarillo, QR nivel H con `icon-192.png` en el centro; si hay Telegram, `.con-tg` aprieta el diseño). `logo.png`, 192 px, para la web y el panel. Notificaciones: `icon-192.png` y `badge-96.png` (silueta blanca del camión; Android pinta el badge en un solo color).
 - `lib/supabase.js` (supabase-js 2.58.0 UMD) y `lib/jszip.min.js` (3.10.1): **alojados aquí a propósito** (no CDN).
 - `fuentes.css` + `fuentes/`: Atkinson Hyperlegible (texto), Barlow Condensed (títulos) y Barlow (de reserva), alojadas aquí (no Google Fonts, por privacidad).
 - Logo: es el original (NO redibujarlo ni quitarle el relieve: al padre le gusta así). Desde la v40 sale de la imagen que pasó la usuaria ampliada x4 con Real-ESRGAN anime 6B (sin torch: pesos .pth leídos con un unpickler restringido y red montada en ONNX, ejecutada con onnxruntime), blancos limpios y exterior transparente (2048 px). De ahí salen `icon-512`, `icon-192`, `logo.png`, `favicon-32`, `icon-maskable-512` (fondo #15191E al 80 %) y `apple-touch-icon` (180, fondo #15191E). `manifest.json` y `theme-color` en #15191E.

@@ -131,6 +131,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 44: cartel con el rojo del logo
+- El cartel para el tablón (`cartel.html`) cambia los detalles amarillos por el rojo del logo (#AB1012; «Calsina Carré» en el tono claro #E0262B para que se lea sobre la cabecera oscura).
+
 ## Versión 43: avisos de encuestas, compartirlas, icono de notificación y cartel nuevo
 - **Encuestas**: al publicar una se avisa en los móviles y en Telegram, como los avisos (casilla «Avisar…»; columnas `notificar`/`notificado` en `encuestas` y la función `notificar` las incluye). Cada encuesta tiene enlace directo (`#encuesta-<id>`) y botón «Compartir la encuesta» por WhatsApp.
 - **Icono pequeño de las notificaciones**: `badge-96.png`, el camión del logo en blanco (Android lo pinta en un solo color; antes salía un cuadrado).
