@@ -1489,3 +1489,20 @@ html[data-letra] .subpestanas a { font-size: .92rem; }
 .leer-mas { display: inline-flex; align-items: center; gap: 6px; margin: 6px 0 2px; padding: 8px 14px; min-height: 40px; border-radius: 99px; border: 1.5px solid var(--rojo); background: transparent; color: var(--rojo-ic); font: inherit; font-weight: 700; cursor: pointer; }
 .leer-mas:hover { background: var(--rojo); color: #fff; }
 @media print { .recortado { max-height: none; -webkit-mask-image: none; mask-image: none; } .leer-mas { display: none; } }
+/* v62: buscador con secciones, archivos, «dónde está» y mapa de la web */
+.busca-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.mapa-web { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 10px; }
+.mapa-grupo { padding: 12px 14px; display: grid; gap: 6px; align-content: start; }
+.mapa-tit { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-family: var(--cond); font-size: 1.2rem; font-weight: 700; color: var(--tinta); text-decoration: none; text-transform: uppercase; letter-spacing: .02em; min-height: 36px; }
+.mapa-tit .icono { color: var(--rojo-ic); }
+.mapa-grupo ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; border-top: 1px solid var(--linea); padding-top: 6px; }
+.mapa-grupo li a { display: flex; align-items: center; min-height: 36px; color: var(--rojo-ic); font-weight: 600; text-decoration: none; padding-left: 10px; border-left: 3px solid var(--rojo); }
+.busca-saltos { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; margin-bottom: 4px; }
+.busca-saltos::-webkit-scrollbar { display: none; }
+.busca-saltos a { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 6px 12px; border-radius: 99px; background: var(--tarjeta); border: 1.5px solid var(--linea); color: var(--tinta); font-weight: 700; font-size: .88rem; text-decoration: none; }
+.busca-saltos a span { background: var(--rojo); color: #fff; border-radius: 99px; padding: 0 7px; font-size: .78rem; }
+.resultado .donde { display: inline-flex; align-items: center; gap: 4px; color: var(--rojo-ic); font-weight: 600; }
+.resultado mark { background: var(--rojo-suave); color: var(--tinta); font-weight: 800; border-radius: 3px; padding: 0 1px; }
+.ver-todos { width: 100%; min-height: 44px; border: 0; border-top: 1px solid var(--linea); background: none; color: var(--rojo-ic); font: inherit; font-weight: 700; cursor: pointer; }
+#v-buscar .titulo-bloque { scroll-margin-top: 150px; }
+.resultado b, .resultado small { white-space: normal; overflow: visible; text-overflow: clip; }

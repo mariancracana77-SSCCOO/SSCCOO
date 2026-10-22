@@ -48,7 +48,7 @@ function irA() {
   const sec = ap ? "ap-" + ap : v;
   if (sec !== "inicio") { marcaVisto(sec); if (cargar.listo) pintaContadores(); }
   contarUnaVez("s:" + sec, () => sb.rpc("contar_seccion", { p_seccion: sec }));
-  if (v === "buscar") setTimeout(() => $("buscar-todo").focus(), 100);
+  if (v === "buscar") { if (cargar.listo) buscarTodo(); if (matchMedia("(hover: hover)").matches) setTimeout(() => $("buscar-todo").focus(), 100); } // en el móvil, sin abrir el teclado: así se ve el mapa de la web
 }
 
 window.addEventListener("hashchange", irA);
@@ -82,6 +82,7 @@ function pintaPestanas() {
   document.querySelector(".pestanas-web").innerHTML = GRUPOS.map(g => `<a href="#${esc(g.miembros[0].clave)}" data-v="${esc(g.clave)}">${esc(g.titulo)}</a>`).join("");
   marcaPestanas(irA.antes);
   flechasPestanas();
+  if (irA.antes === "buscar") buscarTodo();
 }
 function marcaPestanas(clave) {
   const g = GRUPO_DE[clave], arriba = g ? g.clave : clave;
@@ -1218,33 +1219,95 @@ document.addEventListener("click", (ev) => {
 });
 
 // ---------- Buscar en toda la web ----------
+// v62: también busca secciones y subapartados (con «dónde está»), publicaciones y archivos adjuntos por su nombre
+// o por el título de donde están. Sin nada escrito, enseña búsquedas útiles y el mapa de la web.
+// Palabras con las que se llega a cada sección aunque no salgan en su nombre
+const PALABRAS_VISTA = { inicio: "inicio portada principal", avisos: "avisos comunicados noticias novedades urgente",
+  calendario: "calendario fechas asambleas reuniones festivos eventos citas", documentos: "documentos archivos pdf fotos impresos formularios",
+  convenio: "convenio colectivo articulos salario nomina vacaciones permisos licencias", calcula: "calculadora calcular vacaciones permisos horas extra",
+  descansos: "descansos descanso semanal diario tacografo conduccion pausas jornada horas 561", actas: "actas reuniones comite acuerdos",
+  preguntas: "dudas preguntas frecuentes", info: "nosotros delegados contacto telefono buzon sugerencias quienes somos" };
+const BUSQUEDAS_UTILES = ["Vacaciones", "Nómina", "Descansos", "Permisos", "Convenio", "Asamblea", "Delegados"];
+const estadoBusca = { abiertos: {} };
+const nomVista = (clave) => clave.startsWith("ap-") ? (D.apartados.find(a => "ap-" + a.slug === clave)?.titulo || clave) : NOMBRE_FIJO[clave] || clave;
+// «Grupo › Sección» según las pestañas de arriba
+function rutaDe(clave) {
+  const g = GRUPO_DE[clave]; if (!g) return nomVista(clave);
+  return g.titulo === nomVista(clave) ? g.titulo : g.titulo + " › " + nomVista(clave);
+}
+// Resalta lo buscado (sin tener en cuenta tildes) dentro de un texto ya sin HTML
+function resalta(t, qr) {
+  t = String(t || ""); const n = normal(t), palabras = normal(qr).split(/\s+/).filter(p => p.length >= 2);
+  const marcas = [];
+  palabras.forEach(p => { let i = n.indexOf(p); while (i >= 0) { marcas.push([i, i + p.length]); i = n.indexOf(p, i + p.length); } });
+  if (!marcas.length || n.length !== t.length) return esc(t);
+  marcas.sort((x, y) => x[0] - y[0]); let out = "", pos = 0;
+  marcas.forEach(([i, f]) => { if (i < pos) return; out += esc(t.slice(pos, i)) + "<mark>" + esc(t.slice(i, f)) + "</mark>"; pos = f; });
+  return out + esc(t.slice(pos));
+}
+function pintaMapaWeb() {
+  return `<h2 class="titulo-bloque">Búsquedas útiles</h2><div class="busca-chips">${BUSQUEDAS_UTILES.map(b => `<button type="button" class="filtro" data-busca="${esc(b)}">${esc(b)}</button>`).join("")}</div>
+    <h2 class="titulo-bloque">Todo lo que hay en la web</h2>
+    <div class="mapa-web">${GRUPOS.filter(g => g.clave !== "inicio").map(g => `<div class="panel mapa-grupo"><a class="mapa-tit" href="#${esc(g.miembros[0].clave)}">${esc(g.titulo)}${icono("der", "p")}</a>
+      ${g.miembros.length > 1 ? `<ul>${g.miembros.map(m => `<li><a href="#${esc(m.clave)}">${esc(m.titulo)}</a></li>`).join("")}</ul>` : ""}</div>`).join("")}</div>`;
+}
 function buscarTodo() {
   const qr = $("buscar-todo").value.trim(), q = normal(qr);
-  if (q.length < 2) { $("resultados-todo").innerHTML = `<p class="fecha-txt">Escribe al menos dos letras.</p>`; return; }
+  if (q.length < 2) {
+    $("resultados-todo").innerHTML = (qr ? `<p class="fecha-txt">Escribe al menos dos letras.</p>` : "") + pintaMapaWeb();
+    $("resultados-todo").querySelectorAll("[data-busca]").forEach(b => b.onclick = () => { $("buscar-todo").value = b.dataset.busca; buscarTodo(); });
+    return;
+  }
   const pasa = (...t) => coincide(t.join(" "), q);
+  // 2 = lo buscado está en el título; 1 = está en el texto. Lo del título sale antes.
+  const nota = (titulo, ...resto) => coincide(String(titulo || ""), q) ? 2 : pasa(titulo, ...resto) ? 1 : 0;
+  const lista = (arr, f) => arr.map(x => { const r = f(x); return r && r.n ? r : null; }).filter(Boolean).sort((a, b) => b.n - a.n);
+  const apDe = (id) => D.apartados.find(a => a.id === id);
+  // Secciones y subapartados
+  const vistas = GRUPOS.flatMap(g => g.miembros.map(m => m.clave)).filter((c, i, a) => a.indexOf(c) === i);
+  const secciones = lista(vistas, c => {
+    const ap = c.startsWith("ap-") ? D.apartados.find(a => "ap-" + a.slug === c) : null;
+    return { n: nota(nomVista(c), ap?.descripcion, PALABRAS_VISTA[c], GRUPO_DE[c]?.titulo), h: c, t: nomVista(c), s: ap?.descripcion || "", donde: rutaDe(c), ic: ap?.icono || { descansos: "reloj", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta", info: "grupo", inicio: "inicio" }[c] || "carpeta" };
+  });
+  // Archivos: los de Documentos y los adjuntos de avisos, actas y publicaciones
+  const arch = [];
+  D.docs.forEach(d => arch.push({ url: d.url, nombre: d.titulo || d.nombre_archivo, extra: [d.nombre_archivo, d.descripcion, d.categoria], tipo: d.tipo_archivo, fichero: d.nombre_archivo, donde: "Documentos" + (d.categoria ? " › " + d.categoria : "") }));
+  const adj = (l, donde, titulo) => (l || []).forEach(j => arch.push({ url: j.url, nombre: j.nombre || "Archivo", extra: [titulo], tipo: j.tipo, fichero: j.nombre, donde }));
+  D.avisos.forEach(a => adj(a.adjuntos, "Avisos › " + (a.titulo || ""), a.titulo));
+  D.actas.forEach(a => adj(a.adjuntos, rutaDe("actas") + " › " + (a.titulo || ""), a.titulo));
+  D.publicaciones.forEach(x => { const ap = apDe(x.apartado_id); if (ap) adj(x.adjuntos, rutaDe("ap-" + ap.slug) + " › " + (x.titulo || ""), x.titulo); });
+  const archivos = lista(arch, a => ({ n: nota(a.nombre, ...a.extra), url: a.url, t: a.nombre, s: tipoArchivo(a.tipo, a.fichero).txt, donde: a.donde, ic: tipoArchivo(a.tipo, a.fichero).ic }));
   const grupos = [
-    ["Avisos", "avisos", D.avisos.filter(a => pasa(a.titulo, a.contenido, textoFecha(a.fecha))).map(a => ({ h: "aviso-" + a.id, t: a.titulo, s: fechaLarga(a.fecha) }))],
-    ["Calendario", "calendario", D.eventos.filter(e => pasa(e.titulo, e.descripcion, e.lugar, e.tipo, textoFecha(e.fecha))).map(e => ({ h: "calendario", t: e.titulo, s: fechaLarga(e.fecha + "T12:00:00") + (e.hora ? " · " + horaEvento(e).toLowerCase() : ""), dia: e.fecha }))],
-    ["Convenio", "convenio", D.convenio.filter(s => pasa(s.titulo, s.resumen, s.contenido, s.articulo)).map(s => ({ h: "convenio", t: s.titulo, s: s.resumen || s.categoria, q: qr }))],
-    ["Preguntas frecuentes", "pregunta", D.preguntas.filter(x => pasa(x.pregunta, x.respuesta)).map(x => ({ h: "preguntas", t: x.pregunta, s: x.categoria, q: qr }))],
-    ["Actas", "actas", D.actas.filter(a => pasa(a.titulo, a.resumen, a.acuerdos, a.tipo, textoFecha(a.fecha))).map(a => ({ h: "actas", t: a.titulo, s: a.fecha ? fechaLarga(a.fecha + "T12:00:00") : a.tipo, q: qr }))],
-    ...D.apartados.map(ap => [ap.titulo, ap.icono || "carpeta", D.publicaciones.filter(x => x.apartado_id === ap.id && pasa(x.titulo, x.contenido, textoFecha(x.fecha), (x.adjuntos || []).map(j => j.nombre).join(" "))).map(x => ({ h: "ap-" + ap.slug, t: x.titulo, s: x.fecha ? fechaLarga(x.fecha + "T12:00:00") : "", q: qr }))]),
-    ["Documentos", "carpeta", D.docs.filter(d => pasa(d.titulo, d.descripcion, d.nombre_archivo, d.categoria)).map(d => ({ url: d.url, t: d.titulo, s: d.categoria + " · " + tipoArchivo(d.tipo_archivo, d.nombre_archivo).txt }))],
+    ["Secciones de la web", "secciones", secciones],
+    ["Avisos", "avisos", lista(D.avisos, a => ({ n: nota(a.titulo, a.contenido, textoFecha(a.fecha)), h: "aviso-" + a.id, t: a.titulo, s: fechaLarga(a.fecha), donde: "Avisos", ic: "avisos" }))],
+    ["Publicaciones", "pubs", lista(D.publicaciones, x => { const ap = apDe(x.apartado_id); return ap && { n: nota(x.titulo, x.contenido, textoFecha(x.fecha), (x.adjuntos || []).map(j => j.nombre).join(" ")), h: "pub-" + x.id, t: x.titulo, s: x.fecha ? fechaLarga(x.fecha + "T12:00:00") : "", donde: rutaDe("ap-" + ap.slug), ic: ap.icono || "carpeta" }; })],
+    ["Archivos y fotos", "archivos", archivos],
+    ["Calendario", "calendario", lista(D.eventos, e => ({ n: nota(e.titulo, e.descripcion, e.lugar, e.tipo, textoFecha(e.fecha)), h: "calendario", t: e.titulo, s: fechaLarga(e.fecha + "T12:00:00") + (e.hora ? " · " + horaEvento(e).toLowerCase() : ""), dia: e.fecha, donde: "Calendario", ic: "calendario" }))],
+    ["Convenio", "convenio", lista(D.convenio, x => ({ n: nota(x.titulo, x.resumen, x.contenido, x.articulo), h: "convenio", t: x.titulo, s: x.resumen || x.categoria, q: qr, donde: rutaDe("convenio"), ic: "convenio" }))],
+    ["Actas", "actas", lista(D.actas, a => ({ n: nota(a.titulo, a.resumen, a.acuerdos, a.tipo, textoFecha(a.fecha)), h: "actas", t: a.titulo, s: a.fecha ? fechaLarga(a.fecha + "T12:00:00") : a.tipo, q: qr, donde: rutaDe("actas"), ic: "actas" }))],
+    ["Preguntas frecuentes", "preguntas", lista(D.preguntas, x => ({ n: nota(x.pregunta, x.respuesta), h: "preguntas", t: x.pregunta, s: x.categoria, q: qr, donde: rutaDe("preguntas"), ic: "pregunta" }))],
   ].filter(g => g[2].length);
   const total = grupos.reduce((n, g) => n + g[2].length, 0);
-  $("resultados-todo").innerHTML = total ? `<p class="fecha-txt">${total} resultado${total === 1 ? "" : "s"}</p>` + grupos.map(([tit, ic, l]) => `
-    <h2 class="titulo-bloque">${esc(tit)} <span class="etq">${l.length}</span></h2>
-    <div class="panel resultados">${l.slice(0, 8).map(r => `<a class="novedad" ${r.url ? `href="${esc(urlSegura(r.url))}" target="_blank" rel="noopener"` : `href="#${r.h}" data-q="${esc(r.q || "")}" data-dia="${r.dia || ""}"`}>
-      <span class="ic">${icono(esc(ic), "p")}</span><span class="txt"><b>${esc(r.t)}</b><small>${esc(r.s || "")}</small></span>${icono("der", "p")}</a>`).join("")}</div>`).join("")
-    : vacio("buscar", `No hay nada con «${esc(qr)}». Prueba con otra palabra o <a href="#info">pregúntanos</a>.`);
+  const fila = (r) => `<a class="novedad resultado" ${r.url ? `href="${esc(urlSegura(r.url))}" target="_blank" rel="noopener"` : `href="#${esc(r.h)}" data-q="${esc(r.q || "")}" data-dia="${r.dia || ""}"`}>
+      <span class="ic">${icono(esc(r.ic), "p")}</span><span class="txt"><b>${resalta(r.t || "Sin título", qr)}</b>${r.s ? `<small>${esc(r.s)}</small>` : ""}${r.donde ? `<small class="donde">${icono("lugar", "p")}${esc(r.donde)}</small>` : ""}</span>${icono(r.url ? "descargar" : "der", "p")}</a>`;
+  $("resultados-todo").innerHTML = total ? `<p class="fecha-txt">${total} resultado${total === 1 ? "" : "s"}</p>` +
+    `<nav class="busca-saltos" aria-label="Ir a un grupo de resultados">${grupos.map(([tit, k, l]) => `<a href="#" data-salto="bg-${k}">${esc(tit)} <span>${l.length}</span></a>`).join("")}</nav>` +
+    grupos.map(([tit, k, l]) => { const todos = estadoBusca.abiertos[k], ver = todos ? l : l.slice(0, 5);
+      return `<h2 class="titulo-bloque" id="bg-${k}">${esc(tit)} <span class="etq">${l.length}</span></h2>
+      <div class="panel resultados">${ver.map(fila).join("")}${l.length > 5 ? `<button type="button" class="ver-todos" data-ver-todos="${k}">${todos ? "Ver menos" : `Ver los ${l.length}`}</button>` : ""}</div>`; }).join("")
+    : vacio("buscar", `No hay nada con «${esc(qr)}». Prueba con otra palabra o <a href="#info">pregúntanos</a>.`) + pintaMapaWeb();
+  $("resultados-todo").querySelectorAll("[data-busca]").forEach(b => b.onclick = () => { $("buscar-todo").value = b.dataset.busca; buscarTodo(); });
+  $("resultados-todo").querySelectorAll("[data-ver-todos]").forEach(b => b.onclick = () => { const k = b.dataset.verTodos; estadoBusca.abiertos[k] = !estadoBusca.abiertos[k]; buscarTodo(); $("bg-" + k)?.scrollIntoView({ block: "start" }); });
+  $("resultados-todo").querySelectorAll("[data-salto]").forEach(b => b.onclick = (ev) => { ev.preventDefault(); $(b.dataset.salto)?.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); });
   $("resultados-todo").querySelectorAll("a[data-q]").forEach(l => l.onclick = () => {
     const h = l.getAttribute("href").slice(1), q2 = l.dataset.q;
     if (l.dataset.dia) { const d = fechaDia(l.dataset.dia); estado.mes = new Date(d.getFullYear(), d.getMonth(), 1); estado.diaSel = l.dataset.dia; pintaCalendario(); }
-    const campo = h.startsWith("ap-") ? "buscar-ap" : { convenio: "buscar-convenio", preguntas: "buscar-preguntas", actas: "buscar-actas" }[h];
+    const campo = { convenio: "buscar-convenio", preguntas: "buscar-preguntas", actas: "buscar-actas" }[h];
     if (campo && q2) { $(campo).value = q2; $(campo).dispatchEvent(new Event("input")); }
   });
 }
-$("buscar-todo").oninput = buscarTodo;
+let tBusca = 0;
+$("buscar-todo").oninput = () => { estadoBusca.abiertos = {}; clearTimeout(tBusca); tBusca = setTimeout(buscarTodo, 150); };
 
 // ---------- Estadísticas anónimas: secciones visitadas y lo que se lee ----------
 // Solo se suma 1 en el servidor; aquí se recuerda (en esta visita) qué se ha contado ya, para no contarlo dos veces.

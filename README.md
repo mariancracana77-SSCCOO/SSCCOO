@@ -91,6 +91,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Próxima cita** (el rótulo de Inicio cuando no hay nada urgente): diseño nuevo de carretera. El título sale en un panel luminoso de autopista (letras blancas de puntos y luces rojas que parpadean en las esquinas) y, debajo, en un poste, dos señales en el rojo del logo: el lugar con los días que faltan (como los kilómetros de una señal) y el día y la hora. Prefiere reuniones y asambleas a los festivos y, si es la misma cita que la cuenta atrás, no se repite.
 - **Animación de entrada**: ahora empieza cuando la página ha cargado (en la app instalada, Android tapaba los primeros segundos con su pantalla y la animación terminaba sin verse) y sale aunque el móvil tenga «quitar animaciones» (lo activa el ahorro de batería). Se sigue saltando tocándola.
 
+## Versión 62: buscador de toda la web
+- Busca también secciones y subapartados, publicaciones y archivos (por nombre o por dónde están). Cada resultado dice dónde está, lo buscado sale resaltado y hay saltos por grupo. Sin escribir nada: búsquedas útiles y el mapa de la web.
+
 ## Versión 61: «Leer más» en los textos largos
 - Avisos, actas, publicaciones y fechas del calendario con mucho texto salen recortados con un botón «Leer más» (y «Leer menos»). Entero si se llega por enlace directo o buscando.
 

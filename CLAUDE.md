@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, GitHub Pages, con `.nojekyll`)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **61**
+- Versión actual: **62**
 
 ## Reglas del proyecto (no negociables)
 - **No publicar nada en GitHub sin que la usuaria lo confirme antes** (enseñar lo que cambia y esperar a «publica»).
@@ -53,6 +53,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
   - Traducir más cosas (v58): en Inicio, el rótulo (urgente o «Próxima parada») y «Lo último» llevan un botón por bloque (`botonTraducir("lista")`, contenedor `[data-reg-lista]`, `traduceLista`/`originalLista`, se reaplica al repintar con `IDIOMA_LISTA`); cada fecha del calendario (`eventoHTML`) tiene su botón. `data-resumen="N"` recorta la traducción como `resumenPlano`. La función `traducir` admite también `eventos` y `documentos`.
   - Idioma propio del trabajador (v58, localStorage `ccoo-mi-idioma`, `miIdioma`/`ponMiIdioma` en `app.js`, evento `mi-idioma`): lo elige en «Mis descansos» (`#desc-idioma`) o en la ventana «Avisos activados»/Nosotros (`.idioma-avisos`). Se guarda en `push_subs.idioma` (RPC pública `idioma_push`) y `notificar` manda cada notificación traducida (caché en `traducciones`, tabla "push"; si falla, en español). Telegram sigue en español.
   - Textos de «Mis descansos» traducibles: escritos como `T("…")`/`TH("…")` (con huecos `{x}` y `**negrita**`) en `descansos.js`; los textos del HTML llevan `data-dt` (`FIJOS`). `traducir` en modo `textos` (grupo `descansos`) descarga el `descansos.js` publicado y traduce solo esas frases (no acepta texto de fuera): si se añade un texto, escribirlo con `T("...")` literal. Caché en el móvil `ccoo-textos-descansos` (1 día y por versión). Fechas con el idioma (`LOC`); la copia en PDF siempre en español. Total de horas por compensar (`.desc-total`).
+  - Buscador de toda la web (v62, `buscarTodo`): también secciones y subapartados (`GRUPOS`, `PALABRAS_VISTA`, ruta «Grupo › Sección» con `rutaDe`), publicaciones (llevan a `#pub-<id>`) y archivos (Documentos y adjuntos de avisos, actas y publicaciones, por nombre o por el título de donde están). Cada resultado dice dónde está, resalta lo buscado (`resalta`), lo del título sale antes, 5 por grupo con «Ver los N» y saltos por grupo. Sin nada escrito: «Búsquedas útiles» y mapa de la web (`pintaMapaWeb`). Ojo: `irA()` se ejecuta al cargar `app.js`, antes de que existan algunas constantes; por eso `buscarTodo` solo se llama ahí si `cargar.listo`.
   - Búsqueda que perdona faltas (`coincide`, `fonetico` en `config.js`), en la web y en el panel.
   - Colores por tipo (v52/v55): usan `--tc` (color del tipo puesto en Ajustes) la etiqueta `.etq.tipo`, los puntos del calendario (`.dia .punto`), la etiqueta `.t-tipo` de «Próximas fechas» (v59) y, en el panel, `.sel-color` y `.ev-mini`; todo lo demás sigue en rojo. Filtro por tipo del calendario: `estado.tipoCal` (`[data-tipo-cal]`).
   - Festivos: filas normales de `eventos` con `tipo = "Festivo"` (00:00–23:59). `esFestivo()` los saca de «Lo último», del recuento de novedades y del contador de la pestaña. Al cargarlos en bloque, `notificar = false` y `notificado = true` para no mandar avisos.
