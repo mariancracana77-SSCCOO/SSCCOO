@@ -131,6 +131,11 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 41: animación al abrir la app
+- Al abrir la web sale una pantalla de bienvenida: el camión del logo (el mismo, sin su borde gris) llega por la carretera con las ruedas girando y un camionero saludando, frena, encoge hasta su sitio y el logo se forma a su alrededor (aro rojo que se dibuja, logo que nace del camión, latido de sello y destello). Dura unos 4 segundos; tocar la pantalla la salta. Si el móvil tiene las animaciones desactivadas, sale el logo quieto. Si algo falla, se quita sola a los 8 segundos.
+- Al quitarse, las tarjetas de la portada entran una detrás de otra, y las tarjetas y botones se hunden un poco al tocarlos.
+- Nuevo archivo: `camion.webp` (el camión del logo recortado).
+
 ## Versión 40: logo en alta calidad (ampliado con IA)
 - El logo de siempre (mismo dibujo, relieve, colores y correo) se ha ampliado x4 con Real-ESRGAN (modelo «anime 6B», gratuito y de código abierto) a partir de la imagen que pasó la usuaria. Ahora tiene 2048 px y se ve nítido en todos los tamaños. Se rehacen todos los iconos, la tarjeta al compartir y las capturas.
 

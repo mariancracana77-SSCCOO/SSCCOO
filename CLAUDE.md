@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, GitHub Pages, con `.nojekyll`)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **40**
+- Versión actual: **41**
 
 ## Reglas del proyecto (no negociables)
 - **No publicar nada en GitHub sin que la usuaria lo confirme antes** (enseñar lo que cambia y esperar a «publica»).
@@ -39,6 +39,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
   - Zona Conductores: en el apartado con slug `zona-conductores` (`APARTADO_CONDUCTORES`) se pinta en `#ap-extra` el bloque de restricciones para camiones (`restriccionesHTML`, tarjeta `restriccionHTML` en `render.js`): lista de la tabla `restricciones` (solo `visible`); si la consulta falla, `RESTRICCIONES_RESERVA`; si está vacía, no sale. Solo enlaces oficiales y gratuitos. Si `idioma` no dice español/castellano (`restrTraducida`), la tarjeta lleva `.restr-trad` («tu móvil te ofrece traducirla») y el aviso explica cómo traducir con el navegador. No usar el proxy translate.goog: webs oficiales como BALM lo bloquean (pasó en v31). La fecha de revisión sale de `paginas.restricciones_revisado`; si no hay, `RESTRICCIONES_REVISADO`.
   - Textos de privacidad editables (`TXT_CONSENTIMIENTO`, `pintaTextosPrivacidad`, `conPolitica`): `paginas.aviso_privacidad_texto`, `consentimiento_buzon`, `consentimiento_avisos`; vacíos = los de siempre. «política de privacidad» se convierte en enlace (o se añade).
   - Vista previa al compartir: etiquetas `og:*` en `index.html` con `og.png` (1200×630, hecha con Playwright). `manifest.json` lleva `screenshots` (carpeta `capturas/`, hechas con los datos de prueba).
+  - Pantalla de bienvenida (v41, `#bienvenida` al principio de `index.html`, bloque «Pantalla de bienvenida» en `styles.css`, `quitarBienvenida()` en `app.js`): el camión del logo (`camion.webp`, recortado del logo sin el borde gris; su caja va en % de la del logo para encajar encima) llega con ruedas SVG que giran y un camionero saludando, encoge y el logo (`icon-512.png`) aparece desde él con máscara radial (`@property --bv-r`), aro que se dibuja, latido de sello y destello. Se quita al terminar de cargar y como pronto a los 4,3 s; tocarla la salta; el CSS la quita a los 8 s si algo falla; con «reducir movimiento», logo quieto. Al quitarla, `.anima-entra` escalona la entrada de las listas.
   - Avisos con fotos (`tarjetaAviso`): la primera foto sale grande (`.aviso-foto`, `object-fit: contain`), el resto en `galeriaHTML` y los documentos en `adjuntosHTML`. En «Lo último», `x.foto` pinta miniatura (`.ic.foto`). Ayudas comunes en `render.js`: `esImagen`, `fotoSrc` (deja pasar `blob:` de la vista previa), `galeriaHTML`.
   - Festivos: filas normales de `eventos` con `tipo = "Festivo"` (00:00–23:59). `esFestivo()` los saca de «Lo último», del recuento de novedades y del contador de la pestaña. Al cargarlos en bloque, `notificar = false` y `notificado = true` para no mandar avisos.
 - `admin.html` + `admin.js` + `admin.css`: panel (Resumen con visitas, Calendario mensual, secciones, Textos, Ajustes: canales Telegram/WhatsApp, copia ZIP, archivo, administradores, listas; asistente de actas con Gemini a partir de fotos/archivos).
