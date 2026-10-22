@@ -991,13 +991,8 @@ body.publica.con-aviso-priv { padding-bottom: calc(84px + var(--alto-aviso, 90px
 @keyframes bv-aparece { from { opacity: 0; transform: scale(.8); } to { opacity: 1; transform: none; } }
 @keyframes bv-latido { 50% { transform: scale(1.04); } }
 .bv-escena { width: min(300px, 86vw); height: auto; overflow: visible; }
-.bv-cc { font-family: var(--cond); font-weight: 700; font-size: 38px; fill: #fff; letter-spacing: 1px; }
-.bv-camion { animation: bv-bache .5s ease-in-out infinite; }
+.bv-camion { transform-box: fill-box; transform-origin: center bottom; animation: bv-bache .5s ease-in-out infinite; }
 @keyframes bv-bache { 50% { transform: translateY(-1.5px); } }
-.bv-rueda circle { fill: #1b1f24; stroke: #e8ebef; stroke-width: 3; }
-.bv-rueda path { stroke: #e8ebef; stroke-width: 2.5; stroke-linecap: round; }
-.bv-rueda { transform-box: fill-box; transform-origin: center; animation: bv-gira .5s linear infinite; }
-@keyframes bv-gira { to { transform: rotate(360deg); } }
 .bv-carretera { stroke: #FFB000; stroke-width: 3; stroke-dasharray: 18 14; animation: bv-carretera .5s linear infinite; }
 @keyframes bv-carretera { to { stroke-dashoffset: 32; } }
 .bv-velocidad line { stroke: rgba(255,255,255,.55); stroke-width: 3; stroke-linecap: round; animation: bv-viento .7s linear infinite; }

@@ -2,7 +2,7 @@
 // y recibir notificaciones aunque la app esté cerrada.
 const VERSION = "40"; // súbelo en cada actualización
 const CACHE = "ccoo-v" + VERSION;
-const BASE = ["./", "index.html", "logo.png", "icon-192.png", "manifest.json", "fuentes/atkinson-hyperlegible-latin-400-normal.woff2", "fuentes/atkinson-hyperlegible-latin-700-normal.woff2", "fuentes/barlow-condensed-latin-700-normal.woff2", ...["styles.css", "fuentes.css", "lectura.js", "lib/supabase.js", "config.js", "iconos.js", "render.js", "app.js"].map(f => f + "?v=" + VERSION)];
+const BASE = ["./", "index.html", "logo.png", "icon-192.png", "camion.webp", "manifest.json", "fuentes/atkinson-hyperlegible-latin-400-normal.woff2", "fuentes/atkinson-hyperlegible-latin-700-normal.woff2", "fuentes/barlow-condensed-latin-700-normal.woff2", ...["styles.css", "fuentes.css", "lectura.js", "lib/supabase.js", "config.js", "iconos.js", "render.js", "app.js"].map(f => f + "?v=" + VERSION)];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(BASE))); self.skipWaiting(); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });
 self.addEventListener("fetch", e => {
