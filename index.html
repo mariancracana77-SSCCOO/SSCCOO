@@ -226,53 +226,74 @@
       <label class="desc-idioma"><svg class="icono p" aria-hidden="true"><use href="#i-idioma"/></svg><span>Idioma · Language</span><select id="desc-idioma" aria-label="Idioma · Language"></select></label>
     </div>
     <p class="msg" id="desc-idioma-msg" role="status"></p>
-    <p class="intro-vista" data-dt="intro">Calcula tus descansos (el diario y el semanal), tus horas de conducción y las pausas: cuándo te toca, si puede ser reducido y cuántas horas tienes que compensar. Tus datos se guardan solo en este móvil: nadie más los ve.</p>
+    <p class="intro-vista" data-dt="intro">Tu descanso diario y semanal: cuándo te toca y cuántas horas tienes que compensar. Se guarda solo en este móvil.</p>
+    <details class="desc-guia" id="desc-guia"><summary><svg class="icono p" aria-hidden="true"><use href="#i-pregunta"/></svg><span data-dt="guiatit">Cómo se usa (guía rápida)</span></summary><div id="desc-guia-cuerpo"></div></details>
     <div id="desc-app"></div>
-    <div class="panel desc-hoy" id="desc-hoy" data-bloque="diario"></div>
-    <div class="panel desc-estado" id="desc-estado" data-bloque="semanal"></div>
-    <div class="panel desc-estado" id="desc-conduccion" data-bloque="conduccion"></div>
-    <div class="panel desc-form" data-bloque="diario">
-      <h2 class="tit-seccion" data-dt="apuntarj">Apuntar una jornada (un día de trabajo)</h2>
-      <p class="ayuda" data-dt="ayudaj">Desde que empezaste a trabajar después de un descanso hasta que paraste para el descanso diario. Si usas el botón «Empiezo la jornada» de arriba, se apunta sola.</p>
-      <div class="fila"><div><label for="desc-j-ini" data-dt="jini">Empecé a trabajar</label><input id="desc-j-ini" type="datetime-local"></div>
-        <div><label for="desc-j-fin" data-dt="jfin">Terminé (empieza el descanso)</label><input id="desc-j-fin" type="datetime-local"></div>
-        <div><label for="desc-j-cond" data-dt="jcond">Horas conducidas ese día</label><input id="desc-j-cond" inputmode="decimal" placeholder="Ej: 8,5"></div></div>
-      <label class="check"><input type="checkbox" id="desc-j-partido"><span data-dt="jpartido">Hice el descanso partido: una parada de 3 h o más durante la jornada (y 9 h al final)</span></label>
-      <label class="check"><input type="checkbox" id="desc-j-doble"><span data-dt="jdoble">Conduje con otro conductor (doble tripulación)</span></label>
-      <label class="check"><input type="checkbox" id="desc-j-ferry"><span data-dt="jferry">El descanso se cortó por un ferry o un tren</span></label>
-      <div class="botones"><button class="btn" id="desc-j-guardar" data-dt="jguardar">Guardar jornada</button></div>
-      <div class="msg" id="desc-j-msg" role="status"></div>
+    <nav class="desc-tabs" id="desc-tabs" role="tablist" aria-label="Mis descansos">
+      <button type="button" role="tab" data-tab="hoy"><svg class="icono p" aria-hidden="true"><use href="#i-reloj"/></svg><span data-dt="tabhoy">Hoy</span></button>
+      <button type="button" role="tab" data-tab="apuntar"><svg class="icono p" aria-hidden="true"><use href="#i-mas"/></svg><span data-dt="tabapuntar">Apuntar</span></button>
+      <button type="button" role="tab" data-tab="lista"><svg class="icono p" aria-hidden="true"><use href="#i-calendario"/></svg><span data-dt="tablista">Lo apuntado</span></button>
+      <button type="button" role="tab" data-tab="ajustes"><svg class="icono p" aria-hidden="true"><use href="#i-ajustes"/></svg><span data-dt="tabajustes">Ajustes</span></button>
+    </nav>
+
+    <div class="desc-panel" data-panel="hoy">
+      <div class="panel desc-hoy" id="desc-hoy" data-bloque="diario"></div>
+      <div class="panel desc-estado" id="desc-estado" data-bloque="semanal"></div>
     </div>
-    <div class="panel desc-form" data-bloque="semanal">
-      <h2 class="tit-seccion" data-dt="apuntar">Apuntar un descanso semanal</h2>
-      <p class="ayuda" data-dt="ayudasem">El descanso semanal puede ser cualquier día de la semana: no tiene por qué caer en fin de semana.</p>
-      <div class="fila"><div><label for="desc-ini" data-dt="empezo">Empezó</label><input id="desc-ini" type="datetime-local"></div>
-        <div><label for="desc-fin" data-dt="acabo">Acabó</label><input id="desc-fin" type="datetime-local"></div></div>
-      <label class="check"><input type="checkbox" id="desc-casa"><span data-dt="casa">Lo hice en casa (o en la base de la empresa)</span></label>
-      <label class="check"><input type="checkbox" id="desc-cabina"><span data-dt="cabina">Lo hice en la cabina del camión</span></label>
-      <div class="botones"><button class="btn" id="desc-guardar" data-dt="guardar">Guardar descanso</button></div>
-      <details class="desc-mas"><summary data-dt="comp">Apuntar horas de compensación sumadas a un descanso diario</summary>
+
+    <div class="desc-panel" data-panel="apuntar">
+      <div class="desc-tipo-apunte" role="group" aria-label="Qué quieres apuntar">
+        <button type="button" class="filtro" data-apunte="jornada" data-dt="apjornada">Una jornada</button>
+        <button type="button" class="filtro" data-apunte="semanal" data-dt="apsemanal">Un descanso semanal</button>
+        <button type="button" class="filtro" data-apunte="comp" data-dt="apcomp">Una compensación</button>
+      </div>
+      <div class="panel desc-form" data-form="jornada">
+        <p class="ayuda" data-dt="ayudaj">Desde que empezaste a trabajar después de un descanso hasta que paraste para el descanso diario. Si usas «Empiezo la jornada» en «Hoy», se apunta sola.</p>
+        <div class="fila"><div><label for="desc-j-ini" data-dt="jini">Empecé a trabajar</label><input id="desc-j-ini" type="datetime-local"></div>
+          <div><label for="desc-j-fin" data-dt="jfin">Terminé (empieza el descanso)</label><input id="desc-j-fin" type="datetime-local"></div></div>
+        <label class="check"><input type="checkbox" id="desc-j-partido"><span data-dt="jpartido">Hice el descanso partido: una parada de 3 h o más durante la jornada (y 9 h al final)</span></label>
+        <label class="check"><input type="checkbox" id="desc-j-doble"><span data-dt="jdoble">Fui con otro conductor (doble tripulación)</span></label>
+        <label class="check"><input type="checkbox" id="desc-j-ferry"><span data-dt="jferry">El descanso se cortó por un ferry o un tren</span></label>
+        <div class="botones"><button class="btn" id="desc-j-guardar" data-dt="jguardar">Guardar jornada</button></div>
+        <div class="msg" id="desc-j-msg" role="status"></div>
+      </div>
+      <div class="panel desc-form" data-form="semanal">
+        <p class="ayuda" data-dt="ayudasem">El descanso semanal puede ser cualquier día de la semana: no tiene por qué caer en fin de semana.</p>
+        <div class="fila"><div><label for="desc-ini" data-dt="empezo">Empezó</label><input id="desc-ini" type="datetime-local"></div>
+          <div><label for="desc-fin" data-dt="acabo">Acabó</label><input id="desc-fin" type="datetime-local"></div></div>
+        <label class="check"><input type="checkbox" id="desc-casa"><span data-dt="casa">Lo hice en casa (o en la base de la empresa)</span></label>
+        <label class="check"><input type="checkbox" id="desc-cabina"><span data-dt="cabina">Lo hice en la cabina del camión</span></label>
+        <div class="botones"><button class="btn" id="desc-guardar" data-dt="guardar">Guardar descanso</button></div>
+      </div>
+      <div class="panel desc-form" data-form="comp">
+        <p class="ayuda" data-dt="ayudacomp">Cuando devuelves horas de un descanso semanal reducido sumándolas a un descanso diario, apúntalo aquí.</p>
         <div class="fila"><div><label for="desc-comp-fin" data-dt="compfin">Cuándo acabó ese descanso</label><input id="desc-comp-fin" type="datetime-local"></div>
           <div><label for="desc-comp-h" data-dt="comph">Horas de compensación</label><input id="desc-comp-h" inputmode="decimal" placeholder="Ej: 9"></div></div>
-        <div class="botones"><button class="btn sec" id="desc-comp-guardar" data-dt="compguardar">Apuntar compensación</button></div></details>
+        <div class="botones"><button class="btn" id="desc-comp-guardar" data-dt="compguardar">Apuntar compensación</button></div>
+      </div>
       <div class="msg" id="desc-msg" role="status"></div>
     </div>
-    <div class="panel desc-opciones">
-      <label class="check"><input type="checkbox" id="desc-internacional"><span data-dt="internacional">Hago transporte internacional</span></label>
-      <label class="check"><input type="checkbox" id="desc-doble"><span data-dt="doble">Suelo conducir con otro conductor (doble tripulación)</span></label>
-      <label class="check" id="desc-avisar-caja"><input type="checkbox" id="desc-avisar"><span data-dt="avisar">Avisarme en el móvil (descansos, pausas y plazos de compensación). Al servidor solo va cuándo avisarte y el texto del aviso, sin tu nombre; se borra al enviarse.</span></label>
-      <details class="desc-mas" id="desc-personaliza"><summary data-dt="personaliza">Personalizar: qué ver y cuándo avisarme</summary><div id="desc-personaliza-cuerpo"></div></details>
+
+    <div class="desc-panel" data-panel="lista">
+      <div class="desc-filtro" id="desc-filtro" role="group" aria-label="Qué ver"></div>
+      <ul class="desc-lista" id="desc-lista"></ul>
+      <div class="botones desc-copias">
+        <button class="btn sec" id="desc-copia"><svg class="icono p" aria-hidden="true"><use href="#i-descargar"/></svg><span data-dt="copia">Guardar una copia (PDF)</span></button>
+        <label class="btn sec" for="desc-recupera"><svg class="icono p" aria-hidden="true"><use href="#i-subir"/></svg><span data-dt="recupera">Recuperar una copia</span></label>
+        <input type="file" id="desc-recupera" accept="application/pdf,.pdf,application/json,.json" hidden>
+        <button class="btn peligro" id="desc-borrar"><svg class="icono p" aria-hidden="true"><use href="#i-borrar"/></svg><span data-dt="borrar">Borrar todo</span></button>
+      </div>
+      <p class="ayuda" data-dt="ayudacopia">Guarda una copia de vez en cuando (y antes de cambiar de móvil): si se borran los datos del navegador, se pierde lo apuntado.</p>
     </div>
-    <h2 class="tit-seccion" data-dt="apuntado">Lo que has apuntado</h2>
-    <div class="desc-filtro" id="desc-filtro" role="group" aria-label="Qué ver"></div>
-    <ul class="desc-lista" id="desc-lista"></ul>
-    <div class="botones desc-copias">
-      <button class="btn sec" id="desc-copia"><svg class="icono p" aria-hidden="true"><use href="#i-descargar"/></svg><span data-dt="copia">Guardar una copia (PDF)</span></button>
-      <label class="btn sec" for="desc-recupera"><svg class="icono p" aria-hidden="true"><use href="#i-subir"/></svg><span data-dt="recupera">Recuperar una copia</span></label>
-      <input type="file" id="desc-recupera" accept="application/pdf,.pdf,application/json,.json" hidden>
-      <button class="btn peligro" id="desc-borrar"><svg class="icono p" aria-hidden="true"><use href="#i-borrar"/></svg><span data-dt="borrar">Borrar todo</span></button>
+
+    <div class="desc-panel" data-panel="ajustes">
+      <div class="panel desc-opciones">
+        <label class="check"><input type="checkbox" id="desc-internacional"><span data-dt="internacional">Hago transporte internacional</span></label>
+        <label class="check"><input type="checkbox" id="desc-doble"><span data-dt="doble">Suelo ir con otro conductor (doble tripulación)</span></label>
+        <label class="check" id="desc-avisar-caja"><input type="checkbox" id="desc-avisar"><span data-dt="avisar">Avisarme en el móvil antes de mis descansos y de los plazos de compensación. Al servidor solo va cuándo avisarte y el texto del aviso, sin tu nombre; se borra al enviarse.</span></label>
+        <div id="desc-personaliza-cuerpo"></div>
+      </div>
     </div>
-    <p class="ayuda" data-dt="ayudacopia">Guarda una copia de vez en cuando (y antes de cambiar de móvil): si se borran los datos del navegador, se pierde lo apuntado.</p>
     <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span data-dt="oficial">Orientativo. Manda lo que registra el tacógrafo y el Reglamento (CE) 561/2006. Cálculos según el cuadernillo «Tiempos de conducción y descanso» de FENADISMER (mayo 2026) y el II Acuerdo Marco. Ante la duda, pregunta a un delegado.</span></p>
   </section>
 

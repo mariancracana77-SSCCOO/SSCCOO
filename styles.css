@@ -1506,3 +1506,36 @@ html[data-letra] .subpestanas a { font-size: .92rem; }
 .ver-todos { width: 100%; min-height: 44px; border: 0; border-top: 1px solid var(--linea); background: none; color: var(--rojo-ic); font: inherit; font-weight: 700; cursor: pointer; }
 #v-buscar .titulo-bloque { scroll-margin-top: 150px; }
 .resultado b, .resultado small { white-space: normal; overflow: visible; text-overflow: clip; }
+/* v63: Mis descansos más ligero: pestañas, guía plegable y avisos recogidos */
+#v-descansos [hidden] { display: none !important; }
+.desc-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 4px; margin: 0 0 14px; background: var(--tarjeta); border: 1px solid var(--linea); border-radius: 14px; }
+.desc-tabs button { display: grid; justify-items: center; gap: 2px; min-height: 52px; padding: 6px 2px; border: 0; border-radius: 10px; background: none; color: var(--suave); font: inherit; font-size: .82rem; font-weight: 700; cursor: pointer; text-align: center; line-height: 1.15; }
+.desc-tabs button .icono { width: 20px; height: 20px; }
+.desc-tabs button.activa { background: var(--rojo); color: #fff; }
+.desc-tit { display: flex; align-items: center; gap: 8px; margin: 0; font-family: var(--cond); font-size: 1.35rem; }
+.desc-tit .icono { color: var(--rojo-ic); width: 22px; height: 22px; }
+.desc-hoy, .desc-estado { box-shadow: none; }
+.btn.grande { width: 100%; min-height: 54px; font-size: 1.1rem; }
+.desc-red { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--suave); font-size: .9rem; }
+.desc-puntos { display: inline-flex; gap: 4px; flex: none; }
+.desc-puntos i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--rojo); }
+.desc-puntos i.usado { background: var(--rojo); }
+.desc-guia { margin: 0 0 12px; border: 1px solid var(--linea); border-radius: 12px; background: var(--tarjeta); }
+.desc-guia summary { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 14px; cursor: pointer; font-weight: 700; color: var(--rojo-ic); }
+.desc-guia[open] summary { border-bottom: 1px solid var(--linea); }
+#desc-guia-cuerpo { padding: 12px 14px; }
+.desc-guia-pasos { margin: 0 0 10px; padding-left: 1.4em; display: grid; gap: 10px; }
+.desc-guia-pasos li { display: grid; gap: 2px; }
+.desc-guia-pasos li::marker { color: var(--rojo-ic); font-weight: 700; }
+.desc-mini { margin: 0 0 8px; border-radius: 12px; background: var(--rojo-suave); }
+.desc-mini summary, .desc-mini.fila-aviso { display: flex; align-items: center; gap: 8px; min-height: 46px; padding: 6px 12px; cursor: pointer; font-weight: 600; font-size: .95rem; }
+.desc-mini .icono { color: var(--rojo-ic); flex: none; }
+.desc-mini > div { padding: 0 14px 12px; }
+.desc-mini.fila-aviso { cursor: default; }
+.desc-mini.fila-aviso span { flex: 1; min-width: 0; }
+.desc-tipo-apunte { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.desc-panel > .panel { margin-bottom: 12px; }
+.desc-estado .desc-mas { padding-top: 10px; }
+@media (min-width: 900px) { .desc-panel[data-panel="hoy"] { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; } .desc-panel[data-panel="hoy"] > .panel { margin: 0; } }
+@media (max-width: 420px) { .desc-idioma > span { display: none; } }
+.desc-form > .ayuda:first-child { margin-top: 0; }
