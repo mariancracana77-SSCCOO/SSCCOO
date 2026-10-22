@@ -744,11 +744,11 @@ body.publica { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
 .fila-tablero:last-child { border-bottom: 0; }
 .fila-tablero:hover { background: #12161b; }
 .fila-tablero:focus-visible { outline-color: var(--ambar-rotulo); outline-offset: -3px; }
-.fila-tablero[class*="c-"] { --t: var(--rojo-luz); }
+.fila-tablero[class*="c-"] { --t: var(--tc, var(--rojo-luz)); } /* v58: el color del tipo que pone el padre en Ajustes */
 .t-dia { font-family: var(--cond); font-weight: 700; font-size: 1.6rem; line-height: 1; text-transform: uppercase; color: var(--ambar-rotulo); }
 .t-dia small { display: block; font-weight: 600; font-size: 1.02rem; color: var(--ambar-claro); margin-top: 4px; letter-spacing: .02em; }
 .t-que { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
-.t-tipo { background: var(--t); color: #0a0c0f; font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; padding: 1px 7px; border-radius: 3px; margin-bottom: 3px; }
+.t-tipo { background: var(--t); color: #fff; font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; padding: 1px 7px; border-radius: 3px; margin-bottom: 3px; }
 .t-que b { font-size: 1.1rem; line-height: 1.25; }
 .t-lugar { color: #aeb4bc; font-size: .95rem; }
 html[data-contraste="alto"] .tablero { border-color: #fff; }
@@ -1295,7 +1295,7 @@ html[data-contraste="alto"] .cita-panel b { text-shadow: none; color: #fff; }
 .t-dia, .resultado-calc .rc-num, .ca-bloque b, .ca-ahora { color: #fff; }
 .t-dia small, .resultado-calc .rc-num small, .resultado-calc .rc-sub, .ca-bloque small { color: #c9ced4; }
 .cuenta-atras { border-left-color: var(--rojo); }
-.fila-tablero[class*="c-"] { --t: var(--rojo); }
+.fila-tablero[class*="c-"] { --t: var(--tc, var(--rojo)); }
 .t-tipo { color: #fff; }
 
 /* En oscuro, los iconos de las listas van en blanco sobre el rojo del logo */
