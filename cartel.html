@@ -11,22 +11,22 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="stylesheet" href="fuentes.css?v=43">
 <style>
-  :root { --rojo: #c4122f; --asfalto: #15191e; --ambar: #ffb000; --tinta: #15191e; --suave: #5e646c; --hueso: #f5f3ee; }
+  :root { --rojo: #c4122f; --asfalto: #15191e; --rojo-vivo: #ff3355; --tinta: #15191e; --suave: #5e646c; --hueso: #f5f3ee; }
   * { box-sizing: border-box; }
   body { margin: 0; font-family: "Atkinson Hyperlegible", "Barlow", sans-serif; color: var(--tinta); background: #e9ecf1; }
   .barra { display: flex; gap: 10px; justify-content: center; padding: 14px; flex-wrap: wrap; }
   .barra button, .barra a { font: inherit; font-weight: 700; border: 0; border-radius: 10px; padding: 11px 18px; cursor: pointer; background: var(--rojo); color: #fff; text-decoration: none; }
   .barra a { background: #fff; color: var(--tinta); border: 1px solid #d9dee7; }
   .hoja { position: relative; width: 210mm; height: 297mm; margin: 0 auto 30px; background: #fff; display: flex; flex-direction: column; align-items: center; text-align: center; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,.12); }
-  .cab { width: 100%; background: var(--asfalto); color: #fff; padding: 9mm 14mm 8mm; border-bottom: 2.2mm solid var(--ambar); display: flex; align-items: center; gap: 7mm; text-align: left; }
+  .cab { width: 100%; background: var(--asfalto); color: #fff; padding: 9mm 14mm 8mm; border-bottom: 2.2mm solid var(--rojo); display: flex; align-items: center; gap: 7mm; text-align: left; }
   .cab img { width: 30mm; height: 30mm; }
   .cab b { display: block; font-family: "Barlow Condensed", sans-serif; font-size: 13mm; line-height: .95; letter-spacing: .01em; text-transform: uppercase; }
-  .cab span { font-family: "Barlow Condensed", sans-serif; font-size: 7.5mm; color: var(--ambar); letter-spacing: .06em; text-transform: uppercase; }
+  .cab span { font-family: "Barlow Condensed", sans-serif; font-size: 7.5mm; color: var(--rojo-vivo); letter-spacing: .06em; text-transform: uppercase; }
   h1 { font-family: "Barlow Condensed", sans-serif; font-size: 15mm; line-height: .98; margin: 8mm 14mm 3mm; text-transform: uppercase; }
   .sub { font-size: 5.4mm; color: var(--suave); margin: 0 18mm 7mm; line-height: 1.35; }
   .centro { display: flex; gap: 10mm; align-items: center; justify-content: center; padding: 0 14mm; }
   .qr { display: flex; flex-direction: column; align-items: center; gap: 3mm; }
-  .codigo { position: relative; padding: 5mm; background: #fff; border: 1.6mm solid var(--asfalto); border-radius: 6mm; box-shadow: 0 0 0 1.4mm var(--ambar); }
+  .codigo { position: relative; padding: 5mm; background: #fff; border: 1.6mm solid var(--asfalto); border-radius: 6mm; box-shadow: 0 0 0 1.4mm var(--rojo); }
   .codigo svg { display: block; width: 66mm; height: 66mm; }
   .codigo .logo-qr { position: absolute; left: 50%; top: 50%; width: 18mm; height: 18mm; transform: translate(-50%, -50%); border-radius: 50%; background: #fff; padding: 1mm; }
   .qr b { font-family: "Barlow Condensed", sans-serif; font-size: 8mm; text-transform: uppercase; }
@@ -41,7 +41,7 @@
   .tg small { display: block; color: var(--suave); font-size: 3.8mm; }
   .ofrece { list-style: none; margin: 0; padding: 0; text-align: left; font-size: 5mm; line-height: 1.25; display: grid; gap: 3.4mm; max-width: 82mm; }
   .ofrece li { display: flex; gap: 3mm; align-items: flex-start; }
-  .ofrece li::before { content: ""; flex: none; width: 4.2mm; height: 4.2mm; margin-top: .6mm; border-radius: 1mm; background: var(--ambar); border: .7mm solid var(--asfalto); }
+  .ofrece li::before { content: ""; flex: none; width: 4.2mm; height: 4.2mm; margin-top: .6mm; border-radius: 1mm; background: var(--rojo); border: .7mm solid var(--asfalto); }
   .ofrece b { font-family: "Barlow Condensed", sans-serif; font-size: 6mm; display: block; line-height: 1; }
   .pasos { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; margin: 7mm 14mm 0; text-align: left; width: calc(100% - 28mm); }
   .paso { background: var(--hueso); border-radius: 4mm; padding: 5mm 6mm; }
@@ -50,7 +50,8 @@
   .pie { margin-top: auto; width: 100%; }
   .pie p { font-family: "Barlow Condensed", sans-serif; font-size: 7mm; letter-spacing: .03em; text-transform: uppercase; margin: 0 0 3mm; }
   .carretera { position: relative; height: 16mm; background: var(--asfalto); }
-  .carretera::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1.4mm; margin-top: -.7mm; background: repeating-linear-gradient(90deg, var(--ambar) 0 12mm, transparent 12mm 20mm); }
+  .carretera::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1.4mm; margin-top: -.7mm; background: repeating-linear-gradient(90deg, #fff 0 12mm, transparent 12mm 20mm); }
+  .carretera { border-top: 1.6mm solid var(--rojo); }
   .carretera img { position: absolute; right: 18mm; top: -11.5mm; width: 34mm; height: auto; }
   @media print {
     body { background: #fff; }
