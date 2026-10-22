@@ -91,6 +91,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Próxima cita** (el rótulo de Inicio cuando no hay nada urgente): diseño nuevo de carretera. El título sale en un panel luminoso de autopista (letras blancas de puntos y luces rojas que parpadean en las esquinas) y, debajo, en un poste, dos señales en el rojo del logo: el lugar con los días que faltan (como los kilómetros de una señal) y el día y la hora. Prefiere reuniones y asambleas a los festivos y, si es la misma cita que la cuenta atrás, no se repite.
 - **Animación de entrada**: ahora empieza cuando la página ha cargado (en la app instalada, Android tapaba los primeros segundos con su pantalla y la animación terminaba sin verse) y sale aunque el móvil tenga «quitar animaciones» (lo activa el ahorro de batería). Se sigue saltando tocándola.
 
+## Versión 51: contraseña sin email y todos los archivos juntos
+- **Códigos de rescate**: en Ajustes, «Si te olvidas de la contraseña», cada administrador genera 8 códigos de un solo uso y los guarda en papel. En la pantalla de entrar, «Tengo un código de rescate» pone una contraseña nueva al momento, sin email.
+- **Poner contraseña nueva** a otro administrador desde Ajustes, «Quién puede publicar».
+- Las dos cosas usan la función `cuenta` de Supabase y la tabla `codigos_rescate` (solo guarda un resumen cifrado de cada código).
+- **Todos los archivos y fotos** (botón en Documentos del panel): todo lo subido en cualquier sección, con búsqueda por nombre del archivo o por título, filtros Fotos/PDF/Otros y «Abrir donde está».
+
 ## Versión 50: entrar en el panel sin bloqueos
 - Ya no hay espera tras varios intentos fallidos al entrar (Supabase sigue frenando los ataques por su cuenta).
 - «He olvidado la contraseña» abre una pantalla dentro de la app para escribir el código del email y la contraseña nueva. Para que el email traiga el código, la plantilla «Reset password» de Supabase tiene que llevar `{{ .Token }}`. El botón del email sigue sirviendo.
