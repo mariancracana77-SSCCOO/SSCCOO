@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, GitHub Pages, con `.nojekyll`)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **48**
+- Versión actual: **49**
 
 ## Reglas del proyecto (no negociables)
 - **No publicar nada en GitHub sin que la usuaria lo confirme antes** (enseñar lo que cambia y esperar a «publica»).
@@ -71,7 +71,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 - `lib/supabase.js` (supabase-js 2.58.0 UMD) y `lib/jszip.min.js` (3.10.1): **alojados aquí a propósito** (no CDN).
 - `fuentes.css` + `fuentes/`: Atkinson Hyperlegible (texto), Barlow Condensed (títulos) y Barlow (de reserva), alojadas aquí (no Google Fonts, por privacidad).
 - Logo: es el original (NO redibujarlo ni quitarle el relieve: al padre le gusta así). Desde la v40 sale de la imagen que pasó la usuaria ampliada x4 con Real-ESRGAN anime 6B (sin torch: pesos .pth leídos con un unpickler restringido y red montada en ONNX, ejecutada con onnxruntime), blancos limpios y exterior transparente (2048 px). De ahí salen `icon-512`, `icon-192`, `logo.png`, `favicon-32`, `icon-maskable-512` (fondo #15191E al 80 %) y `apple-touch-icon` (180, fondo #15191E). `manifest.json` y `theme-color` en #15191E.
-- Diseño: colores en `:root` de `styles.css` (asfalto, `--rotulo`, hueso `#F5F3EE`). **Manda el rojo del logo** (v45): `--rojo` `#AB1012`, `--rojo-ic` (iconos/enlaces; más claro en oscuro), `--rojo-luz` y `--ambar-rotulo` también `#AB1012` (nombres de antes). Nada de rojos claros (no gustó): sobre negro, letras en blanco y el rojo para fondos y bordes. Todas las clases de color `.c-*` salen en rojo (`--c` siempre `var(--rojo)`, que se usa también como fondo, p. ej. la fecha `.cartel` de las actas; en oscuro, `--cs` es rojo y la letra encima blanca; v46: con `--c` blanco en oscuro la fecha de las actas salía en blanco). No volver a meter ámbar ni colores variados (no gustó); solo son amarillas las luces de emergencia del camión sin conexión y las letras del panel luminoso de «Próxima parada» (`.cita-panel b`, #FFC233, lo pidió el padre en la v48). El bloque «Diseño Rótulo de línea» está al final de `styles.css`.
+- Diseño: colores en `:root` de `styles.css` (asfalto, `--rotulo`, hueso `#F5F3EE`). **Manda el rojo del logo** (v45): `--rojo` `#AB1012`, `--rojo-ic` (iconos/enlaces; más claro en oscuro), `--rojo-luz` y `--ambar-rotulo` también `#AB1012` (nombres de antes). Nada de rojos claros (no gustó): sobre negro, letras en blanco y el rojo para fondos y bordes. Todas las clases de color `.c-*` salen en rojo (`--c` siempre `var(--rojo)`, que se usa también como fondo, p. ej. la fecha `.cartel` de las actas; en oscuro, `--cs` es rojo y la letra encima blanca; v46: con `--c` blanco en oscuro la fecha de las actas salía en blanco). No volver a meter ámbar ni colores variados (no gustó); solo son amarillas las luces de emergencia del camión sin conexión las letras del panel luminoso de «Próxima parada» (`.cita-panel b`, #FFC233, v48) y sus señales `.cita-placa` (#FFB000 con letra negra; la de la hora negra con borde amarillo, v49). Lo pidió el padre. El bloque «Diseño Rótulo de línea» está al final de `styles.css`.
 
 ## Al publicar una versión nueva (3 sitios)
 1. `?v=N` en `index.html`, `admin.html`, `cartel.html`

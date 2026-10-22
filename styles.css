@@ -1315,3 +1315,8 @@ html[data-contraste="alto"] .cita-panel b { text-shadow: none; color: #fff; }
    «Próximas paradas» sigue en rojo. */
 .cita-panel b { color: #ffc233; text-shadow: 0 0 6px rgba(255, 176, 0, .6), 0 0 14px rgba(255, 176, 0, .45); }
 html[data-contraste="alto"] .cita-panel b { color: #ffc233; text-shadow: none; }
+/* Las señales del poste, también en amarillo: la del lugar amarilla con letra negra y la de la hora negra con borde amarillo */
+.cita-placa > span { background: #ffb000; color: #15191e; }
+.cita-placa.hora { background: #ffb000; }
+.cita-placa.hora > span { background: var(--asfalto); color: #fff; }
+.cita-placa.hora .icono { color: #ffb000; }
