@@ -5,12 +5,12 @@
   --rojo-osc: #860c0e;
   --rojo-suave: #fbe9e9;
   --rojo-ic: #ab1012; /* iconos y textos rojos (en oscuro, más claro para que se lea) */
-  --rojo-luz: #ff5a52; /* el rojo del logo encendido, para letras sobre fondo negro */
+  --rojo-luz: #ab1012; /* el panel luminoso del urgente, también en el rojo del logo */
   --asfalto: #15191e;
   --rotulo: #0a0c0f;
   --rotulo-borde: #2c333c;
-  --ambar-rotulo: #ff5a52; /* antes ámbar: ahora manda el rojo del logo */
-  --ambar-claro: #ffc2bd;
+  --ambar-rotulo: #ab1012; /* antes ámbar: ahora el rojo del logo */
+  --ambar-claro: #c9ced4; /* textos secundarios sobre negro, en gris (sin rojos claros) */
   --azul: #1e4f9c;
   --azul-suave: #e6edf8;
   --ambar: #e8a317;
@@ -34,7 +34,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --tinta: #eceae4; --suave: #a3a9b1; --fondo: #0f1216; --tarjeta: #1a1f25; --linea: #2c333c;
-    --rojo-suave: #3a1214; --rojo-ic: #ff6b63; --azul-suave: #142640; --ambar-suave: #3a2c0c; --verde-suave: #10301f; --morado-suave: #261a38; --azul: #8ab4f8;
+    --rojo-suave: #3a1214; --rojo-ic: #ffffff; --azul-suave: #142640; --ambar-suave: #3a2c0c; --verde-suave: #10301f; --morado-suave: #261a38; --azul: #8ab4f8;
     --sombra: none;
   }
 }
@@ -109,7 +109,7 @@ h1, h2, h3 { font-family: var(--cond); line-height: 1.1; margin: 0; }
 .destacado h2 { font-size: 1.9rem; font-weight: 700; margin-bottom: 10px; }
 .destacado .cuerpo { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .enlace-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; font-weight: 700; text-decoration: none; color: var(--rojo); background: none; border: 0; padding: 0; cursor: pointer; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .enlace-btn { color: var(--rojo-luz); } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .enlace-btn { color: #fff; } }
 
 .proxima { padding: 20px; display: flex; gap: 16px; align-items: center; }
 .cartel { font-family: var(--cond); text-align: center; min-width: 74px; border-radius: var(--radio); background: var(--c, var(--azul)); color: #fff; padding: 8px 6px 6px; }
@@ -253,7 +253,7 @@ mark { background: var(--ambar-suave); color: inherit; border-radius: 3px; paddi
   padding: 9px 2px 8px; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: .7rem; font-weight: 600;
 }
 .nav button.activa { color: var(--rojo); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .nav button.activa { color: var(--rojo-luz); } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .nav button.activa { color: #fff; } }
 @media (min-width: 1000px) {
   body { padding-bottom: 0; padding-left: 230px; }
   .nav {
@@ -426,7 +426,7 @@ a.proxima:hover { border-color: var(--azul); }
 .delegado .txt { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .delegado b { font-family: var(--cond); font-size: 1.3rem; line-height: 1.1; }
 .delegado .cargo { color: var(--rojo); font-weight: 600; font-size: .92rem; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .delegado .cargo { color: var(--rojo-luz); } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .delegado .cargo { color: #fff; } }
 .delegado small { color: var(--suave); }
 .delegado .acciones-tarjeta { margin-top: 8px; }
 .lista-enlaces { display: grid; gap: 10px; }
@@ -473,7 +473,7 @@ body.publica { background: #f4f5f7; padding: 0 0 calc(84px + env(safe-area-inset
 .pestanas-web a { flex: none; color: var(--suave); text-decoration: none; font-weight: 700; font-size: .95rem; padding: 6px 0 10px; border-bottom: 3px solid transparent; }
 .pestanas-web a:hover { color: var(--tinta); }
 .pestanas-web a.activa { color: var(--rojo); border-bottom-color: var(--rojo); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pestanas-web a.activa { color: var(--rojo-luz); border-bottom-color: var(--rojo-luz); } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pestanas-web a.activa { color: #fff; border-bottom-color: var(--rojo-luz); } }
 
 body.publica .contenedor { padding-top: 14px; }
 body.publica #v-inicio { max-width: 720px; margin: 0 auto; }
@@ -509,17 +509,17 @@ body.publica .pie { padding-bottom: 20px; }
 /* Tema oscuro elegido a mano (botón Aa) */
 :root[data-theme="dark"] {
     --tinta: #eceae4; --suave: #a3a9b1; --fondo: #0f1216; --tarjeta: #1a1f25; --linea: #2c333c;
-    --rojo-suave: #3a1214; --rojo-ic: #ff6b63; --azul-suave: #142640; --ambar-suave: #3a2c0c; --verde-suave: #10301f; --morado-suave: #261a38; --azul: #8ab4f8;
+    --rojo-suave: #3a1214; --rojo-ic: #ffffff; --azul-suave: #142640; --ambar-suave: #3a2c0c; --verde-suave: #10301f; --morado-suave: #261a38; --azul: #8ab4f8;
     --sombra: none;
   }
 :root[data-theme="dark"] a { color: var(--rojo-ic); }
 :root[data-theme="dark"] .etq.fijado { color: var(--ambar); }
-:root[data-theme="dark"] .enlace-btn { color: var(--rojo-luz); }
-:root[data-theme="dark"] .nav button.activa { color: var(--rojo-luz); }
+:root[data-theme="dark"] .enlace-btn { color: #fff; }
+:root[data-theme="dark"] .nav button.activa { color: #fff; }
 :root[data-theme="dark"] .accion.wa { color: #4cd486; }
-:root[data-theme="dark"] .delegado .cargo { color: var(--rojo-luz); }
+:root[data-theme="dark"] .delegado .cargo { color: #fff; }
 :root[data-theme="dark"] body.publica { background: var(--fondo); }
-:root[data-theme="dark"] .pestanas-web a.activa { color: var(--rojo-luz); border-bottom-color: var(--rojo-luz); }
+:root[data-theme="dark"] .pestanas-web a.activa { color: #fff; border-bottom-color: var(--rojo-luz); }
 
 /* ====== Ajustes de lectura (botón Aa) ====== */
 html[data-letra="grande"] { font-size: 112.5%; }
@@ -632,8 +632,8 @@ html[data-letra] .cab-tablon .pestanas-web a { font-size: 1.12rem; }
 .tit-seccion { font-family: var(--texto); font-size: .85rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--suave); margin: 26px 0 12px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .tit-seccion a, .tit-seccion span { color: var(--rojo); text-decoration: none; }
 .tit-seccion a { padding: 8px 0; margin: -8px 0; }
-:root[data-theme="dark"] .tit-seccion a, :root[data-theme="dark"] .tit-seccion span { color: var(--rojo-luz); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tit-seccion a, :root:not([data-theme="light"]) .tit-seccion span { color: var(--rojo-luz); } }
+:root[data-theme="dark"] .tit-seccion a, :root[data-theme="dark"] .tit-seccion span { color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tit-seccion a, :root:not([data-theme="light"]) .tit-seccion span { color: #fff; } }
 
 /* --- Portada: orden en el móvil y dos columnas en PC --- */
 body.publica #v-inicio { max-width: none; }
@@ -688,8 +688,8 @@ html[data-contraste="alto"] .rotulo { border-color: #fff; }
 .ruta li.hoy a::before { background: var(--ambar-rotulo); border-color: var(--tinta); }
 .ruta .cuando { display: block; font-family: var(--cond); font-weight: 700; font-size: 1.1rem; letter-spacing: .05em; text-transform: uppercase; color: var(--rojo); }
 .ruta li.hoy .cuando { color: var(--tinta); }
-:root[data-theme="dark"] .ruta .cuando { color: var(--rojo-luz); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ruta .cuando { color: var(--rojo-luz); } }
+:root[data-theme="dark"] .ruta .cuando { color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ruta .cuando { color: #fff; } }
 :root[data-theme="dark"] .ruta li.hoy .cuando { color: var(--tinta); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ruta li.hoy .cuando { color: var(--tinta); } }
 .ruta b { display: block; font-size: 1.12rem; line-height: 1.25; }
@@ -717,8 +717,8 @@ html[data-contraste="alto"] .rotulo { border-color: #fff; }
 .accesos-tablon a { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; gap: 10px; min-height: 92px; padding: 14px; background: var(--tarjeta); border: 1px solid var(--linea); border-radius: 12px; color: var(--tinta); text-decoration: none; transition: border-color .15s; }
 .accesos-tablon a:hover { border-color: var(--tinta); }
 .accesos-tablon .icono { width: 28px; height: 28px; color: var(--rojo); }
-:root[data-theme="dark"] .accesos-tablon .icono { color: var(--rojo-luz); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .accesos-tablon .icono { color: var(--rojo-luz); } }
+:root[data-theme="dark"] .accesos-tablon .icono { color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .accesos-tablon .icono { color: #fff; } }
 .accesos-tablon b { font-family: var(--cond); font-size: 1.35rem; line-height: 1; text-transform: uppercase; letter-spacing: .03em; color: var(--tinta); }
 .banda-instalar { border-radius: 12px; padding: 12px 14px; font-size: .98rem; }
 
@@ -892,8 +892,8 @@ html[data-contraste="alto"] .resultado-calc { border-color: #fff; }
 .opcion-permiso { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 56px; padding: 12px 14px; border: 2px solid var(--linea); border-radius: 10px; background: var(--tarjeta); color: var(--tinta); font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
 .opcion-permiso:hover { border-color: var(--tinta); }
 .volver-calc { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; color: var(--rojo); font: inherit; font-weight: 700; padding: 8px 0; min-height: 44px; cursor: pointer; margin-bottom: 6px; }
-:root[data-theme="dark"] .volver-calc { color: var(--rojo-luz); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .volver-calc { color: var(--rojo-luz); } }
+:root[data-theme="dark"] .volver-calc { color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .volver-calc { color: #fff; } }
 .si-no { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-width: 360px; }
 .si-no label { margin: 0; position: relative; cursor: pointer; }
 .si-no input { position: absolute; opacity: 0; width: 1px; height: 1px; }
@@ -924,8 +924,8 @@ html { overscroll-behavior-y: contain; } /* el gesto de actualizar lo hace la we
 .sabias-tarjeta b { display: block; font-family: var(--cond); font-size: 1.3rem; line-height: 1.15; text-transform: uppercase; letter-spacing: .02em; }
 .sabias-tarjeta p { margin: 6px 0 8px; }
 .sabias-tarjeta a { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; color: var(--rojo); text-decoration: none; min-height: 44px; }
-:root[data-theme="dark"] .sabias-tarjeta a { color: var(--rojo-luz); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sabias-tarjeta a { color: var(--rojo-luz); } }
+:root[data-theme="dark"] .sabias-tarjeta a { color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sabias-tarjeta a { color: #fff; } }
 .sabias:empty { display: none; }
 
 /* Esqueletos de carga: recuadros grises con un brillo suave mientras llegan los datos */
@@ -1231,17 +1231,18 @@ body.con-aviso-priv .arriba-btn { --alto-aviso-on: var(--alto-aviso, 0px); }
 .enc-compartir { margin-top: 10px; }
 
 /* ====== v45: manda el rojo del logo (#AB1012) ======
-   Lo que era ámbar pasa a rojo: fondos en el rojo del logo con letra blanca y, sobre negro, el rojo «encendido»
-   (--rojo-luz) para que se lea. Las luces de emergencia del camión sin conexión siguen ámbar a propósito. */
-.cab-tablon .pestanas-web a.activa, :root[data-theme="dark"] .cab-tablon .pestanas-web a.activa { border-bottom-color: #e0262b; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cab-tablon .pestanas-web a.activa { border-bottom-color: #e0262b; } }
+   Lo que era ámbar pasa a rojo: fondos en el rojo del logo con letra blanca y, sobre negro,
+   blanco para las letras (el rojo del logo no se lee como letra sobre negro). Las luces de emergencia del camión sin conexión siguen ámbar a propósito. */
+.cab-tablon .pestanas-web a.activa, :root[data-theme="dark"] .cab-tablon .pestanas-web a.activa { border-bottom-color: var(--rojo); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cab-tablon .pestanas-web a.activa { border-bottom-color: var(--rojo); } }
 .rot-tipo, .novedades-tira .n, .filtro.activo .cuenta, .cuenta-pestana { background: var(--rojo); color: #fff; }
 .marca-nuevo { background: var(--rojo); color: #fff !important; }
 .banda-novedad button { background: var(--rojo); color: #fff; }
 .banda-novedad button:hover { background: var(--rojo-osc); }
-.rot-l1 { text-shadow: 0 0 14px rgba(255, 90, 82, .35); }
-@keyframes urgente { 50% { box-shadow: 0 0 0 4px rgba(224, 38, 43, .6), 0 0 22px rgba(224, 38, 43, .5); } }
-.rot-led-txt { color: var(--rojo-luz); text-shadow: 0 0 6px rgba(255, 90, 82, .8); }
+.rot-l1 { color: #fff; text-shadow: none; }
+.rotulo.es-urgente { border-color: var(--rojo); }
+@keyframes urgente { 50% { box-shadow: 0 0 0 4px rgba(171, 16, 18, .7), 0 0 22px rgba(171, 16, 18, .6); } }
+.rot-led-txt { color: var(--rojo); text-shadow: 0 0 4px rgba(171, 16, 18, .9), 0 0 10px rgba(171, 16, 18, .6); }
 .ruta li.hoy a::before { background: var(--rojo); }
 .item-tablon.es-nuevo { border-left-color: var(--rojo); }
 .dia.sel { background: var(--rojo-suave); box-shadow: inset 0 0 0 2px var(--rojo-ic); }
@@ -1257,4 +1258,42 @@ body.con-aviso-priv .arriba-btn { --alto-aviso-on: var(--alto-aviso, 0px); }
 .documento > .ic.imagen, .documento > .ic.hoja, .documento > .ic.word { background: var(--rojo-suave); color: var(--rojo-ic); }
 .banda-instalar .ic { color: var(--rojo-ic); }
 :root .cab-tablon a.btn-tab { color: #fff; } /* que el buscador de la cabecera no coja el color de los enlaces en oscuro */
-:root .buscar-portada { color: var(--suave); } /* el atajo al buscador se ve como un campo, no como un enlace */
+:root:root a.buscar-portada { color: var(--suave); } /* el atajo al buscador se ve como un campo, no como un enlace */
+
+/* v45: «Próxima cita» como hoja de ruta: el camión del logo por la carretera hacia la parada de la cita (como «Próximas paradas») */
+.rotulo.cita { gap: 0; }
+.cita-cab { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; }
+.cita-falta { font-size: .95rem; color: #c9ced4; white-space: nowrap; }
+.cita-falta b { font-family: var(--cond); font-size: 1.35rem; color: #fff; text-transform: uppercase; letter-spacing: .02em; }
+.cita-tit { font-family: var(--cond); font-weight: 700; font-size: 2rem; line-height: 1.02; text-transform: uppercase; letter-spacing: .01em; color: #fff; margin: 10px 0 8px; overflow-wrap: anywhere; }
+.cita-datos { display: flex; flex-wrap: wrap; gap: 6px 16px; color: #dfe3e8; font-size: 1rem; }
+.cita-datos > span { display: inline-flex; gap: 6px; align-items: center; }
+.cita-datos .icono { color: #fff; opacity: .75; }
+.cita-via { position: relative; display: flex; align-items: center; width: 100%; margin-top: 16px; }
+.cita-asfalto { position: relative; flex: 1; height: 30px; margin-right: -6px; background: #2c333c; border-radius: 6px 0 0 6px; }
+.cita-asfalto::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,.75) 0 12px, transparent 12px 22px); }
+.cita-camion { position: absolute; bottom: 6px; left: calc((100% - 66px) * var(--avance)); width: 66px; height: auto; filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
+.cita-parada { position: relative; z-index: 1; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 58px; height: 58px;
+  border-radius: 50%; background: #fff; border: 6px solid var(--rojo); color: var(--asfalto); font-family: var(--cond); font-weight: 700; line-height: .9; text-transform: uppercase; }
+.cita-parada b { font-size: 1.45rem; }
+.cita-parada small { font-size: .78rem; letter-spacing: .06em; }
+#v-inicio.anima .cita-camion { animation: cita-arranca 1.4s .2s cubic-bezier(.3, .6, .25, 1) both; }
+@keyframes cita-arranca { from { left: 0; } }
+@media (prefers-reduced-motion: reduce) { #v-inicio.anima .cita-camion { animation: none; } }
+html[data-letra] .cita-tit { font-size: 1.8rem; }
+
+/* Armonía sobre negro: cifras y fechas en blanco, el rojo del logo para los acentos (el rojo encendido queda para lo urgente) */
+.t-dia, .resultado-calc .rc-num, .ca-bloque b, .ca-ahora { color: #fff; }
+.t-dia small, .resultado-calc .rc-num small, .resultado-calc .rc-sub, .ca-bloque small { color: #c9ced4; }
+.cuenta-atras { border-left-color: var(--rojo); }
+.fila-tablero[class*="c-"] { --t: var(--rojo); }
+.t-tipo { color: #fff; }
+
+/* En oscuro, los iconos de las listas van en blanco sobre el rojo del logo */
+:root[data-theme="dark"] [class*="c-"] { --cs: var(--rojo); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) [class*="c-"] { --cs: var(--rojo); } }
+:root[data-theme="dark"] :is(.conv-intro, .instalar-panel, .banda:not(.avisos-on), .enlace-util, .enlace-faq, .doc, .adjunto, .acceso) .ic,
+:root[data-theme="dark"] .documento > .ic { background: var(--rojo); color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) :is(.conv-intro, .instalar-panel, .banda:not(.avisos-on), .enlace-util, .enlace-faq, .doc, .adjunto, .acceso) .ic,
+  :root:not([data-theme="light"]) .documento > .ic { background: var(--rojo); color: #fff; } }

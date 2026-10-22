@@ -181,9 +181,19 @@ function pintaInicio() {
       <span class="rot-led" aria-hidden="true"><span class="rot-led-txt" style="animation-duration:${Math.max(8, Math.round(led.length * .28))}s"><span>${esc(led)}</span><span>${esc(led)}</span></span></span>
       <span class="rot-l1">${esc(urg.titulo)}</span><span class="rot-l2">${esc(resumenPlano(urg.contenido, 110))}</span>
       <span class="rot-ir">Ver el aviso completo${icono("der", "p")}</span></a>`;
-  else if (prox[0]) { const e = prox[0];
-    rot = `<a class="rotulo" href="#calendario" data-dia="${e.fecha}"><span class="rot-tipo">Próxima cita</span>
-      <span class="rot-l1">${esc(e.titulo)}</span><span class="rot-l2">${esc(cuandoEvento(e))}${e.lugar ? " · " + esc(e.lugar) : ""}</span>
+  // Próxima cita como «hoja de ruta»: el camión del logo va por la carretera hacia la parada de la cita;
+  // cuanto menos falta, más cerca está (escala de 30 días). Al entrar en Inicio, el camión arranca hasta su sitio.
+  // (un festivo solo sale si no hay ninguna reunión o asamblea por delante)
+  else if (prox[0]) { const e = prox.find(x => !esFestivo(x)) || prox[0], d = fechaDia(e.fecha), faltan = Math.round((d - fechaDia(hoy)) / DIA);
+    const avance = Math.min(1, Math.max(.06, 1 - faltan / 30));
+    const falta = faltan === 0 ? "<b>Es hoy</b>" : faltan === 1 ? "<b>Mañana</b>" : `Faltan <b>${faltan}</b> días`;
+    rot = `<a class="rotulo cita" href="#calendario" data-dia="${e.fecha}">
+      <span class="cita-cab"><span class="rot-tipo">Próxima cita</span><span class="cita-falta">${falta}</span></span>
+      <span class="cita-tit">${esc(e.titulo)}</span>
+      <span class="cita-datos"><span>${icono("calendario", "p")}${esc(may(DIA_CORTO[d.getDay()]) + " " + d.getDate() + " de " + MESES[d.getMonth()])}</span>
+        ${e.hora ? `<span>${icono("reloj", "p")}${esc(horaEvento(e))}</span>` : ""}${e.lugar ? `<span>${icono("lugar", "p")}${esc(e.lugar)}</span>` : ""}</span>
+      <span class="cita-via" style="--avance:${avance.toFixed(2)}" aria-hidden="true"><span class="cita-asfalto"><img class="cita-camion" src="camion.webp" alt=""></span>
+        <span class="cita-parada"><b>${d.getDate()}</b><small>${MES_CORTO[d.getMonth()]}</small></span></span>
       <span class="rot-ir">Ver en el calendario${icono("der", "p")}</span></a>`; }
   else rot = `<div class="rotulo"><span class="rot-tipo">Sin avisos urgentes</span><span class="rot-l1">Todo en orden</span><span class="rot-l2">Aquí verás lo importante en cuanto se publique.</span></div>`;
   $("inicio-rotulo").innerHTML = rot;
@@ -232,7 +242,7 @@ function pintaInicio() {
   const acc = [["avisos", "avisos", "Avisos"], ...D.apartados.map(a => ["ap-" + a.slug, a.icono || "carpeta", a.titulo]), ["convenio", "convenio", "Convenio"], ["calcula", "reloj", "Calcula"], ["calendario", "calendario", "Calendario"], ["actas", "actas", "Actas"], ["documentos", "carpeta", "Documentos"], ["preguntas", "pregunta", "Dudas"]];
   $("inicio-accesos").innerHTML = `<h2 class="tit-seccion">Ir a</h2><nav class="accesos-tablon" aria-label="Accesos rápidos">${acc.map(([v, ic, t]) =>
     `<a href="#${esc(v)}">${icono(esc(ic))}<b>${esc(t)}</b></a>`).join("")}</nav>`;
-  pintaCuentaAtras(urg ? null : prox[0]);
+  pintaCuentaAtras(urg ? null : prox.find(x => !esFestivo(x)) || prox[0]);
   pintaSabias();
   document.querySelectorAll("#v-inicio [data-dia]").forEach(l => l.onclick = () => irADia(l.dataset.dia));
 }
@@ -252,10 +262,11 @@ function pintaCuentaAtras(enRotulo) {
   const cifras = ms <= 0 ? `<span class="ca-ahora">${esTodoElDia(e) || !e.hora ? "Es hoy" : "Está pasando ahora"}</span>`
     : dias > 0 ? bloque(dias, dias === 1 ? "día" : "días") + bloque(horas, horas === 1 ? "hora" : "horas")
     : bloque(horas, horas === 1 ? "hora" : "horas") + bloque(mins, "min");
-  const mismo = enRotulo && enRotulo.id === e.id;
+  // Si la cita importante ya es la del rótulo (que dice cuántos días faltan), no se repite debajo
+  if (enRotulo && enRotulo.id === e.id) { $("cuenta-atras").innerHTML = ""; return; }
   pintaCuentaAtras.antes = { ...ahoraV, id: e.id };
   $("cuenta-atras").innerHTML = `<a class="cuenta-atras" href="#calendario" data-dia="${e.fecha}" aria-label="${ms > 0 ? "Faltan " + (dias ? dias + " días y " : "") + horas + " horas para " : ""}${esc(e.titulo)}">
-    <span class="ca-txt"><small>${ms > 0 ? "Faltan" : "Cita importante"}</small>${mismo ? "" : `<b>${esc(e.titulo)}</b>`}<small>${esc(cuandoEvento(e))}${e.lugar ? " · " + esc(e.lugar) : ""}</small></span>
+    <span class="ca-txt"><small>${ms > 0 ? "Faltan" : "Cita importante"}</small><b>${esc(e.titulo)}</b><small>${esc(cuandoEvento(e))}${e.lugar ? " · " + esc(e.lugar) : ""}</small></span>
     <span class="ca-cifras" aria-hidden="true">${cifras}</span></a>`;
   $("cuenta-atras").querySelector("[data-dia]").onclick = () => irADia(e.fecha);
   pintaCuentaAtras.t = setInterval(() => pintaCuentaAtras(enRotulo), 60000);

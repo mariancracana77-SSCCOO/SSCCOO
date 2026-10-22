@@ -132,7 +132,8 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
 ## Versión 45: manda el rojo del logo y la animación de entrada se ve siempre
-- **Colores**: el rojo de toda la web pasa a ser el del logo (#AB1012). Lo que era ámbar (subrayado de la pestaña, flechas, marcas «Nuevo», contadores, panel luminoso del urgente, calendario) y los iconos de colores de las listas pasan a rojo. Sobre fondo negro se usa el rojo encendido (#FF5A52) para que se lea. Las luces de emergencia del camión sin conexión siguen ámbar.
+- **Colores**: solo el rojo del logo (#AB1012), sin rojos claros. Lo que era ámbar (subrayado de la pestaña, flechas, marcas «Nuevo», contadores, panel luminoso del urgente, calendario) y los iconos de colores de las listas pasan a ese rojo. Sobre fondo negro, las letras van en blanco y el rojo queda para fondos, bordes y detalles. Las luces de emergencia del camión sin conexión siguen ámbar.
+- **Próxima cita** (el rótulo de Inicio cuando no hay nada urgente): diseño nuevo de «hoja de ruta». El camión del logo va por la carretera hacia la parada de la cita (círculo con el día, como en «Próximas paradas"); cuanto menos falta, más cerca está. Arriba dice cuántos días faltan y debajo el día, la hora y el lugar. Prefiere reuniones y asambleas a los festivos y, si es la misma cita que la cuenta atrás, no se repite.
 - **Animación de entrada**: ahora empieza cuando la página ha cargado (en la app instalada, Android tapaba los primeros segundos con su pantalla y la animación terminaba sin verse) y sale aunque el móvil tenga «quitar animaciones» (lo activa el ahorro de batería). Se sigue saltando tocándola.
 
 ## Versión 44: cartel con el rojo del logo
