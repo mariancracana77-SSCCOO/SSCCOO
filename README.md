@@ -91,6 +91,13 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Próxima cita** (el rótulo de Inicio cuando no hay nada urgente): diseño nuevo de carretera. El título sale en un panel luminoso de autopista (letras blancas de puntos y luces rojas que parpadean en las esquinas) y, debajo, en un poste, dos señales en el rojo del logo: el lugar con los días que faltan (como los kilómetros de una señal) y el día y la hora. Prefiere reuniones y asambleas a los festivos y, si es la misma cita que la cuenta atrás, no se repite.
 - **Animación de entrada**: ahora empieza cuando la página ha cargado (en la app instalada, Android tapaba los primeros segundos con su pantalla y la animación terminaba sin verse) y sale aunque el móvil tenga «quitar animaciones» (lo activa el ahorro de batería). Se sigue saltando tocándola.
 
+## Versión 60: Mis descansos completo (diario, conducción y pausas)
+- **Hoy**: «Empiezo la jornada» dice hasta qué hora se puede trabajar antes del descanso diario (11 h, 9 h reducido —quedan N de 3—, partido 3 h + 9 h, o 9 h en 30 h con doble tripulación). Cronómetro de conducción con aviso de la pausa de 45 min tras 4 h 30 (o 15 + 30). «Termino la jornada» la apunta sola.
+- **Jornadas a mano**, horas de conducción de la semana (56 h), de dos semanas (90 h) y días de 10 h (2 por semana).
+- **Lo apuntado** con filtro: todo, descansos semanales, en fin de semana, entre semana o jornadas. El descanso semanal puede ser cualquier día.
+- **Personalizar**: qué bloques se ven y con cuánta antelación avisa cada cosa.
+- La copia en PDF incluye jornadas y conducción.
+
 ## Versión 59: colores en «Próximas fechas»
 - **Calendario**: las etiquetas de «Próximas fechas» (Asamblea, Reunión, Festivo…) salen con el color que se pone a cada tipo en Ajustes, no todas en rojo.
 
