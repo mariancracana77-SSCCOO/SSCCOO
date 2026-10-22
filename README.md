@@ -91,6 +91,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Próxima cita** (el rótulo de Inicio cuando no hay nada urgente): diseño nuevo de carretera. El título sale en un panel luminoso de autopista (letras blancas de puntos y luces rojas que parpadean en las esquinas) y, debajo, en un poste, dos señales en el rojo del logo: el lugar con los días que faltan (como los kilómetros de una señal) y el día y la hora. Prefiere reuniones y asambleas a los festivos y, si es la misma cita que la cuenta atrás, no se repite.
 - **Animación de entrada**: ahora empieza cuando la página ha cargado (en la app instalada, Android tapaba los primeros segundos con su pantalla y la animación terminaba sin verse) y sale aunque el móvil tenga «quitar animaciones» (lo activa el ahorro de batería). Se sigue saltando tocándola.
 
+## Versión 59: colores en «Próximas fechas»
+- **Calendario**: las etiquetas de «Próximas fechas» (Asamblea, Reunión, Festivo…) salen con el color que se pone a cada tipo en Ajustes, no todas en rojo.
+
 ## Versión 58: más traducciones y subapartados en rojo
 - **Traducir**: también el rótulo de Inicio (lo urgente o la próxima cita), la lista «Lo último» (un botón para toda la lista) y cada fecha del calendario.
 - **Mis descansos en tu idioma**: selector de idioma arriba; toda la calculadora (explicaciones, avisos y fechas) sale traducida. La copia en PDF sigue en español.
