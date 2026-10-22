@@ -252,7 +252,7 @@ let PAGINAS = {};
 // «cab» pone un título encima; «sub» lo mete dentro del de arriba. Si falta el apartado de arriba, va suelto.
 const DENTRO_PANEL = { actas: "comite", convenio: "convenio-y-leyes", calculadoras: "convenio-y-leyes", camiones: "zona-conductores" };
 const PAG_FIJAS = { calculadoras: { nombre: "Calculadoras", icono: "reloj" }, camiones: { nombre: "Restricciones camiones", icono: "lugar" },
-  buzon: { nombre: "Buzón anónimo", icono: "correo" }, historial: { nombre: "Historial", icono: "reloj" }, textos: { nombre: "Textos", icono: "texto" }, ajustes: { nombre: "Ajustes", icono: "ajustes" } };
+  buzon: { nombre: "Buzón anónimo", icono: "correo" }, ortografia: { nombre: "Revisar ortografía", icono: "check" }, historial: { nombre: "Historial", icono: "reloj" }, textos: { nombre: "Textos", icono: "texto" }, ajustes: { nombre: "Ajustes", icono: "ajustes" } };
 const padreDe = (a) => a.padre_id ? APARTADOS.find(p => p.id === a.padre_id && !p.padre_id) : null;
 function construirPaginas() {
   const P = { resumen: { nombre: "Inicio", icono: "resumen" } };
@@ -268,7 +268,7 @@ function construirPaginas() {
   pon("documentos", { grupo: true });
   ["preguntas", "delegados", "enlaces", "buzon"].forEach((k, i) => pon(k, i ? {} : { cab: "Nosotros" }));
   afiliate.forEach(a => pon("ap" + a.id, { grupo: true }));
-  const herr = ["encuestas", "plantillas", "recurrentes", "apartados", "historial", "textos", "ajustes"];
+  const herr = ["encuestas", "plantillas", "recurrentes", "apartados", "ortografia", "historial", "textos", "ajustes"];
   Object.keys(SECCIONES).filter(k => !SECCIONES[k].oculta && !/^ap\d+$/.test(k) && !herr.includes(k)).forEach(k => pon(k));
   herr.forEach((k, i) => pon(k, i ? {} : { cab: "Herramientas" }));
   PAGINAS = P;
@@ -516,6 +516,7 @@ function abrir(k) {
   else if (k === "textos") pintaTextos();
   else if (k === "ajustes") pintaAjustes();
   else if (k === "archivos") pintaTodosArchivos();
+  else if (k === "ortografia") pintaOrtografia();
   else pintaSeccion(k);
 }
 
@@ -528,6 +529,7 @@ async function pintaResumen() {
       <button class="panel rapido" data-n="calendario"><span class="ic">${icono("calendario")}</span><span><b>Añadir una fecha</b><small>Asamblea, reunión…</small></span></button>
       <button class="panel rapido" data-n="documentos"><span class="ic">${icono("subir")}</span><span><b>Subir un documento</b><small>PDF, Word, Excel, fotos</small></span></button>
       <button class="panel rapido" data-n="convenio"><span class="ic">${icono("convenio")}</span><span><b>Apartado del convenio</b><small>Explicar un derecho</small></span></button>
+      <button class="panel rapido" data-orto><span class="ic">${icono("check")}</span><span><b>Revisar la ortografía</b><small>De todo lo publicado</small></span></button>
       <button class="panel rapido" data-ir="ajustes"><span class="ic">${icono("telegram")}</span><span><b>Telegram y avisos</b><small>Canales y cartel QR</small></span></button>
     </div>
     <div id="aviso-buzon"></div>
@@ -555,6 +557,7 @@ async function pintaResumen() {
     $("aviso-buzon").innerHTML = `<button class="panel banda aviso-buzon" id="ir-buzon"><span class="ic">${icono("correo")}</span><span class="txt"><b>${n === 1 ? "Tienes 1 mensaje sin leer" : `Tienes ${n} mensajes sin leer`} en el buzón anónimo</b><p>Preguntas y sugerencias de la plantilla.</p></span>${icono("der")}</button>`;
     $("ir-buzon").onclick = () => abrir("buzon");
   });
+  $("zona").querySelector("[data-orto]").onclick = () => abrir("ortografia");
   $("zona").querySelector("[data-ir]").onclick = () => { abrir("ajustes"); setTimeout(() => $("ajuste-canales")?.scrollIntoView({ behavior: "smooth" }), 400); };
   sb.from("paginas").select("contenido").eq("slug", "ultima_copia").maybeSingle().then(({ data }) => {
     const f = data?.contenido, dias = f ? (Date.now() - new Date(f)) / 86400000 : Infinity;
@@ -1370,6 +1373,119 @@ async function limpiarArchivos() {
     msg("m-limpiar", `Hecho: se han quitado ${sobran.length} archivo(s).`, true);
   } catch (e) { msg("m-limpiar", "No se ha podido: " + (e.message || e)); }
   finally { b.disabled = false; }
+}
+
+// ---------- Revisar la ortografía de todo (v53) ----------
+// Pasa por el corrector (función «corregir», Gemini gratis) los textos ya publicados, en tandas pequeñas.
+// No cambia nada solo: enseña cada propuesta y se aplica una a una (o todas) tras mirarla. Todo queda en el Historial.
+// No toca los textos legales ni las páginas de Textos, ni nombres, enlaces, emails o teléfonos.
+// Lo ya revisado (aplicado o dejado como está) se recuerda en este navegador para no volver a pedirlo (localStorage «ccoo-revisado»).
+const NO_CORREGIR_TODO = [...NO_CORREGIR, "nombre", "opciones", "lugar", "articulo"];
+const huellaTxt = (t) => { let h = 5381; for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36) + t.length; };
+const leeRevisado = () => { try { return new Set(JSON.parse(localStorage.getItem("ccoo-revisado") || "[]")); } catch (_) { return new Set(); } };
+const marcaRevisado = (t) => { try { const s = leeRevisado(); s.add(huellaTxt(t)); localStorage.setItem("ccoo-revisado", JSON.stringify([...s].slice(-5000))); } catch (_) {} };
+let ORTO = null; // { parar, propuestas: [] }
+function pintaOrtografia() {
+  const secs = Object.keys(SECCIONES).filter(k => !SECCIONES[k].oculta && k !== "recurrentes" && camposPlanos(SECCIONES[k]).some(c => (c.t === "text" || c.t === "textarea") && !NO_CORREGIR_TODO.includes(c.k)));
+  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Revisar la ortografía</h1><p>El corrector repasa lo que ya está publicado y te propone arreglos (tildes, mayúsculas, signos…). No se cambia nada hasta que lo apliques, y todo queda en el Historial por si quieres deshacerlo. No toca los textos legales.</p></div></div>
+    <div class="panel orto-elegir">
+      <details class="orto-que"><summary>Qué revisar: <span id="orto-cuantas">todas las secciones</span></summary>
+        <div class="orto-secs">${secs.map(k => `<label class="check"><input type="checkbox" data-sec="${k}" checked>${esc(SECCIONES[k].nombre)}</label>`).join("")}</div></details>
+      <label class="check"><input type="checkbox" id="orto-nuevo" checked>Solo lo que no he revisado antes</label>
+      <div class="botones"><button class="btn" id="b-orto">${icono("check", "p")}Empezar a revisar</button><button class="btn sec oculto" id="b-orto-parar">Parar</button></div>
+      <div class="orto-barra oculto" id="orto-barra"><span id="orto-prog"></span></div>
+      <div class="msg" id="m-orto"></div>
+    </div>
+    <div class="botones oculto" id="orto-todos"><button class="btn" id="b-orto-todos">${icono("check", "p")}Aplicar todos los cambios</button></div>
+    <div class="lista-adm" id="orto-lista"></div>`;
+  $("zona").querySelectorAll("[data-sec]").forEach(x => x.onchange = () => { const n = $("zona").querySelectorAll("[data-sec]:checked").length; $("orto-cuantas").textContent = n === secs.length ? "todas las secciones" : n === 1 ? "1 sección" : n + " secciones"; });
+  $("b-orto").onclick = () => empiezaOrtografia([...$("zona").querySelectorAll("[data-sec]:checked")].map(x => x.dataset.sec), $("orto-nuevo").checked);
+  $("b-orto-parar").onclick = () => { if (ORTO) ORTO.parar = true; };
+  $("b-orto-todos").onclick = async () => {
+    const pend = ORTO?.propuestas.filter(p => !p.hecho) || [];
+    if (!pend.length || !confirm(`¿Aplicar los ${pend.length} cambios propuestos? Puedes deshacer cualquiera en el Historial.`)) return;
+    for (const p of pend) await aplicaOrto(p, true);
+  };
+}
+async function empiezaOrtografia(secs, soloNuevo) {
+  if (!secs.length) return msg("m-orto", "Marca al menos una sección.");
+  const b = $("b-orto"); b.disabled = true; $("b-orto-parar").classList.remove("oculto"); $("orto-barra").classList.remove("oculto");
+  $("orto-lista").innerHTML = ""; $("orto-todos").classList.add("oculto");
+  ORTO = { parar: false, propuestas: [] };
+  msg("m-orto", "Cargando los textos…", true);
+  const revisado = soloNuevo ? leeRevisado() : new Set(), piezas = [];
+  try {
+    for (const k of secs) {
+      const s = SECCIONES[k]; await cargarDatos(k);
+      const campos = camposPlanos(s).filter(c => (c.t === "text" || c.t === "textarea") && !NO_CORREGIR_TODO.includes(c.k));
+      for (const x of datos[k]) for (const c of campos) {
+        const t = x[c.k];
+        if (typeof t === "string" && /\p{L}{3}/u.test(t) && t.length <= 15000 && !revisado.has(huellaTxt(t))) piezas.push({ k, id: x.id, campo: c.k, etiqueta: c.l, texto: t, x });
+      }
+    }
+  } catch (e) { b.disabled = false; return msg("m-orto", "No se han podido cargar los textos: " + (e.message || e)); }
+  if (!piezas.length) { b.disabled = false; $("b-orto-parar").classList.add("oculto"); $("orto-barra").classList.add("oculto"); return msg("m-orto", soloNuevo ? "No hay nada nuevo que revisar. Para repasarlo todo otra vez, desmarca «Solo lo que no he revisado antes»." : "No hay textos que revisar.", true); }
+  // Tandas de hasta 10 campos y 6000 letras (el corrector admite 12 y 20000)
+  const tandas = []; let t = [], n = 0;
+  for (const p of piezas) { if (t.length && (t.length >= 10 || n + p.texto.length > 6000)) { tandas.push(t); t = []; n = 0; } t.push(p); n += p.texto.length; }
+  if (t.length) tandas.push(t);
+  const clave = (i) => "c_" + String.fromCharCode(97 + Math.floor(i / 26)) + String.fromCharCode(97 + i % 26);
+  let hechas = 0, fallos = 0, cambios = 0;
+  for (const tanda of tandas) {
+    if (ORTO.parar) break;
+    $("orto-prog").style.width = Math.round(hechas / tandas.length * 100) + "%";
+    msg("m-orto", `Revisando… ${Math.min(hechas * 10 + 1, piezas.length)} de ${piezas.length} textos. ${cambios ? cambios + (cambios === 1 ? " con propuesta." : " con propuestas.") : ""}`, true);
+    const cuerpo = { textos: Object.fromEntries(tanda.map((p, i) => [clave(i), p.texto])) };
+    let res = null;
+    for (let intento = 0; intento < 2 && !res; intento++) {
+      try {
+        const r = await Promise.race([sb.functions.invoke("corregir", { body: cuerpo }), new Promise(ok => setTimeout(() => ok({ error: "tiempo" }), 30000))]);
+        if (!r.error && r.data?.textos) res = r.data.textos;
+      } catch (_) {}
+      if (!res && intento === 0 && !ORTO.parar) { msg("m-orto", "El corrector va lento. Esperando un poco para seguir…", true); await new Promise(ok => setTimeout(ok, 20000)); }
+    }
+    if (!res) { fallos++; if (fallos >= 2) { msg("m-orto", "El corrector gratuito ha llegado a su límite por ahora. Lo revisado se queda; vuelve a pulsar «Empezar» más tarde y seguirá con lo que falta."); break; } continue; }
+    fallos = 0;
+    tanda.forEach((p, i) => {
+      const nuevo = res[clave(i)];
+      if (typeof nuevo === "string" && nuevo !== p.texto) { p.nuevo = nuevo; ORTO.propuestas.push(p); cambios++; pintaPropuesta(p); }
+      else marcaRevisado(p.texto); // está bien: no se vuelve a pedir
+    });
+    hechas++;
+    await new Promise(ok => setTimeout(ok, 1500)); // sin agobiar al corrector gratuito
+  }
+  $("orto-prog").style.width = "100%";
+  $("b-orto").disabled = false; $("b-orto-parar").classList.add("oculto");
+  if (!$("m-orto").classList.contains("err")) msg("m-orto", ORTO.parar ? `Parado. ${cambios === 1 ? "1 propuesta" : cambios + " propuestas"} hasta ahora.` : cambios ? (cambios === 1 ? "Hecho. Hay 1 propuesta: revísala abajo." : `Hecho. Hay ${cambios} propuestas: revísalas abajo.`) : "Hecho. No hay nada que corregir.", true);
+  $("orto-todos").classList.toggle("oculto", ORTO.propuestas.filter(p => !p.hecho).length < 2);
+}
+function pintaPropuesta(p) {
+  const s = SECCIONES[p.k], el = document.createElement("div");
+  el.className = "panel orto-prop"; el.dataset.i = ORTO.propuestas.indexOf(p);
+  el.innerHTML = `<div class="orto-cab"><span class="etq">${esc(s.nombre)}</span><b>${esc((s.tituloDe ? s.tituloDe(p.x) : p.x.titulo) || "Sin título")}</b><small>${esc(p.etiqueta)}</small></div>
+    <div class="corr-dif">${difHTML(p.texto, p.nuevo)}</div>
+    <div class="botones"><button class="btn peq" data-a="si">${icono("check", "p")}Aplicar</button><button class="btn sec peq" data-a="no">Dejar como está</button><button class="btn sec peq" data-a="ver">${icono("editar", "p")}Abrir</button></div>`;
+  el.querySelector("[data-a=si]").onclick = () => aplicaOrto(p);
+  el.querySelector("[data-a=no]").onclick = () => { marcaRevisado(p.texto); p.hecho = true; el.classList.add("hecho"); el.querySelector(".botones").innerHTML = `<span class="fecha-txt">Se queda como está.</span>`; };
+  el.querySelector("[data-a=ver]").onclick = () => abrirEditor(p.k, datos[p.k].find(x => x.id === p.id) || p.x);
+  p.el = el; $("orto-lista").appendChild(el);
+  $("orto-todos").classList.toggle("oculto", ORTO.propuestas.filter(q => !q.hecho).length < 2);
+}
+async function aplicaOrto(p, enLote) {
+  if (p.hecho) return;
+  const s = SECCIONES[p.k], caja = p.el.querySelector(".botones");
+  caja.innerHTML = `<span class="fecha-txt">Guardando…</span>`;
+  // Solo si nadie lo ha cambiado mientras tanto (si no, se perdería lo nuevo)
+  const { data: ahora, error: e1 } = await sb.from(s.tabla).select(p.campo).eq("id", p.id).maybeSingle();
+  if (e1 || !ahora) { caja.innerHTML = `<span class="msg err">No se ha podido comprobar. Prueba otra vez.</span>`; return; }
+  if (ahora[p.campo] !== p.texto) { p.hecho = true; caja.innerHTML = `<span class="msg err">Este texto ha cambiado desde que se revisó: no se ha tocado.</span>`; return; }
+  const { error } = await sb.from(s.tabla).update({ [p.campo]: p.nuevo }).eq("id", p.id);
+  if (error) { caja.innerHTML = `<span class="msg err">No se ha podido guardar: ${esc(error.message)}</span>`; return; }
+  p.hecho = true; marcaRevisado(p.nuevo); p.el.classList.add("hecho");
+  const x = datos[p.k]?.find(y => y.id === p.id); if (x) x[p.campo] = p.nuevo;
+  caja.innerHTML = `<span class="msg ok">${icono("check", "p")}Corregido.</span>`;
+  if (!enLote) aviso("Corregido. Si no te convence, lo puedes deshacer en el Historial.");
+  $("orto-todos").classList.toggle("oculto", ORTO.propuestas.filter(q => !q.hecho).length < 2);
 }
 
 // ---------- Todos los archivos y fotos ----------
