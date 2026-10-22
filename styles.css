@@ -977,3 +977,61 @@ body.publica.con-aviso-priv { padding-bottom: calc(84px + var(--alto-aviso, 90px
 .check.consentimiento { align-items: flex-start; font-weight: 400; margin: 14px 0 10px; min-height: 44px; }
 .check.consentimiento input { flex: none; width: 24px; height: 24px; min-height: 0; margin-top: 1px; }
 .check.consentimiento a { color: var(--azul); font-weight: 700; }
+
+/* ====== Pantalla de bienvenida (v41): el camión del logo en marcha mientras carga ====== */
+.bienvenida {
+  position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: var(--asfalto); color: #fff; padding: 16px; text-align: center;
+  transition: opacity .45s ease, visibility .45s;
+  animation: bv-seguro .45s 8s forwards; /* por si la web no llega a quitarla */
+}
+.bienvenida.fuera { opacity: 0; visibility: hidden; pointer-events: none; }
+@keyframes bv-seguro { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+.bv-logo { width: 132px; height: 132px; border-radius: 50%; animation: bv-aparece .6s ease both, bv-latido 2.4s .6s ease-in-out infinite; }
+@keyframes bv-aparece { from { opacity: 0; transform: scale(.8); } to { opacity: 1; transform: none; } }
+@keyframes bv-latido { 50% { transform: scale(1.04); } }
+.bv-escena { width: min(300px, 86vw); height: auto; overflow: visible; }
+.bv-cc { font-family: var(--cond); font-weight: 700; font-size: 38px; fill: #fff; letter-spacing: 1px; }
+.bv-camion { animation: bv-bache .5s ease-in-out infinite; }
+@keyframes bv-bache { 50% { transform: translateY(-1.5px); } }
+.bv-rueda circle { fill: #1b1f24; stroke: #e8ebef; stroke-width: 3; }
+.bv-rueda path { stroke: #e8ebef; stroke-width: 2.5; stroke-linecap: round; }
+.bv-rueda { transform-box: fill-box; transform-origin: center; animation: bv-gira .5s linear infinite; }
+@keyframes bv-gira { to { transform: rotate(360deg); } }
+.bv-carretera { stroke: #FFB000; stroke-width: 3; stroke-dasharray: 18 14; animation: bv-carretera .5s linear infinite; }
+@keyframes bv-carretera { to { stroke-dashoffset: 32; } }
+.bv-velocidad line { stroke: rgba(255,255,255,.55); stroke-width: 3; stroke-linecap: round; animation: bv-viento .7s linear infinite; }
+.bv-velocidad line:nth-child(2) { animation-delay: .23s; }
+.bv-velocidad line:nth-child(3) { animation-delay: .46s; }
+@keyframes bv-viento { from { transform: translateX(16px); opacity: 0; } 40% { opacity: 1; } to { transform: translateX(-22px); opacity: 0; } }
+.bv-humo circle { fill: rgba(255,255,255,.35); transform-box: fill-box; transform-origin: center; animation: bv-humo 1.2s ease-out infinite; }
+.bv-humo circle:nth-child(2) { animation-delay: .4s; }
+.bv-humo circle:nth-child(3) { animation-delay: .8s; }
+@keyframes bv-humo { from { transform: translate(0, 0) scale(.6); opacity: .9; } to { transform: translate(-26px, -14px) scale(2.2); opacity: 0; } }
+.bv-nombre { font-family: var(--cond); font-weight: 700; font-size: 1.6rem; letter-spacing: .02em; }
+.bv-carga { width: min(220px, 70vw); height: 6px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; }
+.bv-carga span { display: block; width: 40%; height: 100%; border-radius: 3px; background: var(--rojo); animation: bv-barra 1.3s ease-in-out infinite; }
+@keyframes bv-barra { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+.bv-texto { font-size: .95rem; opacity: .8; }
+.bv-puntos i { font-style: normal; animation: bv-punto 1.2s infinite; }
+.bv-puntos i:nth-child(2) { animation-delay: .2s; }
+.bv-puntos i:nth-child(3) { animation-delay: .4s; }
+@keyframes bv-punto { 0%, 60%, 100% { opacity: .2; } 30% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .bienvenida * { animation: none !important; }
+  .bienvenida { transition: none; }
+}
+
+/* Animaciones pequeñas: las tarjetas entran escalonadas y los botones responden al tocar */
+.anima-entra > * { animation: entra .35s ease both; }
+.anima-entra > *:nth-child(2) { animation-delay: .05s; }
+.anima-entra > *:nth-child(3) { animation-delay: .1s; }
+.anima-entra > *:nth-child(4) { animation-delay: .15s; }
+.anima-entra > *:nth-child(5) { animation-delay: .2s; }
+.anima-entra > *:nth-child(n+6) { animation-delay: .25s; }
+.item-tablon, .accesos-tablon a, .btn { transition: border-color .15s, transform .12s ease; }
+.item-tablon:active, .accesos-tablon a:active, .btn:active { transform: scale(.97); }
+@media (prefers-reduced-motion: reduce) {
+  .anima-entra > * { animation: none; }
+  .item-tablon:active, .accesos-tablon a:active, .btn:active { transform: none; }
+}

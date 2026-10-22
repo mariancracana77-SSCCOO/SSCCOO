@@ -585,7 +585,19 @@ async function cargar(idNuevo) {
   pintaInicio(); pintaAvisos(idNuevo); pintaCalendario(); pintaConvenio(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaInfo(); pintaCanales(); pintaContadores();
   if (/^#aviso-\d+$/.test(location.hash) && !cargar.hecho) { cargar.hecho = true; irA(); }
 }
-cargar();
+// Pantalla de bienvenida: se ve al menos 1,6 s (para que dé tiempo a ver el camión) y se quita al terminar de cargar.
+// Al quitarla, lo que hay en pantalla entra escalonado (solo esta vez, no en cada actualización).
+function quitarBienvenida() {
+  const bv = $("bienvenida"); if (!bv || bv.classList.contains("fuera")) return;
+  const quieto = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  setTimeout(() => {
+    const listas = document.querySelectorAll("#inicio-feed, #inicio-paradas, .accesos-tablon, [id^='lista-']");
+    if (!quieto) listas.forEach(el => el.classList.add("anima-entra"));
+    bv.classList.add("fuera");
+    setTimeout(() => { bv.remove(); listas.forEach(el => el.classList.remove("anima-entra")); }, 1200);
+  }, quieto ? 0 : Math.max(0, 1600 - performance.now()));
+}
+cargar().finally(quitarBienvenida);
 
 // ---------- Tiempo real: avisos al momento si alguien tiene la web abierta ----------
 const toast = $("toast");
