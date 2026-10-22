@@ -23,7 +23,7 @@ function irA() {
     if (!cargar.listo) { setTimeout(irA, 300); return; }
     const p = D.publicaciones.find(x => x.id === pubDirecto), a = p && D.apartados.find(x => x.id === p.apartado_id);
     history.replaceState(null, "", a ? "#ap-" + a.slug : "#inicio");
-    if (a) setTimeout(() => { const el = $("pub-" + pubDirecto); if (el) { el.scrollIntoView({ block: "start" }); el.classList.add("nuevo"); } }, 350);
+    if (a) setTimeout(() => { const el = $("pub-" + pubDirecto); if (el) { expandeLargos(el); el.scrollIntoView({ block: "start" }); el.classList.add("nuevo"); } }, 350);
     return irA();
   }
   const h = location.hash.slice(1), avisoDirecto = /^aviso-\d+$/.test(h) ? h : null;
@@ -35,7 +35,7 @@ function irA() {
   if (aDelegados) setTimeout(() => ($("lista-delegados").children.length ? $("tit-delegados") : $("txt-contacto"))?.scrollIntoView({ block: "start" }), 50);
   if (legal) setTimeout(() => $("leg-" + legal)?.scrollIntoView({ block: "start" }), 50);
   if (aEncuesta) { const ir = () => { const el = $(aEncuesta); if (el) { el.scrollIntoView({ block: "center" }); el.classList.add("nuevo"); } else if (!cargar.listo) setTimeout(ir, 300); }; setTimeout(ir, 300); }
-  if (avisoDirecto) setTimeout(() => { const el = $(avisoDirecto); if (el) { el.scrollIntoView({ block: "start" }); el.classList.add("nuevo"); } }, 300);
+  if (avisoDirecto) setTimeout(() => { const el = $(avisoDirecto); if (el) { expandeLargos(el); el.scrollIntoView({ block: "start" }); el.classList.add("nuevo"); } }, 300);
   // La vista nueva entra desde el lado de su pestaña (más a la derecha en la barra: entra por la derecha)
   const orden = ordenVistas(), clave = ap ? "ap-" + ap : v;
   const iAntes = orden.indexOf(irA.antes), iAhora = orden.indexOf(clave), lado = iAntes < 0 || iAhora < 0 || iAntes === iAhora ? "" : iAhora > iAntes ? "desde-der" : "desde-izq";
@@ -1150,6 +1150,7 @@ async function traduceReg(reg, idioma) {
       if (idioma === "ar") el.setAttribute("dir", "rtl"); else el.removeAttribute("dir");
     });
     reg.dataset.idiomaActual = idioma;
+    reg.querySelectorAll(LARGOS).forEach(el => { if (el.dataset.largo !== "abierto") { el.dataset.largo = "?"; revisaLargo(el); } });
     if (boton) boton.innerHTML = icono("idioma", "p") + "Ver en español";
   } catch (e) { if (boton) boton.innerHTML = icono("idioma", "p") + "Traducir"; throw e; }
   finally { if (boton) boton.disabled = false; }
@@ -1185,6 +1186,36 @@ function reaplicaIdioma(cont, nombre) {
 // v56: se quitó el botón de idioma de toda la web (cortaba «Calsina Carré» en la cabecera y traducir todo iba lento).
 // Se traduce cada tarjeta con su botón «Traducir»; el último idioma elegido sale el primero del menú.
 try { localStorage.removeItem("ccoo-idioma"); } catch (_) {}
+
+// ---------- «Leer más» en los textos largos (v61) ----------
+// Avisos, actas, publicaciones y fechas del calendario con mucho texto salen recortados (unas 7 líneas) con «Leer más»,
+// para no tener que deslizar tanto. Se mide cuando la tarjeta aparece en pantalla (las vistas ocultas no tienen alto).
+// Si el texto lleva lo buscado resaltado (<mark>), sale entero.
+const LARGOS = ".aviso .cuerpo:not(.corto), .acta [data-campo='resumen'], .acta [data-campo='acuerdos'], .publicacion .pub-texto, .evento [data-campo='descripcion']";
+function revisaLargo(el) {
+  if (!el.isConnected || el.dataset.largo === "abierto") return;
+  const btn = el.nextElementSibling?.classList.contains("leer-mas") ? el.nextElementSibling : null;
+  if (el.querySelector("mark")) { el.classList.remove("recortado"); btn?.remove(); return; }
+  el.classList.add("recortado");
+  const sobra = el.scrollHeight > el.clientHeight + 8;
+  if (!sobra) { el.classList.remove("recortado"); btn?.remove(); el.dataset.largo = "corto"; return; }
+  el.dataset.largo = "recortado";
+  if (!btn) el.insertAdjacentHTML("afterend", `<button type="button" class="leer-mas" aria-expanded="false">Leer más${icono("abajo", "p")}</button>`);
+}
+function expandeLargos(raiz) {
+  raiz.querySelectorAll(LARGOS).forEach(el => { el.classList.remove("recortado"); el.dataset.largo = "abierto"; const b = el.nextElementSibling; if (b?.classList.contains("leer-mas")) { b.setAttribute("aria-expanded", "true"); b.innerHTML = "Leer menos" + icono("arriba", "p"); } });
+}
+const vigiaLargos = "IntersectionObserver" in window ? new IntersectionObserver((es) => es.forEach(e => { if (e.isIntersecting) { vigiaLargos.unobserve(e.target); revisaLargo(e.target); } }), { rootMargin: "400px 0px" }) : null;
+function buscaLargos(raiz) { (raiz || document).querySelectorAll(LARGOS).forEach(el => { if (!el.dataset.largo) { el.dataset.largo = "?"; el.classList.add("recortado"); vigiaLargos ? vigiaLargos.observe(el) : revisaLargo(el); } }); }
+let tLargos = 0;
+new MutationObserver(() => { clearTimeout(tLargos); tLargos = setTimeout(() => buscaLargos(document.querySelector("main")), 120); }).observe(document.querySelector("main") || document.body, { childList: true, subtree: true });
+document.addEventListener("click", (ev) => {
+  const b = ev.target.closest(".leer-mas"); if (!b) return;
+  const el = b.previousElementSibling, abrir = el.classList.contains("recortado");
+  el.classList.toggle("recortado", !abrir); el.dataset.largo = abrir ? "abierto" : "recortado";
+  b.setAttribute("aria-expanded", String(abrir)); b.innerHTML = (abrir ? "Leer menos" + icono("arriba", "p") : "Leer más" + icono("abajo", "p"));
+  if (!abrir && el.getBoundingClientRect().top < 0) el.closest("article, .evento")?.scrollIntoView({ block: "start" });
+});
 
 // ---------- Buscar en toda la web ----------
 function buscarTodo() {
