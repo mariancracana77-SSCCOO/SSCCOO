@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, GitHub Pages, con `.nojekyll`)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **37**
+- Versión actual: **38**
 
 ## Reglas del proyecto (no negociables)
 - Responder siempre en **español**, claro y sin tecnicismos innecesarios.
@@ -64,7 +64,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 - `cartel.html` + `cartel.js` + `qr.js`: cartel con QR para imprimir (usa `icon-512.png` para el logo; `logo.png`, 192 px, para la web y el panel).
 - `lib/supabase.js` (supabase-js 2.58.0 UMD) y `lib/jszip.min.js` (3.10.1): **alojados aquí a propósito** (no CDN).
 - `fuentes.css` + `fuentes/`: Atkinson Hyperlegible (texto), Barlow Condensed (títulos) y Barlow (de reserva), alojadas aquí (no Google Fonts, por privacidad).
-- Logo: `logo.svg` es la fuente (vectorial, letra Barlow Condensed). Los PNG (`icon-192/512`, `logo.png`, `icon-maskable-512` con fondo #15191E al 78 %, `apple-touch-icon` 180 con fondo, `favicon-32`) se sacan con Playwright. `manifest.json` y `theme-color` en #15191E (pantalla de carga oscura).
+- Logo: es el original (no redibujarlo: al padre le gusta así). `icon-512.png` es el original más nítido, con el exterior del círculo transparente (PIL: UnsharpMask, blancos a 255, máscara circular centro 256,258 r 237,5). De ahí salen `icon-192`, `logo.png`, `favicon-32`, `icon-maskable-512` (fondo #15191E al 80 %) y `apple-touch-icon` (180, fondo #15191E). El original sin tocar está en la rama `respaldo-v36`. `manifest.json` y `theme-color` en #15191E (pantalla de carga oscura).
 - Diseño: colores en `:root` de `styles.css` (asfalto, `--rotulo`, `--ambar-rotulo` `#FFB000`, rojo CCOO `#C4122F`, hueso `#F5F3EE`). El bloque «Diseño Rótulo de línea» está al final de `styles.css`.
 
 ## Al publicar una versión nueva (3 sitios)

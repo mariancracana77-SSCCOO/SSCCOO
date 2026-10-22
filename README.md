@@ -131,6 +131,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 38: vuelve el logo de siempre, más nítido
+- Se recupera el logo original (el de la v36 y anteriores), sin cambiar el dibujo: solo más nítido, con los blancos limpios y sin el fondo grisáceo de alrededor (ahora es transparente fuera del círculo). Se quita `logo.svg`.
+- Se mantienen los iconos para Android (sobre fondo oscuro), iPhone y pestaña del navegador, la pantalla de carga oscura, la tarjeta al compartir y las capturas, todo con este logo.
+
 ## Versión 37: logo nuevo, limpio
 - El logo se ha redibujado en vectorial (`logo.svg`, la fuente para volver a sacar los PNG): mismo diseño (aro rojo con «Sección Sindical CCOO» y «Calsina Carré», engranaje rojo y camión azul con «CC»), pero nítido, con fondo transparente y borde blanco. Se quita el email, que en el icono no se podía leer.
 - Iconos nuevos: `icon-192.png`, `icon-512.png`, `logo.png`, `icon-maskable-512.png` (para Android, sobre fondo oscuro), `apple-touch-icon.png` (iPhone) y `favicon-32.png` (pestaña del navegador). También se rehacen `og.png` y las capturas de `capturas/`.
