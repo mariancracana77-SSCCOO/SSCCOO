@@ -585,7 +585,22 @@ async function cargar(idNuevo) {
   pintaInicio(); pintaAvisos(idNuevo); pintaCalendario(); pintaConvenio(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaInfo(); pintaCanales(); pintaContadores();
   if (/^#aviso-\d+$/.test(location.hash) && !cargar.hecho) { cargar.hecho = true; irA(); }
 }
-cargar();
+// Pantalla de bienvenida: dura lo que tarda el camión en formar el logo (4,3 s) y se quita al terminar de cargar.
+// Tocarla la salta.
+// Al quitarla, lo que hay en pantalla entra escalonado (solo esta vez, no en cada actualización).
+function quitarBienvenida() {
+  const bv = $("bienvenida"); if (!bv || bv.classList.contains("fuera")) return;
+  const quieto = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  clearTimeout(quitarBienvenida.t);
+  quitarBienvenida.t = setTimeout(() => {
+    const listas = document.querySelectorAll("#inicio-feed, #inicio-paradas, .accesos-tablon, [id^='lista-']");
+    if (!quieto) listas.forEach(el => el.classList.add("anima-entra"));
+    bv.classList.add("fuera");
+    setTimeout(() => { bv.remove(); listas.forEach(el => el.classList.remove("anima-entra")); }, 1200);
+  }, quieto || quitarBienvenida.ya ? 0 : Math.max(0, 4300 - performance.now()));
+}
+if ($("bienvenida")) $("bienvenida").addEventListener("click", () => { quitarBienvenida.ya = true; quitarBienvenida(); });
+cargar().finally(quitarBienvenida);
 
 // ---------- Tiempo real: avisos al momento si alguien tiene la web abierta ----------
 const toast = $("toast");
