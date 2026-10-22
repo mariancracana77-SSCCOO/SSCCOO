@@ -31,27 +31,45 @@
 </head>
 <body class="publica">
 
-<!-- Pantalla de bienvenida: el camión del logo llega por la carretera, frena, encoge hasta su sitio y el logo se forma a su alrededor
-     (centro, engranaje y anillo, que son trozos del logo original sin mover). Se quita en app.js al terminar de cargar;
-     si algo falla, el CSS la quita a los 8 s; tocarla la salta. -->
+<!-- Pantalla de bienvenida: el camión del logo (sin su borde) llega por la carretera con el camionero saludando, frena,
+     encoge hasta su sitio y el logo aparece desde él. Se quita en app.js al terminar de cargar; si algo falla, el CSS la quita a los 8 s; tocarla la salta. -->
 <div class="bienvenida" id="bienvenida" aria-hidden="true">
   <div class="bv-logo-caja">
     <div class="bv-carretera"></div>
     <div class="bv-onda"></div>
-    <img class="bv-pieza bv-centro" src="logo-centro.webp" alt="" width="512" height="512">
-    <img class="bv-pieza bv-engranaje" src="logo-engranaje.webp" alt="" width="512" height="512">
-    <img class="bv-pieza bv-anillo" src="logo-anillo.webp" alt="" width="512" height="512">
+    <img class="bv-logo" src="icon-512.png" alt="" width="512" height="512">
     <div class="bv-camion"><div class="bv-escala"><div class="bv-mueve">
       <span class="bv-viento"><i></i><i></i><i></i></span>
       <span class="bv-humo"><i></i><i></i><i></i></span>
       <div class="bv-bote">
-        <img src="camion.webp" alt="" width="600" height="307">
-        <svg class="bv-ruedas" viewBox="0 0 1025 524"><defs><radialGradient id="bv-g-neum" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#2C68AB"/><stop offset=".75" stop-color="#1B4C86"/><stop offset="1" stop-color="#123A6B"/></radialGradient><radialGradient id="bv-g-buje" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#F4F7FA"/><stop offset="1" stop-color="#A9B5C2"/></radialGradient></defs><g class="bv-rueda"><circle cx="180" cy="448" r="64" class="bv-neum"/><circle cx="180" cy="448" r="29" class="bv-buje"/><circle cx="196.0" cy="448.0" r="4" class="bv-tuerca"/><circle cx="184.9" cy="463.2" r="4" class="bv-tuerca"/><circle cx="167.1" cy="457.4" r="4" class="bv-tuerca"/><circle cx="167.1" cy="438.6" r="4" class="bv-tuerca"/><circle cx="184.9" cy="432.8" r="4" class="bv-tuerca"/><circle cx="180" cy="448" r="6" class="bv-eje"/></g><g class="bv-rueda"><circle cx="410" cy="450" r="64" class="bv-neum"/><circle cx="410" cy="450" r="29" class="bv-buje"/><circle cx="426.0" cy="450.0" r="4" class="bv-tuerca"/><circle cx="414.9" cy="465.2" r="4" class="bv-tuerca"/><circle cx="397.1" cy="459.4" r="4" class="bv-tuerca"/><circle cx="397.1" cy="440.6" r="4" class="bv-tuerca"/><circle cx="414.9" cy="434.8" r="4" class="bv-tuerca"/><circle cx="410" cy="450" r="6" class="bv-eje"/></g><g class="bv-rueda"><circle cx="857" cy="451" r="64" class="bv-neum"/><circle cx="857" cy="451" r="29" class="bv-buje"/><circle cx="873.0" cy="451.0" r="4" class="bv-tuerca"/><circle cx="861.9" cy="466.2" r="4" class="bv-tuerca"/><circle cx="844.1" cy="460.4" r="4" class="bv-tuerca"/><circle cx="844.1" cy="441.6" r="4" class="bv-tuerca"/><circle cx="861.9" cy="435.8" r="4" class="bv-tuerca"/><circle cx="857" cy="451" r="6" class="bv-eje"/></g></svg>
+        <img src="camion.webp" alt="" width="700" height="358">
+        <svg class="bv-extras" viewBox="0 0 1025 524">
+          <defs>
+            <radialGradient id="bv-g-neum" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#2C68AB"/><stop offset=".75" stop-color="#1B4C86"/><stop offset="1" stop-color="#123A6B"/></radialGradient>
+            <radialGradient id="bv-g-buje" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#F4F7FA"/><stop offset="1" stop-color="#A9B5C2"/></radialGradient>
+            <linearGradient id="bv-g-vidrio" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".45" stop-color="#fff" stop-opacity=".08"/><stop offset=".6" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+            <clipPath id="bv-ventana"><polygon points="771,176 864,176 912,266 767,266"/></clipPath>
+          </defs>
+          <g class="bv-conductor" clip-path="url(#bv-ventana)">
+            <rect x="760" y="170" width="160" height="100" fill="#7F96B0"/>
+            <path d="M812 300c0-34 14-50 36-50s36 16 36 50z" fill="#C4122F"/>
+            <rect x="841" y="236" width="14" height="18" rx="4" fill="#D99C74"/>
+            <circle cx="848" cy="219" r="21" fill="#F2C29C"/>
+            <path d="M827 214c1-17 13-24 24-24s20 6 21 18c-8-6-18-7-27-6-8 1-13 5-18 12z" fill="#3B2A22"/>
+            <circle cx="861" cy="217" r="2.6" fill="#2A1C16"/>
+            <path d="M856 229q6 4 11 0" stroke="#9A4B37" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+            <path d="M822 262l-12-22" stroke="#C4122F" stroke-width="13" stroke-linecap="round"/>
+            <g class="bv-brazo"><path d="M810 240l-6-34" stroke="#F2C29C" stroke-width="10" stroke-linecap="round"/><circle cx="803" cy="200" r="8.5" fill="#F2C29C"/></g>
+            <polygon points="771,176 864,176 912,266 767,266" fill="url(#bv-g-vidrio)"/>
+          </g>
+          <g class="bv-ruedas"><g class="bv-rueda"><circle cx="180" cy="448" r="64" class="bv-neum"/><circle cx="180" cy="448" r="29" class="bv-buje"/><circle cx="196.0" cy="448.0" r="4" class="bv-tuerca"/><circle cx="184.9" cy="463.2" r="4" class="bv-tuerca"/><circle cx="167.1" cy="457.4" r="4" class="bv-tuerca"/><circle cx="167.1" cy="438.6" r="4" class="bv-tuerca"/><circle cx="184.9" cy="432.8" r="4" class="bv-tuerca"/><circle cx="180" cy="448" r="6" class="bv-eje"/></g><g class="bv-rueda"><circle cx="410" cy="450" r="64" class="bv-neum"/><circle cx="410" cy="450" r="29" class="bv-buje"/><circle cx="426.0" cy="450.0" r="4" class="bv-tuerca"/><circle cx="414.9" cy="465.2" r="4" class="bv-tuerca"/><circle cx="397.1" cy="459.4" r="4" class="bv-tuerca"/><circle cx="397.1" cy="440.6" r="4" class="bv-tuerca"/><circle cx="414.9" cy="434.8" r="4" class="bv-tuerca"/><circle cx="410" cy="450" r="6" class="bv-eje"/></g><g class="bv-rueda"><circle cx="857" cy="451" r="64" class="bv-neum"/><circle cx="857" cy="451" r="29" class="bv-buje"/><circle cx="873.0" cy="451.0" r="4" class="bv-tuerca"/><circle cx="861.9" cy="466.2" r="4" class="bv-tuerca"/><circle cx="844.1" cy="460.4" r="4" class="bv-tuerca"/><circle cx="844.1" cy="441.6" r="4" class="bv-tuerca"/><circle cx="861.9" cy="435.8" r="4" class="bv-tuerca"/><circle cx="857" cy="451" r="6" class="bv-eje"/></g></g>
+        </svg>
       </div>
     </div></div></div>
   </div>
   <div class="bv-nombre">CCOO Calsina Carré</div>
   <div class="bv-carga"><span></span></div>
+</div>
 </div>
 </div>
 </div>
