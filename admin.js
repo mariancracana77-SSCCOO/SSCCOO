@@ -759,7 +759,7 @@ async function pintaSeccion(k) {
     if (FECHA_DE[k]) pintaFechasAdm(datos[k], k, ff, pinta);
     const q = $("buscar").value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const l = datos[k].filter(x => pasaFechaAdm(ff, FECHA_DE[k]?.(x)) &&
-      (!q || (JSON.stringify(x) + " " + textoFecha(FECHA_DE[k]?.(x))).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)));
+      (!q || coincide(Object.values(x).filter(v => typeof v === "string").join(" ") + " " + (x.adjuntos || []).map(j => j.nombre).join(" ") + " " + textoFecha(FECHA_DE[k]?.(x)), q)));
     const ordenable = REORDENABLE(k) && !q && l.length > 1;
     if (!ordenable) $("ayuda-orden")?.remove();
     if (ordenable && !$("ayuda-orden")) $("lista").insertAdjacentHTML("beforebegin", `<p class="ayuda" id="ayuda-orden">${icono("arrastrar", "p")} Para cambiar el orden, arrastra desde las rayas de la izquierda (con el dedo o el ratón).</p>`);
@@ -1401,7 +1401,7 @@ async function pintaTodosArchivos() {
   const sinAcentos = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const pinta = () => {
     const q = sinAcentos($("buscar").value.trim());
-    const l = todos.filter(a => (FILTRO_ARCH === "todo" || clase(a) === FILTRO_ARCH) && (!q || sinAcentos([a.nombre, a.titulo, a.sec, textoFecha(a.fecha)].join(" ")).includes(q)));
+    const l = todos.filter(a => (FILTRO_ARCH === "todo" || clase(a) === FILTRO_ARCH) && (!q || coincide([a.nombre, a.titulo, a.sec, textoFecha(a.fecha)].join(" "), q)));
     $("cuenta-arch").textContent = l.length === 1 ? "1 archivo" : `${l.length} archivos`;
     $("lista-arch").innerHTML = l.length ? l.map((a, i) => {
       const t = tipoArchivo(a.tipo, a.nombre);

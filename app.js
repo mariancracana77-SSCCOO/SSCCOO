@@ -402,7 +402,7 @@ function pintaAvisos(idNuevo) {
   const l = ordenAvisos(D.avisos).filter(a => (estado.catAviso === "Todos" || a.categoria === estado.catAviso) &&
     pasaFecha("avisos", a.fecha) &&
     (buscando || !nArch || archivado(a) === estado.archivo) &&
-    (!q || normal(a.titulo + " " + a.contenido + " " + textoFecha(a.fecha)).includes(q)));
+    (!q || coincide(a.titulo + " " + a.contenido + " " + textoFecha(a.fecha), q)));
   $("lista-avisos").innerHTML = (buscando && l.length ? `<p class="fecha-txt">${l.length} aviso${l.length === 1 ? "" : "s"} encontrado${l.length === 1 ? "" : "s"} (incluye el archivo).</p>` : "") +
     (estado.archivo && !buscando ? `<p class="fecha-txt">Avisos de hace más de ${mesesArchivo()} mes${mesesArchivo() === 1 ? "" : "es"}.</p>` : "") +
     (l.length ? l.filter(a => a.fijado).map(a => tarjetaAviso(a, { nuevo: a.id === idNuevo, resaltar: qr })).join("") +
@@ -468,7 +468,7 @@ function pintaConvenio() {
   pintaFiltros("filtros-convenio", usadas("convenio", D.convenio, "categoria"), estado.catConv, o => { estado.catConv = o; pintaConvenio(); });
   const qr = $("buscar-convenio").value.trim(), q = normal(qr);
   const l = D.convenio.filter(s => (estado.catConv === "Todos" || s.categoria === estado.catConv) &&
-    (!q || normal(s.titulo + " " + s.resumen + " " + s.contenido + " " + (s.articulo || "")).includes(q)));
+    (!q || coincide(s.titulo + " " + s.resumen + " " + s.contenido + " " + (s.articulo || ""), q)));
   $("lista-convenio").innerHTML = l.length ? l.map(s => apartadoHTML(s, qr, !!q)).join("")
     : vacio("convenio", q ? "No hay apartados que coincidan con la búsqueda." : "Todavía no hay apartados del convenio.");
   const docsConv = D.docs.slice(0, 5);
@@ -487,7 +487,7 @@ function pintaActas() {
   pintaFechas("fechas-actas", "actas", D.actas, a => a.fecha, () => pintaActas());
   const qr = $("buscar-actas").value.trim(), q = normal(qr);
   const l = D.actas.filter(a => (estado.tipoActa === "Todos" || a.tipo === estado.tipoActa) && pasaFecha("actas", a.fecha) &&
-    (!q || normal(a.titulo + " " + a.resumen + " " + a.acuerdos + " " + textoFecha(a.fecha)).includes(q)));
+    (!q || coincide(a.titulo + " " + a.resumen + " " + a.acuerdos + " " + textoFecha(a.fecha), q)));
   if (!l.length) { $("lista-actas").innerHTML = vacio("actas", q || hayFecha("actas") ? "No hay actas que coincidan con la búsqueda o la fecha." : "Todavía no hay actas publicadas."); return; }
   const html = porMeses(l, a => a.fecha, a => actaHTML(a, qr));
   $("lista-actas").innerHTML = html;
@@ -500,7 +500,7 @@ function pintaDocumentos() {
   pintaFechas("fechas-docs", "docs", D.docs, d => d.fecha, () => pintaDocumentos());
   const q = normal($("buscar-docs").value.trim());
   const l = D.docs.filter(d => (estado.catDoc === "Todos" || d.categoria === estado.catDoc) && pasaFecha("docs", d.fecha) &&
-    (!q || normal(d.titulo + " " + d.descripcion + " " + d.nombre_archivo + " " + textoFecha(d.fecha)).includes(q)));
+    (!q || coincide(d.titulo + " " + d.descripcion + " " + d.nombre_archivo + " " + textoFecha(d.fecha), q)));
   $("lista-documentos").innerHTML = l.length ? porMeses(l, d => d.fecha, docHTML)
     : vacio("carpeta", q || hayFecha("docs") ? "No hay documentos que coincidan con la búsqueda o la fecha." : "Todavía no hay documentos subidos.");
 }
@@ -544,7 +544,7 @@ function pintaApartado() {
   const todas = D.publicaciones.filter(x => x.apartado_id === a.id);
   pintaFechas("fechas-ap", "ap", todas, x => x.fecha, () => pintaApartado());
   const qr = $("buscar-ap").value.trim(), q = normal(qr);
-  const l = todas.filter(x => pasaFecha("ap", x.fecha) && (!q || normal(x.titulo + " " + x.contenido + " " + (x.adjuntos || []).map(j => j.nombre).join(" ") + " " + textoFecha(x.fecha)).includes(q)));
+  const l = todas.filter(x => pasaFecha("ap", x.fecha) && (!q || coincide(x.titulo + " " + x.contenido + " " + (x.adjuntos || []).map(j => j.nombre).join(" ") + " " + textoFecha(x.fecha), q)));
   $("lista-ap").innerHTML = l.length ? porMeses(l, x => x.fecha, x => publicacionHTML(x, qr))
     : vacio(a.icono || "carpeta", q || hayFecha("ap") ? "No hay nada que coincida con la búsqueda o la fecha." : "Todavía no hay nada publicado en este apartado.");
 }
@@ -554,7 +554,7 @@ $("buscar-ap").oninput = () => pintaApartado();
 function pintaPreguntas() {
   pintaFiltros("filtros-preguntas", usadas("pregunta", D.preguntas, "categoria"), estado.catPreg, o => { estado.catPreg = o; pintaPreguntas(); });
   const qr = $("buscar-preguntas").value.trim(), q = normal(qr);
-  const l = D.preguntas.filter(p => (estado.catPreg === "Todos" || p.categoria === estado.catPreg) && (!q || normal(p.pregunta + " " + p.respuesta).includes(q)));
+  const l = D.preguntas.filter(p => (estado.catPreg === "Todos" || p.categoria === estado.catPreg) && (!q || coincide(p.pregunta + " " + p.respuesta, q)));
   $("lista-preguntas").innerHTML = l.length ? l.map(p => preguntaHTML(p, qr, !!q)).join("")
     : vacio("pregunta", q ? "No hay preguntas que coincidan. Escríbenos y te respondemos." : "Todavía no hay preguntas frecuentes.");
 }
@@ -1101,7 +1101,7 @@ document.addEventListener("click", async (ev) => {
 function buscarTodo() {
   const qr = $("buscar-todo").value.trim(), q = normal(qr);
   if (q.length < 2) { $("resultados-todo").innerHTML = `<p class="fecha-txt">Escribe al menos dos letras.</p>`; return; }
-  const pasa = (...t) => normal(t.join(" ")).includes(q);
+  const pasa = (...t) => coincide(t.join(" "), q);
   const grupos = [
     ["Avisos", "avisos", D.avisos.filter(a => pasa(a.titulo, a.contenido, textoFecha(a.fecha))).map(a => ({ h: "aviso-" + a.id, t: a.titulo, s: fechaLarga(a.fecha) }))],
     ["Calendario", "calendario", D.eventos.filter(e => pasa(e.titulo, e.descripcion, e.lugar, e.tipo, textoFecha(e.fecha))).map(e => ({ h: "calendario", t: e.titulo, s: fechaLarga(e.fecha + "T12:00:00") + (e.hora ? " · " + horaEvento(e).toLowerCase() : ""), dia: e.fecha }))],
