@@ -7,9 +7,10 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, GitHub Pages, con `.nojekyll`)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **39**
+- Versión actual: **40**
 
 ## Reglas del proyecto (no negociables)
+- **No publicar nada en GitHub sin que la usuaria lo confirme antes** (enseñar lo que cambia y esperar a «publica»).
 - Responder siempre en **español**, claro y sin tecnicismos innecesarios.
 - **Sin emojis** en la interfaz.
 - **Todo gratis**: nada de servicios de pago. IA = Google Gemini gratuito (no API de Claude).
@@ -64,7 +65,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 - `cartel.html` + `cartel.js` + `qr.js`: cartel con QR para imprimir (usa `icon-512.png` para el logo; `logo.png`, 192 px, para la web y el panel).
 - `lib/supabase.js` (supabase-js 2.58.0 UMD) y `lib/jszip.min.js` (3.10.1): **alojados aquí a propósito** (no CDN).
 - `fuentes.css` + `fuentes/`: Atkinson Hyperlegible (texto), Barlow Condensed (títulos) y Barlow (de reserva), alojadas aquí (no Google Fonts, por privacidad).
-- Logo: es el original (no redibujarlo: al padre le gusta así). Desde la v39 sale de una imagen más nítida que pasó la usuaria (1407×768, círculo centro 703,5/382,5 r 251,5): recorte, ampliado a 1024, MedianFilter(3), UnsharpMask, blancos grisáceos a blanco y exterior transparente. De ahí salen `icon-512`, `icon-192`, `logo.png`, `favicon-32`, `icon-maskable-512` (fondo #15191E al 80 %) y `apple-touch-icon` (180, fondo #15191E). `manifest.json` y `theme-color` en #15191E (pantalla de carga oscura).
+- Logo: es el original (NO redibujarlo ni quitarle el relieve: al padre le gusta así). Desde la v40 sale de la imagen que pasó la usuaria ampliada x4 con Real-ESRGAN anime 6B (sin torch: pesos .pth leídos con un unpickler restringido y red montada en ONNX, ejecutada con onnxruntime), blancos limpios y exterior transparente (2048 px). De ahí salen `icon-512`, `icon-192`, `logo.png`, `favicon-32`, `icon-maskable-512` (fondo #15191E al 80 %) y `apple-touch-icon` (180, fondo #15191E). `manifest.json` y `theme-color` en #15191E.
 - Diseño: colores en `:root` de `styles.css` (asfalto, `--rotulo`, `--ambar-rotulo` `#FFB000`, rojo CCOO `#C4122F`, hueso `#F5F3EE`). El bloque «Diseño Rótulo de línea» está al final de `styles.css`.
 
 ## Al publicar una versión nueva (3 sitios)
