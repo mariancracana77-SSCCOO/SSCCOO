@@ -90,13 +90,14 @@ function marcaPestanas(clave) {
     if (on) b.scrollIntoView({ inline: "center", block: "nearest" });
   });
   const sub = $("subpestanas"), hay = g && g.miembros.length > 1;
-  sub.classList.toggle("oculto", !hay);
+  $("subpest-caja").classList.toggle("oculto", !hay);
   document.body.classList.toggle("con-subpestanas", !!hay);
-  if (!hay) { sub.innerHTML = ""; return; }
+  if (!hay) { sub.innerHTML = ""; flechasPestanas(); return; }
   sub.setAttribute("aria-label", "Dentro de " + g.titulo);
   sub.innerHTML = g.miembros.map(m => `<a href="#${esc(m.clave)}" data-v="${esc(m.clave)}" class="${m.clave === clave ? "activa" : ""}"${m.clave === clave ? ' aria-current="page"' : ""}>${esc(m.titulo)}</a>`).join("");
   sub.scrollLeft = 0; // se ve desde el principio; solo se mueve si la elegida no cabe
   const act = sub.querySelector(".activa"); if (act && act.offsetLeft + act.offsetWidth > sub.clientWidth) sub.scrollLeft = act.offsetLeft - 16;
+  flechasPestanas();
   if (cargar.listo) pintaContadores();
 }
 
@@ -122,18 +123,27 @@ function marcaPestanas(clave) {
 
 // Barra de pestañas: en el móvil caben 2 o 3 de 12 y no se notaba que se puede deslizar.
 // Una flecha a cada lado (y la sombra) solo cuando hay más secciones escondidas por ese lado.
+// Lo mismo en la segunda fila (subapartados), con flechas rojas para que se vea que hay más.
+const FILAS_PEST = [[".pestanas-caja", ".pestanas-web"], ["#subpest-caja", "#subpestanas"]];
 function flechasPestanas() {
-  const nav = document.querySelector(".pestanas-web"), izq = document.querySelector(".pest-flecha.izq"), der = document.querySelector(".pest-flecha.der");
-  if (!nav || !izq || !der) return;
-  const hayIzq = nav.scrollLeft > 4, hayDer = nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 4;
-  izq.hidden = !hayIzq; der.hidden = !hayDer;
-  nav.classList.toggle("hay-izq", hayIzq); nav.classList.toggle("hay-der", hayDer);
+  FILAS_PEST.forEach(([c, n]) => {
+    const caja = document.querySelector(c), nav = document.querySelector(n);
+    if (!caja || !nav) return;
+    const izq = caja.querySelector(":scope > .pest-flecha.izq"), der = caja.querySelector(":scope > .pest-flecha.der");
+    const hayIzq = nav.scrollLeft > 4, hayDer = nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 4;
+    izq.hidden = !hayIzq; der.hidden = !hayDer;
+    nav.classList.toggle("hay-izq", hayIzq); nav.classList.toggle("hay-der", hayDer);
+  });
 }
-document.querySelectorAll(".pest-flecha").forEach(b => b.addEventListener("click", () => {
-  const nav = document.querySelector(".pestanas-web"), lado = b.classList.contains("izq") ? -1 : 1;
-  nav.scrollBy({ left: lado * nav.clientWidth * 0.7, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-}));
-document.querySelector(".pestanas-web")?.addEventListener("scroll", flechasPestanas, { passive: true });
+FILAS_PEST.forEach(([c, n]) => {
+  const caja = document.querySelector(c), nav = document.querySelector(n);
+  if (!caja || !nav) return;
+  caja.querySelectorAll(":scope > .pest-flecha").forEach(b => b.addEventListener("click", () => {
+    const lado = b.classList.contains("izq") ? -1 : 1;
+    nav.scrollBy({ left: lado * nav.clientWidth * 0.7, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  }));
+  nav.addEventListener("scroll", flechasPestanas, { passive: true });
+});
 window.addEventListener("resize", flechasPestanas);
 irA();
 flechasPestanas();
