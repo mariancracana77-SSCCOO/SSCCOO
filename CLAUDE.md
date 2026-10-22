@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, GitHub Pages, con `.nojekyll`)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **54**
+- Versión actual: **55**
 
 ## Reglas del proyecto (no negociables)
 - **No publicar nada en GitHub sin que la usuaria lo confirme antes** (enseñar lo que cambia y esperar a «publica»).
@@ -49,7 +49,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
   - Mis descansos (v52, `descansos.js`, vista `#descansos`): descanso semanal del conductor. Datos solo en localStorage `ccoo-descansos`; copia en PDF hecha a mano (`hazPDF`, Helvetica WinAnsi) con los datos en una línea de comentario `%CCOO-DESCANSOS:<base64>` para recuperarla; avisos con la RPC `programar_descanso` (tabla `avisos_descanso`, solo hora y texto unidos al endpoint) y la edge function `avisos-descanso` (tarea `avisos-descanso`, cada 10 min).
   - Idioma de toda la web (v55, botón `#cab-idioma` junto a «Aa», localStorage `ccoo-idioma`): las tarjetas con `data-reg` se traducen solas al verse (`vigiaIdioma`, de dos en dos, `traduceReg` con la función `traducir` y caché `TRADUCIDO`); franja `#banda-idioma` para volver al español. Menús y botones siguen en español.
   - Búsqueda que perdona faltas (`coincide`, `fonetico` en `config.js`), en la web y en el panel.
-  - Colores por tipo (v52): solo la etiqueta `.etq.tipo` usa `--tc` (color del tipo puesto en Ajustes); todo lo demás sigue en rojo.
+  - Colores por tipo (v52/v55): usan `--tc` (color del tipo puesto en Ajustes) la etiqueta `.etq.tipo`, los puntos del calendario (`.dia .punto`) y, en el panel, `.sel-color` y `.ev-mini`; todo lo demás sigue en rojo. Filtro por tipo del calendario: `estado.tipoCal` (`[data-tipo-cal]`).
   - Festivos: filas normales de `eventos` con `tipo = "Festivo"` (00:00–23:59). `esFestivo()` los saca de «Lo último», del recuento de novedades y del contador de la pestaña. Al cargarlos en bloque, `notificar = false` y `notificado = true` para no mandar avisos.
 - `admin.html` + `admin.js` + `admin.css`: panel (Resumen con visitas, Calendario mensual, secciones, Textos, Ajustes: canales Telegram/WhatsApp, copia ZIP, archivo, administradores, listas; asistente de actas con Gemini a partir de fotos/archivos).
   - Las secciones se definen en el objeto `SECCIONES`.
