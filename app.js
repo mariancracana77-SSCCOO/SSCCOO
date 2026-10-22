@@ -28,16 +28,13 @@ function irA() {
   if (aEncuesta) { const ir = () => { const el = $(aEncuesta); if (el) { el.scrollIntoView({ block: "center" }); el.classList.add("nuevo"); } else if (!cargar.listo) setTimeout(ir, 300); }; setTimeout(ir, 300); }
   if (avisoDirecto) setTimeout(() => { const el = $(avisoDirecto); if (el) { el.scrollIntoView({ block: "start" }); el.classList.add("nuevo"); } }, 300);
   // La vista nueva entra desde el lado de su pestaña (más a la derecha en la barra: entra por la derecha)
-  const orden = [...document.querySelectorAll(".pestanas-web a")].map(b => b.dataset.v), clave = ap ? "ap-" + ap : v;
+  const orden = ordenVistas(), clave = ap ? "ap-" + ap : v;
   const iAntes = orden.indexOf(irA.antes), iAhora = orden.indexOf(clave), lado = iAntes < 0 || iAhora < 0 || iAntes === iAhora ? "" : iAhora > iAntes ? "desde-der" : "desde-izq";
   const cambia = irA.antes !== undefined && irA.antes !== clave; irA.antes = clave;
   document.querySelectorAll(".vista").forEach(s => { s.classList.toggle("activa", s.id === "v-" + v); s.classList.remove("desde-der", "desde-izq"); });
   if (lado && cambia) $("v-" + v)?.classList.add(lado);
   if (v === "inicio" && cambia) animaPortada();
-  document.querySelectorAll(".pestanas-web a").forEach(b => {
-    const on = b.dataset.v === (ap ? "ap-" + ap : v); b.classList.toggle("activa", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current");
-    if (on) b.scrollIntoView({ inline: "center", block: "nearest" });
-  });
+  marcaPestanas(clave);
   if (!avisoDirecto && !legal && !aDelegados && !aEncuesta) window.scrollTo(0, 0);
   const sec = ap ? "ap-" + ap : v;
   if (sec !== "inicio") { marcaVisto(sec); if (cargar.listo) pintaContadores(); }
@@ -46,6 +43,53 @@ function irA() {
 }
 
 window.addEventListener("hashchange", irA);
+
+// ---------- Pestañas agrupadas (v52) ----------
+// Arriba solo salen los apartados principales; lo que va dentro (Actas en «Comité de empresa», los subapartados
+// que crea el admin…) sale en una segunda fila (#subpestanas). Las direcciones de siempre (#actas, #ap-…) siguen valiendo.
+// Si falta el apartado de arriba (borrado u oculto), lo de dentro vuelve a salir arriba.
+const DENTRO_DE = { actas: "comite", convenio: "convenio-y-leyes", calcula: "convenio-y-leyes", preguntas: "@info" };
+const APARTADO_AFILIATE = "afiliate"; // va el último, al lado de «Nosotros», para animar a afiliarse
+const NOMBRE_FIJO = { inicio: "Inicio", avisos: "Avisos", calendario: "Calendario", actas: "Actas", documentos: "Documentos", convenio: "Convenio", calcula: "Calcula", preguntas: "Dudas", info: "Nosotros" };
+let GRUPOS = [], GRUPO_DE = {};
+const padreValido = (a) => !!a.padre_id && D.apartados.some(p => p.id === a.padre_id && !p.padre_id);
+function montaGrupos() {
+  const principales = D.apartados.filter(a => !padreValido(a));
+  const fijo = (k) => ({ clave: k, titulo: NOMBRE_FIJO[k], miembros: [{ clave: k, titulo: NOMBRE_FIJO[k] }, ...Object.keys(DENTRO_DE).filter(x => DENTRO_DE[x] === "@" + k).map(x => ({ clave: x, titulo: NOMBRE_FIJO[x] }))] });
+  const grupoAp = (a) => {
+    const fijos = Object.keys(DENTRO_DE).filter(k => DENTRO_DE[k] === a.slug), hijos = D.apartados.filter(h => h.padre_id === a.id && padreValido(h));
+    const propio = D.publicaciones.some(p => p.apartado_id === a.id) || a.slug === APARTADO_CONDUCTORES || !(fijos.length + hijos.length);
+    return { clave: "ap-" + a.slug, titulo: a.titulo, miembros: [...(propio ? [{ clave: "ap-" + a.slug, titulo: a.titulo }] : []),
+      ...fijos.map(k => ({ clave: k, titulo: NOMBRE_FIJO[k] })), ...hijos.map(h => ({ clave: "ap-" + h.slug, titulo: h.titulo }))] };
+  };
+  const sueltos = Object.keys(DENTRO_DE).filter(k => !DENTRO_DE[k].startsWith("@") && !principales.some(a => a.slug === DENTRO_DE[k])).map(k => ({ clave: k, titulo: NOMBRE_FIJO[k], miembros: [{ clave: k, titulo: NOMBRE_FIJO[k] }] }));
+  GRUPOS = [fijo("inicio"), fijo("avisos"), fijo("calendario"), ...principales.filter(a => a.slug !== APARTADO_AFILIATE).map(grupoAp), ...sueltos,
+    fijo("documentos"), fijo("info"), ...principales.filter(a => a.slug === APARTADO_AFILIATE).map(grupoAp)];
+  GRUPO_DE = {}; GRUPOS.forEach(g => { GRUPO_DE[g.clave] = g; g.miembros.forEach(m => GRUPO_DE[m.clave] = g); });
+}
+const ordenVistas = () => GRUPOS.length ? GRUPOS.flatMap(g => g.miembros.map(m => m.clave)) : [...document.querySelectorAll(".pestanas-web a")].map(b => b.dataset.v);
+function pintaPestanas() {
+  montaGrupos();
+  document.querySelector(".pestanas-web").innerHTML = GRUPOS.map(g => `<a href="#${esc(g.miembros[0].clave)}" data-v="${esc(g.clave)}">${esc(g.titulo)}</a>`).join("");
+  marcaPestanas(irA.antes);
+  flechasPestanas();
+}
+function marcaPestanas(clave) {
+  const g = GRUPO_DE[clave], arriba = g ? g.clave : clave;
+  document.querySelectorAll(".pestanas-web a").forEach(b => {
+    const on = b.dataset.v === arriba; b.classList.toggle("activa", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current");
+    if (on) b.scrollIntoView({ inline: "center", block: "nearest" });
+  });
+  const sub = $("subpestanas"), hay = g && g.miembros.length > 1;
+  sub.classList.toggle("oculto", !hay);
+  document.body.classList.toggle("con-subpestanas", !!hay);
+  if (!hay) { sub.innerHTML = ""; return; }
+  sub.setAttribute("aria-label", "Dentro de " + g.titulo);
+  sub.innerHTML = g.miembros.map(m => `<a href="#${esc(m.clave)}" data-v="${esc(m.clave)}" class="${m.clave === clave ? "activa" : ""}"${m.clave === clave ? ' aria-current="page"' : ""}>${esc(m.titulo)}</a>`).join("");
+  sub.scrollLeft = 0; // se ve desde el principio; solo se mueve si la elegida no cabe
+  const act = sub.querySelector(".activa"); if (act && act.offsetLeft + act.offsetWidth > sub.clientWidth) sub.scrollLeft = act.offsetLeft - 16;
+  if (cargar.listo) pintaContadores();
+}
 
 // ---------- Aviso de privacidad (informativo, no bloquea) ----------
 // Sale la primera vez, encima de la barra de abajo. Con «Entendido» no vuelve a salir en este móvil
@@ -161,9 +205,11 @@ function pintaContadores() {
   const c = { avisos: nuevos("avisos", D.avisos, a => a.fecha), calendario: nuevos("calendario", D.eventos.filter(e => !esFestivo(e)), e => e.creado), actas: nuevos("actas", D.actas, a => a.creado),
     documentos: nuevos("documentos", D.docs, d => d.fecha), convenio: nuevos("convenio", D.convenio, x => x.actualizado), preguntas: nuevos("preguntas", D.preguntas, x => x.creado) };
   D.apartados.forEach(a => { c["ap-" + a.slug] = nuevos("ap-" + a.slug, D.publicaciones.filter(p => p.apartado_id === a.id), p => p.creado); });
-  document.querySelectorAll(".pestanas-web a[data-v]").forEach(a => {
+  const actual = irA.antes;
+  document.querySelectorAll(".pestanas-web a[data-v], #subpestanas a[data-v]").forEach(a => {
     a.querySelectorAll(".cuenta-pestana, .sr-cuenta").forEach(e => e.remove());
-    const n = a.classList.contains("activa") ? 0 : c[a.dataset.v] || 0;
+    const g = a.closest("#subpestanas") ? null : GRUPOS.find(x => x.clave === a.dataset.v);
+    const n = g ? g.miembros.reduce((t, m) => t + (m.clave === actual ? 0 : c[m.clave] || 0), 0) : a.dataset.v === actual ? 0 : c[a.dataset.v] || 0;
     if (n) a.insertAdjacentHTML("beforeend", `<span class="cuenta-pestana" aria-hidden="true">${n > 9 ? "9+" : n}</span><span class="sr-only sr-cuenta">, ${n} ${n === 1 ? "nuevo" : "nuevos"}</span>`);
   });
 }
@@ -237,7 +283,9 @@ function pintaInicio() {
   if ($("ver-mas")) $("ver-mas").onclick = () => { estado.feedMax = max + 20; pintaInicio(); };
   if (aparece) $("inicio-feed").querySelectorAll(".item-tablon").forEach(el => { if (el.getBoundingClientRect().top > innerHeight) { el.classList.add("por-ver"); aparece.observe(el); } });
   // Accesos
-  const acc = [["avisos", "avisos", "Avisos"], ...D.apartados.map(a => ["ap-" + a.slug, a.icono || "carpeta", a.titulo]), ["convenio", "convenio", "Convenio"], ["calcula", "reloj", "Calcula"], ["calendario", "calendario", "Calendario"], ["actas", "actas", "Actas"], ["documentos", "carpeta", "Documentos"], ["preguntas", "pregunta", "Dudas"]];
+  const IC_FIJO = { avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta" };
+  const acc = GRUPOS.flatMap(g => g.miembros).filter(m => m.clave !== "inicio" && m.clave !== "info")
+    .map(m => [m.clave, IC_FIJO[m.clave] || D.apartados.find(a => "ap-" + a.slug === m.clave)?.icono || "carpeta", m.titulo]);
   $("inicio-accesos").innerHTML = `<h2 class="tit-seccion">Ir a</h2><nav class="accesos-tablon" aria-label="Accesos rápidos">${acc.map(([v, ic, t]) =>
     `<a href="#${esc(v)}">${icono(esc(ic))}<b>${esc(t)}</b></a>`).join("")}</nav>`;
   pintaCuentaAtras(urg ? null : prox.find(x => !esFestivo(x)) || prox[0]);
@@ -449,12 +497,6 @@ function pintaDocumentos() {
 $("buscar-docs").oninput = () => pintaDocumentos();
 
 // ---------- Apartados que crea el admin (Comité de empresa, etc.) ----------
-function pintaPestanasApartados() {
-  document.querySelectorAll(".pestanas-web a[data-ap]").forEach(a => a.remove());
-  const tras = document.querySelector('.pestanas-web a[data-v="actas"]');
-  tras.insertAdjacentHTML("afterend", D.apartados.map(a => `<a href="#ap-${esc(a.slug)}" data-v="ap-${esc(a.slug)}" data-ap>${esc(a.titulo)}</a>`).join(""));
-  flechasPestanas();
-}
 // ---------- Zona Conductores: restricciones de circulación para camiones ----------
 // Solo fuentes oficiales y gratuitas, comprobadas el 17/10/2026. La lista sale de la tabla «restricciones»
 // y la fecha de revisión de paginas.restricciones_revisado: las dos se cambian en el panel («Restricciones camiones»).
@@ -686,7 +728,7 @@ async function cargar(idNuevo) {
   D.votos = {}; (vot.data || []).forEach(v => { (D.votos[v.encuesta_id] = D.votos[v.encuesta_id] || {})[v.opcion] = v.n; });
   D.calc = { permisos: cp.data || [], categorias: cc.data || [], ajustes: Object.fromEntries((ca.data || []).map(x => [x.clave, x.valor])) };
   if (!$("calc-zona").contains(document.activeElement)) pintaCalcula(); // no borrar lo que se está escribiendo
-  pintaPestanasApartados(); pintaApartado();
+  pintaPestanas(); pintaApartado();
   pintaInicio(); pintaEncuestas(); pintaAvisos(idNuevo); pintaCalendario(); pintaConvenio(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaInfo(); pintaCanales(); pintaContadores();
   if (/^#aviso-\d+$/.test(location.hash) && !cargar.hecho) { cargar.hecho = true; irA(); }
 }
@@ -805,7 +847,7 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) carg
     if (x0 == null) return;
     const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
     if (Math.abs(dx) < 80 || Math.abs(dx) < Math.abs(dy) * 2 || Date.now() - t0 > 700) return;
-    const orden = [...document.querySelectorAll(".pestanas-web a")].map(b => b.dataset.v), i = orden.indexOf(irA.antes);
+    const orden = ordenVistas(), i = orden.indexOf(irA.antes);
     const sig = orden[i + (dx < 0 ? 1 : -1)];
     if (i >= 0 && sig) location.hash = sig;
   }, { passive: true });
