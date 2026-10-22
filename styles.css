@@ -1456,3 +1456,31 @@ html[data-letra] .subpestanas a { font-size: .92rem; }
 .desc-total { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 6px 0 10px; padding: 10px 14px; border-radius: 10px; background: var(--rojo); color: #fff; font-weight: 700; }
 .desc-total b { font-family: var(--cond); font-size: 1.5rem; }
 .desc-idioma { font-weight: 600; font-size: .9rem; color: var(--suave); }
+/* v60: Mis descansos con jornada, conducción, pausas y personalizar */
+.desc-hoy { padding: 16px; display: grid; gap: 12px; margin-bottom: 16px; }
+.desc-hoy .tit-seccion, #desc-conduccion .tit-seccion { margin: 0; }
+.desc-limites { margin: 4px 0 0; padding-left: 1.2em; display: grid; gap: 4px; font-size: .95rem; }
+.desc-hoy .desc-fecha { font-size: 1.5rem; }
+.desc-hoy-cond { margin: 0; }
+.desc-pausa { display: grid; gap: 2px; padding: 12px 14px; border-radius: var(--radio); background: var(--fondo); border-left: 5px solid var(--linea); }
+.desc-pausa.pronto { border-left-color: #ffb000; }
+.desc-pausa.tarde { border-left-color: var(--rojo); background: var(--rojo-suave); }
+.desc-pausa.parado { border-left-color: #2e7d4f; }
+.desc-pausa b { font-family: var(--cond); font-size: 1.3rem; }
+.desc-hoy-bot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.desc-hoy-bot .btn { flex: 1 1 auto; }
+.desc-cifras > div.mal b { color: var(--rojo-ic); }
+.desc-cifras > div.mal { box-shadow: inset 0 0 0 2px var(--rojo); }
+.desc-filtro { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.desc-fila.jornada { border-left-style: dashed; }
+.desc-fila.falta { border-left-color: var(--rojo); }
+.desc-fila.partido { border-left-color: #2e7d4f; }
+.desc-perso { display: grid; gap: 14px; }
+.desc-perso fieldset { border: 1px solid var(--linea); border-radius: var(--radio); padding: 10px 14px; margin: 0; display: grid; gap: 8px; min-width: 0; }
+.desc-perso legend { font-weight: 700; padding: 0 6px; }
+.desc-perso label:not(.check) { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; justify-content: space-between; }
+.desc-perso select { min-height: 40px; padding: 6px 10px; border-radius: 10px; border: 1.5px solid var(--linea); background: var(--tarjeta); color: var(--tinta); font: inherit; }
+.desc-perso .ayuda { margin: 0; }
+[data-bloque][hidden], #desc-conduccion[hidden] { display: none !important; }
+.desc-perso .check { display: flex; align-items: center; gap: 10px; font-weight: 400; font-size: 1rem; margin: 0; }
+.desc-perso .check input { margin: 0; flex: none; min-height: 0; width: 20px; height: 20px; }
