@@ -506,3 +506,7 @@ body.admin .btn-cab.aa { min-width: 44px; }
 .origen-ley span { display: inline-flex; align-items: center; gap: 6px; }
 .origen-ley i { width: 12px; height: 12px; border-radius: 3px; background: var(--linea); }
 .origen-ley i.app { background: var(--dato); }
+
+/* v45: en oscuro las categorías llevan fondo rojo del logo: letra blanca encima */
+:root[data-theme="dark"] :is(.sel-color, .ev-mini) { color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) :is(.sel-color, .ev-mini) { color: #fff; } }
