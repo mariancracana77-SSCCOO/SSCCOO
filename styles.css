@@ -1438,3 +1438,10 @@ html[data-letra] .subpestanas a { font-size: .92rem; }
 .filtro-cal:not(.etq).activo { background: var(--tinta); color: var(--tarjeta); outline: none; }
 .filtro-cal.apagado { opacity: .45; }
 .dia .punto { width: 8px; height: 8px; }
+
+/* v58: traducir lo de Inicio (rótulo y «Lo último») con un solo botón por bloque */
+.rot-caja { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.rot-caja > .traducir { justify-self: end; }
+.tit-seccion .traducir { margin-left: auto; }
+.tit-seccion .traducir .accion { text-transform: none; letter-spacing: 0; font-size: .85rem; }
+.tit-seccion .traducir .menu-idiomas { text-transform: none; letter-spacing: 0; }
