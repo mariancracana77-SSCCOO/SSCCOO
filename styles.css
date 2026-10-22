@@ -1432,3 +1432,4 @@ html[data-letra] .subpestanas a { font-size: .9rem; }
 .filtro-cal.activo { outline: 3px solid var(--tinta); outline-offset: 1px; }
 .filtro-cal:not(.etq).activo { background: var(--tinta); color: var(--tarjeta); outline: none; }
 .filtro-cal.apagado { opacity: .45; }
+.dia .punto { width: 8px; height: 8px; }
