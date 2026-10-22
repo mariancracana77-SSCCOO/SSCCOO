@@ -261,7 +261,7 @@ body.admin { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
 /* Visitas */
 .visitas { padding: 16px 18px; margin-bottom: 6px; }
 .cifras { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-@media (min-width: 640px) { .cifras { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 640px) { .cifras { grid-template-columns: repeat(3, 1fr); } }
 .cifras div { background: var(--fondo); border-radius: var(--radio); padding: 10px 12px; display: flex; flex-direction: column; }
 .cifras b { font-family: var(--cond); font-size: 2rem; line-height: 1; }
 .cifras div:first-child b { color: var(--rojo); }

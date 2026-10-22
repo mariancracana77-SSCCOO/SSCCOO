@@ -4,6 +4,9 @@ const D = { avisos: [], eventos: [], convenio: [], docs: [], actas: [], pregunta
 const estado = { catAviso: "Todos", catConv: "Todos", tipoActa: "Todos", catDoc: "Todos", catPreg: "Todos", archivo: false, mes: new Date(), diaSel: hoyISO(),
   fechas: { avisos: {}, actas: {}, docs: {}, ap: {} }, ap: null, calc: "vacaciones", permiso: null };
 
+// En el navegador con la sesión del panel abierta no se cuentan visitas ni lecturas (las pruebas del administrador no inflan las cifras)
+const ES_ADMIN = (() => { try { return Object.keys(localStorage).some(k => /^sb-.*-auth-token$/.test(k)); } catch (_) { return false; } })();
+
 // ---------- Iconos fijos ----------
 document.querySelectorAll("[data-i]").forEach(el => el.outerHTML = icono(el.dataset.i));
 document.querySelectorAll("[data-ic]").forEach(el => el.innerHTML = icono(el.dataset.ic));
@@ -969,6 +972,7 @@ $("buscar-todo").oninput = buscarTodo;
 // ---------- Estadísticas anónimas: secciones visitadas y lo que se lee ----------
 // Solo se suma 1 en el servidor; aquí se recuerda (en esta visita) qué se ha contado ya, para no contarlo dos veces.
 function contarUnaVez(clave, enviar) {
+  if (ES_ADMIN) return;
   try {
     const hechos = JSON.parse(sessionStorage.getItem("ccoo-contado") || "[]");
     if (hechos.includes(clave)) return;
@@ -990,14 +994,22 @@ new MutationObserver(vigilar).observe(document.querySelector("main"), { childLis
 document.addEventListener("click", (ev) => { const a = ev.target.closest("[data-abre]"); if (a) contarLectura(a.dataset.abre); });
 
 // ---------- Contador anónimo de visitas ----------
-// Solo suma 1 a las visitas del día (y 1 a «móviles distintos» la primera vez de hoy en este móvil).
+// Solo suma 1 a las visitas del día, y 1 a «móviles distintos» la primera vez de hoy, de esta semana y de este mes en este móvil.
 // No se guarda nada que identifique a nadie: ni IP, ni nombres, ni un identificador del móvil.
+// En el navegador donde está abierta la sesión del panel no se cuenta nada (ES_ADMIN, arriba del todo).
 (function contarVisita() {
+  if (ES_ADMIN) return;
+  const primera = (prefijo, clave) => { // true solo la primera vez de ese día/semana/mes en este móvil
+    if (localStorage.getItem(clave)) return false;
+    Object.keys(localStorage).filter(k => k.startsWith(prefijo)).forEach(k => localStorage.removeItem(k)); localStorage.setItem(clave, "1"); return true;
+  };
   try {
     if (sessionStorage.getItem("ccoo-contada")) return; // una vez por cada vez que se abre la web
     sessionStorage.setItem("ccoo-contada", "1");
-    const clave = "ccoo-dia-" + hoyISO(), nuevo = !localStorage.getItem(clave);
-    if (nuevo) { Object.keys(localStorage).filter(k => k.startsWith("ccoo-dia-")).forEach(k => localStorage.removeItem(k)); localStorage.setItem(clave, "1"); }
+    const d = new Date(), lunes = new Date(d.getFullYear(), d.getMonth(), d.getDate() - (d.getDay() + 6) % 7);
+    const nuevo = primera("ccoo-dia-", "ccoo-dia-" + hoyISO());
     sb.rpc("contar_visita", { p_nuevo: nuevo }).then(() => {}, () => {});
+    if (primera("ccoo-sem-", "ccoo-sem-" + isoDe(lunes))) sb.rpc("contar_movil", { p_tipo: "semana" }).then(() => {}, () => {});
+    if (primera("ccoo-mes-", "ccoo-mes-" + hoyISO().slice(0, 7))) sb.rpc("contar_movil", { p_tipo: "mes" }).then(() => {}, () => {});
   } catch (_) { sb.rpc("contar_visita", { p_nuevo: false }).then(() => {}, () => {}); }
 })();

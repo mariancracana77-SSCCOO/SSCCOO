@@ -1967,26 +1967,32 @@ async function pintaEstadisticas() {
 // ---------- Visitas (anónimas) ----------
 async function pintaVisitas() {
   const desde = isoLocal(new Date(Date.now() - 13 * 86400000));
-  const { data, error } = await sb.from("visitas_dia").select("*").gte("dia", desde).order("dia");
+  const hoyD = new Date(), lunes = isoLocal(new Date(hoyD.getFullYear(), hoyD.getMonth(), hoyD.getDate() - (hoyD.getDay() + 6) % 7)), mes = hoyISO().slice(0, 7);
+  const [{ data, error }, per] = await Promise.all([sb.from("visitas_dia").select("*").gte("dia", desde).order("dia"),
+    sb.from("moviles_periodo").select("*").in("periodo", ["S" + lunes, "M" + mes])]);
+  const unicos = Object.fromEntries((per.data || []).map(x => [x.periodo, x.n]));
   if (!$("visitas")) return;
   if (error) { $("visitas").innerHTML = `<p class="fecha-txt">No se han podido cargar las visitas.</p>`; return; }
   const porDia = Object.fromEntries((data || []).map(v => [v.dia, v]));
   const dias = [...Array(14)].map((_, i) => isoLocal(new Date(Date.now() - (13 - i) * 86400000)));
   const hoy = porDia[hoyISO()] || { visitas: 0, dispositivos: 0 }, ayer = porDia[dias[12]] || { visitas: 0, dispositivos: 0 };
-  const semana = dias.slice(7).reduce((n, d) => n + (porDia[d]?.dispositivos || 0), 0);
+  const veces7 = dias.slice(7).reduce((n, d) => n + (porDia[d]?.visitas || 0), 0);
+  const cifra = (v) => v === undefined ? "–" : v;
   const max = Math.max(1, ...dias.map(d => porDia[d]?.dispositivos || 0));
   $("visitas").innerHTML = `<div class="cifras">
       <div><b>${hoy.dispositivos}</b><span>móviles distintos hoy</span></div>
       <div><b>${hoy.visitas}</b><span>veces abierta hoy</span></div>
-      <div><b>${ayer.dispositivos}</b><span>ayer</span></div>
-      <div><b>${semana}</b><span>últimos 7 días</span></div>
+      <div><b>${cifra(unicos["S" + lunes])}</b><span>móviles distintos esta semana</span></div>
+      <div><b>${cifra(unicos["M" + mes])}</b><span>móviles distintos este mes</span></div>
+      <div><b>${ayer.dispositivos}</b><span>móviles distintos ayer</span></div>
+      <div><b>${veces7}</b><span>veces abierta en 7 días</span></div>
     </div>
     <div class="barras" role="img" aria-label="Móviles distintos por día, últimos 14 días">${dias.map(d => {
       const v = porDia[d]?.dispositivos || 0, f = fechaDia(d);
       return `<div class="barra-dia ${d === hoyISO() ? "hoy" : ""}" title="${f.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}: ${v} móvil(es), ${porDia[d]?.visitas || 0} visitas">
         <span class="valor">${v || ""}</span><span class="col" style="height:${Math.round(v / max * 100)}%"></span><span class="et">${f.toLocaleDateString("es-ES", { weekday: "narrow" })}<br>${f.getDate()}</span></div>`;
     }).join("")}</div>
-    <p class="ayuda">Cuenta de forma anónima: no se sabe quién entra, solo cuántos. «Móviles distintos» cuenta cada móvil una vez al día.</p>`;
+    <p class="ayuda">Cuenta de forma anónima: no se sabe quién entra, solo cuántos. «Móviles distintos» cuenta cada móvil una sola vez en ese día, semana o mes, aunque entre muchas veces; «veces abierta» suma todas las veces que se abre. La semana y el mes se cuentan desde la versión 42 («–» si aún no hay datos). No cuenta el navegador donde está abierto este panel.</p>`;
 }
 
 // Selector de color: el recuadro toma el color elegido

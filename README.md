@@ -133,6 +133,7 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 
 ## Versión 42: encuestas anónimas y más animaciones
 - **Encuestas anónimas**: en el panel, «Encuestas» (pregunta, de 2 a 6 opciones, día de cierre opcional). Salen en la portada; se vota tocando una opción y se ven los resultados en barras. Al servidor solo va «+1 a esta opción» (tablas `encuestas` y `encuesta_votos`, función `votar_encuesta`): nadie puede saber qué votó cada uno. Un voto por móvil (se recuerda en el propio móvil). Cerradas, los resultados se ven 15 días más.
+- **Visitas más fiables** (Inicio del panel): «móviles distintos esta semana» y «este mes» cuentan cada móvil una sola vez (antes «últimos 7 días» sumaba los móviles de cada día, y un mismo móvil contaba hasta 7 veces). Tabla `moviles_periodo` y función `contar_movil`. Además, el navegador donde está abierta la sesión del panel ya no cuenta visitas ni lecturas.
 - **Buscador a mano** en la portada («Buscar avisos, actas, documentos…»).
 - **Calendario del móvil**: «Añadir a mi calendario» ahora avisa el día antes y 2 horas antes (si es de todo el día, la tarde anterior).
 - Animaciones: «desliza para actualizar» con el camión del logo; la campana se balancea cuando llega algo nuevo; la cuenta atrás corre como un marcador y la cifra que cambia gira; la línea de «Próximas paradas» se dibuja de parada en parada; el aviso urgente da un destello; al cambiar de pestaña la pantalla entra por el lado de la pestaña. Todo se desactiva si el móvil tiene «reducir movimiento».
