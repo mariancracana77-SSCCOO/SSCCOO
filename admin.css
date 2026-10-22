@@ -420,8 +420,8 @@ html[data-contraste="alto"] .fila-h .barra, html[data-contraste="alto"] .col-s .
 .cambio .ic-cambio { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--azul-suave); color: var(--azul); }
 .cambio.borrar .ic-cambio { background: var(--rojo-suave); color: var(--rojo); }
 .cambio.crear .ic-cambio { background: var(--verde-suave); color: var(--verde); }
-:root[data-theme="dark"] .cambio .ic-cambio { color: #8fb3ff; } :root[data-theme="dark"] .cambio.borrar .ic-cambio { color: #ff4d4d; } :root[data-theme="dark"] .cambio.crear .ic-cambio { color: #5fd08f; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cambio .ic-cambio { color: #8fb3ff; } :root:not([data-theme="light"]) .cambio.borrar .ic-cambio { color: #ff4d4d; } :root:not([data-theme="light"]) .cambio.crear .ic-cambio { color: #5fd08f; } }
+:root[data-theme="dark"] .cambio .ic-cambio { color: #8fb3ff; } :root[data-theme="dark"] .cambio.borrar .ic-cambio { color: #ff2d50; } :root[data-theme="dark"] .cambio.crear .ic-cambio { color: #5fd08f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cambio .ic-cambio { color: #8fb3ff; } :root:not([data-theme="light"]) .cambio.borrar .ic-cambio { color: #ff2d50; } :root:not([data-theme="light"]) .cambio.crear .ic-cambio { color: #5fd08f; } }
 .cambio .que { margin: 0; overflow-wrap: anywhere; }
 .cambio .que b:first-child { font-weight: 700; }
 .detalle-cambio { margin-top: 6px; }
