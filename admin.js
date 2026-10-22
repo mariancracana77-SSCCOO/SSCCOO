@@ -1965,11 +1965,22 @@ async function pintaEstadisticas() {
 }
 
 // ---------- Visitas (anónimas) ----------
+// Últimos 7 días: cuántas veces se abre desde la app instalada y cuántas desde el navegador
+function origenHTML(filas) {
+  const app = filas.filter(x => x.origen === "app").reduce((n, x) => n + x.n, 0), nav = filas.filter(x => x.origen === "navegador").reduce((n, x) => n + x.n, 0), t = app + nav;
+  if (!t) return `<p class="ayuda">Desde la app o desde el navegador: se cuenta desde la versión 42.</p>`;
+  const pa = Math.round(app * 100 / t);
+  return `<div class="origen"><b>Desde dónde se abre (últimos 7 días)</b>
+    <div class="origen-barra" role="img" aria-label="Desde la app ${pa} %, desde el navegador ${100 - pa} %"><i style="width:${pa}%"></i></div>
+    <div class="origen-ley"><span><i class="app"></i>App instalada: ${app} (${pa} %)</span><span><i></i>Navegador: ${nav} (${100 - pa} %)</span></div>
+    <p class="ayuda">En iPhone, quien entra el mismo día por la app y por Safari cuenta como 2 móviles distintos. En Android, no.</p></div>`;
+}
 async function pintaVisitas() {
   const desde = isoLocal(new Date(Date.now() - 13 * 86400000));
   const hoyD = new Date(), lunes = isoLocal(new Date(hoyD.getFullYear(), hoyD.getMonth(), hoyD.getDate() - (hoyD.getDay() + 6) % 7)), mes = hoyISO().slice(0, 7);
-  const [{ data, error }, per] = await Promise.all([sb.from("visitas_dia").select("*").gte("dia", desde).order("dia"),
-    sb.from("moviles_periodo").select("*").in("periodo", ["S" + lunes, "M" + mes])]);
+  const [{ data, error }, per, ori] = await Promise.all([sb.from("visitas_dia").select("*").gte("dia", desde).order("dia"),
+    sb.from("moviles_periodo").select("*").in("periodo", ["S" + lunes, "M" + mes]),
+    sb.from("visitas_origen").select("*").gte("dia", isoLocal(new Date(Date.now() - 6 * 86400000)))]);
   const unicos = Object.fromEntries((per.data || []).map(x => [x.periodo, x.n]));
   if (!$("visitas")) return;
   if (error) { $("visitas").innerHTML = `<p class="fecha-txt">No se han podido cargar las visitas.</p>`; return; }
@@ -1992,6 +2003,7 @@ async function pintaVisitas() {
       return `<div class="barra-dia ${d === hoyISO() ? "hoy" : ""}" title="${f.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}: ${v} móvil(es), ${porDia[d]?.visitas || 0} visitas">
         <span class="valor">${v || ""}</span><span class="col" style="height:${Math.round(v / max * 100)}%"></span><span class="et">${f.toLocaleDateString("es-ES", { weekday: "narrow" })}<br>${f.getDate()}</span></div>`;
     }).join("")}</div>
+    ${origenHTML(ori.data || [])}
     <p class="ayuda">Cuenta de forma anónima: no se sabe quién entra, solo cuántos. «Móviles distintos» cuenta cada móvil una sola vez en ese día, semana o mes, aunque entre muchas veces; «veces abierta» suma todas las veces que se abre. La semana y el mes se cuentan desde la versión 42 («–» si aún no hay datos). No cuenta el navegador donde está abierto este panel.</p>`;
 }
 

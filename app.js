@@ -1009,6 +1009,9 @@ document.addEventListener("click", (ev) => { const a = ev.target.closest("[data-
     const d = new Date(), lunes = new Date(d.getFullYear(), d.getMonth(), d.getDate() - (d.getDay() + 6) % 7);
     const nuevo = primera("ccoo-dia-", "ccoo-dia-" + hoyISO());
     sb.rpc("contar_visita", { p_nuevo: nuevo }).then(() => {}, () => {});
+    // Desde dónde se abre (app instalada o navegador): solo para saber cuánta gente tiene la app
+    const app = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+    sb.rpc("contar_origen", { p_origen: app ? "app" : "navegador" }).then(() => {}, () => {});
     if (primera("ccoo-sem-", "ccoo-sem-" + isoDe(lunes))) sb.rpc("contar_movil", { p_tipo: "semana" }).then(() => {}, () => {});
     if (primera("ccoo-mes-", "ccoo-mes-" + hoyISO().slice(0, 7))) sb.rpc("contar_movil", { p_tipo: "mes" }).then(() => {}, () => {});
   } catch (_) { sb.rpc("contar_visita", { p_nuevo: false }).then(() => {}, () => {}); }
