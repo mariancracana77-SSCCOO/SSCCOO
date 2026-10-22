@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, GitHub Pages, con `.nojekyll`)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **36**
+- Versión actual: **37**
 
 ## Reglas del proyecto (no negociables)
 - Responder siempre en **español**, claro y sin tecnicismos innecesarios.
@@ -61,9 +61,10 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 - `render.js`: plantillas HTML de tarjetas. `iconos.js`: iconos SVG. `styles.css`: estilos (al final, bloques «Tablón», portada, modales, filtro de fechas, tema oscuro manual).
 - `lectura.js`: aplica letra/contraste/tema antes de pintar + anti-iframe.
 - `sw.js`: service worker: archivos con `?v=N` primero desde la caché (no cambian nunca); HTML sin caché y el resto primero de la red, con la caché si no hay conexión. Solo guarda respuestas correctas (`r.ok`). Push.
-- `cartel.html` + `cartel.js` + `qr.js`: cartel con QR para imprimir (usa `icon-512.png` para el logo; `logo.png` es pequeño, 192 px, para la web y el panel).
+- `cartel.html` + `cartel.js` + `qr.js`: cartel con QR para imprimir (usa `icon-512.png` para el logo; `logo.png`, 192 px, para la web y el panel).
 - `lib/supabase.js` (supabase-js 2.58.0 UMD) y `lib/jszip.min.js` (3.10.1): **alojados aquí a propósito** (no CDN).
 - `fuentes.css` + `fuentes/`: Atkinson Hyperlegible (texto), Barlow Condensed (títulos) y Barlow (de reserva), alojadas aquí (no Google Fonts, por privacidad).
+- Logo: `logo.svg` es la fuente (vectorial, letra Barlow Condensed). Los PNG (`icon-192/512`, `logo.png`, `icon-maskable-512` con fondo #15191E al 78 %, `apple-touch-icon` 180 con fondo, `favicon-32`) se sacan con Playwright. `manifest.json` y `theme-color` en #15191E (pantalla de carga oscura).
 - Diseño: colores en `:root` de `styles.css` (asfalto, `--rotulo`, `--ambar-rotulo` `#FFB000`, rojo CCOO `#C4122F`, hueso `#F5F3EE`). El bloque «Diseño Rótulo de línea» está al final de `styles.css`.
 
 ## Al publicar una versión nueva (3 sitios)

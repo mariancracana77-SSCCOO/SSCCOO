@@ -131,6 +131,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 37: logo nuevo, limpio
+- El logo se ha redibujado en vectorial (`logo.svg`, la fuente para volver a sacar los PNG): mismo diseño (aro rojo con «Sección Sindical CCOO» y «Calsina Carré», engranaje rojo y camión azul con «CC»), pero nítido, con fondo transparente y borde blanco. Se quita el email, que en el icono no se podía leer.
+- Iconos nuevos: `icon-192.png`, `icon-512.png`, `logo.png`, `icon-maskable-512.png` (para Android, sobre fondo oscuro), `apple-touch-icon.png` (iPhone) y `favicon-32.png` (pestaña del navegador). También se rehacen `og.png` y las capturas de `capturas/`.
+- Al abrir la app instalada, la pantalla de carga es oscura (el mismo asfalto de la cabecera) con el logo, y la barra del navegador también es oscura (`theme_color` #15191E).
+- La versión anterior de los iconos queda en la rama `respaldo-v36`.
+
 ## Versión 36: más profesional y más segura
 - **Vista previa al compartir**: al mandar el enlace de la web por WhatsApp o Telegram sale una tarjeta con el logo y el nombre (`og.png`).
 - **Instalar la app** en Android enseña capturas de la app (carpeta `capturas/`, en `manifest.json`).
