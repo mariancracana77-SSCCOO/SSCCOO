@@ -114,7 +114,7 @@ window.actaHTML = (a, qr = "") => `<article class="panel acta" data-reg="actas:$
     ${a.resumen ? `<div style="margin-top:8px" data-campo="resumen">${textoHTML(a.resumen, qr)}</div>` : ""}
     ${a.acuerdos ? `<div class="acuerdos"><b>Acuerdos</b><div data-campo="acuerdos">${textoHTML(a.acuerdos, qr)}</div></div>` : ""}
     ${adjuntosHTML(a.adjuntos)}
-    <div class="pie-tarjeta">${fechasHTML(a.creado, a.actualizado)}<span class="acciones-tarjeta">${botonTraducir()}</span></div>
+    <div class="pie-tarjeta">${fechasHTML(a.creado, a.actualizado)}<span class="acciones-tarjeta">${botonesCompartir("acta", a.id, a.titulo, a.resumen || a.acuerdos, "actas")}${botonTraducir()}</span></div>
   </div></article>`;
 
 // ---------- Documentos ----------
@@ -137,14 +137,15 @@ window.docHTML = (d) => {
 window.publicacionHTML = (x, qr = "") => {
   const adj = x.adjuntos || [], fotos = adj.filter(esImagen), docs = adj.filter(a => !esImagen(a));
   const d = x.fecha ? fechaDia(x.fecha) : null;
-  return `<article class="panel publicacion" id="pub-${x.id}" data-lectura="publicaciones:${x.id}">
+  return `<article class="panel publicacion" id="pub-${x.id}" data-reg="publicaciones:${x.id}" data-lectura="publicaciones:${x.id}">
     ${d ? `<div class="pub-fecha"><b>${d.getDate()}</b>${MESES[d.getMonth()].slice(0, 3)}</div>` : ""}
     <div class="pub-cuerpo">
-      <h3>${esc(x.titulo || "Sin título")}</h3>
+      <h3 data-campo="titulo">${esc(x.titulo || "Sin título")}</h3>
       ${d ? `<div class="fecha-txt">${fechaLarga(x.fecha + "T12:00:00")}</div>` : ""}
-      ${x.contenido ? `<div class="pub-texto">${textoHTML(x.contenido, qr)}</div>` : ""}
+      ${x.contenido ? `<div class="pub-texto" data-campo="contenido">${textoHTML(x.contenido, qr)}</div>` : ""}
       ${galeriaHTML(fotos)}
       ${adjuntosHTML(docs)}
+      ${x.id ? `<div class="pie-tarjeta"><span></span><span class="acciones-tarjeta">${botonesCompartir("pub", x.id, x.titulo, x.contenido, "pub-" + x.id)}${x.contenido ? botonTraducir() : ""}</span></div>` : ""}
     </div></article>`;
 };
 
@@ -175,6 +176,9 @@ window.preguntaHTML = (p, qr = "", abierta = false) => `<details class="panel ap
 
 // ---------- Traducir ----------
 window.IDIOMAS = { ca: "Català", en: "English", ro: "Română", ar: "العربية", fr: "Français", pt: "Português", de: "Deutsch", pl: "Polski", sr: "Српски" };
+// WhatsApp y Compartir (lo que sea: aviso, acta, publicación). «Compartir» usa el menú del móvil (app.js, data-compartir).
+window.botonesCompartir = (tipo, id, titulo, cuerpo, ancla) => `<a class="accion wa" href="${enlaceWhatsApp(textoCompartir(titulo, cuerpo || "", ancla))}" target="_blank" rel="noopener">${icono("whatsapp", "p")}WhatsApp</a>
+  <button class="accion" data-compartir="${tipo}" data-id="${id}">${icono("compartir", "p")}Compartir</button>`;
 window.botonTraducir = () => `<span class="traducir"><button class="accion" data-traducir aria-haspopup="true">${icono("idioma", "p")}Traducir</button></span>`;
 
 // ---------- Fechas para buscar ----------

@@ -17,6 +17,15 @@ document.querySelector(".contacto-btn").innerHTML = icono("correo", "p") + "Escr
 // ---------- Navegación ----------
 const VISTAS = ["inicio", "avisos", "calendario", "convenio", "calcula", "actas", "documentos", "preguntas", "info", "buscar", "legal", "descansos"];
 function irA() {
+  // Enlace a una publicación de un apartado (al compartirla): #pub-<id> lleva a su apartado y la enseña
+  const pubDirecto = /^pub-\d+$/.test(location.hash.slice(1)) ? +location.hash.slice(5) : null;
+  if (pubDirecto) {
+    if (!cargar.listo) { setTimeout(irA, 300); return; }
+    const p = D.publicaciones.find(x => x.id === pubDirecto), a = p && D.apartados.find(x => x.id === p.apartado_id);
+    history.replaceState(null, "", a ? "#ap-" + a.slug : "#inicio");
+    if (a) setTimeout(() => { const el = $("pub-" + pubDirecto); if (el) { el.scrollIntoView({ block: "start" }); el.classList.add("nuevo"); } }, 350);
+    return irA();
+  }
   const h = location.hash.slice(1), avisoDirecto = /^aviso-\d+$/.test(h) ? h : null;
   const legal = h === "aviso-legal" || h === "privacidad" ? h : null, aDelegados = h === "delegados", aEncuesta = /^encuesta-\d+$/.test(h) ? h : null;
   const ap = /^ap-[a-z0-9-]+$/.test(h) ? h.slice(3) : null;
@@ -1020,7 +1029,12 @@ pintaBanda();
 // ---------- Compartir y calendario (botones de las tarjetas) ----------
 document.addEventListener("click", (ev) => {
   const c = ev.target.closest("[data-compartir]");
-  if (c) { const a = D.avisos.find(x => x.id == c.dataset.id); if (a) compartir(a.titulo, textoCompartir(a.titulo, a.contenido, "aviso-" + a.id)); return; }
+  if (c) {
+    const t = c.dataset.compartir, id = c.dataset.id;
+    const x = t === "acta" ? D.actas.find(y => y.id == id) : t === "pub" ? D.publicaciones.find(y => y.id == id) : D.avisos.find(y => y.id == id);
+    if (x) compartir(x.titulo, textoCompartir(x.titulo, t === "acta" ? x.resumen || x.acuerdos || "" : x.contenido || "", t === "acta" ? "actas" : t === "pub" ? "pub-" + x.id : "aviso-" + x.id));
+    return;
+  }
   const i = ev.target.closest("[data-ics]");
   if (i) { const e = D.eventos.find(x => x.id == i.dataset.ics); if (e) descargarICS(e); }
 });
