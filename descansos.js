@@ -1,7 +1,7 @@
-// ===== «Mis descansos»: descansos diario y semanal, conducción y pausas de los conductores (Zona Conductores) =====
+// ===== «Mis descansos»: descansos diario y semanal de los conductores (Zona Conductores) =====
 // v60: jornadas (descanso diario normal 11 h, reducido 9 h —máx. 3 entre dos semanales—, partido 3 h + 9 h, doble
-// tripulación 9 h en 30 h, ferry/tren), horas de conducción (9 h/día, 10 h dos veces por semana, 56 h/semana, 90 h en
-// dos semanas), cronómetro de pausas (45 min tras 4 h 30, o 15 + 30) y «Personalizar» (qué se ve y cuándo avisa).
+// tripulación 9 h en 30 h, ferry/tren). v63: solo descansos (sin horas de conducción ni pausas, lo pidió el padre),
+// pantalla en cuatro pestañas (Hoy, Apuntar, Lo apuntado, Ajustes) y guía rápida plegable.
 // Según el Reglamento (CE) 561/2006 y el cuadernillo «Tiempos de conducción y descanso» de FENADISMER (mayo 2026),
 // más los mínimos del II Acuerdo Marco (descansos en casa). Es orientativo: manda lo que registra el tacógrafo.
 // Los horarios se guardan SOLO en este móvil (localStorage «ccoo-descansos»). Si el conductor quiere avisos, al servidor
@@ -9,8 +9,8 @@
 (function () {
   const CLAVE = "ccoo-descansos", H = 3600000, DIA = 24 * H;
   const MIN = 60000;
-  const DEF = () => ({ lista: [], jornadas: [], hoy: null, internacional: false, doble: false, avisos: true, filtro: "todo",
-    ver: { semanal: true, diario: true, conduccion: true, pausas: true }, aviso: { semanal: [12, 2], diario: 1, pausa: 15 } });
+  const DEF = () => ({ lista: [], jornadas: [], hoy: null, internacional: false, doble: false, avisos: true, filtro: "todo", tab: "hoy", apunte: "jornada",
+    ver: { semanal: true, diario: true }, aviso: { semanal: [12, 2], diario: 1 } });
   const completa = (d) => { const b = DEF(); return { ...b, ...d, jornadas: Array.isArray(d.jornadas) ? d.jornadas : [], ver: { ...b.ver, ...(d.ver || {}) }, aviso: { ...b.aviso, ...(d.aviso || {}) } }; };
   const lee = () => { try { const d = JSON.parse(localStorage.getItem(CLAVE) || "null"); if (d && Array.isArray(d.lista)) return completa(d); } catch (_) {} return DEF(); };
   let DATOS = lee();
@@ -31,27 +31,42 @@
   const TH = (s, v) => esc(T(s, v)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
   const FIJOS = () => ({
     titulo: T("Mis descansos"),
-    intro: T("Calcula tus descansos (el diario y el semanal), tus horas de conducción y las pausas: cuándo te toca, si puede ser reducido y cuántas horas tienes que compensar. Tus datos se guardan solo en este móvil: nadie más los ve."),
-    apuntarj: T("Apuntar una jornada (un día de trabajo)"),
-    ayudaj: T("Desde que empezaste a trabajar después de un descanso hasta que paraste para el descanso diario. Si usas el botón «Empiezo la jornada» de arriba, se apunta sola."),
-    jini: T("Empecé a trabajar"), jfin: T("Terminé (empieza el descanso)"), jcond: T("Horas conducidas ese día"),
+    intro: T("Tu descanso diario y semanal: cuándo te toca y cuántas horas tienes que compensar. Se guarda solo en este móvil."),
+    guiatit: T("Cómo se usa (guía rápida)"),
+    tabhoy: T("Hoy"), tabapuntar: T("Apuntar"), tablista: T("Lo apuntado"), tabajustes: T("Ajustes"),
+    apjornada: T("Una jornada"), apsemanal: T("Un descanso semanal"), apcomp: T("Una compensación"),
+    ayudaj: T("Desde que empezaste a trabajar después de un descanso hasta que paraste para el descanso diario. Si usas «Empiezo la jornada» en «Hoy», se apunta sola."),
+    jini: T("Empecé a trabajar"), jfin: T("Terminé (empieza el descanso)"),
     jpartido: T("Hice el descanso partido: una parada de 3 h o más durante la jornada (y 9 h al final)"),
-    jdoble: T("Conduje con otro conductor (doble tripulación)"), jferry: T("El descanso se cortó por un ferry o un tren"), jguardar: T("Guardar jornada"),
+    jdoble: T("Fui con otro conductor (doble tripulación)"), jferry: T("El descanso se cortó por un ferry o un tren"), jguardar: T("Guardar jornada"),
     ayudasem: T("El descanso semanal puede ser cualquier día de la semana: no tiene por qué caer en fin de semana."),
-    doble: T("Suelo conducir con otro conductor (doble tripulación)"), personaliza: T("Personalizar: qué ver y cuándo avisarme"),
-    apuntar: T("Apuntar un descanso semanal"), empezo: T("Empezó"), acabo: T("Acabó"),
+    empezo: T("Empezó"), acabo: T("Acabó"),
     casa: T("Lo hice en casa (o en la base de la empresa)"), cabina: T("Lo hice en la cabina del camión"), guardar: T("Guardar descanso"),
-    comp: T("Apuntar horas de compensación sumadas a un descanso diario"), compfin: T("Cuándo acabó ese descanso"), comph: T("Horas de compensación"),
-    compguardar: T("Apuntar compensación"), internacional: T("Hago transporte internacional"),
-    avisar: T("Avisarme en el móvil (descansos, pausas y plazos de compensación). Al servidor solo va cuándo avisarte y el texto del aviso, sin tu nombre; se borra al enviarse."),
-    apuntado: T("Lo que has apuntado"), copia: T("Guardar una copia (PDF)"), recupera: T("Recuperar una copia"), borrar: T("Borrar todo"),
+    ayudacomp: T("Cuando devuelves horas de un descanso semanal reducido sumándolas a un descanso diario, apúntalo aquí."),
+    compfin: T("Cuándo acabó ese descanso"), comph: T("Horas de compensación"), compguardar: T("Apuntar compensación"),
+    internacional: T("Hago transporte internacional"), doble: T("Suelo ir con otro conductor (doble tripulación)"),
+    avisar: T("Avisarme en el móvil antes de mis descansos y de los plazos de compensación. Al servidor solo va cuándo avisarte y el texto del aviso, sin tu nombre; se borra al enviarse."),
+    copia: T("Guardar una copia (PDF)"), recupera: T("Recuperar una copia"), borrar: T("Borrar todo"),
     ayudacopia: T("Guarda una copia de vez en cuando (y antes de cambiar de móvil): si se borran los datos del navegador, se pierde lo apuntado."),
     oficial: T("Orientativo. Manda lo que registra el tacógrafo y el Reglamento (CE) 561/2006. Cálculos según el cuadernillo «Tiempos de conducción y descanso» de FENADISMER (mayo 2026) y el II Acuerdo Marco. Ante la duda, pregunta a un delegado."),
   });
+  // Guía rápida (plegable, traducible)
+  const GUIA = () => [
+    [T("Al empezar a trabajar"), T("En «Hoy», pulsa «Empiezo la jornada». Te digo hasta qué hora puedes estar antes de parar para el descanso diario (11 h, 9 h reducido o partido 3 h + 9 h).")],
+    [T("Al parar"), T("Pulsa «Termino la jornada»: se apunta sola y empieza a contar tu descanso diario.")],
+    [T("El descanso semanal"), T("Cuando lo termines, ve a «Apuntar» > «Un descanso semanal» y pon cuándo empezó y acabó. Te calculo cuándo te toca el siguiente y si tienes horas que compensar.")],
+    [T("Si se te olvidó"), T("En «Apuntar» puedes poner a mano cualquier jornada o descanso de días pasados.")],
+    [T("Revisar"), T("En «Lo apuntado» ves todo, con filtros (semanales, en fin de semana, entre semana o jornadas). Lo que no cumple sale marcado en rojo.")],
+    [T("Avisos y copia"), T("En «Ajustes» eliges cuándo te avisa el móvil. Guarda de vez en cuando la copia en PDF para no perder nada.")],
+  ];
+  function pintaGuia() {
+    $("desc-guia-cuerpo").innerHTML = `<ol class="desc-guia-pasos">${GUIA().map(([t, d]) => `<li><b>${esc(t)}</b><span>${esc(d)}</span></li>`).join("")}</ol>
+      <p class="ayuda">${esc(T("Los descansos: diario de 11 h (o 9 h reducido, como mucho 3 veces entre dos semanales); semanal de 45 h (o 24 h reducido, devolviendo lo que falta antes de que acabe la tercera semana siguiente). Empieza el semanal antes de que pasen 6 días (144 h) desde el anterior."))}</p>`;
+  }
   function pintaFijos() {
     const f = FIJOS(), v = $("v-descansos"), idi = miIdioma();
     v.querySelectorAll("[data-dt]").forEach(el => { const t = f[el.dataset.dt]; if (t) el.textContent = t; });
-    $("desc-comp-h").placeholder = T("Ej: 9"); $("desc-j-cond").placeholder = T("Ej: 8,5");
+    $("desc-comp-h").placeholder = T("Ej: 9"); pintaGuia();
     v.setAttribute("dir", idi === "ar" ? "rtl" : "ltr"); v.setAttribute("lang", idi || "es");
     const sel = $("desc-idioma");
     if (!sel.options.length) sel.innerHTML = `<option value="">Español</option>` + Object.entries(IDIOMAS).map(([k, n]) => `<option value="${k}">${esc(n)}</option>`).join("");
@@ -125,11 +140,10 @@
     return { sem, validos, deudas, pendientes, prox, ultimos12, enCasa, findeCasa, ultimoNormalCasa, alertas };
   }
 
-  // ---------- Descanso diario y conducción (v60) ----------
+  // ---------- Descanso diario (v60) ----------
   // Una jornada va desde que se empieza a trabajar tras un descanso hasta que empieza el siguiente descanso diario.
   // Dentro de las 24 h desde que empieza (30 h con doble tripulación) tiene que caber el descanso diario:
   // 11 h (normal), 9 h (reducido, como mucho 3 entre dos descansos semanales), partido 3 h + 9 h, o 9 h con doble tripulación.
-  const MAX_SIN_PAUSA = 4.5 * H;
   function calculaDiario(c) {
     const js = DATOS.jornadas.filter(j => Number.isFinite(j.ini) && Number.isFinite(j.fin) && j.fin > j.ini).map(j => ({ ...j })).sort((a, b) => a.ini - b.ini);
     js.forEach((j, i) => {
@@ -151,33 +165,7 @@
     const red = {};
     js.forEach(j => { if (j.clase !== "reducido") return; const k = periodo(j.ini); red[k] = (red[k] || 0) + 1; if (red[k] > 3) j.demasiados = true; });
     const reducidosAhora = red[periodo(Date.now())] || 0;
-    // Conducción por semana (de lunes 00:00 a domingo 24:00)
-    const sem = {}, hoyCond = conduceAhora().cond;
-    js.forEach(j => {
-      const k = lunes(j.ini), w = sem[k] ||= { cond: 0, ampliados: 0 }, h = +j.cond || 0;
-      w.cond += h;
-      if (h > 9 + 0.01) { w.ampliados++; j.ampliado = true; if (w.ampliados > 2) j.demasAmpliados = true; }
-      if (h > 10 + 0.01) j.excesoCond = true;
-    });
-    const k0 = lunes(Date.now()), w0 = sem[k0] || { cond: 0, ampliados: 0 }, w1 = sem[k0 - 7 * DIA] || { cond: 0, ampliados: 0 };
-    const semAhora = w0.cond + hoyCond / H, dosSem = semAhora + w1.cond;
-    Object.keys(sem).forEach(k => { const a = sem[k], b = sem[+k + 7 * DIA]; if (a.cond > 56 + 0.01) a.exceso = true; if (b && a.cond + b.cond > 90 + 0.01) b.exceso90 = true; });
-    return { js, reducidosAhora, semAhora, dosSem, ampliadosAhora: w0.ampliados, semanas: sem };
-  }
-  // Jornada en marcha: cuánto se lleva conduciendo hoy y desde la última pausa válida
-  function conduceAhora() {
-    const h = DATOS.hoy, ahora = Date.now();
-    if (!h) return { cond: 0, sinPausa: 0, pausa: 0 };
-    const tramo = h.conduceDesde ? ahora - h.conduceDesde : 0;
-    return { cond: (h.cond || 0) + tramo, sinPausa: (h.sinPausa || 0) + tramo, pausa: h.pausaDesde ? ahora - h.pausaDesde : 0 };
-  }
-  // Al volver a conducir: ¿la pausa ha valido? 45 min seguidos, o 30 min si antes ya se hicieron 15
-  function cierraPausa(h, ahora) {
-    if (!h.pausaDesde) return;
-    const p = ahora - h.pausaDesde;
-    if (p >= 45 * MIN || (h.p15 && p >= 30 * MIN)) { h.sinPausa = 0; h.p15 = false; }
-    else if (p >= 15 * MIN) h.p15 = true;
-    h.pausaDesde = null;
+    return { js, reducidosAhora };
   }
 
   // ---------- Avisos al móvil ----------
@@ -201,102 +189,76 @@
         const lim = h.ini + (h.doble ? 21 : 13) * H, hora = new Date(lim).toLocaleTimeString(LOC, { hour: "2-digit", minute: "2-digit" });
         pon(lim - A.diario * H, T("Descanso diario"), h.doble ? T("Tu descanso diario de 9 h tiene que empezar antes de las {hora}.", { hora }) : T("Tu descanso diario de 11 h tiene que empezar antes de las {hora}.", { hora }));
       }
-      if (DATOS.avisos && V.pausas && h && h.conduceDesde && +A.pausa > 0) {
-        const llega = h.conduceDesde + MAX_SIN_PAUSA - (h.sinPausa || 0);
-        pon(llega - A.pausa * MIN, T("Pausa de conducción"), T("En {min} min llevarás 4 h 30 conduciendo: haz una pausa de 45 minutos (o 15 + 30).", { min: A.pausa }));
-      }
       const firma = ep + JSON.stringify(lista);
       if (firma === ultimoEnvio) return; // no repetir lo mismo cada minuto
       try { const { error } = await sb.rpc("programar_descanso", { p_endpoint: ep, p_avisos: lista }); if (!error) ultimoEnvio = firma; } catch (_) {}
     }, 800);
   }
 
-  // ---------- Jornada de hoy y pausas (v60) ----------
+  // ---------- Jornada de hoy ----------
   const hora = (t) => new Date(t).toLocaleTimeString(LOC, { hour: "2-digit", minute: "2-digit" });
-  const hm = (ms) => ms < H ? Math.max(0, Math.round(ms / MIN)) + " min" : horas(Math.round(ms / MIN) / 60);
   function pintaHoy(dd) {
-    const h = DATOS.hoy, V = DATOS.ver, ahora = Date.now();
+    const h = DATOS.hoy, ahora = Date.now(), quedanRed = Math.max(0, 3 - dd.reducidosAhora);
+    const red = `<p class="desc-red"><span class="desc-puntos">${[0, 1, 2].map(i => `<i class="${i < dd.reducidosAhora ? "usado" : ""}"></i>`).join("")}</span>${esc(T("Descansos diarios reducidos usados: {n} de 3 (hasta el próximo descanso semanal).", { n: Math.min(3, dd.reducidosAhora) }))}</p>`;
     if (!h) {
-      $("desc-hoy").innerHTML = `<h2 class="tit-seccion">${esc(T("Hoy"))}</h2>
-        <p class="desc-vacio">${esc(T("Pulsa al empezar a trabajar y te digo hasta cuándo puedes estar antes del descanso diario y cuándo te toca la pausa."))}</p>
-        <label class="check"><input type="checkbox" id="desc-hoy-doble" ${DATOS.doble ? "checked" : ""}><span>${esc(T("Hoy conduzco con otro conductor (doble tripulación)"))}</span></label>
-        <div class="botones"><button class="btn" id="desc-empieza">${icono("reloj", "p")}${esc(T("Empiezo la jornada"))}</button></div>`;
-      $("desc-empieza").onclick = () => { DATOS.hoy = { ini: Date.now(), doble: $("desc-hoy-doble").checked, cond: 0, sinPausa: 0, conduceDesde: null, pausaDesde: null, p15: false }; guarda(); pinta(); };
+      $("desc-hoy").innerHTML = `<h2 class="desc-tit">${icono("reloj", "p")}${esc(T("Descanso diario"))}</h2>
+        <p class="desc-vacio">${esc(T("Pulsa al empezar a trabajar y te digo hasta qué hora puedes estar antes de parar para el descanso diario."))}</p>
+        <button class="btn grande" id="desc-empieza">${icono("reloj", "p")}${esc(T("Empiezo la jornada"))}</button>
+        <label class="check"><input type="checkbox" id="desc-hoy-doble" ${DATOS.doble ? "checked" : ""}><span>${esc(T("Hoy voy con otro conductor (doble tripulación)"))}</span></label>
+        ${red}`;
+      $("desc-empieza").onclick = () => { DATOS.hoy = { ini: Date.now(), doble: $("desc-hoy-doble").checked, partido: false }; guarda(); pinta(); };
       return;
     }
-    const ca = conduceAhora(), quedanRed = Math.max(0, 3 - dd.reducidosAhora);
     const l11 = h.ini + 13 * H, l9 = h.ini + 15 * H, l30 = h.ini + 21 * H;
     const lim = h.doble ? [`<li>${TH("Tu descanso diario de **9 h** tiene que empezar antes de las **{hora}** (doble tripulación: 9 h dentro de 30 h).", { hora: fmt(l30) })}</li>`]
       : [`<li>${TH("Descanso normal de **11 h**: empieza antes de las **{hora}**.", { hora: fmt(l11) })}</li>`,
         quedanRed ? `<li>${TH("O reducido de **9 h**: antes de las **{hora}** (te quedan {n} de 3 hasta el próximo descanso semanal).", { hora: fmt(l9), n: quedanRed })}</li>` : `<li>${esc(T("Ya has usado los 3 descansos reducidos: hasta el próximo semanal tienen que ser de 11 h."))}</li>`,
         `<li>${TH("O partido: una parada de **3 h** durante la jornada y **9 h** al final, antes de las **{hora}**.", { hora: fmt(l9) })}</li>`];
-    const limActual = h.doble ? l30 : l11, tarde = ahora > (h.doble ? l30 : l9);
-    let pausa = "";
-    if (V.pausas) {
-      const queda = MAX_SIN_PAUSA - ca.sinPausa;
-      pausa = h.conduceDesde
-        ? `<div class="desc-pausa ${queda < 15 * MIN ? "pronto" : ""} ${queda <= 0 ? "tarde" : ""}"><b>${esc(queda > 0 ? T("Pausa antes de las {hora}", { hora: hora(ahora + queda) }) : T("Te toca la pausa ya"))}</b>
-            <span>${esc(T("Llevas {t} conduciendo sin pausa (máximo 4 h 30).", { t: hm(ca.sinPausa) }))}${h.p15 ? " " + esc(T("Ya hiciste 15 min: te faltan 30 min de pausa.")) : ""}</span></div>`
-        : h.pausaDesde ? `<div class="desc-pausa parado"><b>${esc(T("En pausa: {t}", { t: hm(ca.pausa) }))}</b><span>${esc(h.p15 ? T("Ya hiciste 15 min antes: con 30 min seguidos la pausa vale.") : T("Para que valga: 45 min seguidos, o 15 min y luego 30 min."))}</span></div>` : "";
-    }
-    const cond = V.conduccion ? `<p class="desc-hoy-cond">${TH("Conducido hoy: **{t}** (máximo 9 h; 10 h dos veces por semana, te quedan {n}).", { t: hm(ca.cond), n: Math.max(0, 2 - dd.ampliadosAhora) })}</p>` : "";
-    $("desc-hoy").innerHTML = `<h2 class="tit-seccion">${esc(T("Hoy"))}</h2>
-      <div class="desc-prox ${tarde ? "tarde" : ahora > limActual - H ? "pronto" : ""}">
+    const limActual = h.doble ? l30 : l11, tarde = ahora > (h.doble ? l30 : l9), queda = limActual - ahora;
+    $("desc-hoy").innerHTML = `<h2 class="desc-tit">${icono("reloj", "p")}${esc(T("Descanso diario"))}</h2>
+      <div class="desc-prox ${tarde ? "tarde" : queda < H ? "pronto" : ""}">
         <span class="desc-et">${esc(T("Jornada empezada el {fecha}", { fecha: fmt(h.ini) }))}</span>
-        <b class="desc-fecha">${esc(T("Descanso diario antes de las {hora}", { hora: hora(h.doble ? l30 : l11) }))}</b>
-        <ul class="desc-limites">${lim.join("")}</ul></div>
-      ${cond}${pausa}
+        <b class="desc-fecha">${esc(T("Para antes de las {hora}", { hora: hora(limActual) }))}</b>
+        <span class="desc-quedan">${esc(queda > 0 ? T("Quedan {tiempo}", { tiempo: falta(queda) }) : T("Te has pasado {tiempo}", { tiempo: falta(-queda) }))}</span>
+      </div>
+      <details class="desc-mas"><summary>${esc(T("Otras opciones (reducido o partido)"))}</summary><ul class="desc-limites">${lim.join("")}</ul></details>
       ${h.doble ? "" : `<label class="check"><input type="checkbox" id="desc-hoy-partido" ${h.partido ? "checked" : ""}><span>${esc(T("Hoy hago el descanso partido (una parada de 3 h o más y 9 h al final)"))}</span></label>`}
       <div class="botones desc-hoy-bot">
-        ${V.pausas || V.conduccion ? (h.conduceDesde ? `<button class="btn sec" id="desc-para">${esc(T("Paro de conducir"))}</button>` : `<button class="btn" id="desc-conduce">${esc(T("Empiezo a conducir"))}</button>`) : ""}
-        <button class="btn sec" id="desc-termina">${esc(T("Termino la jornada"))}</button>
-        <button class="enlace-desact" id="desc-cancela">${esc(T("Anular esta jornada"))}</button></div>`;
-    const ahoraYa = () => Date.now();
-    if ($("desc-conduce")) $("desc-conduce").onclick = () => { const t = ahoraYa(); cierraPausa(h, t); h.conduceDesde = t; guarda(); pinta(); };
-    if ($("desc-para")) $("desc-para").onclick = () => { const t = ahoraYa(); const d = t - h.conduceDesde; h.cond += d; h.sinPausa += d; h.conduceDesde = null; h.pausaDesde = t; guarda(); pinta(); };
+        <button class="btn grande" id="desc-termina">${esc(T("Termino la jornada"))}</button>
+        <button class="enlace-desact" id="desc-cancela">${esc(T("Anular esta jornada"))}</button></div>
+      ${red}`;
     $("desc-termina").onclick = () => {
-      const t = ahoraYa();
-      if (h.conduceDesde) { h.cond += t - h.conduceDesde; h.conduceDesde = null; }
+      const t = Date.now();
       if (t - h.ini < 10 * MIN) { DATOS.hoy = null; guarda(); pinta(); return; }
-      DATOS.jornadas.push({ id: Date.now().toString(36), ini: h.ini, fin: t, cond: Math.round(h.cond / H * 4) / 4, doble: !!h.doble, partido: !!h.partido, ferry: false });
+      DATOS.jornadas.push({ id: Date.now().toString(36), ini: h.ini, fin: t, doble: !!h.doble, partido: !!h.partido, ferry: false });
       DATOS.hoy = null; guarda(); pinta();
       const m = $("desc-j-msg"); m.textContent = T("Jornada apuntada. Tu descanso diario empieza ahora."); m.className = "msg ok";
     };
     if ($("desc-hoy-partido")) $("desc-hoy-partido").onchange = () => { h.partido = $("desc-hoy-partido").checked; guarda(); };
     $("desc-cancela").onclick = () => { if (!confirm(T("¿Anular la jornada de hoy? No se apuntará."))) return; DATOS.hoy = null; guarda(); pinta(); };
   }
-  function pintaConduccion(dd) {
-    const n = dd.semAhora, d2 = dd.dosSem, ex = Object.values(dd.semanas).some(w => w.exceso || w.exceso90);
-    $("desc-conduccion").innerHTML = `<h2 class="tit-seccion">${esc(T("Horas de conducción"))}</h2>
-      <div class="desc-cifras">
-        <div class="${n > 56 ? "mal" : ""}"><b>${esc(horas(n))}<small> / 56 h</small></b><span>${esc(T("esta semana (de lunes a domingo). Te quedan {t}.", { t: horas(Math.max(0, 56 - n)) }))}</span></div>
-        <div class="${d2 > 90 ? "mal" : ""}"><b>${esc(horas(d2))}<small> / 90 h</small></b><span>${esc(T("esta semana y la anterior juntas. Te quedan {t}.", { t: horas(Math.max(0, 90 - d2)) }))}</span></div>
-        <div class="${dd.ampliadosAhora > 2 ? "mal" : ""}"><b>${dd.ampliadosAhora}<small> / 2</small></b><span>${esc(T("días de hasta 10 h de conducción esta semana (los demás, como mucho 9 h)."))}</span></div></div>
-      ${ex ? `<p class="desc-alerta">${icono("alerta", "p")}<span>${esc(T("En lo apuntado hay alguna semana con más de 56 h de conducción o dos semanas seguidas con más de 90 h."))}</span></p>` : ""}
-      <p class="ayuda">${esc(T("Cuentan las horas que apuntas en cada jornada y las del cronómetro de hoy. La semana va de lunes a las 00:00 a domingo a las 24:00."))}</p>`;
-  }
   function pintaPersonaliza() {
-    const c = $("desc-personaliza-cuerpo"); if (!c || c.dataset.idioma === (miIdioma() || "es") + JSON.stringify(DATOS.ver) + JSON.stringify(DATOS.aviso)) return;
-    c.dataset.idioma = (miIdioma() || "es") + JSON.stringify(DATOS.ver) + JSON.stringify(DATOS.aviso);
+    const c = $("desc-personaliza-cuerpo"), firma = (miIdioma() || "es") + JSON.stringify(DATOS.ver) + JSON.stringify(DATOS.aviso);
+    if (!c || c.dataset.firma === firma) return;
+    c.dataset.firma = firma;
     const V = DATOS.ver, A = DATOS.aviso;
     const sel = (id, ops, val) => `<select id="${id}">${ops.map(([v, t]) => `<option value="${v}" ${String(v) === String(val) ? "selected" : ""}>${esc(t)}</option>`).join("")}</select>`;
     const hOps = [[0, T("No avisar")], [0.5, "30 min"], [1, "1 h"], [2, "2 h"], [3, "3 h"], [6, "6 h"], [12, "12 h"], [24, "24 h"]];
     c.innerHTML = `<div class="desc-perso">
-      <fieldset><legend>${esc(T("Qué quiero ver"))}</legend>
-        ${[["semanal", T("Descanso semanal y compensaciones")], ["diario", T("Descanso diario y jornada de hoy")], ["conduccion", T("Horas de conducción")], ["pausas", T("Pausas al conducir (cronómetro)")]].map(([k, t]) => `<label class="check"><input type="checkbox" data-ver="${k}" ${V[k] ? "checked" : ""}><span>${esc(t)}</span></label>`).join("")}
+      <fieldset><legend>${esc(T("Qué quiero ver en «Hoy»"))}</legend>
+        ${[["diario", T("Descanso diario (jornada de hoy)")], ["semanal", T("Descanso semanal y compensaciones")]].map(([k, t]) => `<label class="check"><input type="checkbox" data-ver="${k}" ${V[k] ? "checked" : ""}><span>${esc(t)}</span></label>`).join("")}
       </fieldset>
       <fieldset><legend>${esc(T("Cuándo avisarme"))}</legend>
         <label>${esc(T("Descanso semanal, primer aviso"))} ${sel("desc-av-s1", hOps, (A.semanal || [])[0] ?? 0)}</label>
         <label>${esc(T("Descanso semanal, segundo aviso"))} ${sel("desc-av-s2", hOps, (A.semanal || [])[1] ?? 0)}</label>
         <label>${esc(T("Descanso diario"))} ${sel("desc-av-d", hOps.slice(0, 5), A.diario)}</label>
-        <label>${esc(T("Pausa de conducción"))} ${sel("desc-av-p", [[0, T("No avisar")], [5, "5 min"], [10, "10 min"], [15, "15 min"], [20, "20 min"], [30, "30 min"]], A.pausa)}</label>
         <p class="ayuda">${esc(T("Antes de la hora límite. Los avisos solo llegan si los tienes activados en este móvil."))}</p>
       </fieldset>
-      <p class="ayuda">${esc(T("La semana va de lunes a las 00:00 a domingo a las 24:00: lo dice el Reglamento (CE) 561/2006 y no se puede cambiar. Nacional o internacional y doble tripulación se eligen arriba."))}</p></div>`;
+      <p class="ayuda">${esc(T("La semana va de lunes a las 00:00 a domingo a las 24:00: lo dice el Reglamento (CE) 561/2006 y no se puede cambiar."))}</p></div>`;
     c.querySelectorAll("[data-ver]").forEach(i => i.onchange = () => { DATOS.ver[i.dataset.ver] = i.checked; guarda(); pinta(); });
     const num = (id) => +$(id).value || 0;
-    ["desc-av-s1", "desc-av-s2", "desc-av-d", "desc-av-p"].forEach(id => $(id).onchange = () => {
-      DATOS.aviso = { semanal: [num("desc-av-s1"), num("desc-av-s2")], diario: num("desc-av-d"), pausa: num("desc-av-p") }; guarda(); pinta();
+    ["desc-av-s1", "desc-av-s2", "desc-av-d"].forEach(id => $(id).onchange = () => {
+      DATOS.aviso = { semanal: [num("desc-av-s1"), num("desc-av-s2")], diario: num("desc-av-d") }; guarda(); pinta();
     });
   }
 
@@ -307,16 +269,17 @@
     const c = calcula(), ahora = Date.now();
     // Invitar a instalar la app y a activar los avisos (sin ellos se pierden datos o no llegan los avisos)
     const inst = typeof INSTALADA === "function" && INSTALADA();
-    $("desc-app").innerHTML = (inst
-      ? `<div class="desc-banda">${icono("alerta")}<div><b>${esc(T("Para no perder tus descansos"))}</b><p>${esc(T("Se guardan solo en este móvil (no en internet). Se pierden si:"))}</p>${lista([T("desinstalas la app,"), T("borras los datos de la app o del navegador en los ajustes del móvil,"), T("cambias de móvil o lo restableces.")])}<p>${esc(T("Descarga de vez en cuando la copia en PDF: con ella lo recuperas todo."))}</p></div></div>`
-      : `<div class="desc-banda">${icono("movil")}<div><b>${esc(T("Instala la app en tu móvil"))}</b><p>${TH("Ahora lo estás usando desde el navegador. Tus descansos se guardan solo en este móvil y aquí **se pueden borrar** si:")}</p>${lista([T("borras el historial o los datos de navegación,"), T("usas una pestaña de incógnito (se pierde todo al cerrarla),"), T("en iPhone, pasas unos días sin entrar (Safari lo borra solo),"), T("cambias de móvil o lo restableces.")])}<p>${esc(T("Con la app se guardan mejor y te llegan los avisos. Descarga de vez en cuando la copia en PDF (en iPhone, sirve también para pasar tus datos a la app)."))}</p><button class="btn" id="desc-instalar">${icono("descargar", "p")}${esc(T("Instalar la app"))}</button></div></div>`) +
-      (!avisosPosibles() ? `<div class="desc-banda">${icono("campana")}<div><b>${esc(T("Activa los avisos"))}</b><p>${esc(T("Te avisamos 12 horas y 2 horas antes de que tengas que empezar tu descanso semanal, y 3 días antes de que acabe el plazo de una compensación."))}</p><button class="btn" id="desc-avisos">${icono("campana", "p")}${esc(T("Activar avisos"))}</button></div></div>` : "");
+    // Avisos de abajo, recogidos en una línea cada uno: se abren al tocarlos (para que la pantalla no pese)
+    $("desc-app").innerHTML = `<details class="desc-mini">${inst
+      ? `<summary>${icono("alerta", "p")}<span>${esc(T("Para no perder tus descansos"))}</span></summary><div><p>${esc(T("Se guardan solo en este móvil (no en internet). Se pierden si:"))}</p>${lista([T("desinstalas la app,"), T("borras los datos de la app o del navegador en los ajustes del móvil,"), T("cambias de móvil o lo restableces.")])}<p>${esc(T("Descarga de vez en cuando la copia en PDF: con ella lo recuperas todo."))}</p></div>`
+      : `<summary>${icono("movil", "p")}<span>${esc(T("Instala la app para no perder tus descansos"))}</span></summary><div><p>${TH("Ahora lo estás usando desde el navegador. Tus descansos se guardan solo en este móvil y aquí **se pueden borrar** si:")}</p>${lista([T("borras el historial o los datos de navegación,"), T("usas una pestaña de incógnito (se pierde todo al cerrarla),"), T("en iPhone, pasas unos días sin entrar (Safari lo borra solo),"), T("cambias de móvil o lo restableces.")])}<p>${esc(T("Con la app se guardan mejor y te llegan los avisos. Descarga de vez en cuando la copia en PDF (en iPhone, sirve también para pasar tus datos a la app)."))}</p><button class="btn" id="desc-instalar">${icono("descargar", "p")}${esc(T("Instalar la app"))}</button></div>`}</details>` +
+      (!avisosPosibles() ? `<div class="desc-mini fila-aviso">${icono("campana", "p")}<span>${esc(T("Activa los avisos y te recuerdo tus descansos."))}</span><button class="btn peq" id="desc-avisos">${esc(T("Activar"))}</button></div>` : "");
     if ($("desc-instalar")) $("desc-instalar").onclick = () => instalar();
     if ($("desc-avisos")) $("desc-avisos").onclick = async () => { await activarAvisos(); pinta(); };
 
     // Estado
-    let h = "";
-    if (!c.validos.length) h = `<p class="desc-vacio">${esc(T("Apunta abajo tu último descanso semanal (cuándo empezó y cuándo acabó) y te calculo cuándo te toca el siguiente."))}</p>`;
+    let h = `<h2 class="desc-tit">${icono("calendario", "p")}${esc(T("Descanso semanal"))}</h2>`;
+    if (!c.validos.length) h += `<p class="desc-vacio">${esc(T("Apunta tu último descanso semanal (en «Apuntar») y te calculo cuándo te toca el siguiente."))}</p><button class="btn sec" data-ir-apunte="semanal">${esc(T("Apuntar un descanso semanal"))}</button>`;
     else {
       const p = c.prox, quedan = p.limite - ahora, tarde = quedan < 0;
       const tipo = p.normal
@@ -334,20 +297,28 @@
           return `<li class="${d.plazo < ahora ? "vencida" : ""}">${d.plazo < ahora ? TH("**{horas}** del descanso del {desde}. El plazo acabó el {dia} a medianoche.", v) : TH("**{horas}** del descanso del {desde}. Antes del {dia} a medianoche.", v)}</li>`; }).join("")}</ul>
         <p class="ayuda">${esc(T("Se compensan de una vez, sumándolas a otro descanso de al menos 9 horas (por ejemplo, a tu próximo descanso semanal)."))}</p></div>`;
       const min = DATOS.internacional ? 5 : 7, n = c.ultimos12.length;
-      h += `<div class="desc-bloque"><h3>${esc(T("En casa y en fin de semana"))}</h3><div class="desc-cifras">
+      h += `<details class="desc-bloque desc-mas"><summary>${esc(T("En casa y en fin de semana"))} · ${c.enCasa}/${n}</summary><div class="desc-cifras">
         <div><b>${c.enCasa}<small> ${esc(T("de {n}", { n }))}</small></b><span>${esc(n < 12 ? T("descansos en casa. Mínimo {min} de cada 12.", { min }) : T("descansos en casa (últimos 12). Mínimo {min} de cada 12.", { min }))}</span></div>
         <div><b>${c.findeCasa}</b><span>${esc(T("en casa y en fin de semana (sábado o domingo). Al menos 1 cada 12 semanas."))}</span></div></div>
-        <p class="ayuda">${esc(DATOS.internacional ? T("Según el II Acuerdo Marco del transporte de mercancías (internacional). Al menos la mitad de los descansos en casa del año deben ser normales.") : T("Según el II Acuerdo Marco del transporte de mercancías (nacional). Al menos la mitad de los descansos en casa del año deben ser normales."))}</p></div>`;
+        <p class="ayuda">${esc(DATOS.internacional ? T("Según el II Acuerdo Marco del transporte de mercancías (internacional). Al menos la mitad de los descansos en casa del año deben ser normales.") : T("Según el II Acuerdo Marco del transporte de mercancías (nacional). Al menos la mitad de los descansos en casa del año deben ser normales."))}</p></details>`;
       if (c.ultimoNormalCasa && ahora - c.ultimoNormalCasa.fin > 28 * DIA || !c.ultimoNormalCasa && c.validos.length >= 4)
         h += `<p class="desc-alerta">${icono("alerta", "p")}<span>${esc(T("Hace más de 4 semanas que no apuntas un descanso normal en casa o en la base. La empresa debe organizar el trabajo para que puedas volver cada 4 semanas."))}</span></p>`;
     }
     $("desc-estado").innerHTML = h;
 
-    // Jornada de hoy, descanso diario y pausas
+    v.querySelectorAll("[data-ir-apunte]").forEach(b => b.onclick = () => { DATOS.apunte = b.dataset.irApunte; DATOS.tab = "apuntar"; guarda(); pinta(); });
+
+    // Jornada de hoy y descanso diario
     const dd = calculaDiario(c), V = DATOS.ver;
-    pintaHoy(dd); pintaConduccion(dd); pintaPersonaliza();
+    pintaHoy(dd); pintaPersonaliza();
     v.querySelectorAll("[data-bloque]").forEach(el => { el.hidden = !V[el.dataset.bloque]; });
-    $("desc-conduccion").hidden = !V.conduccion;
+    // Pestañas: solo se ve una parte cada vez
+    const TAB = DATOS.tab || "hoy";
+    v.querySelectorAll("[data-tab]").forEach(b => { const on = b.dataset.tab === TAB; b.classList.toggle("activa", on); b.setAttribute("aria-selected", String(on)); });
+    v.querySelectorAll("[data-panel]").forEach(p => { p.hidden = p.dataset.panel !== TAB; });
+    const AP = DATOS.apunte || "jornada";
+    v.querySelectorAll("[data-apunte]").forEach(b => { const on = b.dataset.apunte === AP; b.classList.toggle("activo", on); b.setAttribute("aria-pressed", String(on)); });
+    v.querySelectorAll("[data-form]").forEach(f => { f.hidden = f.dataset.form !== AP; });
 
     // Lo apuntado: descansos semanales, compensaciones y jornadas, con filtro
     const F = DATOS.filtro || "todo";
@@ -367,11 +338,9 @@
     $("desc-lista").innerHTML = filas.length ? filas.map(x => {
       if (x._j) {
         const et = { normal: x.doble ? T("Descanso diario de 9 h (doble tripulación)") : T("Descanso diario normal"), reducido: T("Descanso diario reducido"), partido: T("Descanso diario partido (3 h + 9 h)"), falta: T("Descanso diario insuficiente"), pendiente: T("Falta apuntar lo siguiente") }[x.clase];
-        const notas = [x.cond ? T("{horas} conducidas", { horas: horas(+x.cond) }) : "", x.descanso != null ? T("descanso después: {horas}", { horas: horas(x.descanso) }) : "", x.semanal ? T("le sigue el descanso semanal") : "", x.ferry ? T("cortado por ferry o tren") : ""].filter(Boolean);
+        const notas = [x.descanso != null ? T("descanso después: {horas}", { horas: horas(x.descanso) }) : "", x.semanal ? T("le sigue el descanso semanal") : "", x.ferry ? T("cortado por ferry o tren") : ""].filter(Boolean);
         const malas = [x.clase === "falta" ? (x.doble ? T("No caben 9 h de descanso dentro de las 30 h desde que empezaste.") : T("No caben 9 h de descanso dentro de las 24 h desde que empezaste.")) : "",
           x.demasiados ? T("Más de 3 descansos diarios reducidos entre dos descansos semanales.") : "",
-          x.excesoCond ? T("Más de 10 h de conducción en un día.") : "",
-          x.demasAmpliados ? T("Más de 2 días de 10 h de conducción en la misma semana.") : "",
           x.ferry ? T("Con ferry o tren, el descanso se puede cortar como mucho 2 veces y 1 h en total, y hay que tener cama o litera.") : ""].filter(Boolean);
         return `<li class="desc-fila jornada ${x.clase}"><div><b>${esc(fmt(x.ini))} → ${esc(fmt(x.fin))}</b>
           <small><span class="desc-clase">${esc(T("Jornada"))}</span> · ${esc(horas((x.fin - x.ini) / H))}${notas.length ? " · " + notas.map(esc).join(" · ") : ""}</small>
@@ -432,16 +401,12 @@
     }
     const dd = calculaDiario(c);
     if (dd.js.length) {
-      L("Horas de conducción", 13, true);
-      L(`Esta semana: ${horas(dd.semAhora)} de 56 h. Esta semana y la anterior: ${horas(dd.dosSem)} de 90 h. Días de hasta 10 h esta semana: ${dd.ampliadosAhora} de 2.`); L("");
       L("Jornadas y descanso diario", 13, true);
       [...dd.js].reverse().forEach(j => {
         L(fmt(j.ini) + "  a  " + fmt(j.fin), 10, true);
         const et = { normal: j.doble ? "descanso diario de 9 h (doble tripulación)" : "descanso diario normal", reducido: "descanso diario reducido", partido: "descanso diario partido (3 h + 9 h)", falta: "descanso diario insuficiente", pendiente: "falta apuntar lo siguiente" }[j.clase];
-        L([horas((j.fin - j.ini) / H) + " de jornada", j.cond ? horas(+j.cond) + " conducidas" : "", j.descanso != null ? "descanso después: " + horas(j.descanso) : "", et, j.semanal ? "le sigue el descanso semanal" : "", j.ferry ? "cortado por ferry o tren" : ""].filter(Boolean).join(" · "), 10, false, 12);
+        L([horas((j.fin - j.ini) / H) + " de jornada", j.descanso != null ? "descanso después: " + horas(j.descanso) : "", et, j.semanal ? "le sigue el descanso semanal" : "", j.ferry ? "cortado por ferry o tren" : ""].filter(Boolean).join(" · "), 10, false, 12);
         if (j.demasiados) L("Atención: más de 3 descansos diarios reducidos entre dos semanales.", 9, false, 12);
-        if (j.excesoCond) L("Atención: más de 10 h de conducción en un día.", 9, false, 12);
-        if (j.demasAmpliados) L("Atención: más de 2 días de 10 h en la misma semana.", 9, false, 12);
       });
       L("");
     }
@@ -522,17 +487,15 @@
     $("desc-j-ini").value = aLocal(ahora.getTime() - 10 * H); $("desc-j-fin").value = aLocal(ahora.getTime()); $("desc-j-doble").checked = !!DATOS.doble;
     $("desc-j-guardar").onclick = () => {
       const ini = new Date($("desc-j-ini").value).getTime(), fin = new Date($("desc-j-fin").value).getTime(), m = $("desc-j-msg");
-      const condTxt = String($("desc-j-cond").value).trim().replace(",", "."), cond = condTxt ? parseFloat(condTxt) : 0;
       const mal = (t) => { m.textContent = t; m.className = "msg err"; };
       if (!ini || !fin) return mal(T("Pon cuándo empezaste y cuándo terminaste."));
       if (fin <= ini) return mal(T("El final tiene que ser después del principio."));
       if (fin - ini > 30 * H) return mal(T("Una jornada no puede pasar de 30 horas. Revisa las fechas."));
-      if (!(cond >= 0 && cond <= 24) || cond * H > fin - ini + MIN) return mal(T("Las horas conducidas no cuadran con la jornada."));
       if (DATOS.jornadas.some(x => ini < x.fin && fin > x.ini)) return mal(T("Se solapa con otra jornada que ya tienes apuntada."));
       if (DATOS.lista.some(x => x.tipo !== "comp" && ini < x.fin && fin > x.ini)) return mal(T("Se solapa con un descanso semanal apuntado."));
-      DATOS.jornadas.push({ id: Date.now().toString(36), ini, fin, cond, partido: $("desc-j-partido").checked, doble: $("desc-j-doble").checked, ferry: $("desc-j-ferry").checked });
+      DATOS.jornadas.push({ id: Date.now().toString(36), ini, fin, partido: $("desc-j-partido").checked, doble: $("desc-j-doble").checked, ferry: $("desc-j-ferry").checked });
       guarda(); m.textContent = T("Jornada guardada en este móvil."); m.className = "msg ok";
-      $("desc-j-cond").value = ""; $("desc-j-partido").checked = $("desc-j-ferry").checked = false; pinta();
+      $("desc-j-partido").checked = $("desc-j-ferry").checked = false; pinta();
     };
     $("desc-avisar").onchange = () => { DATOS.avisos = $("desc-avisar").checked; guarda(); pinta(); };
     // Copia en un archivo: para el móvil nuevo o por si se borran los datos del navegador
@@ -562,6 +525,8 @@
       const ep = endpoint(); if (ep) sb.rpc("programar_descanso", { p_endpoint: ep, p_avisos: [] }).then(() => {}, () => {});
       pinta();
     };
+    document.querySelectorAll("#v-descansos [data-tab]").forEach(b => b.onclick = () => { DATOS.tab = b.dataset.tab; guarda(); pinta(); });
+    document.querySelectorAll("#v-descansos [data-apunte]").forEach(b => b.onclick = () => { DATOS.apunte = b.dataset.apunte; guarda(); pinta(); });
     $("desc-idioma").onchange = async () => { ponMiIdioma($("desc-idioma").value); };
     addEventListener("mi-idioma", async () => { await cargaIdioma(); pintaFijos(); pinta(); });
     pintaFijos(); pinta();

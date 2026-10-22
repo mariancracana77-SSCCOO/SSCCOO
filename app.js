@@ -27,13 +27,14 @@ function irA() {
     return irA();
   }
   const h = location.hash.slice(1), avisoDirecto = /^aviso-\d+$/.test(h) ? h : null;
-  const legal = h === "aviso-legal" || h === "privacidad" ? h : null, aDelegados = h === "delegados", aEncuesta = /^encuesta-\d+$/.test(h) ? h : null;
+  const legal = h === "aviso-legal" || h === "privacidad" ? h : null, aDelegados = h === "delegados", aBuzon = h === "buzon", aEncuesta = /^encuesta-\d+$/.test(h) ? h : null;
   const ap = /^ap-[a-z0-9-]+$/.test(h) ? h.slice(3) : null;
   if (ap && ap !== estado.ap) { estado.ap = ap; estado.fechas.ap = {}; if ($("buscar-ap")) $("buscar-ap").value = ""; }
-  const v = avisoDirecto ? "avisos" : legal ? "legal" : aDelegados ? "info" : ap ? "apartado" : (VISTAS.includes(h) ? h : "inicio");
+  const v = avisoDirecto ? "avisos" : legal ? "legal" : aDelegados ? "info" : aBuzon ? "preguntas" : ap ? "apartado" : (VISTAS.includes(h) ? h : "inicio");
   if (ap) pintaApartado();
   if (aDelegados) setTimeout(() => ($("lista-delegados").children.length ? $("tit-delegados") : $("txt-contacto"))?.scrollIntoView({ block: "start" }), 50);
   if (legal) setTimeout(() => $("leg-" + legal)?.scrollIntoView({ block: "start" }), 50);
+  if (aBuzon) setTimeout(() => $("buzon")?.scrollIntoView({ block: "start" }), 50);
   if (aEncuesta) { const ir = () => { const el = $(aEncuesta); if (el) { el.scrollIntoView({ block: "center" }); el.classList.add("nuevo"); } else if (!cargar.listo) setTimeout(ir, 300); }; setTimeout(ir, 300); }
   if (avisoDirecto) setTimeout(() => { const el = $(avisoDirecto); if (el) { expandeLargos(el); el.scrollIntoView({ block: "start" }); el.classList.add("nuevo"); } }, 300);
   // La vista nueva entra desde el lado de su pestaña (más a la derecha en la barra: entra por la derecha)
@@ -44,7 +45,7 @@ function irA() {
   if (lado && cambia) $("v-" + v)?.classList.add(lado);
   if (v === "inicio" && cambia) animaPortada();
   marcaPestanas(clave);
-  if (!avisoDirecto && !legal && !aDelegados && !aEncuesta) window.scrollTo(0, 0);
+  if (!avisoDirecto && !legal && !aDelegados && !aBuzon && !aEncuesta) window.scrollTo(0, 0);
   const sec = ap ? "ap-" + ap : v;
   if (sec !== "inicio") { marcaVisto(sec); if (cargar.listo) pintaContadores(); }
   contarUnaVez("s:" + sec, () => sb.rpc("contar_seccion", { p_seccion: sec }));
@@ -559,7 +560,7 @@ function pintaApartado() {
   if (!a) { $("ap-extra").innerHTML = ""; $("ap-titulo").textContent = D.apartados.length || !cargar.listo ? "Cargando…" : "Apartado no encontrado"; $("lista-ap").innerHTML = ""; $("ap-desc").textContent = ""; $("fechas-ap").innerHTML = ""; return; }
   $("ap-titulo").textContent = a.titulo;
   $("ap-desc").textContent = a.descripcion || "";
-  $("ap-extra").innerHTML = a.slug === APARTADO_CONDUCTORES ? `<a class="panel desc-promo" href="#descansos">${icono("reloj")}<span><b>Mis descansos</b><small>Calcula tu descanso semanal: cuándo te toca, si puede ser reducido y qué tienes que compensar. Con avisos al móvil.</small></span>${icono("der", "p")}</a>` + restriccionesHTML() : "";
+  $("ap-extra").innerHTML = a.slug === APARTADO_CONDUCTORES ? `<a class="panel desc-promo" href="#descansos">${icono("reloj")}<span><b>Mis descansos</b><small>Tu descanso diario y semanal: cuándo te toca, si puede ser reducido y qué tienes que compensar. Con avisos al móvil.</small></span>${icono("der", "p")}</a>` + restriccionesHTML() : "";
   const todas = D.publicaciones.filter(x => x.apartado_id === a.id);
   pintaFechas("fechas-ap", "ap", todas, x => x.fecha, () => pintaApartado());
   const qr = $("buscar-ap").value.trim(), q = normal(qr);
@@ -570,9 +571,37 @@ function pintaApartado() {
 $("buscar-ap").oninput = () => pintaApartado();
 
 // ---------- Preguntas frecuentes ----------
+// «¿Dónde está…?» (v63): cada sección y subapartado de la web, más algunas cosas que no son pestañas,
+// con el camino para llegar y un botón que lleva. Sale en Dudas y en el buscador de toda la web.
+// Quita lo que sobra de una pregunta («¿dónde está el…?», «cómo cambio la…») y deja las palabras que importan
+const PALABRAS_VACIAS = new Set("donde como cuando que cual puedo puede se me mi mis tu esta estan estoy encuentro encontrar veo ver ir llego voy cambio cambiar hago hacer hay el la los las lo un una de del a al en para por y o es son sale salen apartado seccion".split(" "));
+const quitaDonde = (t) => { const p = normal(String(t || "").replace(/[¿?¡!.,]/g, " ")).split(/\s+/).filter(Boolean), r = p.filter(x => !PALABRAS_VACIAS.has(x));
+  return r.length && r.length < p.length ? r.join(" ") : String(t || "").replace(/[¿?]/g, "").trim(); };
+function sitiosWeb() {
+  const vistas = GRUPOS.flatMap(g => g.miembros.map(m => m.clave)).filter((c, i, a) => a.indexOf(c) === i && c !== "inicio");
+  const extra = [
+    { t: "Hablar con un delegado", h: "delegados", donde: "Botón rojo de abajo, o Nosotros", p: "delegado telefono llamar contacto whatsapp" },
+    { t: "Buzón anónimo", h: "buzon", donde: rutaDe("preguntas") + " (abajo del todo)", p: "buzon anonimo sugerencia queja pregunta escribir" },
+    { t: "Activar los avisos en el móvil", h: "info", donde: "Campana de abajo, o Nosotros", p: "avisos notificaciones campana movil" },
+    { t: "Restricciones de camiones por país", h: "ap-" + APARTADO_CONDUCTORES, donde: rutaDe("ap-" + APARTADO_CONDUCTORES), p: "restricciones circulacion camiones prohibiciones dgt francia" },
+    { t: "Tamaño de letra y modo oscuro", donde: "Botón «Aa» de arriba a la derecha", p: "letra grande tamaño oscuro contraste colores" },
+    { t: "Buscar en toda la web", h: "buscar", donde: "Lupa de arriba a la derecha", p: "buscar lupa encontrar" },
+    { t: "Instalar la app", donde: "Botón con la flecha de arriba a la derecha (si aún no la tienes)", p: "instalar app descargar icono" },
+  ];
+  return [...vistas.map(c => ({ t: nomVista(c), h: c, donde: rutaDe(c), p: (PALABRAS_VISTA[c] || "") + " " + (c.startsWith("ap-") ? D.apartados.find(a => "ap-" + a.slug === c)?.descripcion || "" : "") })), ...extra.filter(x => !x.h || x.h !== "ap-" + APARTADO_CONDUCTORES || D.apartados.some(a => a.slug === APARTADO_CONDUCTORES))];
+}
+function pintaDonde(q) {
+  const c = $("donde-esta"); if (!c) return;
+  const qq = normal(quitaDonde(q)), l = sitiosWeb().filter(x => !qq || coincide(x.t + " " + x.p + " " + x.donde, qq))
+    .map(x => ({ ...x, n: qq && coincide(x.t, qq) ? 1 : 0 })).sort((a, b) => b.n - a.n);
+  c.hidden = !l.length;
+  c.innerHTML = `<details class="panel donde" ${qq ? "open" : ""}><summary>${icono("lugar", "p")}<span>¿Dónde está…?</span><small>${l.length}</small></summary>
+    <ul>${l.map(x => `<li>${x.h ? `<a href="#${esc(x.h)}">` : "<div>"}<b>${esc(x.t)}</b><small>${esc(x.donde === x.t ? "Pestaña de arriba" : x.donde)}</small>${x.h ? icono("der", "p") + "</a>" : "</div>"}</li>`).join("")}</ul></details>`;
+}
 function pintaPreguntas() {
   pintaFiltros("filtros-preguntas", usadas("pregunta", D.preguntas, "categoria"), estado.catPreg, o => { estado.catPreg = o; pintaPreguntas(); });
-  const qr = $("buscar-preguntas").value.trim(), q = normal(qr);
+  const qr = $("buscar-preguntas").value.trim(), q = normal(quitaDonde(qr) || qr);
+  pintaDonde(qr);
   const l = D.preguntas.filter(p => (estado.catPreg === "Todos" || p.categoria === estado.catPreg) && (!q || coincide(p.pregunta + " " + p.respuesta, q)));
   $("lista-preguntas").innerHTML = l.length ? l.map(p => preguntaHTML(p, qr, !!q)).join("")
     : vacio("pregunta", q ? "No hay preguntas que coincidan. Escríbenos y te respondemos." : "Todavía no hay preguntas frecuentes.");
@@ -1252,7 +1281,7 @@ function pintaMapaWeb() {
       ${g.miembros.length > 1 ? `<ul>${g.miembros.map(m => `<li><a href="#${esc(m.clave)}">${esc(m.titulo)}</a></li>`).join("")}</ul>` : ""}</div>`).join("")}</div>`;
 }
 function buscarTodo() {
-  const qr = $("buscar-todo").value.trim(), q = normal(qr);
+  const qr0 = $("buscar-todo").value.trim(), qr = quitaDonde(qr0) || qr0, q = normal(qr);
   if (q.length < 2) {
     $("resultados-todo").innerHTML = (qr ? `<p class="fecha-txt">Escribe al menos dos letras.</p>` : "") + pintaMapaWeb();
     $("resultados-todo").querySelectorAll("[data-busca]").forEach(b => b.onclick = () => { $("buscar-todo").value = b.dataset.busca; buscarTodo(); });
@@ -1265,10 +1294,11 @@ function buscarTodo() {
   const apDe = (id) => D.apartados.find(a => a.id === id);
   // Secciones y subapartados
   const vistas = GRUPOS.flatMap(g => g.miembros.map(m => m.clave)).filter((c, i, a) => a.indexOf(c) === i);
-  const secciones = lista(vistas, c => {
+  const sitiosExtra = sitiosWeb().filter(x => !vistas.includes(x.h));
+  const secciones = [...lista(sitiosExtra, x => ({ n: nota(x.t, x.p), h: x.h, t: x.t, donde: x.donde, ic: "lugar", sinEnlace: !x.h })), ...lista(vistas, c => {
     const ap = c.startsWith("ap-") ? D.apartados.find(a => "ap-" + a.slug === c) : null;
     return { n: nota(nomVista(c), ap?.descripcion, PALABRAS_VISTA[c], GRUPO_DE[c]?.titulo), h: c, t: nomVista(c), s: ap?.descripcion || "", donde: rutaDe(c), ic: ap?.icono || { descansos: "reloj", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta", info: "grupo", inicio: "inicio" }[c] || "carpeta" };
-  });
+  })].sort((a, b) => b.n - a.n);
   // Archivos: los de Documentos y los adjuntos de avisos, actas y publicaciones
   const arch = [];
   D.docs.forEach(d => arch.push({ url: d.url, nombre: d.titulo || d.nombre_archivo, extra: [d.nombre_archivo, d.descripcion, d.categoria], tipo: d.tipo_archivo, fichero: d.nombre_archivo, donde: "Documentos" + (d.categoria ? " › " + d.categoria : "") }));
@@ -1288,7 +1318,7 @@ function buscarTodo() {
     ["Preguntas frecuentes", "preguntas", lista(D.preguntas, x => ({ n: nota(x.pregunta, x.respuesta), h: "preguntas", t: x.pregunta, s: x.categoria, q: qr, donde: rutaDe("preguntas"), ic: "pregunta" }))],
   ].filter(g => g[2].length);
   const total = grupos.reduce((n, g) => n + g[2].length, 0);
-  const fila = (r) => `<a class="novedad resultado" ${r.url ? `href="${esc(urlSegura(r.url))}" target="_blank" rel="noopener"` : `href="#${esc(r.h)}" data-q="${esc(r.q || "")}" data-dia="${r.dia || ""}"`}>
+  const fila = (r) => r.sinEnlace ? `<div class="novedad resultado"><span class="ic">${icono(esc(r.ic), "p")}</span><span class="txt"><b>${resalta(r.t, qr)}</b><small class="donde">${icono("lugar", "p")}${esc(r.donde)}</small></span></div>` : `<a class="novedad resultado" ${r.url ? `href="${esc(urlSegura(r.url))}" target="_blank" rel="noopener"` : `href="#${esc(r.h)}" data-q="${esc(r.q || "")}" data-dia="${r.dia || ""}"`}>
       <span class="ic">${icono(esc(r.ic), "p")}</span><span class="txt"><b>${resalta(r.t || "Sin título", qr)}</b>${r.s ? `<small>${esc(r.s)}</small>` : ""}${r.donde ? `<small class="donde">${icono("lugar", "p")}${esc(r.donde)}</small>` : ""}</span>${icono(r.url ? "descargar" : "der", "p")}</a>`;
   $("resultados-todo").innerHTML = total ? `<p class="fecha-txt">${total} resultado${total === 1 ? "" : "s"}</p>` +
     `<nav class="busca-saltos" aria-label="Ir a un grupo de resultados">${grupos.map(([tit, k, l]) => `<a href="#" data-salto="bg-${k}">${esc(tit)} <span>${l.length}</span></a>`).join("")}</nav>` +
