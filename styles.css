@@ -978,43 +978,54 @@ body.publica.con-aviso-priv { padding-bottom: calc(84px + var(--alto-aviso, 90px
 .check.consentimiento input { flex: none; width: 24px; height: 24px; min-height: 0; margin-top: 1px; }
 .check.consentimiento a { color: var(--azul); font-weight: 700; }
 
-/* ====== Pantalla de bienvenida (v41): el camión del logo en marcha mientras carga ====== */
+/* ====== Pantalla de bienvenida (v41): el camión del logo llega, frena, encoge hasta su sitio y el logo aparece desde él ======
+   El camión (camion.webp) es el del logo recortado tal cual; su caja está en % de la del logo para que encaje justo encima. */
 .bienvenida {
-  position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
-  background: var(--asfalto); color: #fff; padding: 16px; text-align: center;
+  position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+  background: var(--asfalto); color: #fff; padding: 16px; text-align: center; overflow: hidden; cursor: pointer;
   transition: opacity .45s ease, visibility .45s;
   animation: bv-seguro .45s 8s forwards; /* por si la web no llega a quitarla */
 }
 .bienvenida.fuera { opacity: 0; visibility: hidden; pointer-events: none; }
 @keyframes bv-seguro { to { opacity: 0; visibility: hidden; pointer-events: none; } }
-.bv-logo { width: 132px; height: 132px; border-radius: 50%; animation: bv-aparece .6s ease both, bv-latido 2.4s .6s ease-in-out infinite; }
-@keyframes bv-aparece { from { opacity: 0; transform: scale(.8); } to { opacity: 1; transform: none; } }
-@keyframes bv-latido { 50% { transform: scale(1.04); } }
-.bv-escena { width: min(300px, 86vw); height: auto; overflow: visible; }
-.bv-camion { transform-box: fill-box; transform-origin: center bottom; animation: bv-bache .5s ease-in-out infinite; }
-@keyframes bv-bache { 50% { transform: translateY(-1.5px); } }
-.bv-carretera { stroke: #FFB000; stroke-width: 3; stroke-dasharray: 18 14; animation: bv-carretera .5s linear infinite; }
-@keyframes bv-carretera { to { stroke-dashoffset: 32; } }
-.bv-velocidad line { stroke: rgba(255,255,255,.55); stroke-width: 3; stroke-linecap: round; animation: bv-viento .7s linear infinite; }
-.bv-velocidad line:nth-child(2) { animation-delay: .23s; }
-.bv-velocidad line:nth-child(3) { animation-delay: .46s; }
-@keyframes bv-viento { from { transform: translateX(16px); opacity: 0; } 40% { opacity: 1; } to { transform: translateX(-22px); opacity: 0; } }
-.bv-humo circle { fill: rgba(255,255,255,.35); transform-box: fill-box; transform-origin: center; animation: bv-humo 1.2s ease-out infinite; }
-.bv-humo circle:nth-child(2) { animation-delay: .4s; }
-.bv-humo circle:nth-child(3) { animation-delay: .8s; }
-@keyframes bv-humo { from { transform: translate(0, 0) scale(.6); opacity: .9; } to { transform: translate(-26px, -14px) scale(2.2); opacity: 0; } }
-.bv-nombre { font-family: var(--cond); font-weight: 700; font-size: 1.6rem; letter-spacing: .02em; }
-.bv-carga { width: min(220px, 70vw); height: 6px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; }
+.bv-logo-caja { position: relative; width: min(240px, 62vw); aspect-ratio: 1; }
+.bv-logo { position: absolute; inset: 0; width: 100%; height: 100%; clip-path: circle(0% at 54.8% 52.7%); animation: bv-revela .8s 1.55s cubic-bezier(.3, .7, .2, 1) forwards; }
+@keyframes bv-revela { from { clip-path: circle(0% at 54.8% 52.7%); transform: scale(.94); } to { clip-path: circle(75% at 54.8% 52.7%); transform: none; } }
+.bv-camion { position: absolute; left: 29.785%; top: 39.941%; width: 50.049%; height: 25.586%; animation: bv-funde .35s 2.3s forwards; }
+@keyframes bv-funde { to { opacity: 0; } }
+.bv-escala { width: 100%; height: 100%; transform: scale(1.6); animation: bv-encoge .55s 1.15s cubic-bezier(.4, 0, .2, 1) forwards; }
+@keyframes bv-encoge { to { transform: none; } }
+.bv-mueve { position: relative; width: 100%; height: 100%; animation: bv-llega 1.15s cubic-bezier(.3, .55, .3, 1) both; }
+@keyframes bv-llega { from { transform: translateX(-100vw); } 88% { transform: translateX(1.5%) rotate(.8deg); } to { transform: none; } }
+.bv-bote { display: block; width: 100%; height: 100%; animation: bv-bache .32s ease-in-out 3.5; }
+@keyframes bv-bache { 50% { transform: translateY(-2.5%); } }
+.bv-viento { position: absolute; right: 102%; top: 15%; width: 40%; height: 55%; animation: bv-funde .3s .9s forwards; }
+.bv-viento i { position: absolute; right: 0; height: 3px; border-radius: 2px; background: rgba(255,255,255,.6); animation: bv-viento .55s linear infinite; }
+.bv-viento i:nth-child(1) { top: 0; width: 70%; }
+.bv-viento i:nth-child(2) { top: 45%; width: 100%; animation-delay: .18s; }
+.bv-viento i:nth-child(3) { top: 90%; width: 55%; animation-delay: .36s; }
+@keyframes bv-viento { from { transform: translateX(30%); opacity: 0; } 40% { opacity: 1; } to { transform: translateX(-60%); opacity: 0; } }
+.bv-humo { position: absolute; left: -4%; bottom: 12%; width: 8%; aspect-ratio: 1; animation: bv-funde .3s 1.1s forwards; }
+.bv-humo i { position: absolute; inset: 0; border-radius: 50%; background: rgba(255,255,255,.35); animation: bv-humo .9s ease-out infinite; }
+.bv-humo i:nth-child(2) { animation-delay: .3s; }
+.bv-humo i:nth-child(3) { animation-delay: .6s; }
+@keyframes bv-humo { from { transform: scale(.5); opacity: .9; } to { transform: translate(-160%, -80%) scale(2.2); opacity: 0; } }
+.bv-carretera { position: absolute; top: 66%; left: 50%; width: 100vw; height: 4px; transform: translateX(-50%);
+  background: repeating-linear-gradient(90deg, #FFB000 0 22px, transparent 22px 40px); animation: bv-carretera .4s linear 3, bv-funde .4s 1.05s forwards; }
+@keyframes bv-carretera { to { background-position: -40px 0; } }
+.bv-onda { position: absolute; inset: 0; border-radius: 50%; border: 3px solid var(--rojo); opacity: 0; animation: bv-onda .8s 2.15s ease-out; }
+@keyframes bv-onda { from { opacity: .9; transform: scale(.95); } to { opacity: 0; transform: scale(1.35); } }
+.bv-nombre { font-family: var(--cond); font-weight: 700; font-size: 1.7rem; letter-spacing: .02em; opacity: 0; animation: bv-sube .5s 2.2s ease-out forwards; }
+@keyframes bv-sube { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.bv-carga { width: min(200px, 60vw); height: 5px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; }
 .bv-carga span { display: block; width: 40%; height: 100%; border-radius: 3px; background: var(--rojo); animation: bv-barra 1.3s ease-in-out infinite; }
 @keyframes bv-barra { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
-.bv-texto { font-size: .95rem; opacity: .8; }
-.bv-puntos i { font-style: normal; animation: bv-punto 1.2s infinite; }
-.bv-puntos i:nth-child(2) { animation-delay: .2s; }
-.bv-puntos i:nth-child(3) { animation-delay: .4s; }
-@keyframes bv-punto { 0%, 60%, 100% { opacity: .2; } 30% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
   .bienvenida * { animation: none !important; }
   .bienvenida { transition: none; }
+  .bv-logo { clip-path: none; }
+  .bv-camion, .bv-carretera { display: none; }
+  .bv-nombre { opacity: 1; }
 }
 
 /* Animaciones pequeñas: las tarjetas entran escalonadas y los botones responden al tocar */

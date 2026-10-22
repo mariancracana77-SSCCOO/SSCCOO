@@ -31,18 +31,22 @@
 </head>
 <body class="publica">
 
-<!-- Pantalla de bienvenida: el camión del logo en marcha mientras carga (se quita sola en app.js; si algo falla, el CSS la quita a los 8 s) -->
+<!-- Pantalla de bienvenida: el camión del logo llega, frena, encoge hasta su sitio y el logo aparece desde él
+     (se quita en app.js al terminar de cargar; si algo falla, el CSS la quita a los 8 s; tocarla la salta) -->
 <div class="bienvenida" id="bienvenida" aria-hidden="true">
-  <img class="bv-logo" src="icon-192.png" alt="" width="132" height="132">
-  <svg class="bv-escena" viewBox="0 0 260 112">
-    <g class="bv-velocidad"><line x1="8" y1="30" x2="34" y2="30"/><line x1="0" y1="50" x2="30" y2="50"/><line x1="12" y1="70" x2="34" y2="70"/></g>
-    <g class="bv-humo"><circle cx="44" cy="94" r="4"/><circle cx="44" cy="94" r="4"/><circle cx="44" cy="94" r="4"/></g>
-    <image class="bv-camion" href="camion.webp" x="40" y="2" width="200" height="102"/>
-    <line class="bv-carretera" x1="0" y1="108" x2="260" y2="108"/>
-  </svg>
+  <div class="bv-logo-caja">
+    <div class="bv-carretera"></div>
+    <div class="bv-onda"></div>
+    <img class="bv-logo" src="icon-512.png" alt="" width="512" height="512">
+    <div class="bv-camion"><div class="bv-escala"><div class="bv-mueve">
+      <span class="bv-viento"><i></i><i></i><i></i></span>
+      <span class="bv-humo"><i></i><i></i><i></i></span>
+      <img class="bv-bote" src="camion.webp" alt="" width="600" height="307">
+    </div></div></div>
+  </div>
   <div class="bv-nombre">CCOO Calsina Carré</div>
   <div class="bv-carga"><span></span></div>
-  <div class="bv-texto">Cargando<span class="bv-puntos"><i>.</i><i>.</i><i>.</i></span></div>
+</div>
 </div>
 
 <header class="cab-tablon">
