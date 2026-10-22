@@ -127,6 +127,21 @@ const SECCIONES = {
     previa: (x) => delegadoHTML(x), tituloDe: (x) => x.nombre,
     extracto: (x) => [x.cargo, x.detalle].filter(Boolean).join(" · "), chips: (x) => [x.telefono && "Con teléfono", x.email && "Con email"], fechas: (x) => [null, x.actualizado],
   },
+  encuestas: {
+    nombre: "Encuestas", icono: "encuesta", tabla: "encuestas", orden: ["creado", false], uno: "encuesta", nuevo: "Nueva encuesta", lista: "aviso", campoColor: "_",
+    intro: "Preguntas para la plantilla. Salen en la portada; se vota tocando una opción y nadie puede saber qué ha votado cada uno: solo se cuentan los votos (un voto por móvil).",
+    campos: [
+      { k: "pregunta", l: "Pregunta", t: "text", req: true, ph: "Ej: ¿Qué turno preferís para la asamblea?" },
+      { k: "opciones", l: "Opciones", t: "textarea", req: true, corto: true, ayuda: "Una opción por línea, de 2 a 6. Cuando ya haya votos, no cambies el orden ni quites opciones: los votos van por posición." },
+      { k: "cierra", l: "Se cierra el día", t: "date", opc: true, ayuda: "Déjalo vacío para que siga abierta hasta que la ocultes. Cerrada, se ven los resultados en la portada 15 días más." },
+      { checks: [{ k: "publicada", l: "Se ve en la web (desmárcalo para ocultarla sin borrarla)", def: true }] },
+    ],
+    previa: (x) => encuestaHTML(x, VOTOS[x.id] || {}, 0),
+    tituloDe: (x) => x.pregunta,
+    extracto: (x) => { const v = VOTOS[x.id] || {}; return opcionesEncuesta(x).map((o, i) => `${o}: ${+v[i + 1] || 0}`).join(" · "); },
+    chips: (x) => { const v = VOTOS[x.id] || {}, n = Object.values(v).reduce((a, b) => a + b, 0); return [n + (n === 1 ? " voto" : " votos"), x.publicada === false ? "Oculta" : encuestaAbierta(x) ? (x.cierra ? "Abierta hasta el " + fechaLarga(x.cierra + "T12:00:00") : "Abierta") : "Cerrada"]; },
+    fechas: (x) => [x.creado, x.actualizado],
+  },
   enlaces: {
     nombre: "Enlaces", icono: "idioma", tabla: "enlaces", orden: ["orden", true], uno: "enlace", nuevo: "Nuevo enlace", lista: "aviso", campoColor: "_",
     intro: "Webs útiles para la plantilla (sindicato, Seguridad Social, SEPE…). Salen en «Nosotros».",
@@ -453,6 +468,14 @@ async function pintaResumen() {
   if ($("anadir-prox")) $("anadir-prox").onclick = (e) => { e.preventDefault(); abrirEditor("calendario"); };
 }
 
+// Votos de las encuestas: solo el recuento por opción
+let VOTOS = {};
+async function cargarVotos() {
+  const { data, error } = await sb.from("encuesta_votos").select("*");
+  if (error) throw error;
+  VOTOS = {}; (data || []).forEach(v => { (VOTOS[v.encuesta_id] = VOTOS[v.encuesta_id] || {})[v.opcion] = v.n; });
+}
+
 // ---------- Listas ----------
 async function cargarDatos(k) {
   const s = SECCIONES[k];
@@ -602,7 +625,7 @@ async function pintaSeccion(k) {
   if ($("b-recurrentes")) $("b-recurrentes").onclick = () => abrir("recurrentes");
   if ($("b-camiones")) $("b-camiones").onclick = () => abrir("camiones");
   enlazarVistaCal();
-  try { await Promise.all([cargarDatos(k), TABLAS_LEIDAS.includes(s.tabla) ? cargarLecturas() : null, k === "apartados" ? contarPublicaciones() : null]); } catch (e) { $("lista").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
+  try { await Promise.all([cargarDatos(k), TABLAS_LEIDAS.includes(s.tabla) ? cargarLecturas() : null, k === "apartados" ? contarPublicaciones() : null, k === "encuestas" ? cargarVotos() : null]); } catch (e) { $("lista").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
   const ff = FILTRO_ADM[k] ||= {};
   const pinta = () => {
     if (FECHA_DE[k]) pintaFechasAdm(datos[k], k, ff, pinta);
@@ -862,6 +885,10 @@ $("ed-guardar").onclick = async () => {
     if (c.req && c.t !== "archivo" && c.t !== "archivos" && !fila[c.k]) { cambiarPestana("form"); $("f-" + c.k)?.focus(); return msg("ed-msg", "Falta: " + c.l.toLowerCase() + "."); }
   }
   if (["avisos"].includes(ED.k) && /\[[^\]]{1,30}\]/.test((fila.titulo || "") + (fila.contenido || "")) && !confirm("El aviso todavía tiene partes entre [corchetes] sin rellenar. ¿Publicar igualmente?")) return;
+  if (ED.k === "encuestas") {
+    const n = opcionesEncuesta(fila).length;
+    if (n < 2 || n > 6) { cambiarPestana("form"); $("f-opciones")?.focus(); return msg("ed-msg", "Pon de 2 a 6 opciones, una por línea."); }
+  }
   if (!(await revisarOrtografia(s, fila))) return;
   if (["enlaces", "restricciones"].includes(ED.k) && fila.url && !/^https?:\/\//.test(fila.url)) fila.url = "https://" + fila.url;
   if (s.filtro) Object.assign(fila, s.filtro);

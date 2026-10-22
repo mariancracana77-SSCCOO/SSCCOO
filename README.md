@@ -131,6 +131,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Festivos que duran todo el día: dicen «Todo el día» en vez de «00:00–23:59», y se añaden al calendario del móvil como día completo.
 - Nuevos archivos: `fuentes/atkinson-hyperlegible-*.woff2` (4 archivos). **Súbelos también a GitHub.**
 
+## Versión 42: encuestas anónimas y más animaciones
+- **Encuestas anónimas**: en el panel, «Encuestas» (pregunta, de 2 a 6 opciones, día de cierre opcional). Salen en la portada; se vota tocando una opción y se ven los resultados en barras. Al servidor solo va «+1 a esta opción» (tablas `encuestas` y `encuesta_votos`, función `votar_encuesta`): nadie puede saber qué votó cada uno. Un voto por móvil (se recuerda en el propio móvil). Cerradas, los resultados se ven 15 días más.
+- **Buscador a mano** en la portada («Buscar avisos, actas, documentos…»).
+- **Calendario del móvil**: «Añadir a mi calendario» ahora avisa el día antes y 2 horas antes (si es de todo el día, la tarde anterior).
+- Animaciones: «desliza para actualizar» con el camión del logo; la campana se balancea cuando llega algo nuevo; la cuenta atrás corre como un marcador y la cifra que cambia gira; la línea de «Próximas paradas» se dibuja de parada en parada; el aviso urgente da un destello; al cambiar de pestaña la pantalla entra por el lado de la pestaña. Todo se desactiva si el móvil tiene «reducir movimiento».
+
 ## Versión 41: animación al abrir la app
 - Al abrir la web sale una pantalla de bienvenida: el camión del logo (el mismo, sin su borde gris) llega por la carretera con las ruedas girando y un camionero saludando, frena, encoge hasta su sitio y el logo se forma a su alrededor (aro rojo que se dibuja, logo que nace del camión, latido de sello y destello). Dura unos 4 segundos; tocar la pantalla la salta. Si el móvil tiene las animaciones desactivadas, sale el logo quieto. Si algo falla, se quita sola a los 8 segundos.
 - Al quitarse, las tarjetas de la portada entran una detrás de otra, y las tarjetas y botones se hunden un poco al tocarlos.

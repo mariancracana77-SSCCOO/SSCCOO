@@ -1,6 +1,6 @@
 // ===== Web pública: Sección Sindical CCOO Calsina Carré =====
 const $ = (id) => document.getElementById(id);
-const D = { avisos: [], eventos: [], convenio: [], docs: [], actas: [], preguntas: [], delegados: [], enlaces: [], apartados: [], publicaciones: [], calc: { permisos: [], categorias: [], ajustes: {} }, paginas: {} };
+const D = { avisos: [], eventos: [], convenio: [], docs: [], actas: [], preguntas: [], delegados: [], enlaces: [], apartados: [], publicaciones: [], encuestas: [], votos: {}, calc: { permisos: [], categorias: [], ajustes: {} }, paginas: {} };
 const estado = { catAviso: "Todos", catConv: "Todos", tipoActa: "Todos", catDoc: "Todos", catPreg: "Todos", archivo: false, mes: new Date(), diaSel: hoyISO(),
   fechas: { avisos: {}, actas: {}, docs: {}, ap: {} }, ap: null, calc: "vacaciones", permiso: null };
 
@@ -23,7 +23,13 @@ function irA() {
   if (aDelegados) setTimeout(() => ($("lista-delegados").children.length ? $("tit-delegados") : $("txt-contacto"))?.scrollIntoView({ block: "start" }), 50);
   if (legal) setTimeout(() => $("leg-" + legal)?.scrollIntoView({ block: "start" }), 50);
   if (avisoDirecto) setTimeout(() => { const el = $(avisoDirecto); if (el) { el.scrollIntoView({ block: "start" }); el.classList.add("nuevo"); } }, 300);
-  document.querySelectorAll(".vista").forEach(s => s.classList.toggle("activa", s.id === "v-" + v));
+  // La vista nueva entra desde el lado de su pestaña (más a la derecha en la barra: entra por la derecha)
+  const orden = [...document.querySelectorAll(".pestanas-web a")].map(b => b.dataset.v), clave = ap ? "ap-" + ap : v;
+  const iAntes = orden.indexOf(irA.antes), iAhora = orden.indexOf(clave), lado = iAntes < 0 || iAhora < 0 || iAntes === iAhora ? "" : iAhora > iAntes ? "desde-der" : "desde-izq";
+  const cambia = irA.antes !== undefined && irA.antes !== clave; irA.antes = clave;
+  document.querySelectorAll(".vista").forEach(s => { s.classList.toggle("activa", s.id === "v-" + v); s.classList.remove("desde-der", "desde-izq"); });
+  if (lado && cambia) $("v-" + v)?.classList.add(lado);
+  if (v === "inicio" && cambia) animaPortada();
   document.querySelectorAll(".pestanas-web a").forEach(b => {
     const on = b.dataset.v === (ap ? "ap-" + ap : v); b.classList.toggle("activa", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current");
     if (on) b.scrollIntoView({ inline: "center", block: "nearest" });
@@ -165,7 +171,7 @@ function pintaInicio() {
   const prox = D.eventos.filter(e => e.fecha >= hoy).sort((a, b) => (a.fecha + (a.hora || "")).localeCompare(b.fecha + (b.hora || "")));
   // Rótulo: lo urgente; si no hay, la próxima cita; si no, «todo en orden»
   let rot;
-  if (urg) rot = `<a class="rotulo" href="#aviso-${urg.id}"><span class="rot-tipo urgente">${icono("alerta", "p")}Urgente</span>
+  if (urg) rot = `<a class="rotulo es-urgente" href="#aviso-${urg.id}"><span class="rot-tipo urgente">${icono("alerta", "p")}Urgente</span>
       <span class="rot-l1">${esc(urg.titulo)}</span><span class="rot-l2">${esc(resumenPlano(urg.contenido, 110))}</span>
       <span class="rot-ir">Ver el aviso completo${icono("der", "p")}</span></a>`;
   else if (prox[0]) { const e = prox[0];
@@ -230,16 +236,60 @@ function pintaCuentaAtras(enRotulo) {
   const ahora = new Date(), e = D.eventos.filter(x => x.importante && finDe(x) > ahora).sort((a, b) => inicioDe(a) - inicioDe(b))[0];
   if (!e) { $("cuenta-atras").innerHTML = ""; return; }
   const ms = inicioDe(e) - ahora, min = Math.floor(ms / 60000), dias = Math.floor(min / 1440), horas = Math.floor((min % 1440) / 60), mins = min % 60;
-  const bloque = (n, t) => `<span class="ca-bloque"><b>${n}</b><small>${t}</small></span>`;
+  // Marcador: si una cifra cambia respecto a la vez anterior, gira (como los paneles de las estaciones)
+  const antes = pintaCuentaAtras.antes || {}, ahoraV = {};
+  const bloque = (n, t) => { const k = t.replace(/s$/, ""); ahoraV[k] = n; const gira = antes.id === e.id && antes[k] !== undefined && antes[k] !== n;
+    return `<span class="ca-bloque"><b class="${gira ? "gira" : ""}" data-n="${n}">${n}</b><small>${t}</small></span>`; };
   const cifras = ms <= 0 ? `<span class="ca-ahora">${esTodoElDia(e) || !e.hora ? "Es hoy" : "Está pasando ahora"}</span>`
     : dias > 0 ? bloque(dias, dias === 1 ? "día" : "días") + bloque(horas, horas === 1 ? "hora" : "horas")
     : bloque(horas, horas === 1 ? "hora" : "horas") + bloque(mins, "min");
   const mismo = enRotulo && enRotulo.id === e.id;
+  pintaCuentaAtras.antes = { ...ahoraV, id: e.id };
   $("cuenta-atras").innerHTML = `<a class="cuenta-atras" href="#calendario" data-dia="${e.fecha}" aria-label="${ms > 0 ? "Faltan " + (dias ? dias + " días y " : "") + horas + " horas para " : ""}${esc(e.titulo)}">
     <span class="ca-txt"><small>${ms > 0 ? "Faltan" : "Cita importante"}</small>${mismo ? "" : `<b>${esc(e.titulo)}</b>`}<small>${esc(cuandoEvento(e))}${e.lugar ? " · " + esc(e.lugar) : ""}</small></span>
     <span class="ca-cifras" aria-hidden="true">${cifras}</span></a>`;
   $("cuenta-atras").querySelector("[data-dia]").onclick = () => irADia(e.fecha);
   pintaCuentaAtras.t = setInterval(() => pintaCuentaAtras(enRotulo), 60000);
+}
+
+// ---------- Encuestas anónimas (en la portada) ----------
+// Se guarda en este móvil qué se votó (para enseñar los resultados y no votar dos veces); al servidor solo va +1 a esa opción.
+const leeVotos = () => { try { return JSON.parse(localStorage.getItem("ccoo-votos") || "{}") || {}; } catch (_) { return {}; } };
+function pintaEncuestas(recien) {
+  const hace15 = new Date(Date.now() - 15 * 864e5).toISOString().slice(0, 10), mios = leeVotos();
+  const l = D.encuestas.filter(x => encuestaAbierta(x) || (x.cierra && x.cierra >= hace15)).slice(0, 3);
+  $("inicio-encuesta").innerHTML = l.map(x => encuestaHTML(x, D.votos[x.id] || {}, +mios[x.id] || 0, x.id === recien)).join("");
+}
+$("inicio-encuesta").addEventListener("click", async (ev) => {
+  const b = ev.target.closest("[data-voto]"); if (!b) return;
+  const [id, op] = b.dataset.voto.split(":").map(Number), caja = b.closest(".encuesta");
+  caja.querySelectorAll(".enc-op").forEach(x => x.disabled = true); b.classList.add("elegida");
+  const { error } = await sb.rpc("votar_encuesta", { p_id: id, p_opcion: op });
+  if (error) { caja.querySelector(".enc-msg").textContent = error.message || "No se ha podido votar. Prueba otra vez."; caja.querySelectorAll(".enc-op").forEach(x => x.disabled = false); b.classList.remove("elegida"); return; }
+  const v = leeVotos(); v[id] = op; try { localStorage.setItem("ccoo-votos", JSON.stringify(v)); } catch (_) {}
+  const t = (D.votos[id] = D.votos[id] || {}); t[op] = (+t[op] || 0) + 1;
+  pintaEncuestas(id);
+});
+
+// ---------- Animaciones de la portada ----------
+// Al abrir la web (tras la pantalla del camión) y al volver a Inicio: la línea de «Próximas paradas» se dibuja,
+// el rótulo urgente da un destello, las cifras de la cuenta atrás corren como un marcador y, si hay novedades, la campana se mueve.
+const QUIETO = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+function sacudeCampana() {
+  if (QUIETO()) return; const c = document.querySelector(".campana"); if (!c) return;
+  c.classList.remove("sacude"); void c.offsetWidth; c.classList.add("sacude"); setTimeout(() => c.classList.remove("sacude"), 1300);
+}
+function animaPortada() {
+  if (QUIETO() || $("bienvenida")?.isConnected && !$("bienvenida").classList.contains("fuera")) return;
+  const v = $("v-inicio"); v.classList.remove("anima"); void v.offsetWidth; v.classList.add("anima");
+  clearTimeout(animaPortada.t); animaPortada.t = setTimeout(() => v.classList.remove("anima"), 2600);
+  v.querySelectorAll(".ca-bloque b[data-n]").forEach(b => {
+    const fin = +b.dataset.n, t0 = performance.now(), dur = 900;
+    if (!(fin > 0)) return;
+    const paso = (t) => { const k = Math.min(1, (t - t0) / dur); b.textContent = Math.round(fin * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(paso); };
+    requestAnimationFrame(paso);
+  });
+  if (document.querySelector("#inicio-novedades .n")) setTimeout(sacudeCampana, 900);
 }
 
 // «Sabías que…»: un apartado del convenio distinto cada día (el mismo para todos ese día)
@@ -547,7 +597,7 @@ function pintaInfo() {
 // ---------- Carga de datos ----------
 async function cargar(idNuevo) {
   await cargarOpciones();
-  const [a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs] = await Promise.all([
+  const [a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs, enc, vot] = await Promise.all([
     sb.from("comunicados").select("*").order("fecha", { ascending: false }).limit(200),
     sb.from("eventos").select("*").order("fecha"),
     sb.from("convenio_secciones").select("*").order("orden").order("id"),
@@ -563,6 +613,8 @@ async function cargar(idNuevo) {
     sb.from("calc_categorias").select("*").order("orden").order("id"),
     sb.from("calc_ajustes").select("*"),
     sb.from("restricciones").select("*").order("orden").order("id"),
+    sb.from("encuestas").select("*").order("creado", { ascending: false }).limit(20),
+    sb.from("encuesta_votos").select("*"),
   ]);
   if (a.error) {
     document.querySelectorAll("#inicio-rotulo, #lista-avisos").forEach(el =>
@@ -579,10 +631,12 @@ async function cargar(idNuevo) {
   D.apartados = (aps.data || []).filter(x => x.visible !== false);
   D.publicaciones = (pubs.data || []).filter(x => x.publicado !== false && D.apartados.some(ap => ap.id === x.apartado_id)); cargar.listo = true;
   D.restricciones = rs.error ? null : (rs.data || []).filter(x => x.visible !== false); // null: se usa la lista de reserva
+  D.encuestas = (enc.data || []).filter(x => x.publicada !== false);
+  D.votos = {}; (vot.data || []).forEach(v => { (D.votos[v.encuesta_id] = D.votos[v.encuesta_id] || {})[v.opcion] = v.n; });
   D.calc = { permisos: cp.data || [], categorias: cc.data || [], ajustes: Object.fromEntries((ca.data || []).map(x => [x.clave, x.valor])) };
   if (!$("calc-zona").contains(document.activeElement)) pintaCalcula(); // no borrar lo que se está escribiendo
   pintaPestanasApartados(); pintaApartado();
-  pintaInicio(); pintaAvisos(idNuevo); pintaCalendario(); pintaConvenio(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaInfo(); pintaCanales(); pintaContadores();
+  pintaInicio(); pintaEncuestas(); pintaAvisos(idNuevo); pintaCalendario(); pintaConvenio(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaInfo(); pintaCanales(); pintaContadores();
   if (/^#aviso-\d+$/.test(location.hash) && !cargar.hecho) { cargar.hecho = true; irA(); }
 }
 // Pantalla de bienvenida: dura lo que tarda el camión en formar el logo (4,3 s) y se quita al terminar de cargar.
@@ -596,6 +650,7 @@ function quitarBienvenida() {
     const listas = document.querySelectorAll("#inicio-feed, #inicio-paradas, .accesos-tablon, [id^='lista-']");
     if (!quieto) listas.forEach(el => el.classList.add("anima-entra"));
     bv.classList.add("fuera");
+    if (!location.hash || location.hash === "#inicio") animaPortada();
     setTimeout(() => { bv.remove(); listas.forEach(el => el.classList.remove("anima-entra")); }, 1200);
   }, quieto || quitarBienvenida.ya ? 0 : Math.max(0, 4300 - performance.now()));
 }
@@ -619,6 +674,7 @@ function pintaBandaNovedad() {
   const b = $("banda-novedad"), n = PEND.length;
   b.classList.toggle("oculto", !n);
   if (!n) { b.innerHTML = ""; return; }
+  sacudeCampana();
   b.innerHTML = `<button id="ver-novedad" type="button"><span class="pt" aria-hidden="true"></span>
     <span class="txt">${n === 1 ? `Hay 1 novedad: <b>${esc(PEND[0].titulo || QUE[PEND[0].t])}</b>` : `Hay ${n} novedades`}</span><span class="ver">Ver</span></button>`;
   $("ver-novedad").onclick = verNovedades;
