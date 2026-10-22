@@ -301,7 +301,7 @@ async function iniciarPanel() {
   await contarBuzon();
   pintaNav();
   const h = location.hash.slice(1);
-  abrir(PAGINAS[h] ? h : "resumen");
+  abrir(PAGINAS[h] || h === "archivos" ? h : "resumen");
 }
 // Sin bloqueo por intentos fallidos en el panel (v50: al padre le dejaba esperando y parecía que la cuenta se había bloqueado).
 // Contra quien pruebe contraseñas ya protege Supabase, que frena muchos intentos seguidos desde el mismo sitio.
@@ -452,6 +452,7 @@ function abrir(k) {
   else if (k === "historial") pintaHistorial();
   else if (k === "textos") pintaTextos();
   else if (k === "ajustes") pintaAjustes();
+  else if (k === "archivos") pintaTodosArchivos();
   else pintaSeccion(k);
 }
 
@@ -678,7 +679,7 @@ async function pintaSeccion(k) {
   if (k === "calendario" && VISTA_CAL.modo === "mes") return pintaCalAdm();
   $("zona").innerHTML = `<div class="sec-cab">
       <div><h1>${esc(s.nombre)}</h1><p id="cuenta">${esc(s.intro)}</p></div>
-      <div class="botones" style="margin:0">${k === "avisos" ? `<button class="btn sec" id="b-recurrentes">${icono("reloj2", "p")}Avisos que se repiten</button>` : ""}${s.slug === "zona-conductores" ? `<button class="btn sec" id="b-camiones">${icono("lugar", "p")}Restricciones para camiones</button>` : ""}<button class="btn btn-nuevo" id="b-nuevo">${icono("mas", "p")}${s.nuevo}</button></div>
+      <div class="botones" style="margin:0">${k === "avisos" ? `<button class="btn sec" id="b-recurrentes">${icono("reloj2", "p")}Avisos que se repiten</button>` : ""}${k === "documentos" ? `<button class="btn sec" id="b-archivos">${icono("imagen", "p")}Todos los archivos y fotos</button>` : ""}${s.slug === "zona-conductores" ? `<button class="btn sec" id="b-camiones">${icono("lugar", "p")}Restricciones para camiones</button>` : ""}<button class="btn btn-nuevo" id="b-nuevo">${icono("mas", "p")}${s.nuevo}</button></div>
     </div>
     ${k === "calendario" ? cambioVistaCal() : ""}
     <div class="herramientas"><div class="buscador">${icono("buscar", "p")}<input id="buscar" type="search" placeholder="Buscar en ${s.nombre.toLowerCase()} (también fechas: 12/10, octubre…)" aria-label="Buscar"></div></div>
@@ -687,6 +688,7 @@ async function pintaSeccion(k) {
   $("b-nuevo").onclick = () => abrirEditor(k);
   if ($("b-recurrentes")) $("b-recurrentes").onclick = () => abrir("recurrentes");
   if ($("b-camiones")) $("b-camiones").onclick = () => abrir("camiones");
+  if ($("b-archivos")) $("b-archivos").onclick = () => abrir("archivos");
   enlazarVistaCal();
   try { await Promise.all([cargarDatos(k), TABLAS_LEIDAS.includes(s.tabla) ? cargarLecturas() : null, k === "apartados" ? contarPublicaciones() : null, k === "encuestas" ? cargarVotos() : null]); } catch (e) { $("lista").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
   const ff = FILTRO_ADM[k] ||= {};
@@ -1305,6 +1307,55 @@ async function limpiarArchivos() {
     msg("m-limpiar", `Hecho: se han quitado ${sobran.length} archivo(s).`, true);
   } catch (e) { msg("m-limpiar", "No se ha podido: " + (e.message || e)); }
   finally { b.disabled = false; }
+}
+
+// ---------- Todos los archivos y fotos ----------
+// Todo lo subido en cualquier sección (avisos, actas, convenio, documentos y apartados), en un solo sitio.
+// Se busca por el nombre del archivo y también por el título de lo que se publicó con él.
+let FILTRO_ARCH = "todo";
+async function pintaTodosArchivos() {
+  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Todos los archivos y fotos</h1><p>Todo lo que se ha subido a la web, esté donde esté. Toca uno para verlo o «Abrir donde está» para cambiarlo.</p></div>
+      <div class="botones" style="margin:0"><button class="btn sec" id="b-volver-docs">${icono("izq", "p")}Volver a Documentos</button></div></div>
+    <div class="herramientas"><div class="buscador">${icono("buscar", "p")}<input id="buscar" type="search" placeholder="Buscar por nombre del archivo o título (ej.: nómina, asamblea, PRL…)" aria-label="Buscar archivos"></div></div>
+    <div class="cambio-vista filtro-arch" role="group" aria-label="Qué enseñar">${[["todo", "Todo"], ["foto", "Fotos"], ["pdf", "PDF"], ["otro", "Otros"]].map(([v, t]) => `<button data-fa="${v}" class="${FILTRO_ARCH === v ? "activa" : ""}">${t}</button>`).join("")}</div>
+    <p class="ayuda" id="cuenta-arch"></p>
+    <div class="rejilla-arch" id="lista-arch"><p class="fecha-txt">Cargando…</p></div>`;
+  $("b-volver-docs").onclick = () => abrir("documentos");
+  let todos = [];
+  try {
+    const [av, ac, cv, dc, pb] = await Promise.all([
+      sb.from("comunicados").select("id, titulo, fecha, adjuntos"), sb.from("actas").select("id, titulo, fecha, adjuntos"),
+      sb.from("convenio_secciones").select("id, titulo, actualizado, adjuntos"), sb.from("documentos").select("*"),
+      sb.from("publicaciones").select("id, apartado_id, titulo, fecha, adjuntos")]);
+    const err = [av, ac, cv, dc, pb].find(r => r.error); if (err) throw err.error;
+    const de = (k, sec, filas, fecha) => (filas || []).forEach(x => (x.adjuntos || []).forEach(a => a?.url && todos.push({ ...a, k, sec, id: x.id, titulo: x.titulo, fecha: fecha(x) })));
+    de("avisos", "Avisos", av.data, x => x.fecha); de("actas", "Actas", ac.data, x => x.fecha); de("convenio", "Convenio", cv.data, x => x.actualizado);
+    (dc.data || []).forEach(x => x.url && todos.push({ nombre: x.nombre_archivo || x.titulo, url: x.url, tipo: x.tipo_archivo, tamano: x.tamano, k: "documentos", sec: "Documentos", id: x.id, titulo: x.titulo, fecha: x.fecha }));
+    (pb.data || []).forEach(x => { const a = APARTADOS.find(a => a.id === x.apartado_id); if (a) de("ap" + a.id, a.titulo, [x], y => y.fecha); });
+  } catch (e) { $("lista-arch").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message || e)}</p>`; return; }
+  todos.sort((a, b) => String(b.fecha || "").localeCompare(String(a.fecha || "")));
+  const clase = (a) => esImagen(a) ? "foto" : /pdf/i.test(a.tipo || "") || /\.pdf$/i.test(a.nombre || "") ? "pdf" : "otro";
+  const sinAcentos = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const pinta = () => {
+    const q = sinAcentos($("buscar").value.trim());
+    const l = todos.filter(a => (FILTRO_ARCH === "todo" || clase(a) === FILTRO_ARCH) && (!q || sinAcentos([a.nombre, a.titulo, a.sec, textoFecha(a.fecha)].join(" ")).includes(q)));
+    $("cuenta-arch").textContent = l.length === 1 ? "1 archivo" : `${l.length} archivos`;
+    $("lista-arch").innerHTML = l.length ? l.map((a, i) => {
+      const t = tipoArchivo(a.tipo, a.nombre);
+      return `<div class="arch-ficha">
+        <a class="arch-ver" href="${esc(urlSegura(a.url))}" target="_blank" rel="noopener">${esImagen(a) ? `<img src="${esc(fotoSrc(a.url))}" alt="" loading="lazy">` : `<span class="arch-ic">${icono(t.ic)}<small>${esc(t.txt)}</small></span>`}</a>
+        <div class="arch-txt"><b>${esc(a.nombre || "Archivo")}</b><small>${esc(a.sec)} · ${esc(a.titulo || "Sin título")}${a.fecha ? " · " + esc(fechaLarga(String(a.fecha).length === 10 ? a.fecha + "T12:00:00" : a.fecha)) : ""}${a.tamano ? " · " + tamanoTxt(a.tamano) : ""}</small></div>
+        <button class="btn sec peq" data-donde="${i}">${icono("editar", "p")}Abrir donde está</button></div>`;
+    }).join("") : `<div class="panel vacio">${icono("carpeta")}${q || FILTRO_ARCH !== "todo" ? "Nada coincide con la búsqueda." : "Todavía no hay archivos subidos."}</div>`;
+    $("lista-arch").querySelectorAll("[data-donde]").forEach(b => b.onclick = async () => {
+      const a = l[+b.dataset.donde];
+      try { if (!datos[a.k]?.some(x => x.id === a.id)) await cargarDatos(a.k); } catch (e) { return aviso("No se ha podido abrir: " + e.message, true); }
+      const x = datos[a.k].find(x => x.id === a.id);
+      x ? abrirEditor(a.k, x) : aviso("No se ha encontrado. Puede que se haya borrado.", true);
+    });
+  };
+  $("zona").querySelectorAll("[data-fa]").forEach(b => b.onclick = () => { FILTRO_ARCH = b.dataset.fa; $("zona").querySelectorAll("[data-fa]").forEach(x => x.classList.toggle("activa", x === b)); pinta(); });
+  $("buscar").oninput = pinta; pinta();
 }
 
 // ---------- Calculadoras (valores que usa «Calcula» en la web) ----------
