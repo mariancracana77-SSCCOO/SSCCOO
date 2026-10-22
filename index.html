@@ -215,6 +215,41 @@
     <div id="lista-actas"><div class="esq esq-tarjeta" aria-hidden="true"></div><div class="esq esq-tarjeta" aria-hidden="true"></div></div>
   </section>
 
+  <!-- MIS DESCANSOS (Zona Conductores): descanso semanal, solo en este móvil (descansos.js) -->
+  <section class="vista" id="v-descansos">
+    <h1 class="titulo-vista">Mis descansos</h1>
+    <p class="intro-vista">Calcula tu descanso semanal (el del fin de semana): cuándo te toca, si puede ser reducido y cuántas horas tienes que compensar. Tus datos se guardan solo en este móvil: nadie más los ve.</p>
+    <div id="desc-app"></div>
+    <div class="panel desc-estado" id="desc-estado"></div>
+    <div class="panel desc-form">
+      <h2 class="tit-seccion">Apuntar un descanso semanal</h2>
+      <div class="fila"><div><label for="desc-ini">Empezó</label><input id="desc-ini" type="datetime-local"></div>
+        <div><label for="desc-fin">Acabó</label><input id="desc-fin" type="datetime-local"></div></div>
+      <label class="check"><input type="checkbox" id="desc-casa">Lo hice en casa (o en la base de la empresa)</label>
+      <label class="check"><input type="checkbox" id="desc-cabina">Lo hice en la cabina del camión</label>
+      <div class="botones"><button class="btn" id="desc-guardar">Guardar descanso</button></div>
+      <details class="desc-mas"><summary>Apuntar horas de compensación sumadas a un descanso diario</summary>
+        <div class="fila"><div><label for="desc-comp-fin">Cuándo acabó ese descanso</label><input id="desc-comp-fin" type="datetime-local"></div>
+          <div><label for="desc-comp-h">Horas de compensación</label><input id="desc-comp-h" inputmode="decimal" placeholder="Ej: 9"></div></div>
+        <div class="botones"><button class="btn sec" id="desc-comp-guardar">Apuntar compensación</button></div></details>
+      <div class="msg" id="desc-msg" role="status"></div>
+    </div>
+    <div class="panel desc-opciones">
+      <label class="check"><input type="checkbox" id="desc-internacional">Hago transporte internacional</label>
+      <label class="check" id="desc-avisar-caja"><input type="checkbox" id="desc-avisar">Avisarme en el móvil (12 h y 2 h antes, y 3 días antes del plazo de una compensación). Al servidor solo va cuándo avisarte y el texto del aviso, sin tu nombre; se borra al enviarse.</label>
+    </div>
+    <h2 class="tit-seccion">Lo que has apuntado</h2>
+    <ul class="desc-lista" id="desc-lista"></ul>
+    <div class="botones desc-copias">
+      <button class="btn sec" id="desc-copia"><svg class="icono p" aria-hidden="true"><use href="#i-descargar"/></svg>Guardar una copia</button>
+      <label class="btn sec" for="desc-recupera"><svg class="icono p" aria-hidden="true"><use href="#i-subir"/></svg>Recuperar una copia</label>
+      <input type="file" id="desc-recupera" accept="application/json,.json" hidden>
+      <button class="btn peligro" id="desc-borrar"><svg class="icono p" aria-hidden="true"><use href="#i-borrar"/></svg>Borrar todo</button>
+    </div>
+    <p class="ayuda">Guarda una copia de vez en cuando (y antes de cambiar de móvil): si se borran los datos del navegador, se pierde lo apuntado.</p>
+    <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Orientativo. Manda lo que registra el tacógrafo y el Reglamento (CE) 561/2006. Cálculos según el cuadernillo «Tiempos de conducción y descanso» de FENADISMER (mayo 2026) y el II Acuerdo Marco. Ante la duda, pregunta a un delegado.</span></p>
+  </section>
+
   <!-- APARTADO (los crea el admin desde el panel: Comité de empresa, etc.) -->
   <section class="vista" id="v-apartado">
     <h1 class="titulo-vista" id="ap-titulo">Cargando…</h1>
@@ -322,5 +357,6 @@
 <script src="config.js?v=51"></script>
 <script src="render.js?v=51"></script>
 <script src="app.js?v=51"></script>
+<script src="descansos.js?v=51"></script>
 </body>
 </html>

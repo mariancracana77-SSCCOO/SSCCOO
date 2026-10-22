@@ -15,7 +15,7 @@ $("version-web").textContent = "Versión " + VERSION_WEB;
 document.querySelector(".contacto-btn").innerHTML = icono("correo", "p") + "Escribir a la Sección Sindical";
 
 // ---------- Navegación ----------
-const VISTAS = ["inicio", "avisos", "calendario", "convenio", "calcula", "actas", "documentos", "preguntas", "info", "buscar", "legal"];
+const VISTAS = ["inicio", "avisos", "calendario", "convenio", "calcula", "actas", "documentos", "preguntas", "info", "buscar", "legal", "descansos"];
 function irA() {
   const h = location.hash.slice(1), avisoDirecto = /^aviso-\d+$/.test(h) ? h : null;
   const legal = h === "aviso-legal" || h === "privacidad" ? h : null, aDelegados = h === "delegados", aEncuesta = /^encuesta-\d+$/.test(h) ? h : null;
@@ -48,9 +48,9 @@ window.addEventListener("hashchange", irA);
 // Arriba solo salen los apartados principales; lo que va dentro (Actas en «Comité de empresa», los subapartados
 // que crea el admin…) sale en una segunda fila (#subpestanas). Las direcciones de siempre (#actas, #ap-…) siguen valiendo.
 // Si falta el apartado de arriba (borrado u oculto), lo de dentro vuelve a salir arriba.
-const DENTRO_DE = { actas: "comite", convenio: "convenio-y-leyes", calcula: "convenio-y-leyes", preguntas: "@info" };
+const DENTRO_DE = { actas: "comite", convenio: "convenio-y-leyes", calcula: "convenio-y-leyes", descansos: "zona-conductores", preguntas: "@info" };
 const APARTADO_AFILIATE = "afiliate"; // va el último, al lado de «Nosotros», para animar a afiliarse
-const NOMBRE_FIJO = { inicio: "Inicio", avisos: "Avisos", calendario: "Calendario", actas: "Actas", documentos: "Documentos", convenio: "Convenio", calcula: "Calcula", preguntas: "Dudas", info: "Nosotros" };
+const NOMBRE_FIJO = { inicio: "Inicio", avisos: "Avisos", calendario: "Calendario", actas: "Actas", documentos: "Documentos", convenio: "Convenio", calcula: "Calcula", preguntas: "Dudas", info: "Nosotros", descansos: "Mis descansos" };
 let GRUPOS = [], GRUPO_DE = {};
 const padreValido = (a) => !!a.padre_id && D.apartados.some(p => p.id === a.padre_id && !p.padre_id);
 function montaGrupos() {
@@ -283,7 +283,7 @@ function pintaInicio() {
   if ($("ver-mas")) $("ver-mas").onclick = () => { estado.feedMax = max + 20; pintaInicio(); };
   if (aparece) $("inicio-feed").querySelectorAll(".item-tablon").forEach(el => { if (el.getBoundingClientRect().top > innerHeight) { el.classList.add("por-ver"); aparece.observe(el); } });
   // Accesos
-  const IC_FIJO = { avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta" };
+  const IC_FIJO = { descansos: "reloj", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta" };
   const acc = GRUPOS.flatMap(g => g.miembros).filter(m => m.clave !== "inicio" && m.clave !== "info")
     .map(m => [m.clave, IC_FIJO[m.clave] || D.apartados.find(a => "ap-" + a.slug === m.clave)?.icono || "carpeta", m.titulo]);
   $("inicio-accesos").innerHTML = `<h2 class="tit-seccion">Ir a</h2><nav class="accesos-tablon" aria-label="Accesos rápidos">${acc.map(([v, ic, t]) =>
@@ -530,7 +530,7 @@ function pintaApartado() {
   if (!a) { $("ap-extra").innerHTML = ""; $("ap-titulo").textContent = D.apartados.length || !cargar.listo ? "Cargando…" : "Apartado no encontrado"; $("lista-ap").innerHTML = ""; $("ap-desc").textContent = ""; $("fechas-ap").innerHTML = ""; return; }
   $("ap-titulo").textContent = a.titulo;
   $("ap-desc").textContent = a.descripcion || "";
-  $("ap-extra").innerHTML = a.slug === APARTADO_CONDUCTORES ? restriccionesHTML() : "";
+  $("ap-extra").innerHTML = a.slug === APARTADO_CONDUCTORES ? `<a class="panel desc-promo" href="#descansos">${icono("reloj")}<span><b>Mis descansos</b><small>Calcula tu descanso semanal: cuándo te toca, si puede ser reducido y qué tienes que compensar. Con avisos al móvil.</small></span>${icono("der", "p")}</a>` + restriccionesHTML() : "";
   const todas = D.publicaciones.filter(x => x.apartado_id === a.id);
   pintaFechas("fechas-ap", "ap", todas, x => x.fecha, () => pintaApartado());
   const qr = $("buscar-ap").value.trim(), q = normal(qr);
