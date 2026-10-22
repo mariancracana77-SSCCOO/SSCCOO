@@ -143,6 +143,78 @@
     programaAvisos(c);
   }
 
+  // ---------- Copia en PDF ----------
+  // Un PDF sencillo hecho aquí mismo (sin librerías ni servidores): se puede leer, imprimir o mandar.
+  // Lleva dentro, en una línea de comentario que los lectores de PDF no enseñan, los datos para recuperarlos
+  // con «Recuperar una copia» (también valen las copias antiguas en .json).
+  const MARCA = "%CCOO-DESCANSOS:";
+  function hazPDF() {
+    const c = calcula(), lineas = []; // [texto, tamaño, negrita, sangría]
+    const L = (t, tam = 10, neg = false, x = 0) => lineas.push([t, tam, neg, x]);
+    L("Mis descansos", 18, true); L("Sección Sindical CCOO Calsina Carré", 11);
+    L("Copia hecha el " + new Date().toLocaleString("es-ES", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) + " · Transporte " + (DATOS.internacional ? "internacional" : "nacional"), 9); L("");
+    if (c.prox) {
+      L("Próximo descanso semanal", 13, true);
+      L("Tiene que empezar antes del " + fmt(c.prox.limite) + ".", 11);
+      L(c.prox.normal ? "Tiene que ser normal: 45 horas seguidas o más." : "Puede ser reducido (24 horas) o normal (45 horas).", 11); L("");
+    }
+    if (c.pendientes.length) {
+      L("Horas por compensar", 13, true);
+      c.pendientes.forEach(d => L("- " + horas(d.queda) + " del descanso del " + fmt(d.de.ini) + ". " + (d.plazo < Date.now() ? "El plazo acabó el " : "Antes del ") + fmtDia(d.plazo - 1) + " a medianoche."));
+      L("");
+    }
+    if (c.ultimos12.length) {
+      L("En casa y en fin de semana", 13, true);
+      L(`${c.enCasa} de ${c.ultimos12.length} descansos en casa (mínimo ${DATOS.internacional ? 5 : 7} de cada 12). ${c.findeCasa} en casa y en fin de semana (al menos 1 cada 12 semanas).`); L("");
+    }
+    L("Lo apuntado", 13, true);
+    const filas = [...DATOS.lista].sort((a, b) => b.fin - a.fin);
+    if (!filas.length) L("Todavía no hay nada apuntado.");
+    filas.forEach(x => {
+      if (x.tipo === "comp") { L("Compensación de " + horas(+x.horas) + ", sumada a un descanso que acabó el " + fmt(x.fin) + ".", 10, true); return; }
+      const sd = c.sem.find(y => y.id === x.id), deuda = c.deudas.find(d => d.de.id === x.id);
+      L(fmt(x.ini) + "  a  " + fmt(x.fin), 10, true);
+      L([sd.clase === "normal" ? "Normal" : sd.clase === "reducido" ? "Reducido" : "No llega a 24 h", horas(sd.h), deuda ? (deuda.queda > 0.05 ? "faltan " + horas(deuda.queda) + " por compensar" : "compensado") : "", x.casa ? "en casa" : "", tocaFinde(x.ini, x.fin) ? "fin de semana" : "", x.cabina ? "en la cabina" : ""].filter(Boolean).join(" · "), 10, false, 12);
+      if (sd.tarde) L("Atención: empezó " + horas(sd.tarde) + " tarde (más de 6 días desde el anterior).", 9, false, 12);
+      if (sd.seguidos) L("Atención: dos semanas seguidas sin descanso normal.", 9, false, 12);
+      if (sd.enCabina) L("Atención: el descanso normal no se puede hacer en la cabina.", 9, false, 12);
+    });
+    L("");
+    L("Orientativo. Manda lo que registra el tacógrafo y el Reglamento (CE) 561/2006. Cálculos según el cuadernillo «Tiempos de conducción y descanso» de FENADISMER (mayo 2026) y el II Acuerdo Marco.", 8);
+    L("Para volver a cargar estos datos en la app: Zona Conductores > Mis descansos > Recuperar una copia, y elige este PDF.", 8);
+    // Partir en renglones que quepan (Helvetica ~0,5 em por letra) y en páginas A4
+    const ANCHO = 515, renglones = [];
+    lineas.forEach(([t, tam, neg, x]) => {
+      const max = Math.floor((ANCHO - x) / (tam * 0.5)); let resto = String(t);
+      if (!resto) { renglones.push(["", tam, neg, x]); return; }
+      while (resto.length > max) { let i = resto.lastIndexOf(" ", max); if (i < max * 0.5) i = max; renglones.push([resto.slice(0, i), tam, neg, x]); resto = resto.slice(i).trimStart(); }
+      renglones.push([resto, tam, neg, x]);
+    });
+    const paginas = [[]]; let y = 800;
+    renglones.forEach(r => { const alto = r[1] * 1.45; if (y - alto < 50) { paginas.push([]); y = 800; } y -= alto; paginas[paginas.length - 1].push([...r, y]); });
+    // Texto en Windows-1252 (letras con tilde, ñ, «») y escapado para el PDF
+    const cp = (t) => [...t].map(ch => { const n = ch.charCodeAt(0); return n < 256 ? ch : ({ "–": "\x96", "—": "\x97", "‘": "'", "’": "'", "“": '"', "”": '"', "€": "\x80", "…": "..." }[ch] || "?"); }).join("").replace(/[\\()]/g, m => "\\" + m);
+    const objs = [], pag = [];
+    objs[1] = "<< /Type /Catalog /Pages 2 0 R >>";
+    objs[3] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
+    objs[4] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>";
+    paginas.forEach((ls, i) => {
+      const n = 5 + i * 2, cont = ls.map(([t, tam, neg, x, yy]) => t ? `BT /${neg ? "F2" : "F1"} ${tam} Tf ${40 + x} ${yy.toFixed(1)} Td (${cp(t)}) Tj ET` : "").filter(Boolean).join("\n")
+        + `\nBT /F1 8 Tf 40 30 Td (${cp("Página " + (i + 1) + " de " + paginas.length)}) Tj ET`;
+      objs[n] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${n + 1} 0 R >>`;
+      objs[n + 1] = `<< /Length ${cont.length} >>\nstream\n${cont}\nendstream`;
+      pag.push(`${n} 0 R`);
+    });
+    objs[2] = `<< /Type /Pages /Kids [${pag.join(" ")}] /Count ${pag.length} >>`;
+    const datos = btoa(JSON.stringify({ app: "ccoo-descansos", ...DATOS }));
+    let out = "%PDF-1.4\n%\xe2\xe3\xcf\xd3\n" + MARCA + datos + "\n";
+    const pos = [];
+    for (let i = 1; i < objs.length; i++) { pos[i] = out.length; out += `${i} 0 obj\n${objs[i]}\nendobj\n`; }
+    const xref = out.length;
+    out += `xref\n0 ${objs.length}\n0000000000 65535 f \n` + pos.slice(1).map(p => String(p).padStart(10, "0") + " 00000 n \n").join("") + `trailer\n<< /Size ${objs.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+    return new Blob([Uint8Array.from(out, ch => ch.charCodeAt(0) & 255)], { type: "application/pdf" });
+  }
+
   // ---------- Formularios ----------
   function prepara() {
     if (!$("v-descansos")) return;
@@ -170,21 +242,22 @@
     $("desc-avisar").onchange = () => { DATOS.avisos = $("desc-avisar").checked; guarda(); pinta(); };
     // Copia en un archivo: para el móvil nuevo o por si se borran los datos del navegador
     $("desc-copia").onclick = () => {
-      const blob = new Blob([JSON.stringify({ app: "ccoo-descansos", ...DATOS }, null, 1)], { type: "application/json" });
-      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "mis-descansos-" + new Date().toISOString().slice(0, 10) + ".json";
+      const blob = hazPDF();
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "mis-descansos-" + new Date().toISOString().slice(0, 10) + ".pdf";
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     };
     $("desc-recupera").onchange = async () => {
       const f = $("desc-recupera").files[0]; $("desc-recupera").value = ""; if (!f) return;
       try {
-        const d = JSON.parse(await f.text());
+        const txt = await f.text(), i = txt.indexOf(MARCA);
+        const d = JSON.parse(txt.startsWith("%PDF") ? (i < 0 ? "" : atob(txt.slice(i + MARCA.length, txt.indexOf("\n", i)).trim())) : txt);
         if (d.app !== "ccoo-descansos" || !Array.isArray(d.lista)) throw 0;
         const lista = d.lista.filter(x => x && typeof x.id === "string" && Number.isFinite(x.fin) && (x.tipo === "comp" ? Number.isFinite(+x.horas) : Number.isFinite(x.ini)))
           .map(x => x.tipo === "comp" ? { id: x.id, tipo: "comp", fin: x.fin, horas: +x.horas } : { id: x.id, ini: x.ini, fin: x.fin, casa: !!x.casa, cabina: !!x.cabina });
         if (!confirm(`La copia tiene ${lista.length} apuntes. ¿Sustituir lo que hay ahora en este móvil?`)) return;
         DATOS = { lista, internacional: !!d.internacional, avisos: d.avisos !== false }; guarda(); pinta();
         $("desc-msg").textContent = "Copia recuperada."; $("desc-msg").className = "msg ok";
-      } catch (_) { aviso("Ese archivo no es una copia de «Mis descansos»."); }
+      } catch (_) { aviso("Ese archivo no es una copia de «Mis descansos». Elige el PDF (o el .json antiguo) que guardaste con «Guardar una copia»."); }
     };
     $("desc-borrar").onclick = () => {
       if (!confirm("¿Borrar todos tus descansos de este móvil? Si no tienes copia, no se podrán recuperar.")) return;
