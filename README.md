@@ -91,6 +91,14 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Próxima cita** (el rótulo de Inicio cuando no hay nada urgente): diseño nuevo de carretera. El título sale en un panel luminoso de autopista (letras blancas de puntos y luces rojas que parpadean en las esquinas) y, debajo, en un poste, dos señales en el rojo del logo: el lugar con los días que faltan (como los kilómetros de una señal) y el día y la hora. Prefiere reuniones y asambleas a los festivos y, si es la misma cita que la cuenta atrás, no se repite.
 - **Animación de entrada**: ahora empieza cuando la página ha cargado (en la app instalada, Android tapaba los primeros segundos con su pantalla y la animación terminaba sin verse) y sale aunque el móvil tenga «quitar animaciones» (lo activa el ahorro de batería). Se sigue saltando tocándola.
 
+## Versión 52: pestañas agrupadas, subapartados y «Mis descansos»
+- **Pestañas agrupadas**: de 15 a 10 (Inicio, Avisos, Calendario, Comité de empresa, Convenio y leyes, Zona Conductores, PRL, Documentos, Nosotros, Afíliate). Lo de dentro sale en una segunda fila (Actas dentro de Comité; Convenio, Calcula, Decretos y leyes e Info laboral dentro de Convenio y leyes; Dudas dentro de Nosotros).
+- **Subapartados**: en el panel, al crear un apartado, «Dónde sale en la web» (pestaña principal o dentro de otro). Menú del panel agrupado igual y buscador de secciones en «Más».
+- **Mis descansos** (Zona Conductores): calculadora del descanso semanal (Reglamento 561/2006, cuadernillo de FENADISMER, II Acuerdo Marco). Datos solo en el móvil, copia en archivo y avisos al móvil (12 h y 2 h antes; 3 días antes del plazo de una compensación).
+- Inicio: motivo de la próxima cita, color propio por tipo en las etiquetas, iconos de «Ir a» en rojo.
+- Buscadores que perdonan faltas de ortografía. WhatsApp, Compartir y Traducir también en actas y publicaciones.
+- El editor del panel ya no se corta por la derecha en ningún móvil.
+
 ## Versión 51: contraseña sin email y todos los archivos juntos
 - **Códigos de rescate**: en Ajustes, «Si te olvidas de la contraseña», cada administrador genera 8 códigos de un solo uso y los guarda en papel. En la pantalla de entrar, «Tengo un código de rescate» pone una contraseña nueva al momento, sin email.
 - **Poner contraseña nueva** a otro administrador desde Ajustes, «Quién puede publicar».

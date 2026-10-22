@@ -1320,3 +1320,71 @@ html[data-contraste="alto"] .cita-panel b { color: #ffc233; text-shadow: none; }
 .cita-placa.hora { background: #ffb000; }
 .cita-placa.hora > span { background: var(--asfalto); color: #fff; }
 .cita-placa.hora .icono { color: #ffb000; }
+
+/* v52: segunda fila de pestañas con lo que va dentro de cada apartado (Actas en «Comité de empresa», subapartados…) */
+.subpestanas { display: flex; gap: 8px; padding: 8px 16px 10px; overflow-x: auto; scrollbar-width: none; max-width: 1100px; margin: 0 auto; border-top: 1px solid rgba(255, 255, 255, .08); }
+.subpestanas::-webkit-scrollbar { display: none; }
+.subpestanas.oculto { display: none; }
+.subpestanas a { flex: none; display: inline-flex; align-items: center; min-height: 36px; padding: 6px 14px; border-radius: 999px; border: 1.5px solid #3a414a; color: #d6dbe1; text-decoration: none; font-weight: 700; font-size: .9rem; white-space: nowrap; }
+.subpestanas a:hover { border-color: #fff; color: #fff; }
+.subpestanas a.activa { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+.subpestanas a .cuenta-pestana { background: #fff; color: var(--rojo); }
+.subpestanas a.activa .cuenta-pestana { display: none; }
+html[data-letra] .subpestanas a { font-size: .9rem; }
+
+/* v52: «Mis descansos» (Zona Conductores) */
+.desc-promo { display: flex; gap: 14px; align-items: center; text-decoration: none; color: var(--tinta); margin-bottom: 18px; border-left: 5px solid var(--rojo); }
+.desc-promo > .icono:first-child { width: 34px; height: 34px; color: var(--rojo-ic); flex: none; }
+.desc-promo span { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.desc-promo small { color: var(--suave); }
+.desc-banda { display: flex; gap: 12px; align-items: flex-start; background: var(--rojo-suave); border: 1px solid var(--rojo); border-radius: var(--radio-g); padding: 14px; margin-bottom: 12px; }
+.desc-banda > .icono { width: 28px; height: 28px; color: var(--rojo-ic); flex: none; }
+.desc-banda p { margin: 4px 0 10px; }
+.desc-estado, .desc-form, .desc-opciones { margin-bottom: 16px; display: grid; gap: 10px; }
+.desc-vacio { color: var(--suave); margin: 0; }
+.desc-prox { display: grid; gap: 4px; background: var(--asfalto); color: #fff; border-radius: var(--radio-g); padding: 16px 18px; border-left: 6px solid #ffb000; }
+.desc-prox.pronto { border-left-color: #ffb000; box-shadow: 0 0 0 2px #ffb000 inset; }
+.desc-prox.tarde { border-left-color: var(--rojo); background: var(--rojo); }
+.desc-et { font-size: .9rem; color: #c9ced4; }
+.desc-prox.tarde .desc-et { color: #fff; }
+.desc-fecha { font-family: var(--cond); font-size: 1.8rem; line-height: 1.1; color: #ffc233; }
+.desc-prox.tarde .desc-fecha { color: #fff; }
+.desc-quedan { font-weight: 700; }
+.desc-tipo { font-size: .95rem; }
+.desc-bloque h3 { margin: 6px 0; font-family: var(--cond); font-size: 1.25rem; }
+.desc-deudas { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.desc-deudas li.vencida { color: var(--rojo-ic); font-weight: 600; }
+.desc-cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 10px; }
+.desc-cifras > div { background: var(--fondo); border-radius: var(--radio); padding: 10px 12px; display: grid; gap: 2px; }
+.desc-cifras b { font-family: var(--cond); font-size: 1.8rem; color: var(--rojo-ic); line-height: 1; }
+.desc-cifras b small { font-size: 1rem; color: var(--suave); }
+.desc-cifras span { font-size: .9rem; color: var(--suave); }
+.desc-alerta, .desc-mal { display: flex; gap: 8px; align-items: flex-start; color: var(--rojo-ic); font-weight: 600; margin: 4px 0 0; }
+.desc-mal { font-size: .88rem; }
+.desc-lista { list-style: none; padding: 0; margin: 0 0 14px; display: grid; gap: 8px; }
+.desc-fila { display: flex; gap: 10px; align-items: flex-start; background: var(--tarjeta); border: 1px solid var(--linea); border-left: 5px solid var(--linea); border-radius: var(--radio); padding: 10px 12px; }
+.desc-fila > div { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.desc-fila small { color: var(--suave); }
+.desc-fila.normal { border-left-color: #2e7d4f; }
+.desc-fila.reducido { border-left-color: #ffb000; }
+.desc-fila.corto { border-left-color: var(--rojo); }
+.desc-fila.comp { border-left-color: var(--suave); }
+.desc-clase { font-weight: 700; color: var(--tinta); }
+.desc-mas summary { cursor: pointer; font-weight: 700; color: var(--rojo-ic); padding: 6px 0; }
+.desc-copias { flex-wrap: wrap; }
+.desc-opciones .check { align-items: flex-start; }
+#desc-avisar-caja[hidden] { display: none !important; }
+.desc-opciones .check { font-weight: 600; }
+
+/* v52: el TIPO vuelve a tener su color (Convocatoria rojo, Sindicato verde…), solo en la etiqueta de tipo.
+   Todo lo demás sigue en el rojo del logo. Fondo de color con letra blanca: se lee igual en claro y en oscuro. */
+.c-rojo { --tc: #ab1012; } .c-azul { --tc: #1e4f9c; } .c-ambar { --tc: #8a5a00; } .c-verde { --tc: #1f6b3a; }
+.c-morado { --tc: #6a3d9a; } .c-turquesa { --tc: #0b6e6e; } .c-rosa { --tc: #a3226f; } .c-gris { --tc: #59636f; }
+:root .etq.tipo, :root:root .etq.tipo { background: var(--tc, var(--rojo)); color: #fff; }
+:root .etq.tipo::before, :root:root .etq.tipo::before { background: #fff; }
+
+/* v52: iconos de «Ir a» (cuadros del final de Inicio) en rojo, también en oscuro: cuadradito rojo con el dibujo en blanco */
+.accesos-tablon .icono, :root:root .accesos-tablon .icono { width: 40px; height: 40px; padding: 8px; border-radius: 10px; background: var(--rojo); color: #fff; box-sizing: border-box; }
+/* v52: el motivo de la próxima cita (su descripción), debajo de las señales */
+.cita-motivo { display: grid; gap: 2px; width: 100%; margin: 4px 0 12px; padding: 10px 12px; border-left: 4px solid #ffb000; background: rgba(0, 0, 0, .28); border-radius: 4px; color: #fff; font-size: .98rem; line-height: 1.35; }
+.cita-motivo b { font-family: var(--cond); font-size: .85rem; letter-spacing: .08em; text-transform: uppercase; color: #ffc233; }

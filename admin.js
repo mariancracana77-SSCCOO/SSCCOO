@@ -164,6 +164,8 @@ SECCIONES.apartados = {
   campos: [
     { k: "titulo", l: "Nombre del apartado", t: "text", req: true, ph: "Ej: Comité de empresa", ayuda: "Corto: es lo que sale en la pestaña de la web." },
     { k: "descripcion", l: "Explicación corta", t: "text", opc: true, ph: "Ej: Fotos, documentos y novedades del comité." },
+    { k: "padre_id", l: "Dónde sale en la web", t: "select", opc: true, get ops() { return opcionesPadre(); },
+      ayuda: "«Pestaña principal» sale arriba en la web. Si eliges otro apartado, sale dentro de él como subapartado (por ejemplo, «Fotos» dentro de «Comité de empresa»)." },
     { k: "icono", l: "Dibujo", t: "select", ops: ICONOS_AP },
     { k: "orden", l: "Posición", t: "number", ayuda: "1 sale primero, 2 después…" },
     { checks: [{ k: "visible", l: "Se ve en la web (desmárcalo para prepararlo sin que se vea)", def: true }] },
@@ -171,6 +173,11 @@ SECCIONES.apartados = {
   previa: (x) => `<div class="accesos-tablon" style="max-width:360px"><a href="#">${icono(x.icono || "carpeta")}<b>${esc(x.titulo || "Sin nombre")}</b></a></div><p class="ayuda">${esc(x.descripcion || "")}</p>`,
   extracto: (x) => x.descripcion, chips: (x) => [x.visible === false ? "Oculto" : "Se ve en la web", "Posición " + x.orden], fechas: (x) => [x.creado, x.actualizado],
 };
+// Apartados donde se puede meter otro: solo los principales (un nivel) y nunca él mismo ni uno que ya tenga subapartados dentro
+function opcionesPadre() {
+  const yo = ED?.orig?.id, tieneHijos = yo && APARTADOS.some(a => a.padre_id === yo);
+  return [["", "Pestaña principal de la web"], ...(tieneHijos ? [] : APARTADOS.filter(a => !a.padre_id && a.id !== yo).map(a => [String(a.id), "Dentro de «" + a.titulo + "»"]))];
+}
 // Valores de las calculadoras de la web («Calcula»). Se editan desde la página «Calculadoras».
 const UNIDADES = ["días", "días naturales", "días laborables", "horas", "días al año", "tiempo necesario"].map(u => [u, u]);
 SECCIONES.permisos = {
@@ -241,13 +248,30 @@ async function cargarApartados() {
   construirPaginas();
 }
 let PAGINAS = {};
+// Menú agrupado igual que las pestañas de la web (v52): cada apartado principal con lo que va dentro, un poco metido.
+// «cab» pone un título encima; «sub» lo mete dentro del de arriba. Si falta el apartado de arriba, va suelto.
+const DENTRO_PANEL = { actas: "comite", convenio: "convenio-y-leyes", calculadoras: "convenio-y-leyes", camiones: "zona-conductores" };
+const PAG_FIJAS = { calculadoras: { nombre: "Calculadoras", icono: "reloj" }, camiones: { nombre: "Restricciones camiones", icono: "lugar" },
+  buzon: { nombre: "Buzón anónimo", icono: "correo" }, historial: { nombre: "Historial", icono: "reloj" }, textos: { nombre: "Textos", icono: "texto" }, ajustes: { nombre: "Ajustes", icono: "ajustes" } };
+const padreDe = (a) => a.padre_id ? APARTADOS.find(p => p.id === a.padre_id && !p.padre_id) : null;
 function construirPaginas() {
-  const base = Object.keys(SECCIONES).filter(k => !/^ap\d+$/.test(k) && k !== "apartados" && !SECCIONES[k].oculta), i = base.indexOf("actas") + 1;
-  base.splice(base.indexOf("convenio") + 1, 0, "calculadoras");
-  if (base.includes("recurrentes")) { base.splice(base.indexOf("recurrentes"), 1); base.splice(base.indexOf("plantillas") + 1, 0, "recurrentes"); }
-  const orden = [...base.slice(0, i), ...APARTADOS.map(a => "ap" + a.id), ...base.slice(i), "apartados", "camiones"];
-  PAGINAS = { resumen: { nombre: "Inicio", icono: "resumen" }, ...Object.fromEntries(orden.map(k => [k, k === "calculadoras" ? { nombre: "Calculadoras", icono: "reloj" } : k === "camiones" ? { nombre: "Restricciones camiones", icono: "lugar" } : { nombre: SECCIONES[k].nombre, icono: SECCIONES[k].icono }])),
-    buzon: { nombre: "Buzón anónimo", icono: "correo" }, historial: { nombre: "Historial", icono: "reloj" }, textos: { nombre: "Textos", icono: "texto" }, ajustes: { nombre: "Ajustes", icono: "ajustes" } };
+  const P = { resumen: { nombre: "Inicio", icono: "resumen" } };
+  const pon = (k, extra = {}) => { if (P[k] || (!SECCIONES[k] && !PAG_FIJAS[k])) return; P[k] = { nombre: SECCIONES[k]?.nombre, icono: SECCIONES[k]?.icono, ...PAG_FIJAS[k], ...extra }; };
+  pon("avisos"); pon("calendario");
+  const principales = APARTADOS.filter(a => !padreDe(a)), afiliate = principales.filter(a => a.slug === "afiliate");
+  principales.filter(a => a.slug !== "afiliate").forEach(a => {
+    pon("ap" + a.id, { grupo: true });
+    Object.keys(DENTRO_PANEL).filter(k => DENTRO_PANEL[k] === a.slug).forEach(k => pon(k, { sub: true }));
+    APARTADOS.filter(h => padreDe(h)?.id === a.id).forEach(h => pon("ap" + h.id, { sub: true }));
+  });
+  Object.keys(DENTRO_PANEL).forEach(k => pon(k, { grupo: true }));
+  pon("documentos", { grupo: true });
+  ["preguntas", "delegados", "enlaces", "buzon"].forEach((k, i) => pon(k, i ? {} : { cab: "Nosotros" }));
+  afiliate.forEach(a => pon("ap" + a.id, { grupo: true }));
+  const herr = ["encuestas", "plantillas", "recurrentes", "apartados", "historial", "textos", "ajustes"];
+  Object.keys(SECCIONES).filter(k => !SECCIONES[k].oculta && !/^ap\d+$/.test(k) && !herr.includes(k)).forEach(k => pon(k));
+  herr.forEach((k, i) => pon(k, i ? {} : { cab: "Herramientas" }));
+  PAGINAS = P;
 }
 construirPaginas();
 const EN_MOVIL = ["resumen", "avisos", "calendario", "actas"];
@@ -439,7 +463,8 @@ function pintaNav() {
   const cuenta = (k) => k === "buzon" && BUZON_SIN_LEER ? `<span class="cuenta-menu" aria-label="${BUZON_SIN_LEER} sin leer">${BUZON_SIN_LEER}</span>` : "";
   const b = (k, extra = "") => `<button data-p="${k}" class="${k === actual ? "activa" : ""} ${extra}">${icono(esc(PAGINAS[k].icono))}${esc(PAGINAS[k].nombre)}${cuenta(k)}</button>`;
   $("nav-admin").innerHTML =
-    Object.keys(PAGINAS).map(k => (["preguntas", "apartados", "buzon"].includes(k) ? `<div class="sep solo-pc"></div>` : "") + b(k, EN_MOVIL.includes(k) ? "" : "solo-pc")).join("") +
+    Object.keys(PAGINAS).map(k => (PAGINAS[k].cab ? `<div class="sep solo-pc"></div><div class="nav-cab solo-pc">${esc(PAGINAS[k].cab)}</div>` : PAGINAS[k].grupo ? `<div class="sep solo-pc"></div>` : "")
+      + b(k, (EN_MOVIL.includes(k) ? "" : "solo-pc") + (PAGINAS[k].sub ? " sub" : ""))).join("") +
     `<button class="solo-movil ${EN_MOVIL.includes(actual) ? "" : "activa"}" id="b-mas">${icono("menu")}Más</button>
      <div class="sep solo-pc"></div>
      <div class="quien">${esc(window.MI_EMAIL || "")}<br>Versión ${VERSION_WEB}</div>
@@ -451,12 +476,19 @@ function pintaNav() {
   if ($("b-instalar-pc")) $("b-instalar-pc").onclick = instalarApp;
 }
 function abrirMas() {
-  $("hoja-mas").innerHTML = Object.keys(PAGINAS).filter(k => !EN_MOVIL.includes(k)).map(k =>
-    `<button data-p="${k}">${icono(esc(PAGINAS[k].icono))}${esc(PAGINAS[k].nombre)}${k === "buzon" && BUZON_SIN_LEER ? `<span class="cuenta-menu">${BUZON_SIN_LEER}</span>` : ""}</button>`).join("") +
+  $("hoja-mas").innerHTML = `<div class="buscador hoja-buscar">${icono("buscar", "p")}<input type="search" id="buscar-menu" placeholder="Buscar sección (actas, PRL, ajustes…)" aria-label="Buscar sección"></div>` +
+    Object.keys(PAGINAS).filter(k => !EN_MOVIL.includes(k) || PAGINAS[k].sub).map(k =>
+    (PAGINAS[k].cab ? `<p class="hoja-tit hoja-cab">${esc(PAGINAS[k].cab)}</p>` : PAGINAS[k].grupo ? `<div class="hoja-sep"></div>` : "") +
+    `<button data-p="${k}" class="${PAGINAS[k].sub ? "sub" : ""}${k === actual ? " actual" : ""}">${icono(esc(PAGINAS[k].icono))}${esc(PAGINAS[k].nombre)}${k === "buzon" && BUZON_SIN_LEER ? `<span class="cuenta-menu">${BUZON_SIN_LEER}</span>` : ""}</button>`).join("") +
     (INSTALADA_A() ? "" : `<button id="m-instalar">${icono("descargar")}Instalar la app</button>`) +
     `<a href="index.html" target="_blank">${icono("ver")}Ver la web</a><button id="m-salir">${icono("salir")}Salir (${esc(window.MI_EMAIL || "")})</button><p class="fecha-txt" style="text-align:center;margin:6px 0 0">Versión ${VERSION_WEB}</p>`;
   ["velo-mas", "hoja-mas"].forEach(i => $(i).classList.remove("oculto"));
   $("hoja-mas").querySelectorAll("[data-p]").forEach(x => x.onclick = () => { cerrarMas(); abrir(x.dataset.p); });
+  $("buscar-menu").oninput = () => {
+    const q = $("buscar-menu").value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    $("hoja-mas").querySelectorAll("[data-p]").forEach(x => x.hidden = !!q && !x.textContent.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q));
+    $("hoja-mas").querySelectorAll(".hoja-cab, .hoja-sep").forEach(x => x.hidden = !!q);
+  };
   $("m-salir").onclick = () => { cerrarMas(); salir(); };
   if ($("m-instalar")) $("m-instalar").onclick = () => { cerrarMas(); instalarApp(); };
 }
@@ -612,7 +644,7 @@ function tarjetaApartado(x) {
       <span class="ic-ap">${icono(esc(x.icono || "carpeta"))}</span>
       <span class="txt"><span class="tit">${esc(x.titulo || "Sin nombre")}</span>
         <span class="extracto">${n ? `${n} ${n === 1 ? "publicación" : "publicaciones"}. ` : "Todavía está vacío. "}Toca para abrir y publicar textos, fotos y documentos.</span>
-        ${x.visible === false ? `<span class="chips"><span class="etq">Oculto en la web</span></span>` : ""}</span>
+        ${x.visible === false || padreDe(x) ? `<span class="chips">${padreDe(x) ? `<span class="etq">Dentro de «${esc(padreDe(x).titulo)}»</span>` : ""}${x.visible === false ? `<span class="etq">Oculto en la web</span>` : ""}</span>` : ""}</span>
       ${icono("der", "chevron")}</button>
     <button class="btn sec peq ajustes-ap" data-ajustes-ap="${x.id}">${icono("editar", "p")}Cambiar nombre y ajustes</button>
   </div>`;
@@ -727,7 +759,7 @@ async function pintaSeccion(k) {
     if (FECHA_DE[k]) pintaFechasAdm(datos[k], k, ff, pinta);
     const q = $("buscar").value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const l = datos[k].filter(x => pasaFechaAdm(ff, FECHA_DE[k]?.(x)) &&
-      (!q || (JSON.stringify(x) + " " + textoFecha(FECHA_DE[k]?.(x))).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)));
+      (!q || coincide(Object.values(x).filter(v => typeof v === "string").join(" ") + " " + (x.adjuntos || []).map(j => j.nombre).join(" ") + " " + textoFecha(FECHA_DE[k]?.(x)), q)));
     const ordenable = REORDENABLE(k) && !q && l.length > 1;
     if (!ordenable) $("ayuda-orden")?.remove();
     if (ordenable && !$("ayuda-orden")) $("lista").insertAdjacentHTML("beforebegin", `<p class="ayuda" id="ayuda-orden">${icono("arrastrar", "p")} Para cambiar el orden, arrastra desde las rayas de la izquierda (con el dedo o el ratón).</p>`);
@@ -1369,7 +1401,7 @@ async function pintaTodosArchivos() {
   const sinAcentos = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const pinta = () => {
     const q = sinAcentos($("buscar").value.trim());
-    const l = todos.filter(a => (FILTRO_ARCH === "todo" || clase(a) === FILTRO_ARCH) && (!q || sinAcentos([a.nombre, a.titulo, a.sec, textoFecha(a.fecha)].join(" ")).includes(q)));
+    const l = todos.filter(a => (FILTRO_ARCH === "todo" || clase(a) === FILTRO_ARCH) && (!q || coincide([a.nombre, a.titulo, a.sec, textoFecha(a.fecha)].join(" "), q)));
     $("cuenta-arch").textContent = l.length === 1 ? "1 archivo" : `${l.length} archivos`;
     $("lista-arch").innerHTML = l.length ? l.map((a, i) => {
       const t = tipoArchivo(a.tipo, a.nombre);

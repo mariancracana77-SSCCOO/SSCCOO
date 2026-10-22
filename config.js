@@ -3,7 +3,7 @@
 window.SUPABASE_URL = "https://kdfedwcskymaitvpryvg.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_RLt0HuAMskXkKl2hxhUF2w_sCexGznp";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "51"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "52"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/SSCCOO/";
 // Clave pública de las notificaciones (la privada solo está en el servidor)
 window.VAPID_PUBLICA = "BMMdZjehtNipsScHJ__kzOIn9XCgIpya3UDDRlexxOAWJU-J6ZICDlf72ItPOebzl-SfzoU234pd82Chp87Vm1w";
@@ -141,3 +141,34 @@ document.addEventListener("click", (e) => { if (e.target.closest?.("[data-aa]"))
 
 // Solo enlaces web, email o teléfono (nunca «javascript:» ni otros esquemas)
 window.urlSegura = (u) => { u = String(u || "").trim(); return /^(https?:\/\/|mailto:|tel:)/i.test(u) ? u : "#"; };
+
+// ---------- Buscar perdonando faltas (v52) ----------
+// «bacasiones» encuentra «vacaciones», «nomina» encuentra «nómina», «asanblea» encuentra «asamblea».
+// Primero se busca tal cual; si no, por cómo suena (b/v, c/z/s, ll/y, h muda, g/j…) y con una o dos letras de diferencia.
+window.fonetico = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  .replace(/ch/g, "7").replace(/ll/g, "y").replace(/qu/g, "k").replace(/c([ei])/g, "s$1").replace(/z/g, "s").replace(/c/g, "k")
+  .replace(/g([ei])/g, "j$1").replace(/[vw]/g, "b").replace(/h/g, "").replace(/x/g, "ks").replace(/7/g, "ch").replace(/m([bp])/g, "n$1").replace(/(.)\1+/g, "$1");
+const distancia = (a, b, max) => { // letras de diferencia (Levenshtein), parando en cuanto pasa de «max»
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i]; let menor = i;
+    for (let j = 1; j <= b.length; j++) { cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); menor = Math.min(menor, cur[j]); }
+    if (menor > max) return max + 1; prev = cur;
+  }
+  return prev[b.length];
+};
+const CACHE_FON = new Map();
+window.coincide = (texto, q) => {
+  const sin = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const Q = sin(q).trim(); if (!Q) return true;
+  const T = sin(texto); if (T.includes(Q)) return true;
+  let f = CACHE_FON.get(T);
+  if (!f) { const tf = fonetico(T); f = { tf, palabras: [...new Set(tf.split(/[^a-z0-9ñ]+/).filter(p => p.length > 2))] }; if (CACHE_FON.size > 3000) CACHE_FON.clear(); CACHE_FON.set(T, f); }
+  return fonetico(Q).split(/[^a-z0-9ñ]+/).filter(Boolean).every(w => {
+    if (f.tf.includes(w)) return true;
+    if (w.length < 4 || !/[a-z]/.test(w)) return false;
+    const max = w.length >= 7 ? 2 : 1;
+    return f.palabras.some(p => distancia(w, p, max) <= max || (p.length > w.length && distancia(w, p.slice(0, w.length), max) <= max));
+  });
+};
