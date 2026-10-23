@@ -150,6 +150,21 @@ window.publicacionHTML = (x, qr = "") => {
     </div></article>`;
 };
 
+// Acta de un apartado (v78, «Actas de PRL»): mismo aspecto que las actas del comité, pero es una publicación normal
+window.actaPubHTML = (x, qr = "") => {
+  const adj = x.adjuntos || [], fotos = adj.filter(esImagen), docs = adj.filter(a => !esImagen(a));
+  return `<article class="panel acta" id="pub-${x.id}" data-reg="publicaciones:${x.id}" data-lectura="publicaciones:${x.id}">
+    ${x.fecha ? cartel(x.fecha, "Acta de PRL", "acta") : ""}
+    <div><div class="cab"><span class="etq tipo ${claseTipo("Acta de PRL", "acta")}">Acta de PRL</span>${etqNuevo(x.creado)}</div>
+      <h3 data-campo="titulo">${esc(x.titulo || "Sin título")}</h3>
+      ${x.fecha ? `<div class="fecha-txt">Reunión del ${fechaLarga(x.fecha + "T12:00:00")}</div>` : ""}
+      ${x.contenido ? `<div style="margin-top:8px" data-campo="contenido">${textoHTML(x.contenido, qr)}</div>` : ""}
+      ${galeriaHTML(fotos)}
+      ${adjuntosHTML(docs)}
+      <div class="pie-tarjeta">${fechasHTML(x.creado, x.actualizado)}<span class="acciones-tarjeta">${botonesCompartir("pub", x.id, x.titulo, x.contenido, "pub-" + x.id)}${x.contenido ? botonTraducir() : ""}</span></div>
+    </div></article>`;
+};
+
 // ---------- Calculadoras del convenio ----------
 window.numTxt = (n) => Number(n || 0).toLocaleString("es-ES", { maximumFractionDigits: 1 });
 window.eurosTxt = (n) => Number(n || 0).toLocaleString("es-ES", { style: "currency", currency: "EUR" });

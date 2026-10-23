@@ -553,6 +553,7 @@ $("buscar-docs").oninput = () => pintaDocumentos();
 // Solo fuentes oficiales y gratuitas, comprobadas el 17/10/2026. La lista sale de la tabla «restricciones»
 // y la fecha de revisión de paginas.restricciones_revisado: las dos se cambian en el panel («Restricciones camiones»).
 // RESTRICCIONES_RESERVA solo se usa si la tabla no se puede leer (por ejemplo, sin conexión y sin caché).
+const APARTADO_ACTAS_PRL = "actas-prl"; // sus publicaciones salen con el aspecto de acta (v78)
 const APARTADO_CONDUCTORES = "zona-conductores"; // dirección del apartado (no cambia aunque se renombre)
 const RESTRICCIONES_REVISADO = "2026-10-17";
 const RESTRICCIONES_RESERVA = [
@@ -588,7 +589,7 @@ function pintaApartado() {
   pintaFechas("fechas-ap", "ap", todas, x => x.fecha, () => pintaApartado());
   const qr = $("buscar-ap").value.trim(), q = normal(qr);
   const l = todas.filter(x => pasaFecha("ap", x.fecha) && (!q || coincide(x.titulo + " " + x.contenido + " " + (x.adjuntos || []).map(j => j.nombre).join(" ") + " " + textoFecha(x.fecha), q)));
-  $("lista-ap").innerHTML = l.length ? porMeses(l, x => x.fecha, x => publicacionHTML(x, qr))
+  $("lista-ap").innerHTML = l.length ? porMeses(l, x => x.fecha, x => (a.slug === APARTADO_ACTAS_PRL ? actaPubHTML : publicacionHTML)(x, qr))
     : vacio(a.icono || "carpeta", q || hayFecha("ap") ? "No hay nada que coincida con la búsqueda o la fecha." : "Todavía no hay nada publicado en este apartado.");
 }
 $("buscar-ap").oninput = () => pintaApartado();

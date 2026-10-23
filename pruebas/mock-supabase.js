@@ -22,8 +22,11 @@
       { id: 1, slug: "comite", titulo: "Comité", descripcion: "", icono: "", orden: 1, visible: true, padre_id: null },
       { id: 2, slug: "zona-conductores", titulo: "Zona Conductores", descripcion: "", icono: "", orden: 2, visible: true, padre_id: null },
       { id: 3, slug: "convenio-y-leyes", titulo: "Convenio y leyes", descripcion: "", icono: "", orden: 3, visible: true, padre_id: null },
+      { id: 4, slug: "prl", titulo: "PRL", descripcion: "", icono: "", orden: 4, visible: true, padre_id: null },
+      { id: 5, slug: "actas-prl", titulo: "Actas de PRL", descripcion: "", icono: "", orden: 1, visible: true, padre_id: 4 },
     ],
-    publicaciones: [{ id: 1, apartado_id: 2, titulo: "Normas de descanso", contenido: "Contenido de prueba.", fecha: dia(-2), publicado: true, adjuntos: [] }],
+    publicaciones: [{ id: 1, apartado_id: 2, titulo: "Normas de descanso", contenido: "Contenido de prueba.", fecha: dia(-2), publicado: true, adjuntos: [] },
+      { id: 2, apartado_id: 5, titulo: "Reunión de seguridad y salud", contenido: "Se revisa la evaluación de riesgos.", fecha: dia(-3), publicado: true, adjuntos: [] }],
     calc_permisos: [], calc_categorias: [], calc_ajustes: [{ clave: "vac_dias", valor: "23" }],
   };
   window.__LLAMADAS = []; // lo que la web ha pedido (para comprobar que no recarga de más)
