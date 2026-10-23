@@ -58,6 +58,26 @@ const CASOS = [
     pa.on("pageerror", e => errores.push("panel: " + e.message));
     await pa.goto(BASE + "admin.html", { waitUntil: "load" });
     await pa.waitForTimeout(800);
+    // Panel con sesión de prueba: abrir cada página y el editor de cada sección
+    const ps = await ctx.newPage();
+    ps.on("console", m => { if (m.type() === "error") errores.push("panel con sesión: " + m.text()); });
+    ps.on("pageerror", e => errores.push("panel con sesión: " + e.message));
+    await ps.addInitScript(() => localStorage.setItem("prueba-sesion", "1"));
+    await ps.goto(BASE + "admin.html", { waitUntil: "load" });
+    await ps.waitForTimeout(1200);
+    if (!(await ps.evaluate(() => !document.getElementById("s-panel").classList.contains("oculto")))) fallos.push(`${c.nombre}: el panel no entra con la sesión de prueba`);
+    const paginas = await ps.evaluate(() => Object.keys(PAGINAS));
+    for (const k of paginas) {
+      await ps.evaluate(k => abrir(k), k); await ps.waitForTimeout(150);
+      const ancho = await ps.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+      if (ancho > 1) fallos.push(`${c.nombre} · panel #${k}: la página se sale ${ancho} px de lado`);
+    }
+    for (const k of await ps.evaluate(() => Object.keys(SECCIONES))) {
+      await ps.evaluate(k => { try { abrirEditor(k); } catch (e) { console.error("abrirEditor " + k + ": " + e.message); } }, k);
+      await ps.waitForTimeout(120);
+      await ps.evaluate(() => { if (window.ED) { ED.sucio = false; return cerrarEditor(); } });
+      await ps.waitForTimeout(120);
+    }
     errores.filter(e => !/favicon|ERR_|Failed to load resource/.test(e)).forEach(e => fallos.push(`${c.nombre}: ${e}`));
     await ctx.close();
     console.log("Hecho:", c.nombre);

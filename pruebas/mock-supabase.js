@@ -42,12 +42,15 @@
     return q;
   }
   const canal = { on() { return canal; }, subscribe() { return canal; }, unsubscribe() {} };
+  // Con localStorage «prueba-sesion» = 1, el panel entra como administrador de prueba
+  const SES = (() => { try { return localStorage.getItem("prueba-sesion") === "1"; } catch (_) { return false; } })()
+    ? { access_token: "x", user: { id: "u1", email: "prueba@example.com" } } : null;
   const auth = {
-    getSession: async () => ({ data: { session: null }, error: null }),
-    onAuthStateChange: (cb) => { setTimeout(() => cb("INITIAL_SESSION", null), 0); return { data: { subscription: { unsubscribe() {} } } }; },
+    getSession: async () => ({ data: { session: SES }, error: null }),
+    onAuthStateChange: (cb) => { Promise.resolve().then(() => cb(SES ? "SIGNED_IN" : "INITIAL_SESSION", SES)); return { data: { subscription: { unsubscribe() {} } } }; },
     signInWithPassword: async () => ({ data: null, error: { message: "Invalid login credentials" } }),
     signOut: async () => ({ error: null }), getUser: async () => ({ data: { user: null } }),
-    mfa: { getAuthenticatorAssuranceLevel: async () => ({ data: { currentLevel: "aal1", nextLevel: "aal1" } }), listFactors: async () => ({ data: { totp: [] } }) },
+    mfa: { getAuthenticatorAssuranceLevel: async () => ({ data: { currentLevel: "aal1", nextLevel: "aal1" } }), listFactors: async () => ({ data: { totp: [], all: [] } }) },
   };
   window.supabase = {
     createClient: () => ({
