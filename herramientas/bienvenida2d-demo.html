@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bienvenida 2D (prueba)</title>
+<style>
+html,body{margin:0;height:100%;background:#0b0e12;overflow:hidden}
+#esc{position:fixed;inset:0;background:#15191E;overflow:hidden;color:#fff;font-family:"Barlow Condensed","Arial Narrow",sans-serif}
+#esc svg#mundo{position:absolute;inset:0;width:100%;height:100%;display:block}
+#vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 45%,rgba(0,0,0,.5) 100%)}
+#logo{position:absolute;width:240px;height:240px;opacity:0}
+#logo img{position:absolute;inset:0;width:100%;height:100%}
+#aro{position:absolute;width:250px;height:250px;overflow:visible;transform:rotate(-60deg)}
+#aro circle{fill:none;stroke:#AB1012;stroke-width:1.6;stroke-linecap:round}
+#nombre{position:absolute;font-weight:700;font-size:1.7rem;letter-spacing:.02em;opacity:0;text-align:center;width:100%}
+</style></head><body>
+<div id="esc">
+<svg id="mundo" xmlns="http://www.w3.org/2000/svg"><defs>
+ <linearGradient id="gCuerpo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4C8BD0"/><stop offset=".3" stop-color="#2B6BB6"/><stop offset=".72" stop-color="#1D5BA3"/><stop offset="1" stop-color="#143F78"/></linearGradient>
+ <linearGradient id="gBisel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient>
+ <linearGradient id="gTecho" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".42"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+ <linearGradient id="gLado" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".38"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>
+ <linearGradient id="gLadoD" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".3"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>
+ <linearGradient id="gCC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#c3d1e3"/></linearGradient>
+ <linearGradient id="gCab" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3F7FC6"/><stop offset=".5" stop-color="#2262AE"/><stop offset="1" stop-color="#14447F"/></linearGradient>
+ <linearGradient id="gInt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#455669"/><stop offset=".6" stop-color="#222d39"/><stop offset="1" stop-color="#11171e"/></linearGradient>
+ <linearGradient id="gCristal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4dde4"/><stop offset=".5" stop-color="#eef2f5"/><stop offset="1" stop-color="#cdd7de"/></linearGradient>
+ <linearGradient id="gCrist2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset=".4" stop-color="#fff" stop-opacity=".05"/><stop offset=".55" stop-color="#fff" stop-opacity=".2"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+ <linearGradient id="gParach" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6e9ec"/><stop offset="1" stop-color="#8c97a3"/></linearGradient>
+ <linearGradient id="gCarretera" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#232a33"/><stop offset=".25" stop-color="#171c23"/><stop offset="1" stop-color="#15191E"/></linearGradient>
+ <linearGradient id="gSkyA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2630"/><stop offset="1" stop-color="#19212a"/></linearGradient>
+ <linearGradient id="gSkyB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#202b37"/><stop offset="1" stop-color="#1a232d"/></linearGradient>
+ <radialGradient id="gNeum" cx="50%" cy="50%" r="50%"><stop offset=".55" stop-color="#2d3640"/><stop offset=".85" stop-color="#171c22"/><stop offset="1" stop-color="#0a0d11"/></radialGradient>
+ <radialGradient id="gLlanta" cx="38%" cy="32%" r="80%"><stop offset="0" stop-color="#fbfdff"/><stop offset=".6" stop-color="#c3ced9"/><stop offset="1" stop-color="#7f8d9c"/></radialGradient>
+ <radialGradient id="gTuerca" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#e5ebf1"/><stop offset="1" stop-color="#5c6a79"/></radialGradient>
+ <radialGradient id="gFaro" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff8dc" stop-opacity=".95"/><stop offset=".4" stop-color="#fff2b8" stop-opacity=".35"/><stop offset="1" stop-color="#fff2b8" stop-opacity="0"/></radialGradient>
+ <radialGradient id="gSombra" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#000" stop-opacity=".7"/><stop offset=".6" stop-color="#000" stop-opacity=".35"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+ <linearGradient id="gBrillo" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+ <linearGradient id="gFaja" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9c3cd"/><stop offset="1" stop-color="#5e6975"/></linearGradient>
+ <pattern id="pRaya" width="260" height="20" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="150" height="9" rx="2" fill="#fff" fill-opacity=".85"/></pattern>
+ <filter id="fSombra" x="-20%" y="-200%" width="140%" height="500%"><feGaussianBlur stdDeviation="10"/></filter>
+ <filter id="fCC" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#04204a" flood-opacity=".6"/></filter>
+ <filter id="fDesenf" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur id="fDesenfG" stdDeviation="0"/></filter>
+ <filter id="fDesenf2" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur id="fDesenfG2" stdDeviation="0"/></filter>
+ <filter id="fBrazo" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-color="#000" flood-opacity=".45"/></filter>
+ <clipPath id="cVentana"><path d="M516 112H600Q608 112 612 120L640 178H516Z"/></clipPath>
+ <clipPath id="cCamion"><rect x="10" y="20" width="480" height="238" rx="18"/><path d="M495 96H604Q620 96 628 110L664 186Q670 198 684 202L692 206V300H495Z"/></clipPath>
+</defs>
+<g id="cam">
+ <g id="lejos" filter="url(#fDesenf)"><g id="skyB"></g><g id="skyA"></g></g>
+ <g id="calle"><rect x="-6000" y="358" width="12000" height="1400" fill="url(#gCarretera)"/>
+  <rect x="-6000" y="358" width="12000" height="3" fill="#fff" fill-opacity=".1"/>
+  <rect id="rayas" x="-6000" y="440" width="12000" height="20" fill="url(#pRaya)"/></g>
+ <ellipse id="sombra" cx="352" cy="362" rx="360" ry="20" fill="url(#gSombra)" filter="url(#fSombra)"/>
+ <g id="camion">
+  <rect x="24" y="258" width="640" height="44" rx="6" fill="#222a33"/><rect x="24" y="258" width="640" height="6" fill="#fff" fill-opacity=".08"/>
+  <g id="trasera"><rect x="2" y="256" width="20" height="12" rx="3" fill="url(#gFaja)"/></g>
+  <g id="r1"></g><g id="r2"></g>
+  <g id="caja">
+   <rect x="10" y="20" width="480" height="238" rx="18" fill="url(#gCuerpo)"/>
+   <rect x="10" y="20" width="480" height="30" rx="18" fill="url(#gTecho)"/>
+   <rect x="10" y="20" width="26" height="238" rx="18" fill="url(#gLado)"/>
+   <rect x="464" y="20" width="26" height="238" rx="18" fill="url(#gLadoD)"/>
+   <rect x="10" y="236" width="480" height="22" rx="10" fill="#0c2c58" fill-opacity=".45"/>
+   <rect x="13" y="23" width="474" height="232" rx="16" fill="none" stroke="url(#gBisel)" stroke-width="4"/>
+   <rect x="16" y="26" width="468" height="226" rx="14" fill="none" stroke="#06234d" stroke-opacity=".28" stroke-width="1.5"/>
+   <path d="M48 86H452" stroke="#fff" stroke-opacity=".07" stroke-width="2"/>
+   <text x="250" y="188" text-anchor="middle" textLength="330" lengthAdjust="spacingAndGlyphs" font-family="'Arial Rounded MT Bold','Arial Black','Helvetica Neue',Arial,sans-serif" font-weight="900" font-size="250" fill="url(#gCC)" stroke="#0e3a70" stroke-width="15" stroke-linejoin="round" paint-order="stroke" filter="url(#fCC)">CC</text>
+   <rect x="6" y="226" width="10" height="16" rx="3" fill="#a30f1d"/><circle cx="10" cy="234" r="2" fill="#ff5566" fill-opacity=".8"/>
+  </g>
+  <g id="cabina">
+   <path d="M516 112H600Q608 112 612 120L640 178H516Z" fill="url(#gInt)"/>
+   <rect x="516" y="112" width="130" height="70" fill="#000" fill-opacity="0" />
+   <g clip-path="url(#cVentana)"><path d="M516 150Q528 142 540 150L548 182H516Z" fill="#161d25"/>
+    <svg id="chofer" x="534" y="110" width="104" height="93" viewBox="0 0 164 147" overflow="visible">            <defs>
+              <radialGradient id="dg-piel" cx="40%" cy="35%" r="75%"><stop offset="0" stop-color="#FBDCBE"/><stop offset=".65" stop-color="#EDB98F"/><stop offset="1" stop-color="#CF9068"/></radialGradient>
+              <linearGradient id="dg-camisa" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E2263F"/><stop offset=".6" stop-color="#C4122F"/><stop offset="1" stop-color="#8E0B22"/></linearGradient>
+              <linearGradient id="dg-pelo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6A4A39"/><stop offset="1" stop-color="#2A1C16"/></linearGradient>
+              <linearGradient id="dg-cuello" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B9805C"/><stop offset=".45" stop-color="#DDA47C"/></linearGradient>
+              <radialGradient id="dg-sombra" cx="30%" cy="35%" r="80%"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".3"/></radialGradient>
+            </defs>
+            <path d="M28 150c0-30 8-48 26-55l9-3h16l9 3c18 7 26 25 26 55z" fill="url(#dg-camisa)"/>
+            <path d="M28 150c0-30 8-48 26-55l9-3h16l9 3c18 7 26 25 26 55z" fill="url(#dg-sombra)"/>
+            <path d="M42 150c0-16 2-28 7-38M100 150c0-16-2-28-7-38" stroke="#5E0716" stroke-opacity=".35" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <path d="M86 98c9 5 14 16 15 30" stroke="#FFFFFF" stroke-opacity=".16" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <path d="M62 74h17v19c-3 4-14 4-17 0z" fill="url(#dg-cuello)"/>
+            <path d="M60 90l11 9 11-9 4 5-8 9-7-6-7 6-8-9z" fill="#A80E27"/>
+            <path d="M71 99v14" stroke="#7A0A1C" stroke-width="1.6" stroke-linecap="round"/><circle cx="71" cy="106" r="1.3" fill="#F4E8E0"/>
+            <g class="bv-cabeza">
+            <g class="bv-perfil">
+              <path d="M54 58c0-14 8-24 19-24 12 0 19 9 19 21 0 4-1 7-1 9l4 6-4 2c0 8-6 13-15 13-13 0-22-11-22-27z" fill="url(#dg-piel)"/>
+              <path d="M54 58c0-14 8-24 19-24 12 0 19 9 19 21 0 4-1 7-1 9l4 6-4 2c0 8-6 13-15 13-13 0-22-11-22-27z" fill="url(#dg-sombra)"/>
+              <ellipse cx="62" cy="60" rx="5" ry="7" fill="#E2A57E"/><path d="M62 56q2.5 4 0 8" stroke="#B87A57" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+              <path d="M77 48q5-3 10 0" stroke="#3B2A22" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+              <path d="M79 55q3-2 6 0q-3 3-6 0z" fill="#fff"/><circle cx="83.3" cy="55" r="2.1" fill="#2A1C16"/><circle cx="83.9" cy="54.3" r=".7" fill="#fff"/>
+              <circle cx="81" cy="65" r="4" fill="#F0907C" fill-opacity=".3"/>
+              <path d="M82 73q5 2 9-2" stroke="#9A4B37" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <path d="M52 59c-3-20 8-29 21-29 13 0 22 7 20 18-6-5-14-6-21-4-3 4-5 9-7 15-4-3-8-3-13 0z" fill="url(#dg-pelo)"/>
+              <path d="M63 35c7-3 15-2 21 2" stroke="#8A6450" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </g>
+            <g class="bv-frente">
+              <ellipse cx="51" cy="59" rx="4.5" ry="7" fill="#E2A57E"/><ellipse cx="91" cy="59" rx="4.5" ry="7" fill="#E2A57E"/>
+              <path d="M51.5 56q2 3 0 6M90.5 56q-2 3 0 6" stroke="#B87A57" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              <path d="M52 55c0-14 8-23 19-23s19 9 19 23c0 14-8 25-19 25s-19-11-19-25z" fill="url(#dg-piel)"/>
+              <path d="M52 55c0-14 8-23 19-23s19 9 19 23c0 14-8 25-19 25s-19-11-19-25z" fill="url(#dg-sombra)"/>
+              <path d="M59 47q4.5-3 9-.5M74 46.5q4.5-2.5 9 .5" stroke="#3B2A22" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+              <g class="bv-ojos">
+                <ellipse cx="63.5" cy="54" rx="3.6" ry="3.2" fill="#fff"/><ellipse cx="78.5" cy="54" rx="3.6" ry="3.2" fill="#fff"/>
+                <circle cx="64" cy="54.3" r="2.2" fill="#2A1C16"/><circle cx="78" cy="54.3" r="2.2" fill="#2A1C16"/>
+                <circle cx="64.7" cy="53.5" r=".75" fill="#fff"/><circle cx="78.7" cy="53.5" r=".75" fill="#fff"/>
+              </g>
+              <path d="M71 56c1 3 2 5 2.5 7-1 1-3 1-4 .3" stroke="#C98863" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+              <circle cx="59" cy="63" r="4.2" fill="#F0907C" fill-opacity=".3"/><circle cx="83" cy="63" r="4.2" fill="#F0907C" fill-opacity=".3"/>
+              <path d="M62.5 67.5q8.5 8 17 0q-8.5 3-17 0z" fill="#fff" stroke="#9A4B37" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M50 57c-3-19 8-28 21-28s24 9 21 28c-2-7-5-11-8-13-8 2-18 1-26-3-3 3-6 9-8 16z" fill="url(#dg-pelo)"/>
+              <path d="M60 33c6-3 15-3 22 1" stroke="#8A6450" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </g>
+            </g></svg>
+    <path d="M516 112H600Q608 112 612 120L640 178H516Z" fill="#9cc7ea" fill-opacity=".13"/>
+    <path d="M540 108L572 108L552 190L520 190Z" fill="url(#gCrist2)" opacity=".8"/>
+    <g id="cristal"><rect x="510" y="108" width="140" height="76" fill="url(#gCristal)"/><path d="M510 110H650" stroke="#8f9ba7" stroke-width="5"/><path d="M545 112L580 112L556 184L520 184Z" fill="#fff" fill-opacity=".35"/></g></g>
+   <path id="cabCuerpo" fill-rule="evenodd" fill="url(#gCab)" d="M495 96H604Q620 96 628 110L664 186Q670 198 684 202L692 206V300H495Z M516 112H600Q608 112 612 120L640 178H516Z"/>
+   <path d="M498 99H603Q617 99 625 112L661 188" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="3" stroke-linecap="round"/>
+   <path d="M516 112H600Q608 112 612 120L640 178H516Z" fill="none" stroke="#0c2f5e" stroke-width="5" stroke-linejoin="round"/>
+   <path d="M516 112H600Q608 112 612 120L640 178H516Z" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="1.5" stroke-linejoin="round" transform="translate(0 -2.5)"/>
+   <path d="M495 96H604Q620 96 628 110L664 186Q670 198 684 202L692 206V300H495Z" fill="none" stroke="url(#gBisel)" stroke-width="3" transform="translate(2 2) scale(.985 .985)"/>
+   <path d="M512 192V296M512 296" stroke="#0c2f5e" stroke-opacity=".6" stroke-width="2.5"/><rect x="524" y="224" width="26" height="7" rx="3.5" fill="#d9e2ea"/><rect x="524" y="224" width="26" height="3" rx="1.5" fill="#fff" fill-opacity=".6"/>
+   <path d="M676 220V292" stroke="#0c2f5e" stroke-opacity=".5" stroke-width="2"/>
+   <rect x="676" y="244" width="16" height="3.5" rx="1.7" fill="#0d2a52"/><rect x="676" y="254" width="16" height="3.5" rx="1.7" fill="#0d2a52"/><rect x="676" y="264" width="16" height="3.5" rx="1.7" fill="#0d2a52"/>
+   <rect x="652" y="132" width="10" height="38" rx="5" fill="#1c232b"/><rect x="654" y="134" width="3" height="30" rx="1.5" fill="#fff" fill-opacity=".25"/>
+   <rect x="662" y="268" width="38" height="20" rx="7" fill="url(#gParach)"/><rect x="664" y="270" width="34" height="5" rx="2.5" fill="#fff" fill-opacity=".55"/>
+   <ellipse cx="686" cy="226" rx="6.5" ry="13" fill="#fffbe6"/><ellipse cx="686" cy="226" rx="6.5" ry="13" fill="none" stroke="#9aa6b3" stroke-width="1.5"/>
+   <circle id="faro" cx="690" cy="226" r="46" fill="url(#gFaro)" opacity=".5"/>
+  </g>
+  <g id="arco"><circle cx="580" cy="306" r="60" fill="#0b1015"/><circle cx="580" cy="306" r="60" fill="none" stroke="#1e2630" stroke-width="3"/></g>
+  <g id="r3"></g>
+  <g id="brazo" filter="url(#fBrazo)">
+   <path d="M560 178L526 192" stroke="#8E0B22" stroke-width="25" stroke-linecap="round"/><path d="M560 177L526 190" stroke="#C4122F" stroke-width="21" stroke-linecap="round"/><path d="M558 172L528 184" stroke="#E2263F" stroke-width="7" stroke-linecap="round" stroke-opacity=".7"/>
+   <g id="antebrazo" transform="translate(526 191)">
+    <circle r="12" fill="#C4122F"/><path d="M0 0V-24" stroke="#8E0B22" stroke-width="22" stroke-linecap="round"/><path d="M0 0V-24" stroke="#C4122F" stroke-width="19" stroke-linecap="round"/><path d="M-5 -2V-22" stroke="#E2263F" stroke-width="5" stroke-linecap="round" stroke-opacity=".7"/>
+    <path d="M0 -24V-52" stroke="#CF9068" stroke-width="16" stroke-linecap="round"/><path d="M0 -24V-52" stroke="#EDB98F" stroke-width="13" stroke-linecap="round"/><path d="M-4 -26V-50" stroke="#FBDCBE" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="0" cy="-62" rx="10.5" ry="12.5" fill="#EDB98F"/><ellipse cx="-3" cy="-65" rx="4" ry="6" fill="#FBDCBE" fill-opacity=".7"/>
+    <g stroke="#EDB98F" stroke-width="5" stroke-linecap="round"><path d="M-7 -71V-82"/><path d="M-2.5 -73V-86"/><path d="M2.5 -73V-85"/><path d="M7 -70V-80"/></g>
+    <path d="M-9 -60L-17 -66" stroke="#EDB98F" stroke-width="5.5" stroke-linecap="round"/>
+   </g>
+  </g>
+  <rect id="brillo" x="-90" y="10" width="70" height="300" fill="url(#gBrillo)" transform="skewX(-20)" clip-path="url(#cCamion)" opacity="0"/>
+ </g>
+</g></svg>
+<div id="vig"></div>
+<div id="logo"><img src="../icon-512.png" alt=""></div>
+<svg id="aro" viewBox="0 0 100 100"><circle id="aroC" cx="50" cy="50" r="49" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/></svg>
+<div id="nombre">CCOO Calsina Carré</div>
+</div>
+<script>
+const $=id=>document.getElementById(id),NS="http://www.w3.org/2000/svg";
+const W=innerWidth,H=innerHeight;
+const suave=(a,b,x)=>{x=Math.min(1,Math.max(0,(x-a)/(b-a)));return x*x*(3-2*x)};
+const lerp=(a,b,x)=>a+(b-a)*x;
+function el(tag,at,pad){const e=document.createElementNS(NS,tag);for(const k in at)e.setAttribute(k,at[k]);if(pad)pad.appendChild(e);return e}
+// ruedas
+function rueda(g,cx,cy){
+ const r=el("g",{transform:`translate(${cx} ${cy})`},g), giro=el("g",{},r);
+ el("circle",{r:52,fill:"url(#gNeum)"},giro);
+ for(let i=0;i<26;i++){const a=i/26*360;el("rect",{x:-2.5,y:-52,width:5,height:7,rx:1.5,fill:"#07090c",transform:`rotate(${a})`},giro)}
+ el("circle",{r:40,fill:"none",stroke:"#0d1116","stroke-width":2},giro);
+ el("circle",{r:30,fill:"url(#gLlanta)",stroke:"#5f6e7e","stroke-width":2},giro);
+ const det=el("g",{},giro);
+ for(let i=0;i<5;i++){const a=i/5*360;el("circle",{cx:16,cy:0,r:4.2,fill:"url(#gTuerca)",transform:`rotate(${a})`},det)}
+ el("circle",{r:8,fill:"url(#gTuerca)"},det);
+ const bor=el("g",{opacity:0},giro);
+ for(let i=0;i<5;i++){const a=i/5*360;el("path",{d:"M6 -3A24 24 0 0 1 24 -7L22 -1Z",fill:"#fff","fill-opacity":.4,transform:`rotate(${a})`},bor)}
+ // brillo fijo (no gira): luz sobre el neumático
+ el("path",{d:"M-44 -26A52 52 0 0 1 -10 -50",fill:"none",stroke:"#fff","stroke-opacity":.16,"stroke-width":5,"stroke-linecap":"round"},r);
+ return {giro,det,bor};
+}
+const ruedas=[rueda($("r1"),105,306),rueda($("r2"),258,306),rueda($("r3"),580,306)];
+// fondo: edificios lejanos en dos capas
+function ciudad(g,sem,min,max,fill,P){let x=0,s=sem;const rnd=()=>{s=(s*16807)%2147483647;return s/2147483647};
+ while(x<P){const w=40+rnd()*90,h=min+rnd()*(max-min);el("rect",{x,y:358-h,width:w,height:h+2,fill,rx:3},g);
+  if(rnd()>.55)el("rect",{x:x+w*.3,y:358-h-18,width:w*.35,height:20,fill,rx:2},g);x+=w+(rnd()<.3?30:2)}}
+const PA=1500,PB=1700;
+const A=[0,1,2].map(i=>{const g=el("g",{},$("skyA"));ciudad(g,12345,40,150,"url(#gSkyA)",PA);return g});
+const B=[0,1,2].map(i=>{const g=el("g",{},$("skyB"));ciudad(g,777,90,260,"url(#gSkyB)",PB);return g});
+// recorrido de la carretera (integral de la velocidad)
+const VEL=t=>1300*(1-suave(2.0,2.65,t)*.999);
+const TAB=[0];for(let i=1;i<=500;i++)TAB.push(TAB[i-1]+VEL((i-.5)*.01)*.01);
+const dist=t=>{const x=Math.max(0,Math.min(4.99,t))*100,i=Math.floor(x);return TAB[i]+(TAB[i+1]-TAB[i])*(x-i)};
+// cabeza del conductor
+const perfil=document.querySelector("#chofer .bv-perfil"),frente=document.querySelector("#chofer .bv-frente"),ojos=document.querySelector("#chofer .bv-ojos"),cabeza=document.querySelector("#chofer .bv-cabeza");
+[perfil,frente,ojos].forEach(e=>{e.style.transformBox="fill-box";e.style.transformOrigin="50% 60%"});
+cabeza.style.transformBox="view-box";cabeza.style.transformOrigin="71px 80px";
+const FOCO_A=[588,150],FOCO_B=[350,179],DURA=2.9;
+// destino: dónde acaba el camión (centro del camión del logo)
+const LOGO=240,lx=(W-LOGO)/2,ly=(H-(LOGO+22+27+22+5))/2;
+const FIN=[lx+LOGO*.548,ly+LOGO*.527], S1=LOGO*.50049/700;
+const S0=Math.min(W,H*.5)*.0075;
+function frame(t){
+ const x=Math.min(1,t/DURA),u=x*x*(3-2*x)*.6+(1-Math.pow(1-x,2))*.4;
+ const s=S0*Math.pow(S1/S0,u), g=1-u;
+ const fa=suave(0,.9,u), Fx=lerp(FOCO_A[0],FOCO_B[0],fa), Fy=lerp(FOCO_A[1],FOCO_B[1],fa);
+ const Ax=lerp(W/2,FIN[0],suave(0,1,u)), Ay=lerp(H*.42,FIN[1],suave(0,1,u));
+ const roll=-3.5*g*g;
+ $("cam").setAttribute("transform",`translate(${Ax} ${Ay}) rotate(${roll}) scale(${s}) translate(${-Fx} ${-Fy})`);
+ const d=dist(t),v=VEL(t),fade=1-suave(1.7,2.5,t);
+ // fondo: desenfocado mientras estamos cerca (profundidad de campo), se funde al final
+ const desf=Math.max(0,5*g*g+1.2*(1-suave(0,1.5,t)))/Math.max(.35,s*.55);
+ $("fDesenfG").setAttribute("stdDeviation",(desf*s*1.4).toFixed(2)); 
+ B.forEach((e,i)=>e.setAttribute("transform",`translate(${(i-1)*PB-((d*.07)%PB)} 0)`));
+ A.forEach((e,i)=>e.setAttribute("transform",`translate(${(i-1)*PA-((d*.18)%PA)} 0)`));
+ $("lejos").setAttribute("opacity",fade);
+ $("calle").setAttribute("opacity",lerp(1,0,suave(1.7,2.55,t)));
+ $("rayas").setAttribute("fill","url(#pRaya)");
+ document.getElementById("pRaya").setAttribute("patternTransform",`translate(${-(d%260)} 0)`);
+ // suspensión y frenazo
+ const bote=Math.sin(t*15)*2.6*(1-suave(2.0,2.6,t));
+ const cab=Math.sin(Math.PI*suave(2.35,2.9,t))*1.1;
+ $("camion").setAttribute("transform",`translate(0 ${bote}) rotate(${cab} 350 358)`);
+ $("sombra").setAttribute("opacity",(.9-Math.abs(bote)*.03)*(1-suave(2.3,2.9,t)));
+ // ruedas: con la velocidad se ven borrosas, al frenar se ven las tuercas
+ const sp=Math.min(1,v/700);
+ ruedas.forEach(r=>{r.giro.setAttribute("transform",`rotate(${(d/52*180/Math.PI)%360})`);r.det.setAttribute("opacity",1-sp*.85);r.bor.setAttribute("opacity",sp*.9)});
+ // brillo que cruza el camión una vez
+ const bb=suave(1.5,2.2,t);$("brillo").setAttribute("opacity",bb>0&&bb<1?1:0);$("brillo").setAttribute("transform",`translate(${lerp(-60,760,bb)} 0) skewX(-20)`);
+ $("faro").setAttribute("opacity",.5+.2*Math.sin(t*6));
+ // conductor
+ const per=suave(.45,.9,t);perfil.style.opacity=1-per;perfil.style.transform=`translateX(${-6*per}%) scaleX(${1-.18*per})`;
+ frente.style.opacity=per;frente.style.transform=`translateX(${8*(1-per)}%) scaleX(${.82+.18*per})`;
+ cabeza.style.transform=`rotate(${-6*Math.sin(Math.PI*suave(1.0,1.6,t))}deg)`;
+ ojos.style.transform=`scaleY(${(t>1.75&&t<1.93)?.1:1})`;
+ // saludo
+ const sube=suave(.5,1.0,t),baja=suave(1.95,2.2,t);
+ const ola=Math.sin((t-1.0)*9)*24*suave(1.0,1.15,t)*(1-suave(1.8,2.0,t));
+ const ang=lerp(172,0,sube)*(1-baja)+baja*200+ola;
+ $("antebrazo").setAttribute("transform",`translate(526 191) rotate(${ang})`);
+ const ret=suave(1.9,2.2,t);$("brazo").setAttribute("transform",`translate(${28*ret} ${-8*ret})`);$("brazo").setAttribute("opacity",1-ret);
+ $("cristal").setAttribute("transform",`translate(0 ${(1-suave(1.95,2.3,t))*80})`);
+ // el camión se funde y sale el logo
+ const fc=1-suave(3.35,3.9,t);$("camion").style.opacity=fc;$("cam").style.opacity=1;
+ const lo=suave(3.35,3.6,t),r=lerp(8,100,suave(3.35,4.55,t));
+ const logo=$("logo");logo.style.left=lx+"px";logo.style.top=ly+"px";logo.style.opacity=lo;
+ const m=`radial-gradient(circle at 54.8% 52.7%,#000 ${r-22}%,transparent ${r}%)`;logo.style.webkitMask=logo.style.mask=m;
+ const sello=t<3.25?1:1-.07*Math.sin(Math.PI*Math.min(1,(t-3.25)/1.1));logo.style.transform=`scale(${sello})`;
+ const aro=$("aro");aro.style.left=(lx-5)+"px";aro.style.top=(ly-5)+"px";
+ $("aroC").setAttribute("stroke-dashoffset",100-100*suave(2.9,3.7,t));aro.style.opacity=t<2.9?0:1-suave(3.85,4.35,t);
+ const nm=$("nombre");nm.style.top=(ly+LOGO+22)+"px";nm.style.opacity=suave(3.75,4.35,t);
+}
+const q=new URLSearchParams(location.search);
+if(q.has("t")){frame(+q.get("t"))}
+else{let t0=null;const run=n=>{if(t0==null)t0=n;const t=(n-t0)/1000;frame(Math.min(t,4.7));if(t<4.8)requestAnimationFrame(run)};requestAnimationFrame(run)}
+window.frame=frame;
+</script></body></html>
