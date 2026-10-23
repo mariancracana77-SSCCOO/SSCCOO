@@ -22,7 +22,7 @@ Entra en `admin.html`. En el móvil, abajo: Inicio, Avisos, Calendario, Actas y 
 Para dar formato al texto: línea en blanco entre párrafos; `- ` al principio de la línea para listas; `**así**` para negrita.
 
 ## Archivos (no hace falta tocarlos)
-`index.html`, `app.js` (web) · `cartel.html` (cartel QR) · `qr.js` (códigos QR, librería qrcode-generator, licencia MIT) · `admin.html`, `admin.js`, `admin.css` (panel) · `render.js` (piezas comunes) · `styles.css` · `config.js` (conexión con Supabase) · `iconos.js` · `manifest.json`, `sw.js` (para instalarla como app) · `logo.png`, `icon-*.png` · `.nojekyll`
+`index.html`, `app.js` (web) · `cartel.html` (cartel QR) · `qr.js` (códigos QR, librería qrcode-generator, licencia MIT) · `admin.html`, `admin-*.js` (7 partes), `admin.css` (panel) · `render.js` (piezas comunes) · `styles.css` · `config.js` (conexión con Supabase) · `iconos.js` · `manifest.json`, `sw.js` (para instalarla como app) · `logo.png`, `icon-*.png` · `_config.yml` (deja fuera de la web la documentación)
 
 ## Ajustes (todo desde el panel, sin tocar código)
 En la pestaña **Ajustes** del panel se pueden añadir, renombrar, ordenar, cambiar de color y quitar las categorías y tipos de todas las secciones (filtros de avisos, tipos de acta, tipos del calendario, categorías del convenio y de documentos).
@@ -74,6 +74,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Duplicar**: al editar algo, «Duplicar» crea una copia para cambiar solo lo necesario (por ejemplo, la fecha).
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
+
+## Versión 67: el panel, en partes más pequeñas
+- `admin.js` (unas 2.600 líneas) pasa a 7 archivos por temas: `admin-base.js`, `admin-sesion.js`, `admin-listas.js`, `admin-editor.js`, `admin-herramientas.js`, `admin-ajustes.js` y `admin-calendario.js`. El código es el mismo; solo cambia que el arranque espera a que estén cargadas todas las partes. No cambia nada de lo que se ve.
+- La prueba rápida (`pruebas/humo.cjs`) entra también en el panel con una sesión de prueba y abre todas las páginas y editores.
 
 ## Versión 10
 - **Botón «Aa»** (arriba, en la web y en el panel): tamaño de letra (normal, grande, muy grande), contraste alto y colores (automático, claro, oscuro). Se guarda en cada móvil.
