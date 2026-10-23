@@ -865,16 +865,27 @@ function vuelaAlLogo(bv) {
   cab.classList.add("bv-oculto");
   return true;
 }
-// Entera la primera vez de cada día; si se vuelve a abrir el mismo día, solo el logo (algo más de 1 s)
+// Horas que tienen que pasar para que vuelva a salir entera. Está en 0 (siempre entera) hasta comprobar en el móvil que el arreglo de la v72 se ve bien; después, 3.
+const BV_HORAS = 0;
+// Entera si han pasado BV_HORAS horas desde la última vez que salió entera; si no, solo el logo (algo más de 1 s).
+// localStorage "ccoo-bienvenida" guarda cuándo salió entera (en ms); lectura.js hace la misma cuenta antes de pintar.
 const BV_DURA = (() => {
-  const bv = $("bienvenida"), hoy = new Date().toDateString();
   let vista = false;
-  try { vista = localStorage.getItem("ccoo-bienvenida") === hoy; localStorage.setItem("ccoo-bienvenida", hoy); } catch (_) {}
-  if (bv && vista) bv.classList.add("bv-corta");
+  try {
+    const t = Number(localStorage.getItem("ccoo-bienvenida")), pasa = Date.now() - t;
+    vista = t > 0 && pasa >= 0 && pasa < BV_HORAS * 3600e3;
+    if (!vista) localStorage.setItem("ccoo-bienvenida", String(Date.now()));
+  } catch (_) {}
+  if (vista) document.documentElement.classList.add("bv-corta"); // normalmente ya lo ha puesto lectura.js
   return vista ? 1100 : 4850;
 })();
+// En la app instalada, Android tapa el principio con su pantalla de carga (en el móvil de Lorena, 1,5 s más o menos)
+// y el evento load llega antes de que se quite: si la animación empezaba entonces, del primer plano 3D solo se veía un segundo.
+const BV_APP = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 function empiezaBienvenida() {
   const bv = $("bienvenida"); if (!bv || quitarBienvenida.t0 != null) return;
+  const falta = BV_APP ? 1700 - performance.now() : 0;
+  if (falta > 0) { clearTimeout(empiezaBienvenida.t); empiezaBienvenida.t = setTimeout(empiezaBienvenida, falta); return; }
   quitarBienvenida.t0 = performance.now();
   bv.classList.add("bv-anda");
   // La barra de carga solo sale si la animación ya ha terminado y la web sigue cargando

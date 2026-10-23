@@ -75,6 +75,11 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 72: la bienvenida en 3D se ve entera
+- En la app instalada en Android, la animación empieza cuando se quita la pantalla de carga de Android. Antes empezaba por detrás y del primer plano en 3D solo se veía un segundo.
+- Por ahora la animación entera sale siempre (`BV_HORAS = 0` en `app.js`) para comprobar que se ve bien; después saldrá entera si han pasado 3 horas desde la última vez y, si no, la corta (solo el logo).
+- La versión corta ya no enseña un segundo el camión antes del logo.
+
 ## Versión 71: final nuevo de la bienvenida
 - Empieza con un primer plano en 3D del camión (con frontal, parabrisas, faros y techo), visto un poco de frente, con el conductor y el brazo fuera de la ventanilla. Se ve la cabina por dentro y el conductor con detalle, con una mano en un volante con grosor y el brazo que llega hasta ella; las ruedas tienen grosor. Nos mira y saluda mientras la cámara se aleja pasando por el lateral del camión hasta verlo de lado. Mete el brazo, sube la ventanilla, el camión frena y se forma el logo. La línea discontinua de la carretera ahora es blanca. Al salir el logo, rayos rojos que giran detrás y chispas con el latido (el logo es el mismo).
 - Al terminar, el logo vuela hasta su sitio en la cabecera mientras la web se abre en círculo, y el logo de la cabecera da un pequeño rebote al llegar.

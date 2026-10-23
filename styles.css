@@ -1193,15 +1193,15 @@ body.publica.con-aviso-priv { padding-bottom: calc(84px + var(--alto-aviso, 90px
 @keyframes bv-chispa { 0% { opacity: 1; transform: rotate(var(--a)) translateY(calc(var(--d) * -.5)) scaleY(1); }
   100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(var(--d) * -.85)) scaleY(.3); } }
 /* Versión corta (segunda vez del mismo día): sin camión, el logo aparece de golpe con su aro y el destello */
-.bienvenida.bv-corta .bv-camion, .bienvenida.bv-corta .bv-carretera, .bienvenida.bv-corta .bv-onda { display: none; }
-.bienvenida.bv-corta .bv-sello { animation: none; }
-.bienvenida.bv-corta .bv-logo { animation: bv-revela .5s cubic-bezier(.22, .61, .36, 1) forwards; }
-.bienvenida.bv-corta .bv-aro circle { animation: bv-traza .5s cubic-bezier(.6, 0, .3, 1) forwards, bv-funde .3s .65s forwards; }
-.bienvenida.bv-corta .bv-brillo::before { animation-delay: .35s; }
-.bienvenida.bv-corta .bv-rayos { animation-delay: 0s; animation-duration: 1.2s; }
-.bienvenida.bv-corta .bv-chispas i { animation-delay: .25s; }
-.bienvenida.bv-corta .bv-chispas i:nth-child(even) { animation-delay: .32s; }
-.bienvenida.bv-corta .bv-nombre { animation: bv-sube .4s .1s ease-out forwards; }
+.bv-corta .bienvenida .bv-camion, .bv-corta .bienvenida .bv-carretera, .bv-corta .bienvenida .bv-onda { display: none; }
+.bv-corta .bienvenida .bv-sello { animation: none; }
+.bv-corta .bienvenida .bv-logo { animation: bv-revela .5s cubic-bezier(.22, .61, .36, 1) forwards; }
+.bv-corta .bienvenida .bv-aro circle { animation: bv-traza .5s cubic-bezier(.6, 0, .3, 1) forwards, bv-funde .3s .65s forwards; }
+.bv-corta .bienvenida .bv-brillo::before { animation-delay: .35s; }
+.bv-corta .bienvenida .bv-rayos { animation-delay: 0s; animation-duration: 1.2s; }
+.bv-corta .bienvenida .bv-chispas i { animation-delay: .25s; }
+.bv-corta .bienvenida .bv-chispas i:nth-child(even) { animation-delay: .32s; }
+.bv-corta .bienvenida .bv-nombre { animation: bv-sube .4s .1s ease-out forwards; }
 /* Salida (v69): el logo vuela hasta el de la cabecera mientras el fondo se abre en círculo y deja ver la web.
    app.js pone .bv-vuela con --bv-dx/--bv-dy/--bv-s (distancia y tamaño hasta #cab-logo) y --bv-cx/--bv-cy (centro del logo).
    Con «reducir movimiento», o si el logo de la cabecera no se ve, se funde como antes. */
