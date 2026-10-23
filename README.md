@@ -75,6 +75,13 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 70: calendario en el móvil y atajos
+- En Calendario, «Las fechas, en tu calendario»: con un toque se añade el calendario de la Sección Sindical a Google Calendar, iPhone u Outlook, y las fechas nuevas aparecen solas. Lo sirve la función `calendario` de Supabase (pública, solo lo que ya se ve en la web).
+- Al mantener pulsado el icono de la app: atajos a Avisos, Calendario, Mis descansos y Buzón.
+- El nombre de la pestaña del navegador cambia según la sección.
+- Página propia en español cuando un enlace no existe (`404.html`).
+- Enlace «Saltar al contenido» para quien usa teclado o lector de pantalla.
+
 ## Versión 69: guía del panel en el menú
 - En el panel, «Guía del panel» en el menú (en el PC, abajo del menú lateral; en el móvil, en «Más») abre la guía con capturas en otra pestaña.
 

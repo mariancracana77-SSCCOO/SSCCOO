@@ -16,6 +16,9 @@ document.querySelector(".contacto-btn").innerHTML = icono("correo", "p") + "Escr
 
 // ---------- Navegación ----------
 const VISTAS = ["inicio", "avisos", "calendario", "convenio", "calcula", "actas", "documentos", "preguntas", "info", "buscar", "legal", "descansos"];
+// Título de la pestaña del navegador según la sección (se ve en el historial, al compartir y con lector de pantalla)
+const TITULO_WEB = document.title;
+const ponTitulo = (nombre) => { document.title = nombre ? nombre + " · CCOO Calsina Carré" : TITULO_WEB; };
 function irA() {
   // Enlace a una publicación de un apartado (al compartirla): #pub-<id> lleva a su apartado y la enseña
   const pubDirecto = /^pub-\d+$/.test(location.hash.slice(1)) ? +location.hash.slice(5) : null;
@@ -45,6 +48,7 @@ function irA() {
   if (lado && cambia) $("v-" + v)?.classList.add(lado);
   if (v === "inicio" && cambia) animaPortada();
   marcaPestanas(clave);
+  ponTitulo(v === "inicio" ? "" : ap ? D.apartados.find(x => x.slug === ap)?.titulo : v === "buscar" ? "Buscar" : legal ? (legal === "privacidad" ? "Privacidad" : "Aviso legal") : NOMBRE_FIJO[v]);
   if (!avisoDirecto && !legal && !aDelegados && !aBuzon && !aEncuesta) window.scrollTo(0, 0);
   const sec = ap ? "ap-" + ap : v;
   if (sec !== "inicio") { marcaVisto(sec); if (cargar.listo) pintaContadores(); }
@@ -53,6 +57,18 @@ function irA() {
 }
 
 window.addEventListener("hashchange", irA);
+
+// Calendario para suscribirse (v70): la función «calendario» de Supabase da las fechas en formato .ics y el móvil la vuelve a pedir solo
+const CAL_SUSCRIBIR = window.SUPABASE_URL + "/functions/v1/calendario";
+$("cal-sus-webcal").href = CAL_SUSCRIBIR.replace(/^https:/, "webcal:");
+$("cal-sus-google").href = "https://calendar.google.com/calendar/render?cid=" + encodeURIComponent(CAL_SUSCRIBIR.replace(/^https:/, "webcal:"));
+$("cal-sus-copiar").addEventListener("click", async () => {
+  const nota = $("cal-sus-nota");
+  try { await navigator.clipboard.writeText(CAL_SUSCRIBIR); nota.textContent = "Enlace copiado. Pégalo en tu calendario, en «Añadir calendario desde una URL» o «Suscribirse»."; }
+  catch (_) { nota.textContent = "Copia este enlace: " + CAL_SUSCRIBIR; }
+});
+// «Saltar al contenido» (teclado y lector de pantalla): lleva el foco a la sección abierta sin cambiar de sección
+document.querySelector("[data-saltar]").addEventListener("click", (ev) => { ev.preventDefault(); $("principal").focus({ preventScroll: true }); window.scrollTo(0, 0); });
 
 // ---------- Pestañas agrupadas (v52) ----------
 // Arriba solo salen los apartados principales; lo que va dentro (Actas en «Comité de empresa», los subapartados
@@ -85,11 +101,17 @@ function pintaPestanas() {
   flechasPestanas();
   if (irA.antes === "buscar") buscarTodo();
 }
+// Centra la pestaña elegida moviendo solo la barra. No se usa scrollIntoView: en Chrome cambia el punto desde el que
+// sigue el tabulador y el primer Tab se saltaba «Saltar al contenido», «Aa» y la lupa (v70).
+function centraPestana(b) {
+  const barra = b.parentElement, rb = b.getBoundingClientRect(), rn = barra.getBoundingClientRect();
+  barra.scrollLeft += (rb.left + rb.width / 2) - (rn.left + rn.width / 2);
+}
 function marcaPestanas(clave) {
   const g = GRUPO_DE[clave], arriba = g ? g.clave : clave;
   document.querySelectorAll(".pestanas-web a").forEach(b => {
     const on = b.dataset.v === arriba; b.classList.toggle("activa", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current");
-    if (on) b.scrollIntoView({ inline: "center", block: "nearest" });
+    if (on) centraPestana(b);
   });
   const sub = $("subpestanas"), hay = g && g.miembros.length > 1;
   $("subpest-caja").classList.toggle("oculto", !hay);
@@ -559,6 +581,7 @@ function pintaApartado() {
   const a = D.apartados.find(x => x.slug === estado.ap);
   if (!a) { $("ap-extra").innerHTML = ""; $("ap-titulo").textContent = D.apartados.length || !cargar.listo ? "Cargando…" : "Apartado no encontrado"; $("lista-ap").innerHTML = ""; $("ap-desc").textContent = ""; $("fechas-ap").innerHTML = ""; return; }
   $("ap-titulo").textContent = a.titulo;
+  if (location.hash === "#ap-" + a.slug) ponTitulo(a.titulo); // al entrar por enlace directo, el nombre llega al cargar
   $("ap-desc").textContent = a.descripcion || "";
   $("ap-extra").innerHTML = a.slug === APARTADO_CONDUCTORES ? `<a class="panel desc-promo" href="#descansos">${icono("reloj")}<span><b>Mis descansos</b><small>Tu descanso diario y semanal: cuándo te toca, si puede ser reducido y qué tienes que compensar. Con avisos al móvil.</small></span>${icono("der", "p")}</a>` + restriccionesHTML() : "";
   const todas = D.publicaciones.filter(x => x.apartado_id === a.id);
@@ -584,6 +607,7 @@ function sitiosWeb() {
     { t: "Buzón anónimo", h: "buzon", donde: rutaDe("preguntas") + " (abajo del todo)", p: "buzon anonimo sugerencia queja pregunta escribir" },
     { t: "Activar los avisos en el móvil", h: "info", donde: "Campana de abajo, o Nosotros", p: "avisos notificaciones campana movil" },
     { t: "Restricciones de camiones por país", h: "ap-" + APARTADO_CONDUCTORES, donde: rutaDe("ap-" + APARTADO_CONDUCTORES), p: "restricciones circulacion camiones prohibiciones dgt francia" },
+    { t: "Las fechas en el calendario del móvil", h: "calendario", donde: rutaDe("calendario") + " (debajo de «Próximas fechas»)", p: "calendario movil google iphone outlook suscribir añadir fechas" },
     { t: "Tamaño de letra y modo oscuro", donde: "Botón «Aa» de arriba a la derecha", p: "letra grande tamaño oscuro contraste colores" },
     { t: "Buscar en toda la web", h: "buscar", donde: "Lupa de arriba a la derecha", p: "buscar lupa encontrar" },
     { t: "Instalar la app", donde: "Botón con la flecha de arriba a la derecha (si aún no la tienes)", p: "instalar app descargar icono" },

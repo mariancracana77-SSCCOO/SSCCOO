@@ -1569,3 +1569,19 @@ html[data-letra] .subpestanas a { font-size: .92rem; }
   background: var(--asfalto); color: #fff; border: 2px solid var(--rojo); border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.35); font-weight: 700; }
 .banda-version span { flex: 1 1 auto; min-width: 0; }
 .banda-version .btn { flex: none; min-height: 44px; background: var(--rojo); color: #fff; border: 0; }
+
+/* «Saltar al contenido» (v70): solo aparece al llegar con el teclado (Tab) */
+.saltar { position: fixed; left: 12px; top: -80px; z-index: 1300; padding: 12px 18px; border-radius: 10px; background: var(--rojo); color: #fff; font-weight: 700; text-decoration: none; box-shadow: 0 4px 14px rgba(0, 0, 0, .35); }
+.saltar:focus { top: calc(12px + env(safe-area-inset-top)); outline: 3px solid #fff; outline-offset: 2px; }
+#principal:focus { outline: none; }
+
+/* Calendario para suscribirse (v70) */
+.cal-suscribir { margin-top: 18px; padding: 16px; }
+.cal-suscribir h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-family: "Barlow Condensed", sans-serif; font-size: 1.3rem; }
+.cal-suscribir h2 .icono { color: var(--rojo-ic); flex: none; }
+.cal-suscribir p { margin: 0 0 12px; }
+.cal-sus-botones { display: flex; flex-wrap: wrap; gap: 8px; }
+.cal-sus-botones .btn { flex: 1 1 200px; min-height: 48px; text-decoration: none; text-align: center; }
+.cal-sus-nota:empty { display: none; }
+.cal-sus-nota { margin-top: 12px; font-weight: 700; overflow-wrap: anywhere; }
+.cal-suscribir .cal-sus-ayuda { margin: 12px 0 0; font-size: .9rem; color: var(--suave); }

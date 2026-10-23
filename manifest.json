@@ -57,5 +57,59 @@
       "form_factor": "wide",
       "label": "La web en el ordenador"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Avisos",
+      "short_name": "Avisos",
+      "description": "Los últimos avisos de la Sección Sindical",
+      "url": "./index.html#avisos",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Calendario",
+      "short_name": "Calendario",
+      "description": "Próximas fechas y reuniones",
+      "url": "./index.html#calendario",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Mis descansos",
+      "short_name": "Descansos",
+      "description": "Tu descanso diario y semanal",
+      "url": "./index.html#descansos",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Buzón anónimo",
+      "short_name": "Buzón",
+      "description": "Escribe una duda o queja sin dar tu nombre",
+      "url": "./index.html#buzon",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
   ]
 }
