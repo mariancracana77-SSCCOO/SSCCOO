@@ -197,10 +197,12 @@ function pintaNav() {
      <div class="sep solo-pc"></div>
      <div class="quien">${esc(window.MI_EMAIL || "")}<br>Versión ${VERSION_WEB}</div>
      ${INSTALADA_A() ? "" : `<button class="solo-pc" id="b-instalar-pc">${icono("descargar")}Instalar la app</button>`}
+     <button class="solo-pc" id="b-guia">${icono("pregunta")}Guía del panel</button>
      <button class="solo-pc" id="b-salir">${icono("salir")}Salir</button>`;
   $("nav-admin").querySelectorAll("[data-p]").forEach(x => x.onclick = () => abrir(x.dataset.p));
   $("b-mas").onclick = abrirMas;
   $("b-salir").onclick = salir;
+  $("b-guia").onclick = () => window.open(GUIA_URL, "_blank", "noopener");
   if ($("b-instalar-pc")) $("b-instalar-pc").onclick = instalarApp;
 }
 function abrirMas() {
@@ -209,7 +211,7 @@ function abrirMas() {
     (PAGINAS[k].cab ? `<p class="hoja-tit hoja-cab">${esc(PAGINAS[k].cab)}</p>` : PAGINAS[k].grupo ? `<div class="hoja-sep"></div>` : "") +
     `<button data-p="${k}" class="${PAGINAS[k].sub ? "sub" : ""}${k === actual ? " actual" : ""}">${icono(esc(PAGINAS[k].icono))}${esc(PAGINAS[k].nombre)}${k === "buzon" && BUZON_SIN_LEER ? `<span class="cuenta-menu">${BUZON_SIN_LEER}</span>` : ""}</button>`).join("") +
     (INSTALADA_A() ? "" : `<button id="m-instalar">${icono("descargar")}Instalar la app</button>`) +
-    `<a href="index.html" target="_blank">${icono("ver")}Ver la web</a><button id="m-salir">${icono("salir")}Salir (${esc(window.MI_EMAIL || "")})</button><p class="fecha-txt" style="text-align:center;margin:6px 0 0">Versión ${VERSION_WEB}</p>`;
+    `<a href="index.html" target="_blank">${icono("ver")}Ver la web</a><a href="${GUIA_URL}" target="_blank" rel="noopener">${icono("pregunta")}Guía del panel</a><button id="m-salir">${icono("salir")}Salir (${esc(window.MI_EMAIL || "")})</button><p class="fecha-txt" style="text-align:center;margin:6px 0 0">Versión ${VERSION_WEB}</p>`;
   ["velo-mas", "hoja-mas"].forEach(i => $(i).classList.remove("oculto"));
   $("hoja-mas").querySelectorAll("[data-p]").forEach(x => x.onclick = () => { cerrarMas(); abrir(x.dataset.p); });
   $("buscar-menu").oninput = () => {

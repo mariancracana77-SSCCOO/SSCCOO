@@ -75,6 +75,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 69: guía del panel en el menú
+- En el panel, «Guía del panel» en el menú (en el PC, abajo del menú lateral; en el móvil, en «Más») abre la guía con capturas en otra pestaña.
+
 ## Versión 68: aviso de versión nueva
 - Cuando se publica una versión, la web y el panel que estén abiertos (también la app instalada que el móvil deja en segundo plano) enseñan «Hay una versión nueva» con el botón «Actualizar». Al volver a la app se comprueba si hay versión nueva.
 

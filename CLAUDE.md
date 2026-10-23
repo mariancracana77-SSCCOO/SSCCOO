@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, público; GitHub Pages desde `main`, carpeta raíz). Desde la v65 se publica con Jekyll (sin `.nojekyll`) solo para que `_config.yml` deje fuera de la web CLAUDE.md, README.md, `herramientas/` y `pruebas/`; los demás archivos no llevan cabecera `---` y salen idénticos. Si se añade algo que no deba verse en la web, añadirlo a `exclude`. Ojo: el repositorio es público, así que en github.com se sigue viendo todo
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **68**
+- Versión actual: **69**
 
 ## Reglas del proyecto (no negociables)
 - **No publicar nada en GitHub sin que la usuaria lo confirme antes** (enseñar lo que cambia y esperar a «publica»).
@@ -83,6 +83,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
   - v64: `errTxt(e)` traduce los errores de Supabase (si es la sesión, el editor guarda el borrador y ofrece «Volver a entrar»). `reducirFoto` (JPEG/PNG/WebP de más de 600 KB → 2000 px, JPEG 85 %, solo si pesa menos) antes de `subirArchivo`; archivos con `cacheControl` de un año. `sinCambiosDeOtro` compara la fila del servidor con `ED.orig` (salvo `NO_CUENTA`) antes de guardar. Borrar (salvo apartados) no pregunta: `avisoDeshacer` con «Deshacer» 8 s, que llama a `recuperar_cambio` con la fila de `historial`.
   - Panel v65: el botón de guardar dice si va a avisar (`textoGuardar`, lo pone `actualizarPrevia`); campo que falta marcado en el propio campo (`marcaFalta`/`quitaFalta`, clase `.falta` y `#<id>-falta`); «Ver en la web» en la cabecera del editor (`#ed-ver-web`, `enLaWeb`); lo guardado se resalta en la lista (`RESALTAR`, `resaltaGuardado`, clase `.recien`). Páginas que se guardan con un botón avisan al salir con cambios: `PENDIENTE` (función que devuelve la pregunta) y `dejarPagina()` en `abrir`, `salir` y `beforeunload`; Textos guarda solo lo cambiado (`label.sin-guardar`) y Ajustes usa `LISTAS_SUCIAS`.
   - Panel v66: Inicio con visitas y estadísticas en `<details id="det-est">` al final (se cargan al abrir, localStorage `ccoo-adm-est`; recuentos `CUENTAS_HTML` dentro) y acceso «Publicar en un apartado» (`abrirHojaApartados`). Atajos de programar (`atajos: true` en el campo, `ATAJOS_HORA`, `[data-atajo]`). Filtros rápidos de las listas (`RAPIDOS`, `pintaRapidos`, `FILTRO_ADM[k].rapido`; con filtro no se reordena). Avisos al guardar: hora de fin < inicio (calendario) y `opcionesSeguras` (encuestas con votos). «Avisar otra vez de este cambio» (`#f-reavisar`, solo tablas de `TABLAS_AVISO`): pone `notificar = true, notificado = false` y llama a `notificar` con `cambio: true`, que titula «Cambio: …». Login: enlaces dentro de `#problemas-entrar` (se abre al fallar la entrada).
+  - v69: «Guía del panel» en el menú (`GUIA_URL` en `admin-base.js`, botón `#b-guia` en el PC y enlace en «Más»). La guía es un artifact HTML (no Claude Doc); al cambiar el panel, actualizarla con capturas hechas con `pruebas/mock-supabase.js`.
   - «Apartados de la web» (`SECCIONES.apartados`) crea apartados. Cada uno genera una sección dinámica `ap<id>` (`seccionApartado`, tabla `publicaciones` filtrada por `apartado_id`) que se coloca tras Actas (`construirPaginas`).
 - `config.js`: cliente Supabase, `VERSION_WEB`, `WEB_URL`, `VAPID_PUBLICA`, ayudas (textoHTML, compartir, ICS, lectura «Aa», `urlSegura`).
 - `render.js`: plantillas HTML de tarjetas. `iconos.js`: iconos SVG. `styles.css`: estilos (al final, bloques «Tablón», portada, modales, filtro de fechas, tema oscuro manual).
@@ -137,4 +138,3 @@ Playwright con Chromium (sin `playwright install`), servidor local `python3 -m h
 - **Revisar los valores de «Calcula»** en el panel (Calculadoras): ahora son los mínimos del Estatuto, no los del convenio de Girona. Los precios de horas extra están vacíos (esa calculadora no sale hasta que se pongan).
 - Importar el historial del canal de Telegram «Tablon anuncios CCOO-Calsina Carre» (exportación JSON de Telegram Desktop) repartiéndolo por la web. Importar con `notificar = false`.
 - Completar en Textos > Aviso legal y Privacidad la entidad de CCOO responsable y su NIF (que lo revise el servicio jurídico de CCOO).
-- Actualizar la guía del panel (Claude Docs) con capturas del diseño nuevo.

@@ -7,6 +7,8 @@ const $ = (id) => document.getElementById(id);
 const aqui = location.origin + location.pathname;
 const msg = (id, t, ok) => { const el = $(id); if (!el) return; el.textContent = t; el.className = "msg " + (ok ? "ok" : "err"); };
 const MAX_MB = 20;
+// Guía del panel (página aparte con capturas): sale en el menú como «Guía del panel»
+const GUIA_URL = "https://claude.ai/artifact/92KXfVBJpw9ri9FzDnnduu";
 // Errores del servidor explicados en español (Supabase los da en inglés técnico). Si no se reconoce, se enseña tal cual.
 function errTxt(e) {
   const m = String((e && (e.message || e.error_description)) || e || "");
