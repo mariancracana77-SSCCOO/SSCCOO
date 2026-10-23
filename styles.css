@@ -980,7 +980,7 @@ body.publica.con-aviso-priv { padding-bottom: calc(84px + var(--alto-aviso, 90px
   transition: opacity .5s ease, visibility .5s;
   animation: bv-seguro .45s 11s forwards; /* por si la web no llega a quitarla */
 }
-.bienvenida::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--asfalto); }
+.bienvenida::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(ellipse 85% 60% at 50% 46%, #26303b 0%, #1a2028 45%, var(--asfalto) 80%); }
 .bienvenida.fuera { opacity: 0; visibility: hidden; pointer-events: none; }
 @keyframes bv-seguro { to { opacity: 0; visibility: hidden; pointer-events: none; } }
 .bv-logo-caja { position: relative; width: min(240px, 62vw); aspect-ratio: 1; }

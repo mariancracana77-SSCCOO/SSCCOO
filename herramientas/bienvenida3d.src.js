@@ -48,8 +48,11 @@ const AZUL = 0x1d5ba8, AZUL_OSC = 0x14407a, GRIS = 0x222a33;
   sol.shadow.bias = -0.0004; sol.shadow.normalBias = 0.02; sol.shadow.radius = 4;
   sol.target.position.set(3.5, 0, 0);
   scene.add(sol, sol.target);
-  const contra = new THREE.DirectionalLight(0x7aa7ff, 0.9);
-  contra.position.set(-6, 4, -7); scene.add(contra);
+  const contra = new THREE.DirectionalLight(0x6aa8ff, 2.2);   // luz de contorno azul (detrás, a la izquierda)
+  contra.position.set(-7, 5, -8); scene.add(contra);
+  const contra2 = new THREE.DirectionalLight(0xff3b4a, 1.6);  // luz de contorno roja de la marca (detrás, a la derecha)
+  contra2.position.set(9, 3, -7); scene.add(contra2);
+  const relleno = new THREE.DirectionalLight(0xbcd2ff, 0.45); relleno.position.set(-4, 2, 9); scene.add(relleno);
 
   // ---------- Materiales ----------
   const pintura = new THREE.MeshPhysicalMaterial({ color: AZUL, roughness: 0.38, metalness: 0.05, clearcoat: 0.8, clearcoatRoughness: 0.18, envMapIntensity: 0.9 });
@@ -195,15 +198,67 @@ const AZUL = 0x1d5ba8, AZUL_OSC = 0x14407a, GRIS = 0x222a33;
   }
   [1.05, 2.58, 5.8].forEach(x => { rueda(x, 1.0); rueda(x, -1.0); });
 
-  // ---------- Suelo y línea discontinua ----------
-  const suelo = new THREE.Mesh(new THREE.PlaneGeometry(80, 30), new THREE.ShadowMaterial({ opacity: 0.5 }));
-  suelo.rotation.x = -Math.PI / 2; suelo.receiveShadow = true; scene.add(suelo);
+  // ---------- Suelo: sombra de contacto, reflejo difuminado del camión y línea discontinua ----------
+  const sombraSuelo = new THREE.Mesh(new THREE.PlaneGeometry(80, 30), new THREE.ShadowMaterial({ opacity: 0.5 }));
+  sombraSuelo.rotation.x = -Math.PI / 2; sombraSuelo.position.y = 0.004; sombraSuelo.receiveShadow = true; scene.add(sombraSuelo);
+  // el reflejo es una copia del camión boca abajo; el suelo, semitransparente y que se desvanece hacia los lados, lo deja ver
+  const espejo = camion.clone(true), espejoG = new THREE.Group(); espejoG.scale.y = -1; espejoG.add(espejo); scene.add(espejoG);
+  const nodosO = [], nodosE = [];
+  camion.traverse(c => nodosO.push(c)); espejo.traverse(c => { nodosE.push(c); c.castShadow = false; c.receiveShadow = false; });
+  // el reflejo se atenúa con la profundidad bajo el suelo (en el plano lateral el suelo se ve de canto y no podría taparlo)
+  const mapaMat = new Map();
+  function matReflejo(m) {
+    if (mapaMat.has(m)) return mapaMat.get(m);
+    const r = m.clone(), opaco = !m.transparent;
+    r.onBeforeCompile = sh => {
+      sh.vertexShader = "varying float vWY;\n" + sh.vertexShader.replace("#include <project_vertex>", "#include <project_vertex>\n vWY = (modelMatrix * vec4(transformed, 1.0)).y;");
+      sh.fragmentShader = "varying float vWY;\n" + sh.fragmentShader.replace("#include <dithering_fragment>",
+        "float fR = 0.34 * pow(clamp(1.0 + vWY / 3.0, 0.0, 1.0), 1.6);\n" + (opaco ? "gl_FragColor.rgb *= fR; gl_FragColor.a = fR;" : "gl_FragColor.a *= fR;") + "\n#include <dithering_fragment>");
+    };
+    r.customProgramCacheKey = () => "reflejo" + (opaco ? "o" : "t");
+    mapaMat.set(m, r); return r;
+  }
+  espejo.traverse(c => { if (c.isMesh) c.material = matReflejo(c.material); });
   const raya = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true });
   const rayas = [];
   const NR = 30, PASO = 3.4;
   for (let i = 0; i < NR; i++) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 0.2), raya.clone());
     m.rotation.x = -Math.PI / 2; m.position.set(0, 0.005, 2.7); scene.add(m); rayas.push(m);
+  }
+
+  // ---------- Ambiente: luces desenfocadas al fondo (bokeh), haces de los faros y polvo al frenar ----------
+  function suaveTex(c0, c1) {
+    const l = document.createElement("canvas"); l.width = l.height = 128; const g = l.getContext("2d"), r = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    r.addColorStop(0, c0); r.addColorStop(0.55, c1); r.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = r; g.fillRect(0, 0, 128, 128);
+    const t = new THREE.CanvasTexture(l); t.colorSpace = THREE.SRGBColorSpace; return t;
+  }
+  const texBokeh = suaveTex("rgba(255,255,255,.85)", "rgba(255,255,255,.35)");
+  const bokehs = [];
+  [[0x9fc4ff, 22, 5.5], [0xffffff, 14, 4], [0xff4455, 12, 5], [0x5d93ff, 14, 7]].forEach(([col, n, tam], k) => {
+    const pos = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) { pos[i * 3] = -30 + Math.random() * 70; pos[i * 3 + 1] = 0.6 + Math.random() * 15; pos[i * 3 + 2] = -42 + Math.random() * 22; }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    const m = new THREE.Points(geo, new THREE.PointsMaterial({ map: texBokeh, color: col, size: tam, sizeAttenuation: true, transparent: true, opacity: 0.3, depthWrite: false, blending: THREE.AdditiveBlending }));
+    scene.add(m); bokehs.push(m);
+  });
+  const texHaz = (() => { const l = document.createElement("canvas"); l.width = 256; l.height = 64; const g = l.getContext("2d"), r = g.createLinearGradient(0, 0, 256, 0);
+    r.addColorStop(0, "rgba(255,244,214,.8)"); r.addColorStop(1, "rgba(255,244,214,0)"); g.fillStyle = r; g.fillRect(0, 0, 256, 64);
+    const v = g.createLinearGradient(0, 0, 0, 64); v.addColorStop(0, "rgba(0,0,0,1)"); v.addColorStop(0.5, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,1)");
+    g.globalCompositeOperation = "destination-out"; g.fillStyle = v; g.fillRect(0, 0, 256, 64); return new THREE.CanvasTexture(l); })();
+  const haces = [];
+  [-0.72, 0.72].forEach(z => {
+    const hz = new THREE.Mesh(new THREE.PlaneGeometry(9, 2.2), new THREE.MeshBasicMaterial({ map: texHaz, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
+    hz.position.set(11.5, 1.0, z); hz.rotation.z = -0.07; camion.add(hz); haces.push(hz);
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: suaveTex("rgba(255,246,220,1)", "rgba(255,240,200,.35)"), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.9 }));
+    glow.position.set(7.05, 1.2, z); glow.scale.set(1.5, 1.5, 1); camion.add(glow); haces.push(glow);
+  });
+  const texPolvo = suaveTex("rgba(190,205,225,.55)", "rgba(150,165,190,.2)");
+  const polvo = [];
+  for (let i = 0; i < 12; i++) {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: texPolvo, transparent: true, depthWrite: false, opacity: 0 }));
+    sp.userData = { x: 0.4 + Math.random() * 3.2, z: (Math.random() < 0.5 ? 1 : -1) * (1.3 + Math.random() * 0.8), t0: 2.1 + i * 0.035 + Math.random() * 0.1 };
+    scene.add(sp); polvo.push(sp);
   }
 
   // ---------- Encuadre: cámara en órbita alrededor del conductor que se aleja (zoom exponencial) hasta quedar de lado,
@@ -250,7 +305,7 @@ const AZUL = 0x1d5ba8, AZUL_OSC = 0x14407a, GRIS = 0x222a33;
     // suspensión y frenazo
     const bote = Math.sin(t * 15) * 0.014 * (1 - suave(2.0, 2.6, t));
     camion.position.y = bote;
-    camion.rotation.z = -Math.sin(Math.PI * suave(2.35, 2.9, t)) * 0.03;
+    camion.rotation.z = -Math.sin(Math.PI * suave(2.35, 2.9, t)) * 0.03 + (t > 2.65 ? Math.exp(-(t - 2.65) * 7) * Math.sin((t - 2.65) * 20) * 0.012 : 0);
     // conductor: mira al frente y se gira hacia la cámara
     tmp.position.copy(cabeza.getWorldPosition(new THREE.Vector3())); tmp.lookAt(camara.position); qLook.copy(tmp.quaternion);
     const mira = suave(0.45, 1.05, t);
@@ -265,6 +320,14 @@ const AZUL = 0x1d5ba8, AZUL_OSC = 0x14407a, GRIS = 0x222a33;
     brazoSup.position.z = 0.2 - suave(1.9, 2.15, t) * 0.45; brazoSup.visible = t < 2.2;
     const cierre = suave(1.95, 2.3, t);
     vent.position.y = -(1 - cierre) * 0.62 + 0; vent.visible = true;
+    // ambiente
+    const fa = 1 - suave(2.2, 2.8, t);
+    haces.forEach(h => { h.visible = fa > 0.01; if (h.material.opacity !== undefined) h.material.opacity = (h.isSprite ? 0.9 : 0.55) * fa * (0.85 + 0.15 * Math.sin(t * 5)); });
+    bokehs.forEach((b, i) => { b.position.x = -((camino * 0.012 * (1 + i * 0.2)) % 70) + 0; b.material.opacity = 0.3 * (1 - suave(2.3, 3.0, t)); });
+    polvo.forEach(sp => { const u = (t - sp.userData.t0) / 0.9; if (u <= 0 || u >= 1) { sp.material.opacity = 0; return; }
+      sp.position.set(sp.userData.x - u * 2.2, 0.2 + u * 0.9, sp.userData.z); const e = 0.5 + u * 2.2; sp.scale.set(e, e, 1); sp.material.opacity = 0.32 * (1 - u) * Math.min(1, u * 6); });
+    // el reflejo copia al camión (sube y baja, ruedas, brazo...) 
+    for (let i = 0; i < nodosO.length; i++) { const o = nodosO[i], e = nodosE[i]; e.position.copy(o.position); e.quaternion.copy(o.quaternion); e.scale.copy(o.scale); e.visible = o.visible; if (o.material && o.material.opacity !== undefined && e.material !== o.material) e.material.opacity = o.material.opacity; }
     renderer.render(scene, camara);
   }
 
