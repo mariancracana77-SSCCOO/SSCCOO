@@ -3,6 +3,20 @@ const $ = (id) => document.getElementById(id);
 const aqui = location.origin + location.pathname;
 const msg = (id, t, ok) => { const el = $(id); if (!el) return; el.textContent = t; el.className = "msg " + (ok ? "ok" : "err"); };
 const MAX_MB = 20;
+// Errores del servidor explicados en español (Supabase los da en inglés técnico). Si no se reconoce, se enseña tal cual.
+function errTxt(e) {
+  const m = String((e && (e.message || e.error_description)) || e || "");
+  if (/jwt|refresh token|not authenticated|session (missing|not found|expired)|auth session/i.test(m)) return "Se ha cerrado la sesión del panel. Vuelve a entrar: lo que estabas escribiendo queda guardado como borrador.";
+  if (/failed to fetch|networkerror|network request failed|load failed|fetch failed/i.test(m)) return "No hay conexión con el servidor. Comprueba internet y vuelve a probar.";
+  if (/row-level security|permission denied|not authorized|unauthorized|42501/i.test(m)) return "No tienes permiso para hacer esto. Sal del panel y vuelve a entrar (con el código de dos pasos si lo tienes activado).";
+  if (/duplicate key|already exists|23505/i.test(m)) return "Ya existe uno igual.";
+  if (/payload too large|exceeded the maximum|entity too large|413/i.test(m)) return "El archivo es demasiado grande.";
+  if (/timeout|timed out|57014|statement canceled/i.test(m)) return "El servidor ha tardado demasiado. Vuelve a probar en un momento.";
+  if (/not-null|23502/i.test(m)) return "Falta rellenar un dato obligatorio.";
+  if (/check constraint|invalid input|23514|22P02/i.test(m)) return "Algún dato no tiene el formato correcto. Revisa fechas, horas y enlaces.";
+  if (/rate limit|too many|429/i.test(m)) return "Demasiados intentos seguidos. Espera un par de minutos.";
+  return m || "Error desconocido.";
+}
 $("ver-web").innerHTML = icono("ver", "p");
 $("ed-cerrar").innerHTML = icono("cerrar", "p");
 $("fab").innerHTML = icono("mas") + "<span>Nuevo</span>";
@@ -364,7 +378,7 @@ $("b-olvido").onclick = async () => {
   const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: aqui });
   if (error) return msg("m-login", /rate|429|too many/i.test(error.message + error.status)
     ? "Se han pedido demasiados emails seguidos y hay que esperar una hora. Si ya te llegó alguno, abre el último que llegó (los anteriores dejan de valer)."
-    : "No se ha podido enviar: " + error.message);
+    : "No se ha podido enviar: " + errTxt(error));
   try { localStorage.setItem("ccoo-olvido", String(Date.now())); } catch (_) {}
   msg("m-login", "", true);
   verOlvido(email, `Email enviado. Si no llega en 5 minutos, mira en «Spam» o «Promociones».`);
@@ -408,7 +422,7 @@ $("b-resc-guardar").onclick = async () => {
     if (error) return msg("m-rescate", "La contraseña se ha cambiado, pero no ha podido entrar: vuelve atrás y entra con ella.");
     aviso(r.quedan ? `Contraseña cambiada. Te quedan ${r.quedan} códigos de rescate.` : "Contraseña cambiada. Ya no te quedan códigos: genera otros en Ajustes.");
     $("email").value = email;
-  } catch (e) { msg("m-rescate", e.message); }
+  } catch (e) { msg("m-rescate", errTxt(e)); }
   finally { btn.disabled = false; }
 };
 $("resc-repite").onkeydown = (e) => { if (e.key === "Enter") $("b-resc-guardar").click(); };
@@ -665,7 +679,7 @@ function hacerOrdenable(cont, k) {
     if (!cambios.length) return;
     const r = await Promise.all(cambios), e = r.find(x => x.error);
     datos[k].sort((a, b) => a.orden - b.orden);
-    aviso(e ? "No se ha podido guardar el orden: " + e.error.message : "Orden guardado. Ya se ve así en la web.", !!e);
+    aviso(e ? "No se ha podido guardar el orden: " + errTxt(e.error) : "Orden guardado. Ya se ve así en la web.", !!e);
   };
   filas().forEach(f => {
     const asa = f.querySelector(".asa");
@@ -756,7 +770,7 @@ async function pintaSeccion(k) {
   if ($("b-camiones")) $("b-camiones").onclick = () => abrir("camiones");
   if ($("b-archivos")) $("b-archivos").onclick = () => abrir("archivos");
   enlazarVistaCal();
-  try { await Promise.all([cargarDatos(k), TABLAS_LEIDAS.includes(s.tabla) ? cargarLecturas() : null, k === "apartados" ? contarPublicaciones() : null, k === "encuestas" ? cargarVotos() : null]); } catch (e) { $("lista").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
+  try { await Promise.all([cargarDatos(k), TABLAS_LEIDAS.includes(s.tabla) ? cargarLecturas() : null, k === "apartados" ? contarPublicaciones() : null, k === "encuestas" ? cargarVotos() : null]); } catch (e) { $("lista").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(errTxt(e))}</p>`; return; }
   const ff = FILTRO_ADM[k] ||= {};
   const pinta = () => {
     if (FECHA_DE[k]) pintaFechasAdm(datos[k], k, ff, pinta);
@@ -775,14 +789,28 @@ async function pintaSeccion(k) {
 }
 
 // ---------- Archivos ----------
+// Las fotos grandes del móvil (3–8 MB) se reducen antes de subirlas: 2000 px por el lado largo, JPEG al 85 %.
+// Así los trabajadores gastan menos datos. Si el navegador no sabe abrirla (p. ej. HEIC) o no gana nada, se sube tal cual.
+async function reducirFoto(file) {
+  if (!/^image\/(jpeg|png|webp)$/.test(mimeDe(file)) || file.size < 600 * 1024) return file;
+  try {
+    const img = await createImageBitmap(file), r = Math.min(1, 2000 / Math.max(img.width, img.height));
+    const cv = document.createElement("canvas"); cv.width = Math.round(img.width * r); cv.height = Math.round(img.height * r);
+    const cx = cv.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(img, 0, 0, cv.width, cv.height);
+    const blob = await new Promise(ok => cv.toBlob(ok, "image/jpeg", 0.85));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+  } catch (_) { return file; }
+}
 async function subirArchivo(file) {
+  file = await reducirFoto(file);
   const tipo = mimeDe(file);
   if (!tipo) throw new Error(`«${file.name}» no es de un tipo permitido.`);
   if (file.size > MAX_MB * 1048576) throw new Error(`«${file.name}» pesa más de ${MAX_MB} MB.`);
   const limpio = file.name.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w.-]+/g, "_").slice(-80);
   const ruta = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}-${limpio}`;
-  const { error } = await sb.storage.from("documentos").upload(ruta, file, { contentType: tipo, cacheControl: "3600" });
-  if (error) throw new Error(`No se ha podido subir «${file.name}»: ${error.message}`);
+  const { error } = await sb.storage.from("documentos").upload(ruta, file, { contentType: tipo, cacheControl: "31536000" }); // nombre único: no cambia nunca, el móvil lo guarda un año
+  if (error) throw new Error(`No se ha podido subir «${file.name}»: ${errTxt(error)}`);
   return { nombre: file.name, url: sb.storage.from("documentos").getPublicUrl(ruta).data.publicUrl, tipo, tamano: file.size };
 }
 async function borrarArchivos(urls) {
@@ -1061,6 +1089,7 @@ $("ed-guardar").onclick = async () => {
   btn.disabled = true;
   const subidos = [];
   try {
+    if (ED.orig?.id != null && !(await sinCambiosDeOtro(s))) { btn.disabled = false; return msg("ed-msg", ""); }
     for (const [i, p] of ED.pendientes.entries()) {
       msg("ed-msg", `Subiendo archivo ${i + 1} de ${ED.pendientes.length}…`, true);
       subidos.push(await subirArchivo(p.file));
@@ -1094,9 +1123,24 @@ $("ed-guardar").onclick = async () => {
     trasPublicar(k, guardado, res);
   } catch (e) {
     await borrarArchivos(subidos.map(a => a.url)); // no dejar archivos sueltos si algo falla
-    msg("ed-msg", e.message || "No se ha podido guardar."); btn.disabled = false;
+    msg("ed-msg", errTxt(e)); btn.disabled = false;
+    if (/sesión/.test(errTxt(e))) { // sesión caducada: se guarda el borrador y se ofrece volver a entrar sin perderlo
+      guardarBorrador();
+      const b = document.createElement("button"); b.type = "button"; b.className = "btn sec"; b.textContent = "Volver a entrar";
+      b.onclick = () => { ED.sucio = false; location.reload(); };
+      $("ed-msg").append(" ", b);
+    }
   }
 };
+// Con dos administradores (o el panel abierto en dos sitios), comprueba que nadie ha cambiado esto mientras se editaba
+const NO_CUENTA = ["notificado", "actualizado", "ultima_publicacion", "orden"];
+async function sinCambiosDeOtro(s) {
+  const { data: ahora, error } = await sb.from(s.tabla).select("*").eq("id", ED.orig.id).maybeSingle();
+  if (error) return true; // si no se puede comprobar, se guarda como siempre
+  if (!ahora) { msg("ed-msg", "Mientras lo editabas, otra persona lo ha borrado. Puedes recuperarlo en «Historial»."); return false; }
+  const otro = Object.keys(ahora).some(k => !NO_CUENTA.includes(k) && k in ED.orig && JSON.stringify(ahora[k]) !== JSON.stringify(ED.orig[k]));
+  return !otro || confirm("Mientras lo editabas, otra persona (o el panel abierto en otro sitio) ha cambiado esto.\n\nSi guardas, tus cambios sustituyen a los suyos (los suyos quedan en «Historial»). ¿Guardar los tuyos?");
+}
 $("ed-borrar").onclick = async () => {
   const s = SECCIONES[ED.k], x = ED.orig;
   if (ED.k === "apartados") {
@@ -1106,14 +1150,30 @@ $("ed-borrar").onclick = async () => {
       if ((r || "").trim().toUpperCase() !== "BORRAR") return aviso("No se ha borrado nada.");
     } else if (!confirm(`¿Borrar el apartado «${x.titulo}»? Está vacío. Desaparecerá de la web.`)) return;
   }
-  if (ED.k !== "apartados" && !confirm(`¿Borrar «${(s.tituloDe ? s.tituloDe(x) : x.titulo)}»? Desaparecerá de la web. Si te equivocas, puedes recuperarlo en «Historial».`)) return;
+  // Lo demás se borra sin preguntar: sale «Deshacer» unos segundos (y siempre se puede recuperar en «Historial»)
   const { error } = await sb.from(s.tabla).delete().eq("id", x.id);
-  if (error) return msg("ed-msg", "No se ha podido borrar: " + error.message);
+  if (error) return msg("ed-msg", "No se ha podido borrar: " + errTxt(error));
   // Los archivos se conservan para poder recuperarlo desde el Historial (se limpian en Ajustes > Archivos sin usar).
-  ED.sucio = false; const k = ED.k; await cerrarEditor();
+  ED.sucio = false; const k = ED.k, volver = ["resumen", "calendario"].includes(actual) ? actual : (s.volver || k); await cerrarEditor();
   if (k === "apartados") { await cargarApartados(); pintaNav(); }
-  aviso("Borrado."); abrir(["resumen", "calendario"].includes(actual) ? actual : (s.volver || k));
+  abrir(volver);
+  const { data: h } = await sb.from("historial").select("id").eq("tabla", s.tabla).eq("clave", String(x.id)).eq("accion", "borrar").order("cuando", { ascending: false }).limit(1).maybeSingle();
+  if (!h) return aviso("Borrado. Si te has equivocado, recupéralo en «Historial».");
+  avisoDeshacer(`Borrado «${s.tituloDe ? s.tituloDe(x) : x.titulo}».`, async () => {
+    const { error: e } = await sb.rpc("recuperar_cambio", { p_id: h.id });
+    if (e) return aviso(errTxt(e), true);
+    if (k === "apartados") { await cargarApartados(); pintaNav(); }
+    aviso("Recuperado. Ya vuelve a estar como antes."); abrir(volver);
+  });
 };
+// Aviso abajo con un botón «Deshacer» (8 s)
+function avisoDeshacer(texto, deshacer) {
+  const t = $("toast");
+  t.innerHTML = icono("check", "p") + esc(texto) + ` <button type="button" class="toast-deshacer">Deshacer</button>`;
+  t.style.background = "";
+  t.querySelector(".toast-deshacer").onclick = () => { t.classList.remove("ver"); deshacer(); };
+  t.classList.add("ver"); clearTimeout(aviso.t); aviso.t = setTimeout(() => t.classList.remove("ver"), 8000);
+}
 
 // ---------- Asistente de actas (a partir de fotos y archivos) ----------
 let IA_ARCHIVOS = [];
@@ -1221,7 +1281,7 @@ async function generarActa() {
     const falta = [!a.fecha && "pon la fecha de la reunión", a.avisos].filter(Boolean).join(". ");
     msg("m-ia", "Hecho. Revisa el acta abajo" + (falta ? " (ojo: " + falta + ")" : "") + " y pulsa «Publicar».", true);
     $("f-titulo").scrollIntoView({ behavior: "smooth", block: "center" });
-  } catch (e) { msg("m-ia", e.message); }
+  } catch (e) { msg("m-ia", errTxt(e)); }
   btn.disabled = false;
 }
 
@@ -1337,7 +1397,7 @@ async function pintaHistorial() {
   if (FILTRO_HIST.tabla) q = q.eq("tabla", FILTRO_HIST.tabla);
   if (FILTRO_HIST.accion) q = q.eq("accion", FILTRO_HIST.accion);
   const { data, error } = await q;
-  if (error) { $("lista-hist").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(error.message)}</p>`; return; }
+  if (error) { $("lista-hist").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(errTxt(error))}</p>`; return; }
   const l = data.slice(0, FILTRO_HIST.max);
   $("lista-hist").innerHTML = l.length ? l.map(h => {
     const reg = h.despues || h.antes, quien = h.email || "La web (automático)";
@@ -1361,7 +1421,7 @@ async function pintaHistorial() {
     if (!confirm(pregunta)) return;
     b.disabled = true;
     const { data: r, error: e } = await sb.rpc("recuperar_cambio", { p_id: h.id });
-    if (e) { b.disabled = false; return aviso(e.message || "No se ha podido.", true); }
+    if (e) { b.disabled = false; return aviso(errTxt(e), true); }
     aviso(r || "Hecho.");
     if (["apartados"].includes(h.tabla)) { await cargarApartados(); }
     pintaHistorial();
@@ -1394,7 +1454,7 @@ async function limpiarArchivos() {
     const { error } = await sb.storage.from("documentos").remove(sobran.map(o => o.name));
     if (error) throw error;
     msg("m-limpiar", `Hecho: se han quitado ${sobran.length} archivo(s).`, true);
-  } catch (e) { msg("m-limpiar", "No se ha podido: " + (e.message || e)); }
+  } catch (e) { msg("m-limpiar", "No se ha podido: " + errTxt(e)); }
   finally { b.disabled = false; }
 }
 
@@ -1446,7 +1506,7 @@ async function empiezaOrtografia(secs, soloNuevo) {
         if (typeof t === "string" && /\p{L}{3}/u.test(t) && t.length <= 15000 && !revisado.has(huellaTxt(t))) piezas.push({ k, id: x.id, campo: c.k, etiqueta: c.l, texto: t, x });
       }
     }
-  } catch (e) { b.disabled = false; return msg("m-orto", "No se han podido cargar los textos: " + (e.message || e)); }
+  } catch (e) { b.disabled = false; return msg("m-orto", "No se han podido cargar los textos: " + errTxt(e)); }
   if (!piezas.length) { b.disabled = false; $("b-orto-parar").classList.add("oculto"); $("orto-barra").classList.add("oculto"); return msg("m-orto", soloNuevo ? "No hay nada nuevo que revisar. Para repasarlo todo otra vez, desmarca «Solo lo que no he revisado antes»." : "No hay textos que revisar.", true); }
   // Tandas de hasta 10 campos y 6000 letras (el corrector admite 12 y 20000)
   const tandas = []; let t = [], n = 0;
@@ -1503,7 +1563,7 @@ async function aplicaOrto(p, enLote) {
   if (e1 || !ahora) { caja.innerHTML = `<span class="msg err">No se ha podido comprobar. Prueba otra vez.</span>`; return; }
   if (ahora[p.campo] !== p.texto) { p.hecho = true; caja.innerHTML = `<span class="msg err">Este texto ha cambiado desde que se revisó: no se ha tocado.</span>`; return; }
   const { error } = await sb.from(s.tabla).update({ [p.campo]: p.nuevo }).eq("id", p.id);
-  if (error) { caja.innerHTML = `<span class="msg err">No se ha podido guardar: ${esc(error.message)}</span>`; return; }
+  if (error) { caja.innerHTML = `<span class="msg err">No se ha podido guardar: ${esc(errTxt(error))}</span>`; return; }
   p.hecho = true; marcaRevisado(p.nuevo); p.el.classList.add("hecho");
   const x = datos[p.k]?.find(y => y.id === p.id); if (x) x[p.campo] = p.nuevo;
   caja.innerHTML = `<span class="msg ok">${icono("check", "p")}Corregido.</span>`;
@@ -1534,7 +1594,7 @@ async function pintaTodosArchivos() {
     de("avisos", "Avisos", av.data, x => x.fecha); de("actas", "Actas", ac.data, x => x.fecha); de("convenio", "Convenio", cv.data, x => x.actualizado);
     (dc.data || []).forEach(x => x.url && todos.push({ nombre: x.nombre_archivo || x.titulo, url: x.url, tipo: x.tipo_archivo, tamano: x.tamano, k: "documentos", sec: "Documentos", id: x.id, titulo: x.titulo, fecha: x.fecha }));
     (pb.data || []).forEach(x => { const a = APARTADOS.find(a => a.id === x.apartado_id); if (a) de("ap" + a.id, a.titulo, [x], y => y.fecha); });
-  } catch (e) { $("lista-arch").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message || e)}</p>`; return; }
+  } catch (e) { $("lista-arch").innerHTML = `<p class="msg err">No se ha podido cargar: ${escerrTxt(e)}</p>`; return; }
   todos.sort((a, b) => String(b.fecha || "").localeCompare(String(a.fecha || "")));
   const clase = (a) => esImagen(a) ? "foto" : /pdf/i.test(a.tipo || "") || /\.pdf$/i.test(a.nombre || "") ? "pdf" : "otro";
   const sinAcentos = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -1551,7 +1611,7 @@ async function pintaTodosArchivos() {
     }).join("") : `<div class="panel vacio">${icono("carpeta")}${q || FILTRO_ARCH !== "todo" ? "Nada coincide con la búsqueda." : "Todavía no hay archivos subidos."}</div>`;
     $("lista-arch").querySelectorAll("[data-donde]").forEach(b => b.onclick = async () => {
       const a = l[+b.dataset.donde];
-      try { if (!datos[a.k]?.some(x => x.id === a.id)) await cargarDatos(a.k); } catch (e) { return aviso("No se ha podido abrir: " + e.message, true); }
+      try { if (!datos[a.k]?.some(x => x.id === a.id)) await cargarDatos(a.k); } catch (e) { return aviso("No se ha podido abrir: " + errTxt(e), true); }
       const x = datos[a.k].find(x => x.id === a.id);
       x ? abrirEditor(a.k, x) : aviso("No se ha encontrado. Puede que se haya borrado.", true);
     });
@@ -1584,7 +1644,7 @@ async function pintaCalculadoras() {
     if (isNaN(dias) || dias < 0 || dias > 60) return msg("ca-msg", "Pon un número de días entre 0 y 60.");
     filas[0].valor = String(dias);
     const { error } = await sb.from("calc_ajustes").upsert(filas);
-    msg("ca-msg", error ? "No se ha podido guardar: " + error.message : "Guardado. Ya se usa en la web.", !error);
+    msg("ca-msg", error ? "No se ha podido guardar: " + errTxt(error) : "Guardado. Ya se usa en la web.", !error);
   };
   $("lista-permisos").innerHTML = datos.permisos.length ? datos.permisos.map(x => filaOrden("permisos", x)).join("") : `<div class="panel vacio">${icono("convenio")}Todavía no hay permisos.</div>`;
   $("lista-categorias").innerHTML = datos.categorias.length ? datos.categorias.map(x => filaOrden("categorias", x)).join("") : `<div class="panel vacio">${icono("reloj")}Todavía no hay precios. Pulsa «Añadir categoría».</div>`;
@@ -1606,10 +1666,10 @@ async function pintaCamiones() {
   try {
     const [pg] = await Promise.all([sb.from("paginas").select("contenido").eq("slug", "restricciones_revisado").maybeSingle(), cargarDatos("restricciones")]);
     $("rv-fecha").value = /^\d{4}-\d{2}-\d{2}$/.test(pg.data?.contenido || "") ? pg.data.contenido : "";
-  } catch (e) { $("lista-restricciones").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
+  } catch (e) { $("lista-restricciones").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(errTxt(e))}</p>`; return; }
   $("rv-guardar").onclick = async () => {
     const { error } = await sb.from("paginas").upsert({ slug: "restricciones_revisado", contenido: $("rv-fecha").value, actualizado: new Date().toISOString() });
-    msg("rv-msg", error ? "No se ha podido guardar: " + error.message : "Guardado. Ya se ve en la web.", !error);
+    msg("rv-msg", error ? "No se ha podido guardar: " + errTxt(error) : "Guardado. Ya se ve en la web.", !error);
   };
   const l = datos.restricciones;
   $("lista-restricciones").innerHTML = l.length ? l.map(x => filaOrden("restricciones", x)).join("") : `<div class="panel vacio">${icono("lugar")}No hay ningún país. Pulsa «Añadir país». Sin países, el bloque no sale en la web.</div>`;
@@ -1629,7 +1689,7 @@ async function pintaBuzon() {
     <div class="cambio-vista" role="tablist" id="vistas-buzon"></div>
     <div class="lista-adm" id="lista-buzon"><p class="fecha-txt">Cargando…</p></div>`;
   const { data, error } = await sb.from("buzon").select("*").order("dia", { ascending: false }).order("id", { ascending: false }).limit(500);
-  if (error) { $("lista-buzon").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(error.message)}</p>`; return; }
+  if (error) { $("lista-buzon").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(errTxt(error))}</p>`; return; }
   const grupos = { nuevos: data.filter(m => !m.leido && !m.archivado), leidos: data.filter(m => m.leido && !m.archivado), archivo: data.filter(m => m.archivado) };
   BUZON_SIN_LEER = grupos.nuevos.length; pintaNav();
   const NOM = { nuevos: "Sin leer", leidos: "Leídos", archivo: "Archivados" };
@@ -1656,7 +1716,7 @@ async function pintaBuzon() {
     if (acc === "leido") r = await sb.from("buzon").update({ leido: !m.leido }).eq("id", id);
     if (acc === "archivar") r = await sb.from("buzon").update({ archivado: !m.archivado, leido: true }).eq("id", id);
     if (acc === "borrar") { if (!confirm("¿Borrar este mensaje del buzón? No se puede deshacer.")) return; r = await sb.from("buzon").delete().eq("id", id); }
-    if (r?.error) return aviso("No se ha podido: " + r.error.message, true);
+    if (r?.error) return aviso("No se ha podido: " + errTxt(r.error), true);
     pintaBuzon();
   });
 }
@@ -1687,7 +1747,7 @@ async function pintaTextos() {
   $("b-textos").onclick = async () => {
     const filas = TEXTOS.map(t => ({ slug: t.slug, contenido: $("t-" + t.slug).value, actualizado: new Date().toISOString() }));
     const { error } = await sb.from("paginas").upsert(filas);
-    error ? msg("m-textos", "No se ha podido guardar: " + error.message) : aviso("Textos guardados. Ya se ven en la web.");
+    error ? msg("m-textos", "No se ha podido guardar: " + errTxt(error)) : aviso("Textos guardados. Ya se ven en la web.");
   };
   $("t-ir-camiones").onclick = (e) => { e.preventDefault(); abrir("camiones"); };
 }
@@ -1726,7 +1786,7 @@ async function pinta2p() {
     // Si quedó un intento a medias, se quita antes de empezar otro
     for (const f of (data.all || []).filter(f => f.factor_type === "totp" && f.status !== "verified")) await sb.auth.mfa.unenroll({ factorId: f.id });
     const { data: e, error } = await sb.auth.mfa.enroll({ factorType: "totp", issuer: "CCOO Calsina", friendlyName: "Móvil " + Date.now() });
-    if (error) return msg("m-2p", "No se ha podido empezar: " + error.message);
+    if (error) return msg("m-2p", "No se ha podido empezar: " + errTxt(error));
     msg("m-2p", "", true);
     z.innerHTML = `<ol class="pasos-2p">
         <li>Instala en el móvil la app gratuita <b>Google Authenticator</b> (en Play Store o App Store).</li>
@@ -1908,7 +1968,7 @@ async function guardarLista(k) {
       }
     }
     await pintaAjustes(); aviso("Guardado. Ya se ve en la web.");
-  } catch (e) { msg("m-" + k, "No se ha podido guardar: " + e.message); }
+  } catch (e) { msg("m-" + k, "No se ha podido guardar: " + errTxt(e)); }
 }
 // Cambiar la contraseña sin depender del email
 function prepararClave() {
@@ -1945,7 +2005,7 @@ function prepararRescate() {
         navigator.clipboard?.writeText(t).then(() => aviso("Copiados.")).catch(() => aviso("No se han podido copiar: apúntalos a mano.", true));
       };
       msg("m-resc", ""); estado();
-    } catch (e) { msg("m-resc", e.message); }
+    } catch (e) { msg("m-resc", errTxt(e)); }
     finally { b.disabled = false; }
   };
 }
@@ -1967,13 +2027,13 @@ function modalClaveOtro(email) {
     if (p !== v.querySelector("#clv-repite").value) return msg("m-clv", "Las dos contraseñas no coinciden.");
     msg("m-clv", "Guardando…", true);
     try { await llamaCuenta({ accion: "poner_clave", email, clave: p }); cerrar(); aviso("Contraseña cambiada. Ya puede entrar con ella."); }
-    catch (e) { msg("m-clv", e.message); }
+    catch (e) { msg("m-clv", errTxt(e)); }
   };
   document.body.appendChild(v); v.querySelector("#clv-nueva").focus();
 }
 async function cargarAdmins() {
   const { data, error } = await sb.from("admins").select("email").order("email");
-  if (error) { $("lista-admins").innerHTML = `<p class="msg err">${esc(error.message)}</p>`; return; }
+  if (error) { $("lista-admins").innerHTML = `<p class="msg err">${esc(errTxt(error))}</p>`; return; }
   const yo = (window.MI_EMAIL || "").toLowerCase();
   $("lista-admins").innerHTML = data.map(a => `<div class="panel item"><div class="txt"><b>${esc(a.email)}</b>${a.email.toLowerCase() === yo ? '<span class="etq">Tú</span>' : ""}</div>
       ${a.email.toLowerCase() === yo ? "" : `<button class="btn sec peq" data-clave="${esc(a.email)}">${icono("editar", "p")}Poner contraseña nueva</button><button class="btn peligro peq" data-email="${esc(a.email)}" aria-label="Quitar permiso">${icono("borrar", "p")}</button>`}</div>`).join("");
@@ -1981,7 +2041,7 @@ async function cargarAdmins() {
   $("lista-admins").querySelectorAll("[data-email]").forEach(b => b.onclick = async () => {
     if (!confirm(`¿Quitar el permiso de publicar a ${b.dataset.email}?`)) return;
     const { error } = await sb.from("admins").delete().eq("email", b.dataset.email);
-    error ? msg("m-admins", error.message) : (aviso("Permiso quitado."), cargarAdmins());
+    error ? msg("m-admins", errTxt(error)) : (aviso("Permiso quitado."), cargarAdmins());
   });
   pinta2p();
   $("b-admin").onclick = async () => {
@@ -2076,7 +2136,7 @@ async function cargarCanales() {
     const v = $("wa-enlace").value.trim();
     if (v && !/^https:\/\/(chat\.)?whatsapp\.com\//.test(v)) return msg("m-wa", "El enlace debe empezar por https://whatsapp.com/channel/ o https://chat.whatsapp.com/");
     const { error } = await sb.from("paginas").upsert({ slug: "whatsapp", contenido: v, actualizado: new Date().toISOString() });
-    error ? msg("m-wa", error.message) : (msg("m-wa", ""), aviso(v ? "Enlace guardado. Ya sale en la web." : "Enlace quitado."));
+    error ? msg("m-wa", errTxt(error)) : (msg("m-wa", ""), aviso(v ? "Enlace guardado. Ya sale en la web." : "Enlace quitado."));
   };
 }
 
@@ -2130,7 +2190,7 @@ async function prepararCopiaYArchivo() {
   $("meses-archivo").value = p.archivo_meses?.contenido ?? "3";
   $("meses-archivo").onchange = async (e) => {
     const { error } = await sb.from("paginas").upsert({ slug: "archivo_meses", contenido: e.target.value, actualizado: new Date().toISOString() });
-    error ? msg("m-archivo", error.message) : aviso("Guardado. Ya se aplica en la web.");
+    error ? msg("m-archivo", errTxt(error)) : aviso("Guardado. Ya se aplica en la web.");
   };
   $("ultima-copia").innerHTML = p.ultima_copia?.contenido ? `Última copia: <b>${haceTxt(p.ultima_copia.contenido)}</b>.` : "<b>Todavía no se ha hecho ninguna copia.</b>";
   $("b-copia-todo").onclick = () => hacerCopia(true);
@@ -2172,7 +2232,7 @@ async function hacerCopia(conArchivos) {
     await sb.from("paginas").upsert({ slug: "ultima_copia", contenido: new Date().toISOString(), actualizado: new Date().toISOString() });
     msg("m-copia", `Copia descargada (${tamanoTxt(blob.size)}). Guárdala en un sitio seguro.`, true);
     $("ultima-copia").innerHTML = "Última copia: <b>ahora mismo</b>.";
-  } catch (e) { msg("m-copia", "No se ha podido hacer la copia: " + (e.message || e)); }
+  } catch (e) { msg("m-copia", "No se ha podido hacer la copia: " + errTxt(e)); }
   b1.disabled = b2.disabled = false;
 }
 
@@ -2241,7 +2301,7 @@ async function pintaCalAdm() {
   $("cala-hoy").onclick = () => { VISTA_CAL.mes = new Date(); VISTA_CAL.dia = hoyISO(); dibujaCalAdm(); };
   $("cala-ir").onchange = (e) => { if (!e.target.value) return; const [y, m] = e.target.value.split("-"); VISTA_CAL.mes = new Date(+y, +m - 1, 1); VISTA_CAL.dia = `${y}-${m}-01`; dibujaCalAdm(); };
   document.querySelector(".cal-adm .cal-mes-btn").onclick = (e) => { if (e.target.id !== "cala-ir") { const i = $("cala-ir"); i.value = isoLocal(VISTA_CAL.mes).slice(0, 7); try { i.showPicker(); } catch (_) { i.focus(); } } };
-  try { await Promise.all(["calendario", "avisos", "actas"].map(cargarDatos)); } catch (e) { $("cala-dias").innerHTML = `<p class="msg err">${esc(e.message)}</p>`; return; }
+  try { await Promise.all(["calendario", "avisos", "actas"].map(cargarDatos)); } catch (e) { $("cala-dias").innerHTML = `<p class="msg err">${esc(errTxt(e))}</p>`; return; }
   dibujaCalAdm();
 }
 // Todo lo que pasa en un día: fechas del calendario, avisos programados y actas

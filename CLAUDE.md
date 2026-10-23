@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, GitHub Pages, con `.nojekyll`)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **63**
+- Versión actual: **64**
 
 ## Reglas del proyecto (no negociables)
 - **No publicar nada en GitHub sin que la usuaria lo confirme antes** (enseñar lo que cambia y esperar a «publica»).
@@ -58,6 +58,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
   - «¿Dónde está…?» (v63, `sitiosWeb`, `pintaDonde`, `#donde-esta` en Dudas): todas las secciones y subapartados con su camino y botón para ir, más cosas que no son pestañas (delegados, buzón `#buzon`, avisos, restricciones, letra, buscar, instalar). `quitaDonde` quita lo que sobra de una pregunta («¿dónde está el…?», «cómo cambio la…», `PALABRAS_VACIAS`); lo usan Dudas y el buscador, que también enseña estos sitios. El difuminado de «Leer más» solo se pinta con `data-largo="recortado"`.
   - Búsqueda que perdona faltas (`coincide`, `fonetico` en `config.js`), en la web y en el panel.
   - Colores por tipo (v52/v55): usan `--tc` (color del tipo puesto en Ajustes) la etiqueta `.etq.tipo`, los puntos del calendario (`.dia .punto`), la etiqueta `.t-tipo` de «Próximas fechas» (v59) y, en el panel, `.sel-color` y `.ev-mini`; todo lo demás sigue en rojo. Filtro por tipo del calendario: `estado.tipoCal` (`[data-tipo-cal]`).
+  - v64: `cargar()` guarda `cargar.ultima`; al volver a la web (`visibilitychange`) solo recarga si pasó más de 1 min. En tiempo real, `soloInterno` ignora los UPDATE que solo cambian `SIN_EFECTO` (notificado, notificar, actualizado, ultima_publicacion) comparando con `D` (`LISTA_DE`). Si falla una consulta suelta, se usa la de `ccoo-copia` y la copia no se renueva. Bienvenida corta (`.bv-corta`, `BV_DURA` 1100 ms) si ya se vio ese día (localStorage `ccoo-bienvenida`).
   - Festivos: filas normales de `eventos` con `tipo = "Festivo"` (00:00–23:59). `esFestivo()` los saca de «Lo último», del recuento de novedades y del contador de la pestaña. Al cargarlos en bloque, `notificar = false` y `notificado = true` para no mandar avisos.
 - `admin.html` + `admin.js` + `admin.css`: panel (Resumen con visitas, Calendario mensual, secciones, Textos, Ajustes: canales Telegram/WhatsApp, copia ZIP, archivo, administradores, listas; asistente de actas con Gemini a partir de fotos/archivos).
   - Las secciones se definen en el objeto `SECCIONES`.
@@ -79,9 +80,11 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
   - Editor (v54): textareas `.crece` (`creceTexto`), botones de formato `data-fmt` (negrita/lista) y ayuda de formato en `<details class="formato-mas">`.
   - Corrector de ortografía (`revisarOrtografia`, `difHTML`): al pulsar Guardar, los campos de texto que han cambiado (salvo `NO_CORREGIR`) van a la edge function `corregir`; si propone cambios, modal con «Corregir y guardar / Guardar sin corregir / Volver a editar». Si falla o tarda más de 15 s, se guarda sin más. Textareas e inputs de texto con `spellcheck`.
   - Revisar la ortografía de todo (v53, página `ortografia`, `pintaOrtografia`, `empiezaOrtografia`, `aplicaOrto`): tandas de hasta 10 campos/6000 letras a `corregir` (claves `c_aa`…), 1,5 s entre tandas, un reintento a los 20 s. Aplica campo a campo solo si el texto en la base sigue igual. Excluye `NO_CORREGIR_TODO` y la tabla `paginas`. Lo revisado se guarda por huella en localStorage `ccoo-revisado`.
+  - v64: `errTxt(e)` traduce los errores de Supabase (si es la sesión, el editor guarda el borrador y ofrece «Volver a entrar»). `reducirFoto` (JPEG/PNG/WebP de más de 600 KB → 2000 px, JPEG 85 %, solo si pesa menos) antes de `subirArchivo`; archivos con `cacheControl` de un año. `sinCambiosDeOtro` compara la fila del servidor con `ED.orig` (salvo `NO_CUENTA`) antes de guardar. Borrar (salvo apartados) no pregunta: `avisoDeshacer` con «Deshacer» 8 s, que llama a `recuperar_cambio` con la fila de `historial`.
   - «Apartados de la web» (`SECCIONES.apartados`) crea apartados. Cada uno genera una sección dinámica `ap<id>` (`seccionApartado`, tabla `publicaciones` filtrada por `apartado_id`) que se coloca tras Actas (`construirPaginas`).
 - `config.js`: cliente Supabase, `VERSION_WEB`, `WEB_URL`, `VAPID_PUBLICA`, ayudas (textoHTML, compartir, ICS, lectura «Aa», `urlSegura`).
 - `render.js`: plantillas HTML de tarjetas. `iconos.js`: iconos SVG. `styles.css`: estilos (al final, bloques «Tablón», portada, modales, filtro de fechas, tema oscuro manual).
+- Ventanas (v64, al final de `config.js`): un MutationObserver prepara toda `.modal-velo` (web y panel): `aria-labelledby` con su título, foco dentro, Tab no sale, Escape pulsa su botón de cancelar (`data-no`, `data-r=no|volver`, `data-cerrar`) o toca el fondo, y al cerrar el foco vuelve.
 - `lectura.js`: aplica letra/contraste/tema antes de pintar + anti-iframe.
 - `sw.js`: service worker: archivos con `?v=N` primero desde la caché (no cambian nunca); HTML sin caché y el resto primero de la red, con la caché si no hay conexión. Solo guarda respuestas correctas (`r.ok`). Push.
 - `cartel.html` + `cartel.js` + `qr.js`: cartel A4 con QR para imprimir (v43: estilo de la web; v44: detalles en el rojo del logo #AB1012, no amarillo, QR nivel H con `icon-192.png` en el centro; si hay Telegram, `.con-tg` aprieta el diseño). `logo.png`, 192 px, para la web y el panel. Notificaciones: `icon-192.png` y `badge-96.png` (silueta blanca del camión; Android pinta el badge en un solo color).
@@ -91,6 +94,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 - Diseño: colores en `:root` de `styles.css` (asfalto, `--rotulo`, hueso `#F5F3EE`). **Manda el rojo del logo** (v45): `--rojo` `#AB1012`, `--rojo-ic` (iconos/enlaces; más claro en oscuro), `--rojo-luz` y `--ambar-rotulo` también `#AB1012` (nombres de antes). Nada de rojos claros (no gustó): sobre negro, letras en blanco y el rojo para fondos y bordes. Todas las clases de color `.c-*` salen en rojo (`--c` siempre `var(--rojo)`, que se usa también como fondo, p. ej. la fecha `.cartel` de las actas; en oscuro, `--cs` es rojo y la letra encima blanca; v46: con `--c` blanco en oscuro la fecha de las actas salía en blanco). No volver a meter ámbar ni colores variados (no gustó); solo son amarillas las luces de emergencia del camión sin conexión las letras del panel luminoso de «Próxima parada» (`.cita-panel b`, #FFC233, v48) y sus señales `.cita-placa` (#FFB000 con letra negra; la de la hora negra con borde amarillo, v49). Lo pidió el padre. El bloque «Diseño Rótulo de línea» está al final de `styles.css`.
 
 ## Al publicar una versión nueva (3 sitios)
+`python3 herramientas/version.py N` lo cambia todo y comprueba que no queda nada atrás:
 1. `?v=N` en `index.html`, `admin.html`, `cartel.html`
 2. `VERSION_WEB` en `config.js`
 3. `VERSION` en `sw.js`
@@ -99,7 +103,7 @@ Añadir una línea en `README.md` y entregar zip `SSCCOO-web-vN.zip`.
 **Publicar en GitHub lo hace Claude, no la usuaria.** Orden:
 1. **Antes de tocar `main`**, crear y subir una etiqueta de la versión que está publicada ahora (`git tag vN-1 <commit de main>` y `git push origin vN-1`), para poder volver atrás. Decírselo a la usuaria.
 2. Commit solo con los archivos modificados en esa versión, con mensaje claro en español (ej.: «v21: adjuntos en Convenio»).
-3. Subir a `main` (es la rama que publica GitHub Pages). **Nunca** `--force` ni reescribir historial. No subir al repo el zip, las copias de seguridad ni los archivos de prueba.
+3. Subir a `main` (es la rama que publica GitHub Pages). **Nunca** `--force` ni reescribir historial. No subir al repo el zip, las copias de seguridad ni los archivos de prueba (salvo `pruebas/`, la prueba rápida, y `herramientas/`).
 4. Avisar a la usuaria con el enlace del commit y el tiempo que tarda en verse (GitHub Pages, 1–3 minutos; además el service worker pide recargar).
    El permiso de GitHub no deja subir etiquetas (da 403): en su lugar, rama `respaldo-vN-1` apuntando al commit publicado (`git push origin <commit>:refs/heads/respaldo-vN-1`).
 5. Si falla (permisos, conflictos), **parar y explicarlo**. Nunca pedir ni aceptar tokens ni contraseñas por el chat: se usa el acceso a GitHub ya configurado.
@@ -122,14 +126,13 @@ Añadir una línea en `README.md` y entregar zip `SSCCOO-web-vN.zip`.
 - En este entorno, las migraciones con `drop`/`revoke` juntos pueden cancelarse esperando confirmación: dividirlas en partes no destructivas. Lo mismo con la palabra `delete` (también dentro de funciones o disparadores): se puede montar con `'del' || 'ete'` en un `execute format(...)`. Para probar funciones sin dejar rastro: un bloque `do $$ … raise exception 'RESULTADO …' $$` lo deshace todo y devuelve el resultado en el error.
 
 ## Pruebas
-Playwright con Chromium (sin `playwright install`), servidor local `python3 -m http.server 8765` y un mock de supabase-js que sustituye `lib/supabase.js`. Probar móvil 320–412 px y PC, claro/oscuro, letra «muy grande», y que no haya errores de consola ni de CSP.
+Playwright con Chromium (sin `playwright install`), servidor local `python3 -m http.server 8765` y un mock de supabase-js que sustituye `lib/supabase.js` (`pruebas/mock-supabase.js`). Prueba rápida: `NODE_PATH=$(npm root -g) node pruebas/humo.cjs` (todas las pestañas en 320/360/412 px y PC, claro/oscuro, letra muy grande; errores de consola/CSP, scroll lateral, ventanas y recargas). Probar móvil 320–412 px y PC, claro/oscuro, letra «muy grande», y que no haya errores de consola ni de CSP.
 
 - Desde este entorno no se llega a Supabase por HTTP (proxy). Para probar una edge function: `net.http_post(...)` por SQL y leer `net._http_response`.
 
 ## Pendiente / ideas
+- **Vacaciones en «Calcula»**: `calc_ajustes.vac_dias` = 25, pero la nota dice «23 días… Convenio Art. 28». Que el padre confirme y lo corrija en Calculadoras.
 - **Revisar los valores de «Calcula»** en el panel (Calculadoras): ahora son los mínimos del Estatuto, no los del convenio de Girona. Los precios de horas extra están vacíos (esa calculadora no sale hasta que se pongan).
 - Importar el historial del canal de Telegram «Tablon anuncios CCOO-Calsina Carre» (exportación JSON de Telegram Desktop) repartiéndolo por la web. Importar con `notificar = false`.
 - Completar en Textos > Aviso legal y Privacidad la entidad de CCOO responsable y su NIF (que lo revise el servicio jurídico de CCOO).
 - Actualizar la guía del panel (Claude Docs) con capturas del diseño nuevo.
-- Borrar el evento de prueba «zz prueba interna».
-- Añadir un segundo administrador.

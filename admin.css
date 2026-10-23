@@ -610,3 +610,7 @@ textarea.crece { resize: vertical; overflow-y: auto; }
 .sel-color option { background: var(--tarjeta); color: var(--tinta); }
 :root:root .ev-mini { background: var(--tc, var(--rojo)); color: #fff; border-left-color: rgba(0, 0, 0, .25); }
 :root:root .ev-mini.f-acta { background: transparent; color: var(--tinta); border-left: 3px solid var(--tc, var(--rojo)); }
+
+/* Botón «Deshacer» dentro del aviso de abajo (tras borrar) */
+.toast-deshacer { margin-left: 6px; padding: 8px 14px; min-height: 40px; border-radius: 10px; border: 2px solid currentColor; background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+.toast-deshacer:hover, .toast-deshacer:focus-visible { background: var(--rojo); border-color: var(--rojo); color: #fff; }

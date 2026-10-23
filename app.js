@@ -771,7 +771,16 @@ async function cargar(idNuevo) {
     }
     if (cargar.listo) return; // ya hay datos en pantalla: se quedan
     [a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs, enc, vot] = copia.r.map(x => ({ data: x, error: null }));
-  } else { guardaCopia([a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs, enc, vot]); sinRed(false); }
+  } else {
+    // Si falla alguna consulta suelta, esa parte sale de la copia anterior en vez de quedarse vacía
+    const res = [a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs, enc, vot], fallo = res.some(x => x.error);
+    const copia = fallo ? leeCopia() : null;
+    if (copia) res.forEach((x, i) => { if (x.error) res[i] = { data: copia.r[i], error: null }; });
+    [a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs, enc, vot] = res;
+    if (!fallo) guardaCopia(res); // la copia solo se renueva cuando ha llegado todo bien
+    sinRed(false);
+  }
+  cargar.ultima = Date.now();
   // La web enseña solo lo publicado, también si en este móvil está abierta la sesión del panel
   // (el servidor a un administrador le da todo: avisos programados, publicaciones y apartados ocultos)
   const ahoraMs = Date.now();
@@ -806,8 +815,16 @@ function quitarBienvenida() {
     bv.classList.add("fuera");
     if (!location.hash || location.hash === "#inicio") animaPortada();
     setTimeout(() => { bv.remove(); listas.forEach(el => el.classList.remove("anima-entra")); }, 1200);
-  }, quitarBienvenida.ya ? 0 : Math.max(0, 4300 - (performance.now() - quitarBienvenida.t0)));
+  }, quitarBienvenida.ya ? 0 : Math.max(0, BV_DURA - (performance.now() - quitarBienvenida.t0)));
 }
+// Entera la primera vez de cada día; si se vuelve a abrir el mismo día, solo el logo (algo más de 1 s)
+const BV_DURA = (() => {
+  const bv = $("bienvenida"), hoy = new Date().toDateString();
+  let vista = false;
+  try { vista = localStorage.getItem("ccoo-bienvenida") === hoy; localStorage.setItem("ccoo-bienvenida", hoy); } catch (_) {}
+  if (bv && vista) bv.classList.add("bv-corta");
+  return vista ? 1100 : 4300;
+})();
 function empiezaBienvenida() {
   const bv = $("bienvenida"); if (!bv || quitarBienvenida.t0 != null) return;
   quitarBienvenida.t0 = performance.now();
@@ -852,16 +869,25 @@ async function verNovedades() {
   if (x.t === "publicaciones") { const ap = D.apartados.find(a => a.id === x.apartado_id); return irAHash(ap ? "ap-" + ap.slug : "inicio"); }
   irAHash(x.t === "actas" ? "actas" : "documentos");
 }
+// Cambios que no se ven en la web (p. ej. el servidor marca «notificado» tras mandar el aviso): no hace falta recargar
+const SIN_EFECTO = ["notificado", "notificar", "actualizado", "ultima_publicacion"];
+const LISTA_DE = { comunicados: "avisos", actas: "actas", documentos: "docs", eventos: "eventos", publicaciones: "publicaciones" };
+function soloInterno(t, pl) {
+  if (pl.eventType !== "UPDATE" || !pl.new || pl.new.id == null) return false;
+  const antes = (D[LISTA_DE[t]] || []).find(x => x.id === pl.new.id);
+  return !!antes && Object.keys(pl.new).every(k => SIN_EFECTO.includes(k) || JSON.stringify(pl.new[k]) === JSON.stringify(antes[k]));
+}
 const canal = sb.channel("web-directo");
 Object.keys(QUE).forEach(t => canal.on("postgres_changes", { event: "*", schema: "public", table: t }, (pl) => {
   if (pl.eventType === "INSERT" && pl.new?.id != null) {
     if (pl.new.publicado === false || (pl.new.publicar_en && new Date(pl.new.publicar_en) > new Date())) return; // oculto o programado: no es novedad todavía
     if (!PEND.some(x => x.t === t && x.id === pl.new.id)) PEND.push({ t, id: pl.new.id, titulo: pl.new.titulo, fecha: pl.new.fecha, apartado_id: pl.new.apartado_id });
     pintaBandaNovedad();
-  } else { clearTimeout(recarga); recarga = setTimeout(() => cargar(), 400); } // cambios y borrados: se actualiza en silencio
+  } else if (!soloInterno(t, pl)) { clearTimeout(recarga); recarga = setTimeout(() => cargar(), 400); } // cambios y borrados: se actualiza en silencio
 }));
 canal.subscribe();
-document.addEventListener("visibilitychange", () => { if (!document.hidden) cargar(); });
+// Al volver a la web se actualiza, pero no si se ha cargado hace menos de un minuto (ahorra datos y batería)
+document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - (cargar.ultima || 0) > 60000) cargar(); });
 
 // ---------- Desliza hacia abajo para actualizar (móvil) ----------
 (function () {

@@ -91,6 +91,14 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Próxima cita** (el rótulo de Inicio cuando no hay nada urgente): diseño nuevo de carretera. El título sale en un panel luminoso de autopista (letras blancas de puntos y luces rojas que parpadean en las esquinas) y, debajo, en un poste, dos señales en el rojo del logo: el lugar con los días que faltan (como los kilómetros de una señal) y el día y la hora. Prefiere reuniones y asambleas a los festivos y, si es la misma cita que la cuenta atrás, no se repite.
 - **Animación de entrada**: ahora empieza cuando la página ha cargado (en la app instalada, Android tapaba los primeros segundos con su pantalla y la animación terminaba sin verse) y sale aunque el móvil tenga «quitar animaciones» (lo activa el ahorro de batería). Se sigue saltando tocándola.
 
+## Versión 64: más ligera y más cómoda
+- **Gasta menos datos**: al volver a la web no se recarga todo si se cargó hace menos de un minuto, y los cambios internos del servidor (marcar un aviso como enviado) ya no hacen recargar a todos los móviles. Las fotos grandes se reducen al subirlas (2000 px) y los archivos se guardan un año en el móvil.
+- **Bienvenida**: entera la primera vez de cada día; si se vuelve a abrir el mismo día, solo el logo (algo más de 1 s).
+- **Más fiable**: si falla una sola parte al cargar, esa parte sale de la copia guardada en vez de quedarse vacía; sin conexión, los enlaces compartidos con «?…» (WhatsApp, Facebook) también abren.
+- **Panel**: errores explicados en español (y, si se cierra la sesión, botón para volver a entrar sin perder lo escrito); aviso si otra persona ha cambiado lo que estás editando; al borrar sale «Deshacer» en vez de preguntar.
+- **Accesibilidad**: las ventanas reciben el foco, se cierran con Escape y no se sale de ellas con Tab.
+- **Mantenimiento**: `herramientas/version.py N` cambia la versión en todos los sitios; `pruebas/humo.cjs` prueba la web y el panel con datos de prueba.
+
 ## Versión 63: Mis descansos más ligero y «¿Dónde está…?»
 - **Mis descansos**: solo descansos (sin conducción ni pausas), en pestañas (Hoy, Apuntar, Lo apuntado, Ajustes), guía rápida plegable y traducible, y avisos de instalar/activar en una línea.
 - **¿Dónde está…?** en Dudas y en el buscador: cada sección y subapartado con su camino y botón para ir; entiende preguntas como «¿dónde está el buzón?».

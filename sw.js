@@ -1,6 +1,6 @@
 // Service worker: permite instalar la web como app, abrirla sin conexión
 // y recibir notificaciones aunque la app esté cerrada.
-const VERSION = "63"; // súbelo en cada actualización
+const VERSION = "64"; // súbelo en cada actualización
 const CACHE = "ccoo-v" + VERSION;
 const BASE = ["./", "index.html", "logo.png", "icon-192.png", "camion.webp", "icon-512.png", "badge-96.png", "manifest.json", "fuentes/atkinson-hyperlegible-latin-400-normal.woff2", "fuentes/atkinson-hyperlegible-latin-700-normal.woff2", "fuentes/barlow-condensed-latin-700-normal.woff2", ...["styles.css", "fuentes.css", "lectura.js", "lib/supabase.js", "config.js", "iconos.js", "render.js", "app.js", "descansos.js"].map(f => f + "?v=" + VERSION)];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(BASE))); self.skipWaiting(); });
@@ -19,7 +19,10 @@ self.addEventListener("fetch", e => {
   }
   // Páginas, logo, fuentes…: primero internet (para tener lo último) y, sin conexión, lo guardado
   e.respondWith(fetch(pagina ? new Request(e.request, { cache: "no-store" }) : e.request).then(guarda)
-    .catch(() => caches.match(e.request)));
+    .catch(() => pagina
+      // Sin conexión: los enlaces compartidos llegan con añadidos (?fbclid=…) que no están guardados; se busca sin ellos
+      ? caches.match(e.request, { ignoreSearch: true }).then(r => r || (/\/(index\.html)?$/.test(url.pathname) ? caches.match("index.html") : r))
+      : caches.match(e.request)));
 });
 
 // Notificación recibida

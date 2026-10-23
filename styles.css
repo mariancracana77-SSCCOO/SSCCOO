@@ -1043,6 +1043,13 @@ body.publica.con-aviso-priv { padding-bottom: calc(84px + var(--alto-aviso, 90px
 .bv-carga { width: min(200px, 60vw); height: 5px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; }
 .bv-carga span { display: block; width: 40%; height: 100%; border-radius: 3px; background: var(--rojo); animation: bv-barra 1.3s ease-in-out infinite; }
 @keyframes bv-barra { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+/* Versión corta (segunda vez del mismo día): sin camión, el logo aparece de golpe con su aro y el destello */
+.bienvenida.bv-corta .bv-camion, .bienvenida.bv-corta .bv-carretera, .bienvenida.bv-corta .bv-onda { display: none; }
+.bienvenida.bv-corta .bv-sello { animation: none; }
+.bienvenida.bv-corta .bv-logo { animation: bv-revela .5s cubic-bezier(.22, .61, .36, 1) forwards; }
+.bienvenida.bv-corta .bv-aro circle { animation: bv-traza .5s cubic-bezier(.6, 0, .3, 1) forwards, bv-funde .3s .65s forwards; }
+.bienvenida.bv-corta .bv-brillo::before { animation-delay: .35s; }
+.bienvenida.bv-corta .bv-nombre { animation: bv-sube .4s .1s ease-out forwards; }
 /* Quieta hasta que app.js pone .bv-anda (al terminar de cargar). Sale también con «reducir movimiento»: dura 4 s y se salta tocando. */
 .bienvenida:not(.bv-anda) * { animation-play-state: paused !important; }
 
