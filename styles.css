@@ -1222,6 +1222,12 @@ body.publica.con-aviso-priv { padding-bottom: calc(84px + var(--alto-aviso, 90px
 /* Al llegar el logo a la cabecera, un pequeño rebote, como si aterrizara */
 .cab-logo.bv-aterriza { animation: bv-aterriza .4s cubic-bezier(.3, 1.6, .5, 1); }
 @keyframes bv-aterriza { 45% { transform: scale(1.14); } 100% { transform: none; } }
+/* Bienvenida en 3D real (bienvenida3d.js): el canvas ocupa toda la pantalla, detrás del logo; si funciona (.bv-gl) se quita la versión de CSS.
+   El canvas se funde por encima del logo mientras éste aparece desde el camión. */
+.bv-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; animation: bv-funde .6s 3.45s ease-in forwards; }
+.bv-gl .bv-escala { display: none; }
+.bienvenida.bv-vuela .bv-canvas { opacity: 0; }
+.bv-corta .bv-canvas { display: none; }
 /* Quieta hasta que app.js pone .bv-anda (al terminar de cargar). Sale también con «reducir movimiento»: dura 4 s y se salta tocando. */
 .bienvenida:not(.bv-anda) * { animation-play-state: paused !important; }
 

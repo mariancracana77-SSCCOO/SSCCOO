@@ -1,0 +1,8 @@
+Bienvenida en 3D (bienvenida3d.js)
+==================================
+El código que se edita es herramientas/bienvenida3d.src.js. La web usa el archivo empaquetado bienvenida3d.js (raíz), que lleva dentro three.js 0.160.
+Para volver a empaquetar (en una carpeta temporal, fuera del repositorio):
+  npm i three@0.160.0 esbuild
+  cp <repo>/herramientas/bienvenida3d.src.js src.js
+  npx esbuild src.js --bundle --minify --format=iife --target=es2019 --legal-comments=none --outfile=<repo>/bienvenida3d.js
+Para fotografiar un instante concreto en las pruebas: poner window.__BV_T = segundos (y pausar las animaciones de CSS con document.getAnimations()).
