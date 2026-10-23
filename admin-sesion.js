@@ -242,6 +242,8 @@ function abrir(k) {
     $("fab").innerHTML = icono("mas") + "<span>Nuevo</span>";
     $("fab").onclick = abrirHojaNuevo; $("fab").setAttribute("aria-label", "Nuevo: elegir qué crear");
   }
+  // Páginas donde no se crea nada (v79): el botón flotante solo tapaba los mensajes
+  if (["ortografia", "historial", "textos", "ajustes", "archivos"].includes(k)) $("fab").classList.add("oculto");
   if (!window.ES_ADMIN) { $("zona").innerHTML = `<div class="panel vacio">${icono("alerta")}Esta cuenta (${esc(window.MI_EMAIL)}) no tiene permiso para publicar. Pide a la Sección Sindical que añada tu email en Ajustes.</div>`; return; }
   if (k === "resumen") pintaResumen();
   else if (k === "buzon") pintaBuzon();

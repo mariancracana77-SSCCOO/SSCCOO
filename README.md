@@ -75,6 +75,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 79: panel sin botón «Nuevo» donde no crea nada
+
+- En el panel (móvil), el botón flotante «Nuevo» ya no sale en Revisar la ortografía, Historial, Textos, Ajustes ni Archivos: tapaba los mensajes de estado.
+
 ## Versión 78: Actas de PRL
 
 - Nuevo subapartado «Actas de PRL» dentro de PRL (creado en Supabase, slug `actas-prl`). Sus publicaciones salen con el aspecto de las actas del comité (fecha en rojo, etiqueta «Acta de PRL», «Reunión del…»). Se publican desde el panel, en «Apartados de la web».
