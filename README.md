@@ -75,6 +75,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 74: la bienvenida vuelve al camión plano
+- Se quita el 3D: vuelve el camión del logo de lado, con el conductor dentro de la ventanilla, y el logo sale de él.
+- Se mantienen los rayos rojos y las chispas al aparecer el logo y el vuelo del logo hasta la cabecera.
+
 ## Versión 73: la bienvenida no empieza con la app oculta
 - Si al abrir la app el móvil aún está enseñando su pantalla de carga (página oculta), la animación espera a que se vea. Sale entera cada vez que la app arranca de cero.
 
