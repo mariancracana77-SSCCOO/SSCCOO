@@ -30,6 +30,8 @@ html,body{margin:0;height:100%;background:#0b0e12;overflow:hidden}
  <linearGradient id="gCarretera" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#232a33"/><stop offset=".25" stop-color="#171c23"/><stop offset="1" stop-color="#15191E"/></linearGradient>
  <linearGradient id="gSkyA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d2630"/><stop offset="1" stop-color="#19212a"/></linearGradient>
  <linearGradient id="gSkyB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#202b37"/><stop offset="1" stop-color="#1a232d"/></linearGradient>
+ <radialGradient id="gNeumA" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#2C68AB"/><stop offset=".75" stop-color="#1B4C86"/><stop offset="1" stop-color="#123A6B"/></radialGradient>
+ <radialGradient id="gBuje" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#F4F7FA"/><stop offset="1" stop-color="#A9B5C2"/></radialGradient>
  <radialGradient id="gNeum" cx="50%" cy="50%" r="50%"><stop offset=".55" stop-color="#2d3640"/><stop offset=".85" stop-color="#171c22"/><stop offset="1" stop-color="#0a0d11"/></radialGradient>
  <radialGradient id="gLlanta" cx="38%" cy="32%" r="80%"><stop offset="0" stop-color="#fbfdff"/><stop offset=".6" stop-color="#c3ced9"/><stop offset="1" stop-color="#7f8d9c"/></radialGradient>
  <radialGradient id="gTuerca" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#e5ebf1"/><stop offset="1" stop-color="#5c6a79"/></radialGradient>
@@ -43,8 +45,11 @@ html,body{margin:0;height:100%;background:#0b0e12;overflow:hidden}
  <filter id="fDesenf" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur id="fDesenfG" stdDeviation="0"/></filter>
  <filter id="fDesenf2" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur id="fDesenfG2" stdDeviation="0"/></filter>
  <filter id="fBrazo" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-color="#000" flood-opacity=".45"/></filter>
- <clipPath id="cVentana"><path d="M516 112H600Q608 112 612 120L640 178H516Z"/></clipPath>
- <clipPath id="cCamion"><rect x="10" y="20" width="480" height="238" rx="18"/><path d="M495 96H604Q620 96 628 110L664 186Q670 198 684 202L692 206V300H495Z"/></clipPath>
+ <clipPath id="cVentana"><polygon points="529,123 589,123 619,180 528,180"/></clipPath>
+ <filter id="fAlfa"><feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0"/></filter>
+ <mask id="mAlfa" maskUnits="userSpaceOnUse" x="0" y="0" width="700" height="358"><image href="../camion.webp" width="700" height="358" filter="url(#fAlfa)"/></mask>
+ <mask id="mVentana" maskUnits="userSpaceOnUse" x="0" y="0" width="700" height="358"><rect width="700" height="358" fill="#fff"/><polygon points="529,123 589,123 619,180 528,180" fill="#000"/></mask>
+ <linearGradient id="gLuz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".35" stop-color="#fff" stop-opacity="0"/><stop offset=".72" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".28"/></linearGradient>
 </defs>
 <g id="cam">
  <g id="lejos" filter="url(#fDesenf)"><g id="skyB"></g><g id="skyA"></g></g>
@@ -53,31 +58,10 @@ html,body{margin:0;height:100%;background:#0b0e12;overflow:hidden}
   <rect id="rayas" x="-6000" y="440" width="12000" height="20" fill="url(#pRaya)"/></g>
  <ellipse id="sombra" cx="352" cy="362" rx="360" ry="20" fill="url(#gSombra)" filter="url(#fSombra)"/>
  <g id="camion">
-  <rect x="24" y="258" width="640" height="38" rx="6" fill="#222a33"/><rect x="330" y="262" width="110" height="26" rx="5" fill="#2c3641"/><rect x="330" y="262" width="110" height="5" rx="2.5" fill="#fff" fill-opacity=".1"/><rect x="24" y="258" width="640" height="6" fill="#fff" fill-opacity=".08"/>
-  <g id="trasera"><rect x="2" y="256" width="20" height="12" rx="3" fill="url(#gFaja)"/></g>
-  <g id="r1"></g><g id="r2"></g>
-  <g id="caja">
-   <rect x="10" y="20" width="480" height="238" rx="18" fill="url(#gCuerpo)"/>
-   <rect x="10" y="20" width="480" height="30" rx="18" fill="url(#gTecho)"/>
-   <rect x="10" y="20" width="26" height="238" rx="18" fill="url(#gLado)"/>
-   <rect x="464" y="20" width="26" height="238" rx="18" fill="url(#gLadoD)"/>
-   <rect x="10" y="236" width="480" height="22" rx="10" fill="#0c2c58" fill-opacity=".45"/><rect x="10" y="246" width="480" height="12" rx="6" fill="#0a2a55" fill-opacity=".55"/>
-   <rect x="13" y="23" width="474" height="232" rx="16" fill="none" stroke="url(#gBisel)" stroke-width="4"/>
-   <rect x="16" y="26" width="468" height="226" rx="14" fill="none" stroke="#06234d" stroke-opacity=".28" stroke-width="1.5"/>
-   <path d="M48 86H452" stroke="#fff" stroke-opacity=".07" stroke-width="2"/>
-<g id="cc" filter="url(#fCC)">
-    <path d="M227.7 108.4A44 44 0 1 0 227.7 169.6" fill="none" stroke="#0a3469" stroke-width="42" stroke-linecap="butt"/><path d="M327.7 108.4A44 44 0 1 0 327.7 169.6" fill="none" stroke="#0a3469" stroke-width="42" stroke-linecap="butt"/>
-    <path d="M227.7 108.4A44 44 0 1 0 227.7 169.6" fill="none" stroke="url(#gCC)" stroke-width="31" stroke-linecap="butt"/><path d="M327.7 108.4A44 44 0 1 0 327.7 169.6" fill="none" stroke="url(#gCC)" stroke-width="31" stroke-linecap="butt"/>
-    <path d="M168 120A36 36 0 0 1 200 100" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="4" stroke-linecap="round"/><path d="M268 120A36 36 0 0 1 300 100" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="4" stroke-linecap="round"/>
-    <path d="M214 176A44 44 0 0 1 163 160" fill="none" stroke="#8aa0ba" stroke-opacity=".55" stroke-width="4" stroke-linecap="round" transform="translate(0 0)"/><path d="M314 176A44 44 0 0 1 263 160" fill="none" stroke="#8aa0ba" stroke-opacity=".55" stroke-width="4" stroke-linecap="round"/>
-   </g>
-   <rect x="6" y="226" width="10" height="16" rx="3" fill="#a30f1d"/><circle cx="10" cy="234" r="2" fill="#ff5566" fill-opacity=".8"/>
-  </g>
-  <g id="cabina">
-   <path d="M516 112H600Q608 112 612 120L640 178H516Z" fill="url(#gInt)"/>
-   <rect x="516" y="112" width="130" height="70" fill="#000" fill-opacity="0" />
-   <g clip-path="url(#cVentana)"><path d="M516 150Q528 142 540 150L548 182H516Z" fill="#161d25"/>
-    <svg id="chofer" x="534" y="110" width="104" height="93" viewBox="0 0 164 147" overflow="visible">            <defs>
+  <g clip-path="url(#cVentana)">
+   <polygon points="520,114 596,114 628,186 520,186" fill="url(#gInt)"/>
+   <path d="M524 150Q534 143 544 150L550 186H524Z" fill="#161d25"/>
+   <svg id="chofer" x="539" y="113" width="84" height="75" viewBox="0 0 164 147" overflow="visible">            <defs>
               <radialGradient id="dg-piel" cx="40%" cy="35%" r="75%"><stop offset="0" stop-color="#FBDCBE"/><stop offset=".65" stop-color="#EDB98F"/><stop offset="1" stop-color="#CF9068"/></radialGradient>
               <linearGradient id="dg-camisa" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E2263F"/><stop offset=".6" stop-color="#C4122F"/><stop offset="1" stop-color="#8E0B22"/></linearGradient>
               <linearGradient id="dg-pelo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6A4A39"/><stop offset="1" stop-color="#2A1C16"/></linearGradient>
@@ -121,6 +105,39 @@ html,body{margin:0;height:100%;background:#0b0e12;overflow:hidden}
               <path d="M60 33c6-3 15-3 22 1" stroke="#8A6450" stroke-width="2" fill="none" stroke-linecap="round"/>
             </g>
             </g></svg>
+   <g id="brazo"><g transform="translate(537 177) scale(.5)">
+    <g transform="rotate(-20)">
+     <path d="M0 -10.5C12 -12.5 26 -14.5 42 -14.5L42 14.5C26 14.5 12 12.5 0 10.5Z" fill="url(#gManga)"/>
+     <path d="M2 -9C14 -11 27 -12.5 41 -12.5" stroke="#fff" stroke-opacity=".28" stroke-width="3" fill="none" stroke-linecap="round"/>
+     <path d="M0 -10.5C-3 -4 -3 4 0 10.5" stroke="#6d0a1c" stroke-width="5" fill="none"/>
+    </g>
+    <g id="antebrazo">
+     <path d="M-9 4C-9.5 -14 -8 -30 -6.2 -50L6.2 -50C8 -30 9.5 -14 9 4A9 9 0 0 1 -9 4Z" fill="url(#gPiel)"/>
+     <path d="M-5 0C-5.4 -14 -4.4 -30 -3.2 -48" stroke="#fff" stroke-opacity=".3" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+     <g id="mano" transform="translate(0 -50)">
+      <path d="M-8.5 2C-11 -6 -11.5 -12 -9.5 -17.5Q0 -20 9.5 -17.5C11.5 -12 11 -6 8.5 2Z" fill="url(#gPiel)"/>
+      <g fill="#EDB98F" stroke="#CF9068" stroke-width=".6">
+       <rect x="-9.5" y="-30.5" width="4.4" height="14" rx="2.2" transform="rotate(-9 -7 -17)"/>
+       <rect x="-4.7" y="-33.5" width="4.5" height="17" rx="2.25" transform="rotate(-3 -2.5 -17)"/>
+       <rect x="0.4" y="-33" width="4.5" height="16.5" rx="2.25" transform="rotate(3 2.6 -17)"/>
+       <rect x="5.2" y="-29.5" width="4.2" height="13" rx="2.1" transform="rotate(10 7.3 -17)"/>
+       <rect x="-15.8" y="-17" width="4.8" height="13" rx="2.4" transform="rotate(-48 -13 -6)"/>
+      </g>
+     </g>
+    </g>
+   </g></g>
+   <path d="M520 114H596L628 186H520Z" fill="#9cc7ea" fill-opacity=".12"/>
+   <path d="M545 110L575 110L553 190L523 190Z" fill="url(#gCrist2)" opacity=".7"/>
+   <g id="cristal"><rect x="515" y="112" width="120" height="76" fill="url(#gCristal)"/><path d="M515 114H635" stroke="#8f9ba7" stroke-width="4"/><path d="M548 116L576 116L556 186L527 186Z" fill="#fff" fill-opacity=".35"/></g>
+  </g>
+  <image id="img" href="../camion.webp" x="0" y="0" width="700" height="358" mask="url(#mVentana)"/>
+  <g mask="url(#mAlfa)">
+   <rect x="0" y="0" width="700" height="358" fill="url(#gLuz)"/>
+   <rect id="brillo" x="-90" y="0" width="70" height="358" fill="url(#gBrillo)" opacity="0" transform="skewX(-20)"/>
+  </g>
+  <g id="r1"></g><g id="r2"></g><g id="r3"></g>
+ </g>
+</g></svg>
     <path d="M516 112H600Q608 112 612 120L640 178H516Z" fill="#9cc7ea" fill-opacity=".13"/>
     <path d="M540 108L572 108L552 190L520 190Z" fill="url(#gCrist2)" opacity=".8"/>
     <g id="cristal"><rect x="510" y="108" width="140" height="76" fill="url(#gCristal)"/><path d="M510 110H650" stroke="#8f9ba7" stroke-width="5"/><path d="M545 112L580 112L556 184L520 184Z" fill="#fff" fill-opacity=".35"/></g></g>
@@ -180,20 +197,16 @@ function el(tag,at,pad){const e=document.createElementNS(NS,tag);for(const k in 
 // ruedas
 function rueda(g,cx,cy){
  const r=el("g",{transform:`translate(${cx} ${cy})`},g), giro=el("g",{},r);
- el("circle",{r:46,fill:"url(#gNeum)"},giro);
- for(let i=0;i<26;i++){const a=i/26*360;el("rect",{x:-2.3,y:-46,width:4.6,height:6.5,rx:1.5,fill:"#07090c",transform:`rotate(${a})`},giro)}
- el("circle",{r:36,fill:"none",stroke:"#0d1116","stroke-width":2},giro);
- el("circle",{r:27,fill:"url(#gLlanta)",stroke:"#5f6e7e","stroke-width":2},giro);
+ el("circle",{r:44.5,fill:"url(#gNeumA)",stroke:"#0E2C55","stroke-width":3},giro);
  const det=el("g",{},giro);
- for(let i=0;i<5;i++){const a=i/5*360;el("circle",{cx:14.5,cy:0,r:3.8,fill:"url(#gTuerca)",transform:`rotate(${a})`},det)}
- el("circle",{r:7,fill:"url(#gTuerca)"},det);
+ for(let i=0;i<5;i++){const a=i/5*360;el("circle",{cx:11.5,cy:0,r:2.9,fill:"#7D8B9B",transform:`rotate(${a})`},det)}
  const bor=el("g",{opacity:0},giro);
- for(let i=0;i<5;i++){const a=i/5*360;el("path",{d:"M5 -3A22 22 0 0 1 22 -6L20 -1Z",fill:"#fff","fill-opacity":.4,transform:`rotate(${a})`},bor)}
- // brillo fijo (no gira): luz sobre el neumático
- el("path",{d:"M-39 -23A46 46 0 0 1 -9 -45",fill:"none",stroke:"#fff","stroke-opacity":.16,"stroke-width":5,"stroke-linecap":"round"},r);
- return {giro,det,bor};
+ for(let i=0;i<5;i++){const a=i/5*360;el("path",{d:"M4 -2A20 20 0 0 1 20 -5L18 -1Z",fill:"#fff","fill-opacity":.45,transform:`rotate(${a})`},bor)}
+ el("circle",{r:20,fill:"url(#gBuje)",stroke:"#EEF2F6","stroke-width":2.5,"fill-opacity":1},r).setAttribute("class","hub");
+ giro.appendChild(det); 
+ return {giro,det,bor,hub:r.lastChild};
 }
-const ruedas=[rueda($("r1"),105,312),rueda($("r2"),258,312),rueda($("r3"),580,312)];
+const ruedas=[rueda($("r1"),123,306),rueda($("r2"),280,307.5),rueda($("r3"),585,308)];
 // fondo: edificios lejanos en dos capas
 function ciudad(g,sem,min,max,fill,P){let x=0,s=sem;const rnd=()=>{s=(s*16807)%2147483647;return s/2147483647};
  while(x<P){const w=40+rnd()*90,h=min+rnd()*(max-min);el("rect",{x,y:358-h,width:w,height:h+2,fill,rx:3},g);
@@ -209,11 +222,11 @@ const dist=t=>{const x=Math.max(0,Math.min(4.99,t))*100,i=Math.floor(x);return T
 const perfil=document.querySelector("#chofer .bv-perfil"),frente=document.querySelector("#chofer .bv-frente"),ojos=document.querySelector("#chofer .bv-ojos"),cabeza=document.querySelector("#chofer .bv-cabeza");
 [perfil,frente,ojos].forEach(e=>{e.style.transformBox="fill-box";e.style.transformOrigin="50% 60%"});
 cabeza.style.transformBox="view-box";cabeza.style.transformOrigin="71px 80px";
-const FOCO_A=[588,150],FOCO_B=[350,179],DURA=2.9;
+const FOCO_A=[575,160],FOCO_B=[350,179],DURA=2.9;
 // destino: dónde acaba el camión (centro del camión del logo)
 const LOGO=240,lx=(W-LOGO)/2,ly=(H-(LOGO+22+27+22+5))/2;
 const FIN=[lx+LOGO*.548,ly+LOGO*.527], S1=LOGO*.50049/700;
-const S0=Math.min(W,H*.5)*.0075;
+const S0=Math.min(W,H*.5)*.0034;
 function frame(t){
  const x=Math.min(1,t/DURA),u=x*x*(3-2*x)*.6+(1-Math.pow(1-x,2))*.4;
  const s=S0*Math.pow(S1/S0,u), g=1-u;
@@ -238,10 +251,9 @@ function frame(t){
  $("sombra").setAttribute("opacity",(.9-Math.abs(bote)*.03)*(1-suave(2.3,2.9,t)));
  // ruedas: con la velocidad se ven borrosas, al frenar se ven las tuercas
  const sp=Math.min(1,v/700);
- ruedas.forEach(r=>{r.giro.setAttribute("transform",`rotate(${(d/46*180/Math.PI)%360})`);r.det.setAttribute("opacity",1-sp*.85);r.bor.setAttribute("opacity",sp*.9)});
+ const ropa=1-suave(2.75,2.9,t);ruedas.forEach(r=>{r.giro.parentNode.setAttribute("opacity",ropa);r.giro.setAttribute("transform",`rotate(${(d/44.5*180/Math.PI)%360})`);r.det.setAttribute("opacity",1-sp*.85);r.bor.setAttribute("opacity",sp*.9)});
  // brillo que cruza el camión una vez
  const bb=suave(1.5,2.2,t);$("brillo").setAttribute("opacity",bb>0&&bb<1?1:0);$("brillo").setAttribute("transform",`translate(${lerp(-60,760,bb)} 0) skewX(-20)`);
- $("faro").setAttribute("opacity",.5+.2*Math.sin(t*6));
  // conductor
  const per=suave(.45,.9,t);perfil.style.opacity=1-per;perfil.style.transform=`translateX(${-6*per}%) scaleX(${1-.18*per})`;
  frente.style.opacity=per;frente.style.transform=`translateX(${8*(1-per)}%) scaleX(${.82+.18*per})`;
@@ -250,12 +262,12 @@ function frame(t){
  // saludo
  const sube=suave(.5,1.0,t),baja=suave(1.95,2.2,t);
  const gate=suave(1.0,1.15,t)*(1-suave(1.8,2.0,t));
- const ola=Math.sin((t-1.0)*9)*7*gate, mano=Math.sin((t-1.0)*9+.8)*24*gate;
+ const ola=Math.sin((t-1.0)*9)*6*gate, mano=Math.sin((t-1.0)*9+.8)*22*gate;
  const ang=lerp(188,354,sube)+baja*194+ola; // sube y baja por fuera (hacia atrás), sin cruzar la cara
- $("antebrazo").setAttribute("transform",`translate(522 194) rotate(${ang})`);
+ $("antebrazo").setAttribute("transform",`rotate(${ang})`);
  $("mano").setAttribute("transform",`translate(0 -50) rotate(${mano})`);
- const ret=suave(1.9,2.2,t);$("brazo").setAttribute("transform",`translate(${28*ret} ${-8*ret})`);$("brazo").setAttribute("opacity",1-ret);
- $("cristal").setAttribute("transform",`translate(0 ${(1-suave(1.95,2.3,t))*80})`);
+ const ret=suave(1.9,2.2,t);$("brazo").setAttribute("transform",`translate(${9*ret} ${-2*ret})`);$("brazo").setAttribute("opacity",1-ret);
+ $("cristal").setAttribute("transform",`translate(0 ${(1-suave(1.95,2.3,t))*76})`);
  // el camión se funde y sale el logo
  const fc=1-suave(3.35,3.9,t);$("camion").style.opacity=fc;$("cam").style.opacity=1;
  const lo=suave(3.35,3.6,t),r=lerp(8,100,suave(3.35,4.55,t));
@@ -263,7 +275,7 @@ function frame(t){
  const m=`radial-gradient(circle at 54.8% 52.7%,#000 ${r-22}%,transparent ${r}%)`;logo.style.webkitMask=logo.style.mask=m;
  const sello=t<3.25?1:1-.07*Math.sin(Math.PI*Math.min(1,(t-3.25)/1.1));logo.style.transform=`scale(${sello})`;
  const aro=$("aro");aro.style.left=(lx-5)+"px";aro.style.top=(ly-5)+"px";
- $("aroC").setAttribute("stroke-dashoffset",100-100*suave(2.9,3.7,t));aro.style.opacity=t<2.9?0:1-suave(3.85,4.35,t);
+ $("aroC").setAttribute("stroke-dashoffset",100-100*suave(2.9,3.7,t));aro.style.opacity=suave(2.9,3.0,t)*(1-suave(3.85,4.35,t));
  const nm=$("nombre");nm.style.top=(ly+LOGO+22)+"px";nm.style.opacity=suave(3.75,4.35,t);
 }
 const q=new URLSearchParams(location.search);
