@@ -3,7 +3,7 @@
 window.SUPABASE_URL = "https://kdfedwcskymaitvpryvg.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_RLt0HuAMskXkKl2hxhUF2w_sCexGznp";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "67"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "68"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/SSCCOO/";
 // Clave pública de las notificaciones (la privada solo está en el servidor)
 window.VAPID_PUBLICA = "BMMdZjehtNipsScHJ__kzOIn9XCgIpya3UDDRlexxOAWJU-J6ZICDlf72ItPOebzl-SfzoU234pd82Chp87Vm1w";
@@ -208,4 +208,22 @@ window.coincide = (texto, q) => {
       else if (!e.shiftKey && (i === -1 || i === fs.length - 1)) { e.preventDefault(); fs[0].focus(); }
     }
   }, true);
+})();
+
+// Versión nueva: cuando el service worker nuevo toma el control (se publicó otra versión), se avisa con una banda
+// «Actualizar». Sin esto, la app instalada que se reanuda (Android la deja abierta en segundo plano) seguía enseñando
+// la versión vieja. Al volver a la app se pregunta si hay versión nueva.
+(function () {
+  if (!("serviceWorker" in navigator)) return;
+  const habia = !!navigator.serviceWorker.controller; // la primera vez que se instala no hay que avisar de nada
+  const comprobar = () => navigator.serviceWorker.getRegistration().then(r => r && r.update()).catch(() => {});
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) comprobar(); });
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!habia || document.getElementById("banda-version")) return;
+    const b = document.createElement("div");
+    b.id = "banda-version"; b.className = "banda-version"; b.setAttribute("role", "status");
+    b.innerHTML = `<span>Hay una versión nueva.</span><button type="button" class="btn">Actualizar</button>`;
+    b.querySelector("button").addEventListener("click", () => location.reload());
+    document.body.appendChild(b);
+  });
 })();

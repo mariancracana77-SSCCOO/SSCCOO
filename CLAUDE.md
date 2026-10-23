@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, público; GitHub Pages desde `main`, carpeta raíz). Desde la v65 se publica con Jekyll (sin `.nojekyll`) solo para que `_config.yml` deje fuera de la web CLAUDE.md, README.md, `herramientas/` y `pruebas/`; los demás archivos no llevan cabecera `---` y salen idénticos. Si se añade algo que no deba verse en la web, añadirlo a `exclude`. Ojo: el repositorio es público, así que en github.com se sigue viendo todo
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **67**
+- Versión actual: **68**
 
 ## Reglas del proyecto (no negociables)
 - **No publicar nada en GitHub sin que la usuaria lo confirme antes** (enseñar lo que cambia y esperar a «publica»).
@@ -106,7 +106,7 @@ Añadir una línea en `README.md` y entregar zip `SSCCOO-web-vN.zip`.
 1. **Antes de tocar `main`**, crear y subir una etiqueta de la versión que está publicada ahora (`git tag vN-1 <commit de main>` y `git push origin vN-1`), para poder volver atrás. Decírselo a la usuaria.
 2. Commit solo con los archivos modificados en esa versión, con mensaje claro en español (ej.: «v21: adjuntos en Convenio»).
 3. Subir a `main` (es la rama que publica GitHub Pages). **Nunca** `--force` ni reescribir historial. No subir al repo el zip, las copias de seguridad ni los archivos de prueba (salvo `pruebas/`, la prueba rápida, y `herramientas/`).
-4. Avisar a la usuaria con el enlace del commit y el tiempo que tarda en verse (GitHub Pages, 1–3 minutos; además el service worker pide recargar).
+4. Avisar a la usuaria con el enlace del commit y el tiempo que tarda en verse (GitHub Pages, 1–3 minutos). Desde la v68, la web y el panel abiertos enseñan la banda «Hay una versión nueva · Actualizar» (`#banda-version`, al final de `config.js`) cuando el service worker nuevo toma el control; al volver a la app se comprueba si hay versión nueva (`reg.update()`). Antes no había ningún aviso y la app instalada que Android deja abierta seguía con la versión vieja hasta cerrarla del todo.
    El permiso de GitHub no deja subir etiquetas (da 403): en su lugar, rama `respaldo-vN-1` apuntando al commit publicado (`git push origin <commit>:refs/heads/respaldo-vN-1`).
 5. Si falla (permisos, conflictos), **parar y explicarlo**. Nunca pedir ni aceptar tokens ni contraseñas por el chat: se usa el acceso a GitHub ya configurado.
 

@@ -75,6 +75,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 68: aviso de versión nueva
+- Cuando se publica una versión, la web y el panel que estén abiertos (también la app instalada que el móvil deja en segundo plano) enseñan «Hay una versión nueva» con el botón «Actualizar». Al volver a la app se comprueba si hay versión nueva.
+
 ## Versión 67: el panel, en partes más pequeñas
 - `admin.js` (unas 2.600 líneas) pasa a 7 archivos por temas: `admin-base.js`, `admin-sesion.js`, `admin-listas.js`, `admin-editor.js`, `admin-herramientas.js`, `admin-ajustes.js` y `admin-calendario.js`. El código es el mismo; solo cambia que el arranque espera a que estén cargadas todas las partes. No cambia nada de lo que se ve.
 - La prueba rápida (`pruebas/humo.cjs`) entra también en el panel con una sesión de prueba y abre todas las páginas y editores.
