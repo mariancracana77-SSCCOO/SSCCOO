@@ -41,7 +41,7 @@ const SECCIONES = {
       { k: "contenido", l: "Texto del aviso", t: "textarea", formato: true },
       { k: "adjuntos", l: "Archivos adjuntos", t: "archivos", opc: true, ayuda: "Si añades una foto o un cartel, la primera foto sale en grande en el aviso y en «Lo último»." },
       { checks: [{ k: "urgente", l: "Urgente: sale en rojo y arriba del todo en Inicio" }, { k: "fijado", l: "Fijar arriba de la lista de avisos" }, { k: "notificar", l: "Avisar en los móviles y en el canal de Telegram", def: true, soloNuevo: true }] },
-      { k: "publicar_en", l: "Programar la publicación", t: "datetime-local", opc: true, ayuda: "Déjalo vacío para publicar ahora. Si pones día y hora, se publicará y avisará solo en ese momento." },
+      { k: "publicar_en", l: "Programar la publicación", t: "datetime-local", opc: true, atajos: true, ayuda: "Déjalo vacío para publicar ahora. Si pones día y hora, se publicará y avisará solo en ese momento." },
     ],
     previa: (x) => previaCanales(x),
     extracto: (x) => x.contenido, chips: (x) => [x.publicar_en && new Date(x.publicar_en) > new Date() ? "Programado: " + new Date(x.publicar_en).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : null, x.categoria, x.urgente && "Urgente", x.fijado && "Fijado"], fechas: (x) => [x.fecha, x.actualizado],
@@ -347,6 +347,7 @@ $("b-entrar").onclick = async () => {
   msg("m-login", "Entrando…", true);
   const { error } = await sb.auth.signInWithPassword({ email: $("email").value.trim(), password: $("pass").value });
   if (!error) return;
+  $("problemas-entrar").open = true;
   msg("m-login", /confirm/i.test(error.message) ? "Falta confirmar la cuenta: abre el email que te ha llegado y pulsa el enlace."
     : /rate|too many/i.test(error.message) ? "Muchos intentos seguidos. Espera un par de minutos y vuelve a probar."
     : "Email o contraseña incorrectos. Si no la recuerdas, pulsa «He olvidado la contraseña» una sola vez.");
@@ -458,6 +459,7 @@ $("olvido-repite").onkeydown = (e) => { if (e.key === "Enter") $("b-olvido-guard
   const h = new URLSearchParams(location.hash.slice(1));
   if (!h.get("error") && !h.get("error_code")) return;
   history.replaceState(null, "", location.pathname);
+  $("problemas-entrar").open = true;
   setTimeout(() => msg("m-login", /expired|invalid/i.test(h.get("error_code") + h.get("error_description"))
     ? "Ese enlace ya no vale: ha caducado o ya se usó. Pulsa «He olvidado la contraseña» una vez y abre el email nuevo."
     : "No se ha podido abrir el enlace. Pulsa «He olvidado la contraseña» y prueba con el email nuevo."), 0);
@@ -540,6 +542,15 @@ function abrir(k) {
 }
 
 // ---------- Resumen ----------
+let CUENTAS_HTML = "";
+// «Publicar en un apartado»: hoja para elegir en cuál (Comité, Zona Conductores…)
+function abrirHojaApartados() {
+  $("hoja-mas").innerHTML = `<p class="hoja-tit">¿En qué apartado publicas?</p>` + APARTADOS.map(a =>
+    `<button data-pub-ap="${a.id}" class="${padreDe(a) ? "sub" : ""}">${icono(esc(a.icono || "carpeta"))}${esc(a.titulo)}${a.visible === false ? " <small>(oculto)</small>" : ""}</button>`).join("");
+  ["velo-mas", "hoja-mas"].forEach(i => $(i).classList.remove("oculto"));
+  $("hoja-mas").querySelectorAll("[data-pub-ap]").forEach(b => b.onclick = () => { cerrarMas(); abrirEditor("ap" + b.dataset.pubAp); });
+  $("hoja-mas").querySelector("button")?.focus();
+}
 async function pintaResumen() {
   $("zona").innerHTML = `<div class="sec-cab"><div><h1>Hola</h1><p>¿Qué quieres publicar hoy?</p></div></div>
     <div class="rapidos">
@@ -548,12 +559,21 @@ async function pintaResumen() {
       <button class="panel rapido" data-n="calendario"><span class="ic">${icono("calendario")}</span><span><b>Añadir una fecha</b><small>Asamblea, reunión…</small></span></button>
       <button class="panel rapido" data-n="documentos"><span class="ic">${icono("subir")}</span><span><b>Subir un documento</b><small>PDF, Word, Excel, fotos</small></span></button>
       <button class="panel rapido" data-n="convenio"><span class="ic">${icono("convenio")}</span><span><b>Apartado del convenio</b><small>Explicar un derecho</small></span></button>
+      ${APARTADOS.length ? `<button class="panel rapido" data-en-apartado><span class="ic">${icono("carpeta")}</span><span><b>Publicar en un apartado</b><small>${esc(APARTADOS.slice(0, 2).map(a => a.titulo).join(", "))}…</small></span></button>` : ""}
       <button class="panel rapido" data-orto><span class="ic">${icono("check")}</span><span><b>Revisar la ortografía</b><small>De todo lo publicado</small></span></button>
       <button class="panel rapido" data-ir="ajustes"><span class="ic">${icono("telegram")}</span><span><b>Telegram y avisos</b><small>Canales y cartel QR</small></span></button>
     </div>
     <div id="aviso-buzon"></div>
     <div id="recordatorio-copia"></div>
     <div id="banda-instalar"></div>
+    <div class="resumen-rejilla">
+      <div><h2 class="titulo-bloque">Próximos 14 días <a href="#" id="ir-cal">Ver calendario</a></h2><div class="panel proximos" id="proximos"><p class="fecha-txt">Cargando…</p></div></div>
+      <div><h2 class="titulo-bloque">Avisos programados</h2><div class="panel proximos" id="programados"><p class="fecha-txt">Cargando…</p></div></div>
+    </div>
+    <h2 class="titulo-bloque">Lo último que has publicado</h2>
+    <div class="lista-adm" id="ultimos"><p class="fecha-txt">Cargando…</p></div>
+    <details class="plegable-est" id="det-est">
+      <summary><h2 class="titulo-bloque">Visitas y estadísticas</h2><span class="fecha-txt">Toca para ver</span></summary>
     <h2 class="titulo-bloque">Visitas a la web</h2>
     <div class="panel visitas" id="visitas"><p class="fecha-txt">Cargando…</p></div>
     <h2 class="titulo-bloque">Estadísticas</h2>
@@ -562,14 +582,15 @@ async function pintaResumen() {
       <section class="panel graf"><h3>Móviles con avisos activados</h3><p class="fecha-txt">Por semana.</p><div id="est-suscritos"><p class="fecha-txt">Cargando…</p></div></section>
       <section class="panel graf"><h3>Secciones más visitadas</h3><p class="fecha-txt">Últimos 30 días.</p><div id="est-secciones"><p class="fecha-txt">Cargando…</p></div></section>
     </div>
-    <div class="resumen-rejilla">
-      <div><h2 class="titulo-bloque">Próximos 14 días <a href="#" id="ir-cal">Ver calendario</a></h2><div class="panel proximos" id="proximos"><p class="fecha-txt">Cargando…</p></div></div>
-      <div><h2 class="titulo-bloque">Avisos programados</h2><div class="panel proximos" id="programados"><p class="fecha-txt">Cargando…</p></div></div>
-    </div>
-    <h2 class="titulo-bloque">Lo último que has publicado</h2>
-    <div class="cuentas" id="cuentas"></div>
-    <div class="lista-adm" id="ultimos"><p class="fecha-txt">Cargando…</p></div>`;
+        <div class="cuentas" id="cuentas"></div>
+    </details>`;
   $("zona").querySelectorAll("[data-n]").forEach(b => b.onclick = () => abrirEditor(b.dataset.n));
+  // Visitas y estadísticas, plegadas al final: solo se cargan al abrirlas (y se recuerda si se dejaron abiertas)
+  const det = $("det-est");
+  const cargaEst = () => { if (!det.open || det.dataset.cargado) return; det.dataset.cargado = 1; pintaVisitas(); pintaEstadisticas(); };
+  try { det.open = localStorage.getItem("ccoo-adm-est") === "1"; } catch (_) {}
+  det.ontoggle = () => { try { localStorage.setItem("ccoo-adm-est", det.open ? "1" : "0"); } catch (_) {} cargaEst(); };
+  cargaEst();
   pintaBandaInstalar();
   contarBuzon().then(n => {
     if (!n || !$("aviso-buzon")) return;
@@ -577,6 +598,7 @@ async function pintaResumen() {
     $("ir-buzon").onclick = () => abrir("buzon");
   });
   $("zona").querySelector("[data-orto]").onclick = () => abrir("ortografia");
+  if ($("zona").querySelector("[data-en-apartado]")) $("zona").querySelector("[data-en-apartado]").onclick = abrirHojaApartados;
   $("zona").querySelector("[data-ir]").onclick = () => { abrir("ajustes"); setTimeout(() => $("ajuste-canales")?.scrollIntoView({ behavior: "smooth" }), 400); };
   sb.from("paginas").select("contenido").eq("slug", "ultima_copia").maybeSingle().then(({ data }) => {
     const f = data?.contenido, dias = f ? (Date.now() - new Date(f)) / 86400000 : Infinity;
@@ -594,14 +616,13 @@ async function pintaResumen() {
   if (pubs.error) throw pubs.error;
   APARTADOS.forEach(a => { datos["ap" + a.id] = (pubs.data || []).filter(p => p.apartado_id === a.id); });
   datos.apartados = [...APARTADOS];
-  $("cuentas").innerHTML = Object.entries(SECCIONES).filter(([, s]) => !s.oculta).map(([k, s]) => `<span class="etq">${(datos[k] || []).length} ${esc(s.nombre.toLowerCase())}</span>`).join("");
+  CUENTAS_HTML = Object.entries(SECCIONES).filter(([, s]) => !s.oculta).map(([k, s]) => `<span class="etq">${(datos[k] || []).length} ${esc(s.nombre.toLowerCase())}</span>`).join("");
   const todos = Object.entries(SECCIONES).filter(([, s]) => !s.oculta).flatMap(([k, s]) => (datos[k] || []).map(x => ({ k, x, f: s.fechas(x)[1] || s.fechas(x)[0] })))
     .sort((a, b) => new Date(b.f) - new Date(a.f)).slice(0, 6);
   $("ultimos").innerHTML = todos.length ? todos.map(({ k, x }) => itemHTML(k, x, true)).join("") : `<div class="panel vacio">${icono("avisos")}Todavía no has publicado nada.</div>`;
   enlazarItems($("ultimos"));
   resaltaGuardado($("ultimos"));
-  pintaVisitas();
-  pintaEstadisticas();
+  if ($("cuentas")) $("cuentas").innerHTML = CUENTAS_HTML;
   // Próximos días y programados
   $("ir-cal").onclick = (e) => { e.preventDefault(); VISTA_CAL.modo = "mes"; abrir("calendario"); };
   const hoy = hoyISO(), lim = isoLocal(new Date(Date.now() + 14 * 86400000));
@@ -769,6 +790,22 @@ function enlazarItems(cont) {
   cont.querySelectorAll("[data-abrir-ap]").forEach(b => b.onclick = () => abrir("ap" + b.dataset.abrirAp));
   cont.querySelectorAll("[data-ajustes-ap]").forEach(b => b.onclick = () => abrirEditor("apartados", datos.apartados.find(x => x.id == b.dataset.ajustesAp)));
 }
+// Filtros rápidos encima de la lista: solo salen los que tienen algo
+const RAPIDOS = {
+  programados: ["Programados", x => x.publicar_en && new Date(x.publicar_en) > new Date()],
+  ocultos: ["Ocultos", x => x.publicado === false || x.publicada === false || x.visible === false],
+  urgentes: ["Urgentes", x => x.urgente],
+  fijados: ["Fijados", x => x.fijado],
+  importantes: ["Con cuenta atrás", x => x.importante],
+};
+function pintaRapidos(k, ff, repintar) {
+  const cont = $("rapidos-lista"); if (!cont) return;
+  const hay = Object.entries(RAPIDOS).map(([c, [t, f]]) => [c, t, datos[k].filter(f).length]).filter(([, , n]) => n);
+  if (ff.rapido && !hay.some(([c]) => c === ff.rapido)) ff.rapido = "";
+  cont.innerHTML = hay.length ? `<button type="button" class="filtro ${ff.rapido ? "" : "activo"}" data-rapido="" aria-pressed="${!ff.rapido}">Todo</button>` +
+    hay.map(([c, t, n]) => `<button type="button" class="filtro ${ff.rapido === c ? "activo" : ""}" data-rapido="${c}" aria-pressed="${ff.rapido === c}">${t} <span class="cuenta">${n}</span></button>`).join("") : "";
+  cont.querySelectorAll("[data-rapido]").forEach(b => b.onclick = () => { ff.rapido = b.dataset.rapido; repintar(); });
+}
 async function pintaSeccion(k) {
   const s = SECCIONES[k];
   if (k === "calendario" && VISTA_CAL.modo === "mes") return pintaCalAdm();
@@ -779,6 +816,7 @@ async function pintaSeccion(k) {
     ${k === "calendario" ? cambioVistaCal() : ""}
     <div class="herramientas"><div class="buscador">${icono("buscar", "p")}<input id="buscar" type="search" placeholder="Buscar en ${s.nombre.toLowerCase()} (también fechas: 12/10, octubre…)" aria-label="Buscar"></div></div>
     ${FECHA_DE[k] ? `<div class="filtro-fechas" id="fechas-adm"></div>` : ""}
+    <div class="filtro-fechas rapidos-lista" id="rapidos-lista" role="group" aria-label="Ver solo"></div>
     <div class="lista-adm" id="lista"><p class="fecha-txt">Cargando…</p></div>`;
   $("b-nuevo").onclick = () => abrirEditor(k);
   if ($("b-recurrentes")) $("b-recurrentes").onclick = () => abrir("recurrentes");
@@ -790,13 +828,14 @@ async function pintaSeccion(k) {
   const pinta = () => {
     if (FECHA_DE[k]) pintaFechasAdm(datos[k], k, ff, pinta);
     const q = $("buscar").value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const l = datos[k].filter(x => pasaFechaAdm(ff, FECHA_DE[k]?.(x)) &&
+    pintaRapidos(k, ff, pinta);
+    const l = datos[k].filter(x => pasaFechaAdm(ff, FECHA_DE[k]?.(x)) && (!ff.rapido || RAPIDOS[ff.rapido]?.[1](x)) &&
       (!q || coincide(Object.values(x).filter(v => typeof v === "string").join(" ") + " " + (x.adjuntos || []).map(j => j.nombre).join(" ") + " " + textoFecha(FECHA_DE[k]?.(x)), q)));
-    const ordenable = REORDENABLE(k) && !q && l.length > 1;
+    const ordenable = REORDENABLE(k) && !q && !ff.rapido && l.length > 1;
     if (!ordenable) $("ayuda-orden")?.remove();
     if (ordenable && !$("ayuda-orden")) $("lista").insertAdjacentHTML("beforebegin", `<p class="ayuda" id="ayuda-orden">${icono("arrastrar", "p")} Para cambiar el orden, arrastra desde las rayas de la izquierda (con el dedo o el ratón).</p>`);
     $("lista").innerHTML = l.length ? (ordenable ? l.map(x => filaOrden(k, x)).join("") : l.map(x => itemHTML(k, x)).join("")) :
-      `<div class="panel vacio">${icono(s.icono)}${q || ff.a || ff.m || ff.d ? "Nada coincide con la búsqueda o la fecha." : `Todavía no hay nada. Pulsa «${s.nuevo}» para empezar.`}</div>`;
+      `<div class="panel vacio">${icono(s.icono)}${q || ff.a || ff.m || ff.d || ff.rapido ? "Nada coincide con la búsqueda o la fecha." : `Todavía no hay nada. Pulsa «${s.nuevo}» para empezar.`}</div>`;
     enlazarItems($("lista"));
     if (ordenable) hacerOrdenable($("lista"), k);
     resaltaGuardado($("lista"));
@@ -841,6 +880,7 @@ function validarArchivo(f) {
 }
 
 // ---------- Editor ----------
+const TABLAS_AVISO = ["comunicados", "eventos", "actas", "documentos", "publicaciones", "encuestas"]; // las que sabe avisar la función «notificar»
 let ED = null; // { k, orig, pendientes:[File], existentes:[adj], quitar:[url], sucio }
 function campoHTML(c, v) {
   const id = "f-" + c.k, opc = c.opc ? " <small>(opcional)</small>" : "", ayuda = c.ayuda ? `<p class="ayuda">${c.ayuda}</p>` : "";
@@ -863,10 +903,24 @@ function campoHTML(c, v) {
   }
   if (c.t === "datetime-local") {
     const loc = v ? new Date(new Date(v) - new Date(v).getTimezoneOffset() * 6e4).toISOString().slice(0, 16) : "";
-    return `<label for="${id}">${c.l}${opc}</label><input id="${id}" type="datetime-local" value="${loc}">${ayuda}`;
+    const atajos = c.atajos ? `<div class="atajos-hora" role="group" aria-label="Atajos">${ATAJOS_HORA.map(([t], i) => `<button type="button" class="btn sec peq" data-atajo="${i}" data-para="${id}">${t}</button>`).join("")}<button type="button" class="btn sec peq" data-atajo="" data-para="${id}">Ahora (sin programar)</button></div>` : "";
+    return `<label for="${id}">${c.l}${opc}</label><input id="${id}" type="datetime-local" value="${loc}">${atajos}${ayuda}`;
   }
   return `<label for="${id}">${c.l}${opc}</label><input id="${id}" type="${c.t}" value="${esc(v ?? "")}" ${c.t === "text" ? 'spellcheck="true" autocapitalize="sentences" autocorrect="on"' : ""} ${c.ph ? `placeholder="${esc(c.ph)}"` : ""} ${c.paso ? `step="${c.paso}" min="0" inputmode="decimal"` : ""}>${ayuda}`;
 }
+// Atajos para programar: el campo de fecha y hora es incómodo en el móvil
+const aLas8 = (d) => { d.setHours(8, 0, 0, 0); return d; };
+const ATAJOS_HORA = [
+  ["Mañana a las 8:00", () => { const d = new Date(); d.setDate(d.getDate() + 1); return aLas8(d); }],
+  ["El lunes a las 8:00", () => { const d = new Date(); d.setDate(d.getDate() + ((8 - d.getDay()) % 7 || 7)); return aLas8(d); }],
+];
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-atajo]"); if (!b) return;
+  const el = $(b.dataset.para); if (!el) return;
+  const d = b.dataset.atajo === "" ? null : ATAJOS_HORA[+b.dataset.atajo][1]();
+  el.value = d ? new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16) : "";
+  el.dispatchEvent(new Event("input", { bubbles: true })); el.dispatchEvent(new Event("change", { bubbles: true }));
+});
 const camposPlanos = (s) => s.campos.flatMap(c => c.fila || c.checks?.map(x => ({ ...x, t: "check" })) || [c]);
 
 function abrirEditor(k, orig = null, preset = {}) {
@@ -897,7 +951,12 @@ function abrirEditor(k, orig = null, preset = {}) {
     (s.asistente && !orig ? `<div class="separador">Revisa el acta y publícala</div>` : "") +
     s.campos.map(c => {
       if (c.fila) return `<div class="fila">${c.fila.map(f => `<div${f.si ? ` data-si="${f.si}"` : ""}>${campoHTML(f, x[f.k] ?? def[f.k] ?? f.def)}</div>`).join("")}</div>`;
-      if (c.checks) { const v = c.checks.filter(ch => !(ch.soloNuevo && orig)); return v.length ? `<div class="grupo-check">${v.map(ch => `<label class="check"><input type="checkbox" id="f-${ch.k}" ${(x[ch.k] ?? ch.def) ? "checked" : ""}>${ch.l}</label>`).join("")}</div>` : ""; }
+      if (c.checks) {
+        const v = c.checks.filter(ch => !(ch.soloNuevo && orig));
+        // Al editar algo que ya avisó: casilla para avisar otra vez (por ejemplo, si cambia la hora de una asamblea)
+        const re = orig && c.checks.some(ch => ch.k === "notificar") && TABLAS_AVISO.includes(s.tabla) ? `<label class="check"><input type="checkbox" id="f-reavisar">Avisar otra vez de este cambio en los móviles y en Telegram</label>` : "";
+        if (re) return `<div class="grupo-check">${v.map(ch => `<label class="check"><input type="checkbox" id="f-${ch.k}" ${(x[ch.k] ?? ch.def) ? "checked" : ""}>${ch.l}</label>`).join("")}${re}</div>`;
+        return v.length ? `<div class="grupo-check">${v.map(ch => `<label class="check"><input type="checkbox" id="f-${ch.k}" ${(x[ch.k] ?? ch.def) ? "checked" : ""}>${ch.l}</label>`).join("")}</div>` : ""; }
       return c.si ? `<div data-si="${c.si}">${campoHTML(c, x[c.k] ?? def[c.k] ?? c.def)}</div>` : campoHTML(c, x[c.k] ?? def[c.k] ?? c.def);
     }).join("");
 
@@ -1053,8 +1112,15 @@ function actualizarPrevia() {
   $("ed-previa").querySelectorAll("a").forEach(a => a.onclick = (e) => { if (a.getAttribute("href") === "#" || a.href.startsWith("blob:")) e.preventDefault(); });
 }
 // El botón de guardar dice lo que va a pasar: un aviso a los móviles no se puede retirar, así que se ve antes de pulsar
+// Encuestas: con votos, las opciones que ya había deben seguir en el mismo sitio (los votos van por posición)
+function opcionesSeguras(orig, fila) {
+  const v = VOTOS[orig.id] || {};
+  if (!Object.values(v).some(n => n > 0)) return true;
+  const antes = opcionesEncuesta(orig), ahora = opcionesEncuesta(fila);
+  return antes.every((o, i) => ahora[i] === o);
+}
 function textoGuardar(f) {
-  if (ED.orig) return ["check", "Guardar cambios"];
+  if (ED.orig) return $("f-reavisar")?.checked ? ["campana", "Guardar y avisar del cambio"] : ["check", "Guardar cambios"];
   if (f.publicado === false || f.publicada === false || f.visible === false) return ["check", "Guardar sin publicar"];
   const avisa = "notificar" in f && ED.k !== "recurrentes";
   if (f.publicar_en && new Date(f.publicar_en) > new Date()) return ["reloj", avisa ? (f.notificar ? "Programar y avisar" : "Programar sin avisar") : "Programar"];
@@ -1127,6 +1193,10 @@ $("ed-guardar").onclick = async () => {
     const n = opcionesEncuesta(fila).length;
     if (n < 2 || n > 6) return marcaFalta("f-opciones", "Pon de 2 a 6 opciones, una por línea.");
   }
+  if (ED.k === "calendario" && fila.hora && fila.hora_fin && fila.hora_fin < fila.hora
+    && !confirm(`La hora de fin (${fila.hora_fin}) es antes que la de inicio (${fila.hora}). ¿Guardar igualmente?`)) return marcaFalta("f-hora_fin", "Revisa la hora de fin: es antes que la de inicio.");
+  if (ED.k === "encuestas" && ED.orig && !opcionesSeguras(ED.orig, fila)
+    && !confirm("Esta encuesta ya tiene votos y has quitado o cambiado de sitio alguna opción. Los votos van por posición: pasarían a la opción que ahora ocupa ese lugar.\n\nSi solo has corregido una falta, puedes guardar. ¿Guardar igualmente?")) return marcaFalta("f-opciones", "Deja las opciones con votos en su sitio; las nuevas, al final.");
   if (!(await revisarOrtografia(s, fila))) return;
   if (["enlaces", "restricciones"].includes(ED.k) && fila.url && !/^https?:\/\//.test(fila.url)) fila.url = "https://" + fila.url;
   if (s.filtro) Object.assign(fila, s.filtro);
@@ -1155,6 +1225,8 @@ $("ed-guardar").onclick = async () => {
     if (ED.k === "documentos") { const a = adj[0]; Object.assign(fila, { url: a.url, nombre_archivo: a.nombre, tipo_archivo: a.tipo, tamano: a.tamano || null }); }
     else if (s.campos.some(c => c.t === "archivos")) fila.adjuntos = adj;
     if (fila.publicar_en && new Date(fila.publicar_en) < new Date(Date.now() - 60000)) { if (!confirm("La fecha programada ya ha pasado. ¿Publicar ahora?")) { btn.disabled = false; return msg("ed-msg", ""); } fila.publicar_en = null; }
+    const reavisar = !!(ED.orig && $("f-reavisar")?.checked);
+    if (reavisar) Object.assign(fila, { notificar: true, notificado: false });
     const q = ED.orig ? sb.from(s.tabla).update(fila).eq("id", ED.orig.id).select("*").single() : sb.from(s.tabla).insert(fila).select("*").single();
     const { data: guardado, error } = await q;
     if (error) throw error;
@@ -1170,6 +1242,10 @@ $("ed-guardar").onclick = async () => {
     RESALTAR = { k, id: guardado.id };
     abrir(["resumen", "calendario"].includes(actual) ? actual : (s.volver || k));
     if (fila.publicado === false || fila.publicada === false || (k === "convenio" && fila.visible === false)) return aviso(editado ? "Cambios guardados. Está oculto: no se ve en la web." : "Guardado sin publicar: no se ve en la web y no se ha avisado a nadie. Para publicarlo, ábrelo y marca «Se ve en la web».");
+    if (reavisar) {
+      const r = await sb.functions.invoke("notificar", { body: { modo: "publicado", tabla: s.tabla, id: guardado.id, cambio: true } }).catch(() => null);
+      return trasPublicar(k, guardado, r?.data || null);
+    }
     if (editado || s.oculta) return aviso(editado ? "Cambios guardados. Ya se ven en la web." : "Guardado. Ya se ve en la web.");
     // Avisar a los móviles y a Telegram
     let res = null;

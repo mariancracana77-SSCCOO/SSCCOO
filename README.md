@@ -91,6 +91,14 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Próxima cita** (el rótulo de Inicio cuando no hay nada urgente): diseño nuevo de carretera. El título sale en un panel luminoso de autopista (letras blancas de puntos y luces rojas que parpadean en las esquinas) y, debajo, en un poste, dos señales en el rojo del logo: el lugar con los días que faltan (como los kilómetros de una señal) y el día y la hora. Prefiere reuniones y asambleas a los festivos y, si es la misma cita que la cuenta atrás, no se repite.
 - **Animación de entrada**: ahora empieza cuando la página ha cargado (en la app instalada, Android tapaba los primeros segundos con su pantalla y la animación terminaba sin verse) y sale aunque el móvil tenga «quitar animaciones» (lo activa el ahorro de batería). Se sigue saltando tocándola.
 
+## Versión 66: Inicio del panel y formularios más cómodos
+- **Inicio del panel**: lo de cada día arriba (accesos, próximas fechas, avisos programados y lo último); las visitas y estadísticas, plegadas al final, solo se cargan al abrirlas. Nuevo acceso «Publicar en un apartado» (Comité, Zona Conductores…).
+- **Programar con atajos**: «Mañana a las 8:00», «El lunes a las 8:00» y «Ahora (sin programar)».
+- **Avisos de errores fáciles**: hora de fin antes que la de inicio en el calendario, y opciones movidas o quitadas en una encuesta que ya tiene votos.
+- **Filtros rápidos** encima de cada lista: Programados, Ocultos, Urgentes, Fijados y Con cuenta atrás (solo salen los que tienen algo).
+- **Volver a avisar de un cambio**: al editar un aviso, fecha, acta, documento, publicación o encuesta, casilla «Avisar otra vez de este cambio»; la notificación sale como «Cambio: …».
+- **Pantalla de entrar** más limpia: los enlaces de contraseña y cuenta nueva, dentro de «¿Problemas para entrar?» (se abre solo si falla la entrada).
+
 ## Versión 65: panel más claro al publicar
 - **El botón dice lo que va a pasar**: «Publicar y avisar», «Publicar sin avisar», «Programar y avisar» o «Guardar sin publicar», según lo marcado. Un aviso a los móviles no se puede retirar, así que se ve antes de pulsar.
 - **Lo que falta, en el propio campo**: borde rojo y la frase debajo (por ejemplo, el título o el archivo de un documento); se quita al escribir.

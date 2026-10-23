@@ -13,10 +13,10 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="fuentes.css?v=65">
-<script src="lectura.js?v=65"></script>
-<link rel="stylesheet" href="styles.css?v=65">
-<link rel="stylesheet" href="admin.css?v=65">
+<link rel="stylesheet" href="fuentes.css?v=66">
+<script src="lectura.js?v=66"></script>
+<link rel="stylesheet" href="styles.css?v=66">
+<link rel="stylesheet" href="admin.css?v=66">
 </head>
 <body class="admin">
 <header class="cabecera">
@@ -35,13 +35,16 @@
     <label for="email">Email</label><input id="email" type="email" value="ssccoo.calsinacarre@gmail.com" autocomplete="username">
     <label for="pass">Contraseña</label><input id="pass" type="password" autocomplete="current-password">
     <div class="botones"><button class="btn" id="b-entrar" style="flex:1">Entrar</button></div>
-    <div class="enlaces-login">
-      <button id="b-registro">Primera vez: crear la cuenta</button>
-      <button id="b-olvido">He olvidado la contraseña</button>
-      <button id="b-tengo-codigo">Ya tengo el código del email</button>
-      <button id="b-rescate">Tengo un código de rescate</button>
-    </div>
     <div class="msg" id="m-login"></div>
+    <details class="problemas-entrar" id="problemas-entrar">
+      <summary>¿Problemas para entrar?</summary>
+      <div class="enlaces-login">
+        <button id="b-olvido">He olvidado la contraseña</button>
+        <button id="b-tengo-codigo">Ya tengo el código del email</button>
+        <button id="b-rescate">Tengo un código de rescate</button>
+        <button id="b-registro">Primera vez: crear la cuenta</button>
+      </div>
+    </details>
   </section>
 </main>
 
@@ -140,10 +143,10 @@
   </div>
 </section>
 
-<script src="lib/supabase.js?v=65"></script>
-<script src="iconos.js?v=65"></script>
-<script src="config.js?v=65"></script>
-<script src="render.js?v=65"></script>
-<script src="admin.js?v=65"></script>
+<script src="lib/supabase.js?v=66"></script>
+<script src="iconos.js?v=66"></script>
+<script src="config.js?v=66"></script>
+<script src="render.js?v=66"></script>
+<script src="admin.js?v=66"></script>
 </body>
 </html>
