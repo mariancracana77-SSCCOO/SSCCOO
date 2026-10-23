@@ -75,6 +75,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 77: avisos claros de usos y límites
+
+- Traducir: el menú de idiomas y cada tarjeta traducida avisan de que es traducción automática con IA, que puede tener errores y que vale el texto en español (`.menu-aviso`, `.aviso-trad`).
+- Mis descansos: el aviso de que es solo una ayuda (no prueba oficial, no sustituye al tacógrafo) sube arriba de la pantalla y explica para qué sirve y para qué no; la copia en PDF lleva lo mismo.
+- Función `traducir` (Supabase): reintenta con espera si Gemini da 503 o 429 y apunta cada fallo en el registro.
+
 ## Versión 76: guía de Mis descansos al día
 
 La guía rápida explica cómo empezar con una hora anterior y cómo corregir lo apuntado con el lápiz.
