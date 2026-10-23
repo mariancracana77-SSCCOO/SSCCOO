@@ -358,7 +358,7 @@
       return F === "finde" ? tocaFinde(x.ini, x.fin) : !tocaFinde(x.ini, x.fin);
     };
     const filas = [...DATOS.lista, ...dd.js.map(j => ({ ...j, _j: true }))].filter(pasa).sort((a, b) => b.fin - a.fin);
-    const quitar = (id, txt) => `<button class="btn-ic" data-quita="${esc(id)}" aria-label="${esc(txt)}">${icono("borrar", "p")}</button>`;
+    const quitar = (id, txt, edita) => (edita ? `<button class="btn-ic" data-edita="${esc(id)}" aria-label="${esc(T("Cambiar las horas"))}" title="${esc(T("Cambiar las horas"))}">${icono("editar", "p")}</button>` : "") + `<button class="btn-ic" data-quita="${esc(id)}" aria-label="${esc(txt)}">${icono("borrar", "p")}</button>`;
     $("desc-lista").innerHTML = filas.length ? filas.map(x => {
       if (x._j) {
         const et = { normal: x.doble ? T("Descanso diario de 9 h (doble tripulación)") : T("Descanso diario normal"), reducido: T("Descanso diario reducido"), partido: T("Descanso diario partido (3 h + 9 h)"), falta: T("Descanso diario insuficiente"), pendiente: T("Falta apuntar lo siguiente") }[x.clase];
@@ -369,7 +369,7 @@
         return `<li class="desc-fila jornada ${x.clase}"><div><b>${esc(fmt(x.ini))} → ${esc(fmt(x.fin))}</b>
           <small><span class="desc-clase">${esc(T("Jornada"))}</span> · ${esc(horas((x.fin - x.ini) / H))}${notas.length ? " · " + notas.map(esc).join(" · ") : ""}</small>
           <small><span class="desc-clase">${esc(et)}</span></small>
-          ${malas.map(m => `<span class="desc-mal">${icono("alerta", "p")}${esc(m)}</span>`).join("")}</div>${quitar(x.id, T("Quitar esta jornada"))}</li>`;
+          ${malas.map(m => `<span class="desc-mal">${icono("alerta", "p")}${esc(m)}</span>`).join("")}</div>${quitar(x.id, T("Quitar esta jornada"), 1)}</li>`;
       }
       if (x.tipo === "comp") return `<li class="desc-fila comp"><div><b>${esc(T("Compensación: {horas}", { horas: horas(+x.horas) }))}</b><small>${esc(T("Sumadas a un descanso diario que acabó el {fecha}", { fecha: fmt(x.fin) }))}</small></div>${quitar(x.id, T("Quitar"))}</li>`;
       const s = c.sem.find(y => y.id === x.id), et = s.clase === "normal" ? T("Normal") : s.clase === "reducido" ? T("Reducido") : T("No llega a 24 h"), deuda = c.deudas.find(d => d.de.id === x.id);
@@ -381,11 +381,33 @@
       const dTxt = deuda ? (deuda.queda > 0.05 ? T("faltan {horas} por compensar", { horas: horas(deuda.queda) }) : T("compensado")) : "";
       return `<li class="desc-fila ${s.clase}"><div><b>${esc(fmt(x.ini))} → ${esc(fmt(x.fin))}</b>
         <small><span class="desc-clase">${esc(T("Descanso semanal"))} · ${esc(et)}</span> · ${esc(horas(s.h))}${dTxt ? " · " + esc(dTxt) : ""}${notas.length ? " · " + notas.map(esc).join(" · ") : ""}</small>
-        ${malas.map(m => `<span class="desc-mal">${icono("alerta", "p")}${esc(m)}</span>`).join("")}</div>${quitar(x.id, T("Quitar este descanso"))}</li>`;
+        ${malas.map(m => `<span class="desc-mal">${icono("alerta", "p")}${esc(m)}</span>`).join("")}</div>${quitar(x.id, T("Quitar este descanso"), 1)}</li>`;
     }).join("") : `<li class="desc-vacio">${esc(F === "todo" ? T("Todavía no has apuntado nada.") : T("No hay nada de este tipo."))}</li>`;
     $("desc-lista").querySelectorAll("[data-quita]").forEach(b => b.onclick = () => {
       if (!confirm(T("¿Quitarlo de tu lista?"))) return;
       DATOS.lista = DATOS.lista.filter(x => x.id !== b.dataset.quita); DATOS.jornadas = DATOS.jornadas.filter(x => x.id !== b.dataset.quita); guarda(); pinta();
+    });
+    $("desc-lista").querySelectorAll("[data-edita]").forEach(b => b.onclick = () => {
+      const li = b.closest("li"), id = b.dataset.edita, j = DATOS.jornadas.find(x => x.id === id), x = j || DATOS.lista.find(y => y.id === id);
+      if (!x || li.querySelector(".desc-edita")) return;
+      const f = document.createElement("div"); f.className = "desc-edita";
+      f.innerHTML = `<label>${esc(j ? T("Empezaste") : T("Empezó el descanso"))}<input type="datetime-local" id="ed-ini" value="${aLocal(x.ini)}"></label>
+        <label>${esc(j ? T("Terminaste") : T("Terminó el descanso"))}<input type="datetime-local" id="ed-fin" value="${aLocal(x.fin)}"></label>
+        <p class="msg" id="ed-msg" role="alert"></p>
+        <div class="botones"><button class="btn" id="ed-ok">${esc(T("Guardar los cambios"))}</button><button class="enlace-desact" id="ed-no">${esc(T("Cancelar"))}</button></div>`;
+      li.appendChild(f);
+      $("ed-no").onclick = () => f.remove();
+      $("ed-ok").onclick = () => {
+        const ini = new Date($("ed-ini").value).getTime(), fin = new Date($("ed-fin").value).getTime(), m = $("ed-msg");
+        const mal = (t) => { m.textContent = t; m.className = "msg err"; };
+        if (!ini || !fin) return mal(T("Pon cuándo empezó y cuándo acabó."));
+        if (fin <= ini) return mal(T("El final tiene que ser después del principio."));
+        if (fin > Date.now() + MIN) return mal(T("El final no puede ser en el futuro."));
+        if (j ? fin - ini > 30 * H : fin - ini > 14 * DIA) return mal(j ? T("Una jornada no puede pasar de 30 horas. Revisa las fechas.") : T("Un descanso de más de 14 días no parece un descanso semanal (¿vacaciones?). Revisa las fechas."));
+        if (DATOS.jornadas.some(y => y.id !== id && ini < y.fin && fin > y.ini) && j) return mal(T("Se solapa con otra jornada que ya tienes apuntada."));
+        if (DATOS.lista.some(y => y.id !== id && y.tipo !== "comp" && ini < y.fin && fin > y.ini)) return mal(T("Se solapa con otro descanso que ya tienes apuntado."));
+        x.ini = ini; x.fin = fin; guarda(); pinta();
+      };
     });
     $("desc-doble").checked = !!DATOS.doble;
     $("desc-internacional").checked = !!DATOS.internacional;
