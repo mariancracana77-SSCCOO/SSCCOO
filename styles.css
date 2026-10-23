@@ -1466,7 +1466,7 @@ html[data-letra] .subpestanas a { font-size: .92rem; }
 .desc-mas { border-top: 1px solid var(--linea); padding-top: 10px; }
 .desc-mas[open] summary { margin-bottom: 10px; }
 #v-descansos .aviso-oficial, #v-descansos .aviso-oficial span { font-weight: 400; }
-#v-descansos .aviso-oficial { margin-top: 16px; }
+#v-descansos .aviso-oficial { margin: 0 0 14px; }
 .desc-copias { display: flex; gap: 8px; flex-wrap: wrap; }
 .desc-copias .btn { flex: 1 1 auto; }
 .desc-cifras > div { padding: 12px 14px; }
@@ -1635,3 +1635,7 @@ html[data-letra] .subpestanas a { font-size: .92rem; }
 .desc-fila { flex-wrap: wrap; }
 .desc-fila > div:first-child { flex: 1 1 0; min-width: 0; }
 .desc-fila > .desc-edita { flex: 1 1 100%; order: 5; }
+
+/* v77: aviso de traducción automática */
+.menu-idiomas .menu-aviso { grid-column: 1 / -1; margin: 0 0 4px; padding: 6px 10px 8px; font-size: .8rem; line-height: 1.35; color: var(--suave); border-bottom: 1px solid var(--linea); }
+.aviso-trad { margin: 8px 0 0; font-size: .8rem; line-height: 1.35; color: var(--suave); }

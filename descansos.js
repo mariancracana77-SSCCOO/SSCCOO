@@ -48,7 +48,7 @@
     avisar: T("Avisarme en el móvil antes de mis descansos y de los plazos de compensación. Al servidor solo va cuándo avisarte y el texto del aviso, sin tu nombre; se borra al enviarse."),
     copia: T("Guardar una copia (PDF)"), recupera: T("Recuperar una copia"), borrar: T("Borrar todo"),
     ayudacopia: T("Guarda una copia de vez en cuando (y antes de cambiar de móvil): si se borran los datos del navegador, se pierde lo apuntado."),
-    oficial: T("Orientativo. Manda lo que registra el tacógrafo y el Reglamento (CE) 561/2006. Cálculos según el cuadernillo «Tiempos de conducción y descanso» de FENADISMER (mayo 2026) y el II Acuerdo Marco. Ante la duda, pregunta a un delegado."),
+    oficial: T("Solo es una ayuda para organizarte: sirve para saber cuándo te toca descansar y llevar la cuenta de lo que tienes que compensar. No es una prueba oficial ni sustituye al tacógrafo: manda lo que registra el tacógrafo y el Reglamento (CE) 561/2006. Cálculos según el cuadernillo «Tiempos de conducción y descanso» de FENADISMER (mayo 2026) y el II Acuerdo Marco. Ante la duda, pregunta a un delegado."),
   });
   // Guía rápida (plegable, traducible)
   const GUIA = () => [
@@ -471,7 +471,7 @@
       if (sd.enCabina) L("Atención: el descanso normal no se puede hacer en la cabina.", 9, false, 12);
     });
     L("");
-    L("Orientativo. Manda lo que registra el tacógrafo y el Reglamento (CE) 561/2006. Cálculos según el cuadernillo «Tiempos de conducción y descanso» de FENADISMER (mayo 2026) y el II Acuerdo Marco.", 8);
+    L("Solo es una ayuda para organizarte; no es una prueba oficial ni sustituye al tacógrafo. Manda lo que registra el tacógrafo y el Reglamento (CE) 561/2006. Cálculos según el cuadernillo «Tiempos de conducción y descanso» de FENADISMER (mayo 2026) y el II Acuerdo Marco.", 8);
     L("Para volver a cargar estos datos en la app: Zona Conductores > Mis descansos > Recuperar una copia, y elige este PDF.", 8);
     // Partir en renglones que quepan (Helvetica ~0,5 em por letra) y en páginas A4
     const ANCHO = 515, renglones = [];

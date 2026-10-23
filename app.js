@@ -1216,7 +1216,7 @@ function colocaMenuIdiomas(menu, btn) {
 function menuIdiomas(caja, btn) {
   let ult = ""; try { ult = localStorage.getItem("ccoo-ultimo-idioma") || ""; } catch (_) {}
   const lista = Object.entries(IDIOMAS).sort((x, y) => (y[0] === ult) - (x[0] === ult));
-  caja.insertAdjacentHTML("beforeend", `<div class="menu-idiomas" role="menu">${lista.map(([k, n]) => `<button role="menuitem" data-idioma="${k}" class="${k === ult ? "activo" : ""}" ${k === "ar" ? 'dir="rtl"' : ""}>${n}</button>`).join("")}</div>`);
+  caja.insertAdjacentHTML("beforeend", `<div class="menu-idiomas" role="menu"><p class="menu-aviso">Traducción automática con IA: puede tener errores. Si hay dudas, vale el texto en español.</p>${lista.map(([k, n]) => `<button role="menuitem" data-idioma="${k}" class="${k === ult ? "activo" : ""}" ${k === "ar" ? 'dir="rtl"' : ""}>${n}</button>`).join("")}</div>`);
   colocaMenuIdiomas(caja.querySelector(".menu-idiomas"), btn);
 }
 document.addEventListener("click", async (ev) => {
@@ -1269,6 +1269,10 @@ async function traduceReg(reg, idioma) {
       if (idioma === "ar") el.setAttribute("dir", "rtl"); else el.removeAttribute("dir");
     });
     reg.dataset.idiomaActual = idioma;
+    if (!reg.closest("[data-reg-lista]") && !reg.querySelector(".aviso-trad")) {
+      const pie = reg.querySelector(".pie-tarjeta"), av = `<p class="aviso-trad">Traducción automática con IA: puede tener errores. Si hay dudas, vale el texto en español.</p>`;
+      if (pie) pie.insertAdjacentHTML("beforebegin", av); else reg.insertAdjacentHTML("beforeend", av);
+    }
     reg.querySelectorAll(LARGOS).forEach(el => { if (el.dataset.largo !== "abierto") { el.dataset.largo = "?"; revisaLargo(el); } });
     if (boton) boton.innerHTML = icono("idioma", "p") + "Ver en español";
   } catch (e) { if (boton) boton.innerHTML = icono("idioma", "p") + "Traducir"; throw e; }
@@ -1276,6 +1280,7 @@ async function traduceReg(reg, idioma) {
 }
 const originalReg = (reg) => {
   reg.querySelectorAll("[data-campo]").forEach(el => { if (el.dataset.original != null) { el.innerHTML = el.dataset.original; delete el.dataset.original; } el.removeAttribute("dir"); });
+  reg.querySelectorAll(".aviso-trad").forEach(n => n.remove());
   delete reg.dataset.idiomaActual; const b = reg.querySelector("[data-traducir='']"); if (b) b.innerHTML = icono("idioma", "p") + "Traducir";
 };
 // Bloques de Inicio (el rótulo y «Lo último»): un solo botón traduce todo lo de dentro, de dos en dos.
