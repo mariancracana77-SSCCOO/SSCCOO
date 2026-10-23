@@ -52,7 +52,7 @@
   });
   // Guía rápida (plegable, traducible)
   const GUIA = () => [
-    [T("Al empezar a trabajar"), T("En «Hoy», pulsa «Empiezo la jornada». Te digo hasta qué hora puedes estar antes de parar para el descanso diario (11 h, 9 h reducido o partido 3 h + 9 h).")],
+    [T("Al empezar a trabajar"), T("En «Hoy», pulsa «Empiezo la jornada» (si empezaste antes, pon antes la hora real). Te digo hasta qué hora puedes estar antes de parar para el descanso diario (11 h, 9 h reducido o partido 3 h + 9 h).")],
     [T("Al parar"), T("Pulsa «Termino la jornada»: se apunta sola y empieza a contar tu descanso diario.")],
     [T("El descanso semanal"), T("Cuando lo termines, ve a «Apuntar» > «Un descanso semanal» y pon cuándo empezó y acabó. Te calculo cuándo te toca el siguiente y si tienes horas que compensar.")],
     [T("Si se te olvidó"), T("En «Apuntar» puedes poner a mano cualquier jornada o descanso de días pasados.")],
@@ -197,16 +197,31 @@
 
   // ---------- Jornada de hoy ----------
   const hora = (t) => new Date(t).toLocaleTimeString(LOC, { hour: "2-digit", minute: "2-digit" });
+  // «14:30» -> momento más reciente con esa hora que no sea futuro (si es más tarde que ahora, es de ayer)
+  const horaAMs = (v) => {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(v || ""); if (!m) return null;
+    const d = new Date(); d.setHours(+m[1], +m[2], 0, 0);
+    if (d.getTime() > Date.now() + MIN) d.setDate(d.getDate() - 1);
+    return d.getTime();
+  };
+  const avisoHoy = (t) => { const m = $("desc-hoy-msg"); if (m) { m.textContent = t; m.className = "msg err"; } };
+  const horaInput = (t) => { const d = new Date(t); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
   function pintaHoy(dd) {
     const h = DATOS.hoy, ahora = Date.now(), quedanRed = Math.max(0, 3 - dd.reducidosAhora);
     const red = `<p class="desc-red"><span class="desc-puntos">${[0, 1, 2].map(i => `<i class="${i < dd.reducidosAhora ? "usado" : ""}"></i>`).join("")}</span>${esc(T("Descansos diarios reducidos usados: {n} de 3 (hasta el próximo descanso semanal).", { n: Math.min(3, dd.reducidosAhora) }))}</p>`;
     if (!h) {
       $("desc-hoy").innerHTML = `<h2 class="desc-tit">${icono("reloj", "p")}${esc(T("Descanso diario"))}</h2>
         <p class="desc-vacio">${esc(T("Pulsa al empezar a trabajar y te digo hasta qué hora puedes estar antes de parar para el descanso diario."))}</p>
+        <label class="desc-antes"><span>${esc(T("¿Empezaste antes? Pon la hora real (si lo dejas vacío, cuenta desde ahora)"))}</span><input type="time" id="desc-hoy-hora"></label>
         <button class="btn grande" id="desc-empieza">${icono("reloj", "p")}${esc(T("Empiezo la jornada"))}</button>
+        <p class="msg" id="desc-hoy-msg" role="alert"></p>
         <label class="check"><input type="checkbox" id="desc-hoy-doble" ${DATOS.doble ? "checked" : ""}><span>${esc(T("Hoy voy con otro conductor (doble tripulación)"))}</span></label>
         ${red}`;
-      $("desc-empieza").onclick = () => { DATOS.hoy = { ini: Date.now(), doble: $("desc-hoy-doble").checked, partido: false }; guarda(); pinta(); };
+      $("desc-empieza").onclick = () => {
+        const v = $("desc-hoy-hora").value, ini = v ? horaAMs(v) : Date.now();
+        if (ini == null || Date.now() - ini > 30 * H) return avisoHoy(T("Esa hora es de hace más de 30 horas. Si fue antes, apúntala en «Apuntar» > «Una jornada»."));
+        DATOS.hoy = { ini, doble: $("desc-hoy-doble").checked, partido: false }; guarda(); pinta();
+      };
       return;
     }
     const l11 = h.ini + 13 * H, l9 = h.ini + 15 * H, l30 = h.ini + 21 * H;
@@ -223,10 +238,19 @@
       </div>
       <details class="desc-mas"><summary>${esc(T("Otras opciones (reducido o partido)"))}</summary><ul class="desc-limites">${lim.join("")}</ul></details>
       ${h.doble ? "" : `<label class="check"><input type="checkbox" id="desc-hoy-partido" ${h.partido ? "checked" : ""}><span>${esc(T("Hoy hago el descanso partido (una parada de 3 h o más y 9 h al final)"))}</span></label>`}
+      <details class="desc-mas"><summary>${esc(T("Cambiar la hora de inicio"))}</summary>
+        <label class="desc-antes"><span>${esc(T("Hora a la que empezaste de verdad"))}</span><input type="time" id="desc-hoy-cambia" value="${horaInput(h.ini)}"></label>
+        <button class="btn" id="desc-cambia-ok">${esc(T("Cambiar la hora"))}</button>
+        <p class="msg" id="desc-hoy-msg" role="alert"></p></details>
       <div class="botones desc-hoy-bot">
         <button class="btn grande" id="desc-termina">${esc(T("Termino la jornada"))}</button>
         <button class="enlace-desact" id="desc-cancela">${esc(T("Anular esta jornada"))}</button></div>
       ${red}`;
+    $("desc-cambia-ok").onclick = () => {
+      const ini = horaAMs($("desc-hoy-cambia").value);
+      if (ini == null || Date.now() - ini > 30 * H) return avisoHoy(T("Esa hora es de hace más de 30 horas. Si fue antes, apúntala en «Apuntar» > «Una jornada»."));
+      h.ini = ini; guarda(); pinta();
+    };
     $("desc-termina").onclick = () => {
       const t = Date.now();
       if (t - h.ini < 10 * MIN) { DATOS.hoy = null; guarda(); pinta(); return; }

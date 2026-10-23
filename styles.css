@@ -1625,3 +1625,7 @@ html[data-letra] .subpestanas a { font-size: .92rem; }
 .cal-sus-nota:empty { display: none; }
 .cal-sus-nota { margin-top: 12px; font-weight: 700; overflow-wrap: anywhere; }
 .cal-suscribir .cal-sus-ayuda { margin: 12px 0 0; font-size: .9rem; color: var(--suave); }
+
+/* Mis descansos: empezar con una hora anterior (v75) */
+.desc-antes { display: grid; gap: 6px; margin: 12px 0; font-weight: 600; }
+.desc-antes input[type="time"] { font: inherit; font-size: 1.1rem; padding: 10px 12px; min-height: 48px; max-width: 100%; box-sizing: border-box; border: 1px solid var(--linea); border-radius: 10px; background: var(--tarjeta); color: var(--tinta); }
