@@ -75,6 +75,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 73: la bienvenida no empieza con la app oculta
+- Si al abrir la app el móvil aún está enseñando su pantalla de carga (página oculta), la animación espera a que se vea. Sale entera cada vez que la app arranca de cero.
+
 ## Versión 72: la bienvenida en 3D se ve entera
 - En la app instalada en Android, la animación empieza cuando se quita la pantalla de carga de Android. Antes empezaba por detrás y del primer plano en 3D solo se veía un segundo.
 - Por ahora la animación entera sale siempre (`BV_HORAS = 0` en `app.js`) para comprobar que se ve bien; después saldrá entera si han pasado 3 horas desde la última vez y, si no, la corta (solo el logo).

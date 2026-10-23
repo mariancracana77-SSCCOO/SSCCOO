@@ -865,7 +865,7 @@ function vuelaAlLogo(bv) {
   cab.classList.add("bv-oculto");
   return true;
 }
-// Horas que tienen que pasar para que vuelva a salir entera. Está en 0 (siempre entera) hasta comprobar en el móvil que el arreglo de la v72 se ve bien; después, 3.
+// Horas que tienen que pasar para que vuelva a salir entera. 0 = entera cada vez que la app arranca de cero (lo pidió Lorena en la v73); al volver de segundo plano sin recargar no se repite.
 const BV_HORAS = 0;
 // Entera si han pasado BV_HORAS horas desde la última vez que salió entera; si no, solo el logo (algo más de 1 s).
 // localStorage "ccoo-bienvenida" guarda cuándo salió entera (en ms); lectura.js hace la misma cuenta antes de pintar.
@@ -884,6 +884,8 @@ const BV_DURA = (() => {
 const BV_APP = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 function empiezaBienvenida() {
   const bv = $("bienvenida"); if (!bv || quitarBienvenida.t0 != null) return;
+  // Si la página sigue oculta (el móvil aún enseña su pantalla de carga), no empieza hasta que se vea
+  if (document.hidden) { document.addEventListener("visibilitychange", empiezaBienvenida, { once: true }); return; }
   const falta = BV_APP ? 1700 - performance.now() : 0;
   if (falta > 0) { clearTimeout(empiezaBienvenida.t); empiezaBienvenida.t = setTimeout(empiezaBienvenida, falta); return; }
   quitarBienvenida.t0 = performance.now();
