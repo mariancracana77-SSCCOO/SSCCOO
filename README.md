@@ -75,6 +75,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 71: final nuevo de la bienvenida
+- Empieza con un primer plano en 3D del camión (con frontal, parabrisas, faros y techo), visto un poco de frente, con el conductor y el brazo fuera de la ventanilla. Se ve la cabina por dentro y el conductor con detalle, con una mano en un volante con grosor y el brazo que llega hasta ella; las ruedas tienen grosor. Nos mira y saluda mientras la cámara se aleja pasando por el lateral del camión hasta verlo de lado. Mete el brazo, sube la ventanilla, el camión frena y se forma el logo. La línea discontinua de la carretera ahora es blanca. Al salir el logo, rayos rojos que giran detrás y chispas con el latido (el logo es el mismo).
+- Al terminar, el logo vuela hasta su sitio en la cabecera mientras la web se abre en círculo, y el logo de la cabecera da un pequeño rebote al llegar.
+- La barra de carga solo sale si la web sigue cargando cuando acaba la animación. La animación dura algo más que antes (unos 5 segundos).
+- Con «reducir movimiento» en el móvil, o si se toca para saltarla, desaparece fundiéndose como antes.
+
 ## Versión 70: calendario en el móvil y atajos
 - En Calendario, «Las fechas, en tu calendario»: con un toque se añade el calendario de la Sección Sindical a Google Calendar, iPhone u Outlook, y las fechas nuevas aparecen solas. Lo sirve la función `calendario` de Supabase (pública, solo lo que ya se ve en la web).
 - Al mantener pulsado el icono de la app: atajos a Avisos, Calendario, Mis descansos y Buzón.

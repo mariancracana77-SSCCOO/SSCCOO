@@ -823,11 +823,12 @@ async function cargar(idNuevo) {
   pintaInicio(); pintaEncuestas(); pintaAvisos(idNuevo); pintaCalendario(); pintaConvenio(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaInfo(); pintaCanales(); pintaContadores();
   if (/^#aviso-\d+$/.test(location.hash) && !cargar.hecho) { cargar.hecho = true; irA(); }
 }
-// Pantalla de bienvenida: dura lo que tarda el camión en formar el logo (4,3 s) y se quita al terminar de cargar.
+// Pantalla de bienvenida: dura lo que tarda el camión en formar el logo (4,85 s) y se quita al terminar de cargar.
 // Tocarla la salta. Sale aunque el móvil tenga «quitar animaciones» (muchos lo activan solos con el ahorro de batería).
 // La animación no empieza hasta que la página ha cargado: en la app instalada, Android tapa los primeros segundos
 // con su propia pantalla y, si empezaba antes, terminaba sin que se viera.
-// Al quitarla, lo que hay en pantalla entra escalonado (solo esta vez, no en cada actualización).
+// Al quitarla, el logo vuela hasta el de la cabecera mientras el fondo se abre en círculo (v69; con «reducir movimiento»
+// o si se ha tocado para saltarla, se funde sin más) y lo que hay en pantalla entra escalonado (solo esta vez, no en cada actualización).
 function quitarBienvenida() {
   const bv = $("bienvenida"); if (!bv || bv.classList.contains("fuera")) return;
   if (!quitarBienvenida.ya && quitarBienvenida.t0 == null) { quitarBienvenida.pend = true; return; }
@@ -836,10 +837,33 @@ function quitarBienvenida() {
   quitarBienvenida.t = setTimeout(() => {
     const listas = document.querySelectorAll("#inicio-feed, #inicio-paradas, .accesos-tablon, [id^='lista-']");
     if (!quieto) listas.forEach(el => el.classList.add("anima-entra"));
-    bv.classList.add("fuera");
+    if (!quieto && !quitarBienvenida.ya && vuelaAlLogo(bv)) {
+      bv.classList.add("bv-vuela");
+      setTimeout(() => {
+        const cab = $("cab-logo");
+        bv.classList.add("fuera");
+        cab.classList.remove("bv-oculto"); cab.classList.add("bv-aterriza");
+        setTimeout(() => cab.classList.remove("bv-aterriza"), 450);
+      }, 700);
+    } else bv.classList.add("fuera");
     if (!location.hash || location.hash === "#inicio") animaPortada();
     setTimeout(() => { bv.remove(); listas.forEach(el => el.classList.remove("anima-entra")); }, 1200);
   }, quitarBienvenida.ya ? 0 : Math.max(0, BV_DURA - (performance.now() - quitarBienvenida.t0)));
+}
+// Prepara el vuelo del logo de la bienvenida hasta el de la cabecera: distancia, tamaño y centro del círculo que se abre.
+// Si el logo de la cabecera no está a la vista, no vuela (se funde).
+function vuelaAlLogo(bv) {
+  const cab = $("cab-logo"), caja = bv.querySelector(".bv-logo-caja");
+  const a = cab && cab.getBoundingClientRect(), b = caja && caja.getBoundingClientRect();
+  if (!a || !b || !a.width || !b.width || a.bottom <= 0 || a.top >= innerHeight) return false;
+  const cx = b.left + b.width / 2, cy = b.top + b.height / 2;
+  bv.style.setProperty("--bv-dx", (a.left + a.width / 2 - cx) + "px");
+  bv.style.setProperty("--bv-dy", (a.top + a.height / 2 - cy) + "px");
+  bv.style.setProperty("--bv-s", (a.width / b.width).toFixed(4));
+  bv.style.setProperty("--bv-cx", cx + "px");
+  bv.style.setProperty("--bv-cy", cy + "px");
+  cab.classList.add("bv-oculto");
+  return true;
 }
 // Entera la primera vez de cada día; si se vuelve a abrir el mismo día, solo el logo (algo más de 1 s)
 const BV_DURA = (() => {
@@ -847,12 +871,14 @@ const BV_DURA = (() => {
   let vista = false;
   try { vista = localStorage.getItem("ccoo-bienvenida") === hoy; localStorage.setItem("ccoo-bienvenida", hoy); } catch (_) {}
   if (bv && vista) bv.classList.add("bv-corta");
-  return vista ? 1100 : 4300;
+  return vista ? 1100 : 4850;
 })();
 function empiezaBienvenida() {
   const bv = $("bienvenida"); if (!bv || quitarBienvenida.t0 != null) return;
   quitarBienvenida.t0 = performance.now();
   bv.classList.add("bv-anda");
+  // La barra de carga solo sale si la animación ya ha terminado y la web sigue cargando
+  setTimeout(() => bv.classList.add("bv-espera"), BV_DURA);
   if (quitarBienvenida.pend) quitarBienvenida();
 }
 if (document.readyState === "complete") requestAnimationFrame(empiezaBienvenida);
