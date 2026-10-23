@@ -5,7 +5,7 @@ Contexto para Claude Code. Léelo entero antes de tocar nada.
 ## Qué es
 Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: avisos, calendario, convenio, actas, documentos, dudas y «Nosotros». La gestiona sola desde el panel el secretario de la sección (padre de Lorena, usuario GitHub `mariancracana77-SSCCOO`). Lorena (estudiante de 2º SMX) es quien desarrolla y habla con Claude.
 
-- Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, GitHub Pages, con `.nojekyll`)
+- Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, público; GitHub Pages desde `main`, carpeta raíz). Desde la v65 se publica con Jekyll (sin `.nojekyll`) solo para que `_config.yml` deje fuera de la web CLAUDE.md, README.md, `herramientas/` y `pruebas/`; los demás archivos no llevan cabecera `---` y salen idénticos. Si se añade algo que no deba verse en la web, añadirlo a `exclude`. Ojo: el repositorio es público, así que en github.com se sigue viendo todo
 - Panel: `admin.html` (email + contraseña de Supabase)
 - Versión actual: **65**
 

@@ -1,0 +1,11 @@
+# GitHub Pages: la web se publica con Jekyll solo para poder dejar fuera estos archivos.
+# Los .html, .js y .css no llevan cabecera «---», así que Jekyll los copia tal cual, sin tocarlos.
+# Si se añade documentación o herramientas que no deben verse en la web, añadirlas aquí.
+exclude:
+  - CLAUDE.md
+  - README.md
+  - herramientas/
+  - pruebas/
+  - "*.zip"
+  - "*.diff"
+  - "*.sql"
