@@ -124,7 +124,7 @@ const AZUL = 0x1d5ba8, AZUL_OSC = 0x14407a, GRIS = 0x222a33;
   malla(new RoundedBoxGeometry(0.2, 0.28, 2.3, 4, 0.06), plata, 6.9, 0.58, 0);
   [-1, 1].forEach(s => {
     malla(new THREE.BoxGeometry(0.04, 0.04, 0.22), chasis, 6.4, 2.05, s * 1.2);
-    malla(new RoundedBoxGeometry(0.1, 0.42, 0.06, 2, 0.02), chasis, 6.4, 1.96, s * 1.3);
+    malla(new RoundedBoxGeometry(0.08, 0.3, 0.05, 2, 0.02), chasis, 6.4, 1.98, s * 1.27);
   });
 
   // ---------- Interior: asiento, salpicadero, volante ----------
@@ -157,11 +157,11 @@ const AZUL = 0x1d5ba8, AZUL_OSC = 0x14407a, GRIS = 0x222a33;
   cabeza.quaternion.copy(cabeza.userData.base);
   // brazo que sale por la ventanilla: hombro, codo apoyado en el borde y antebrazo que saluda
   const brazoSup = new THREE.Group(); brazoSup.position.set(0.02, 1.88, 0.2); chofer.add(brazoSup);
-  const sup = malla(new THREE.CapsuleGeometry(0.1, 0.85, 6, 14), camisa, 0, 0, 0, brazoSup);
-  sup.rotation.x = Math.PI / 2; sup.position.z = 0.5;
+  const sup = malla(new THREE.CapsuleGeometry(0.105, 0.3, 6, 14), camisa, 0, 0, 0, brazoSup);
+  sup.rotation.x = Math.PI / 2; sup.position.z = 0.22;
   const codo = new THREE.Group(); codo.position.set(0, 0, 1.0); brazoSup.add(codo);
-  codo.position.set(0, -0.02, 0.95);
-  const ante = new THREE.Group(); codo.add(ante);
+  codo.position.set(0, -0.02, 0.46);
+  const ante = new THREE.Group(); ante.scale.setScalar(0.72); codo.add(ante);
   malla(new THREE.SphereGeometry(0.1, 16, 12), camisa, 0, 0, 0, ante);
   malla(new THREE.CapsuleGeometry(0.085, 0.3, 6, 14), camisa, 0, 0.2, 0, ante);
   malla(new THREE.CapsuleGeometry(0.075, 0.22, 6, 14), piel, 0, 0.5, 0, ante);
@@ -262,7 +262,7 @@ const AZUL = 0x1d5ba8, AZUL_OSC = 0x14407a, GRIS = 0x222a33;
     const sube = suave(0.55, 1.0, t), baja = suave(1.95, 2.2, t);
     const ola = Math.sin((t - 1.0) * 9) * 0.38 * suave(1.0, 1.15, t) * (1 - suave(1.8, 2.0, t));
     ante.rotation.z = THREE.MathUtils.lerp(Math.PI * 0.94, 0, sube) * (1 - baja) + baja * 3.0 + ola;
-    brazoSup.position.z = 0.2 - suave(1.9, 2.15, t) * 0.55; brazoSup.visible = t < 2.2;
+    brazoSup.position.z = 0.2 - suave(1.9, 2.15, t) * 0.45; brazoSup.visible = t < 2.2;
     const cierre = suave(1.95, 2.3, t);
     vent.position.y = -(1 - cierre) * 0.62 + 0; vent.visible = true;
     renderer.render(scene, camara);
