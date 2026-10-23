@@ -614,3 +614,19 @@ textarea.crece { resize: vertical; overflow-y: auto; }
 /* Botón «Deshacer» dentro del aviso de abajo (tras borrar) */
 .toast-deshacer { margin-left: 6px; padding: 8px 14px; min-height: 40px; border-radius: 10px; border: 2px solid currentColor; background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer; flex-shrink: 0; }
 .toast-deshacer:hover, .toast-deshacer:focus-visible { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+
+/* v65: «Ver en la web» en la cabecera del editor (en el móvil estrecho, solo el dibujo) */
+#ed-ver-web { margin-left: auto; flex-shrink: 0; }
+@media (max-width: 420px) { #ed-ver-web span { display: none; } #ed-ver-web { padding: 10px; } }
+
+/* v65: campo que falta, marcado en el propio campo */
+.ed-form .falta, .dropzone.falta { border-color: var(--rojo) !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--rojo) 25%, transparent); }
+.falta-txt { display: flex; gap: 6px; align-items: center; margin: 6px 0 0; color: var(--rojo-ic); font-weight: 700; font-size: .95rem; }
+
+/* v65: textos cambiados sin guardar */
+label.sin-guardar::after { content: " · sin guardar"; color: var(--rojo-ic); font-weight: 700; font-size: .85em; }
+
+/* v65: lo recién guardado se resalta un momento en la lista */
+.item-adm.recien { animation: recien 2.6s ease-out; }
+@keyframes recien { 0%, 40% { box-shadow: 0 0 0 3px var(--rojo); } 100% { box-shadow: 0 0 0 3px transparent; } }
+@media (prefers-reduced-motion: reduce) { .item-adm.recien { animation: none; box-shadow: 0 0 0 3px var(--rojo); } }

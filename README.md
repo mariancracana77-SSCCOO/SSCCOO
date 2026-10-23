@@ -91,6 +91,13 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Próxima cita** (el rótulo de Inicio cuando no hay nada urgente): diseño nuevo de carretera. El título sale en un panel luminoso de autopista (letras blancas de puntos y luces rojas que parpadean en las esquinas) y, debajo, en un poste, dos señales en el rojo del logo: el lugar con los días que faltan (como los kilómetros de una señal) y el día y la hora. Prefiere reuniones y asambleas a los festivos y, si es la misma cita que la cuenta atrás, no se repite.
 - **Animación de entrada**: ahora empieza cuando la página ha cargado (en la app instalada, Android tapaba los primeros segundos con su pantalla y la animación terminaba sin verse) y sale aunque el móvil tenga «quitar animaciones» (lo activa el ahorro de batería). Se sigue saltando tocándola.
 
+## Versión 65: panel más claro al publicar
+- **El botón dice lo que va a pasar**: «Publicar y avisar», «Publicar sin avisar», «Programar y avisar» o «Guardar sin publicar», según lo marcado. Un aviso a los móviles no se puede retirar, así que se ve antes de pulsar.
+- **Lo que falta, en el propio campo**: borde rojo y la frase debajo (por ejemplo, el título o el archivo de un documento); se quita al escribir.
+- **Textos**: solo se guarda lo que has cambiado (el botón dice cuántos), cada texto cambiado pone «sin guardar» y, si te vas sin guardar, pregunta antes. Lo mismo en Ajustes con los filtros y categorías.
+- **«Ver en la web»** en el editor de lo ya publicado: abre la web justo en ese aviso, publicación o encuesta.
+- **Lo recién guardado** se resalta un momento en la lista para encontrarlo.
+
 ## Versión 64: más ligera y más cómoda
 - **Gasta menos datos**: al volver a la web no se recarga todo si se cargó hace menos de un minuto, y los cambios internos del servidor (marcar un aviso como enviado) ya no hacen recargar a todos los móviles. Las fotos grandes se reducen al subirlas (2000 px) y los archivos se guardan un año en el móvil.
 - **Bienvenida**: entera la primera vez de cada día; si se vuelve a abrir el mismo día, solo el logo (algo más de 1 s).

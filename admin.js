@@ -470,7 +470,7 @@ $("b-nueva").onclick = async () => {
     : /session|expired|jwt/i.test(error.message) ? "El enlace ha caducado. Vuelve a la pantalla de entrar y pulsa «He olvidado la contraseña» una vez." : "No se ha podido guardar: " + error.message);
   msg("m-rec", "Contraseña guardada. Ya estás dentro.", true); setTimeout(() => location.replace(aqui), 1200);
 };
-const salir = async () => { if (await confirmarSalida()) { await sb.auth.signOut(); location.replace(aqui); } };
+const salir = async () => { if (dejarPagina() && await confirmarSalida()) { await sb.auth.signOut(); location.replace(aqui); } };
 
 // ---------- Navegación ----------
 function pintaNav() {
@@ -509,7 +509,12 @@ function abrirMas() {
 const cerrarMas = () => ["velo-mas", "hoja-mas"].forEach(i => $(i).classList.add("oculto"));
 $("velo-mas").onclick = cerrarMas;
 
+// Textos y los filtros de Ajustes se guardan con un botón: si hay cambios sin guardar, se pregunta antes de irse
+let PENDIENTE = null; // función que devuelve la pregunta si hay algo sin guardar, o "" si no
+const dejarPagina = () => { const t = PENDIENTE?.(); return !t || confirm(t); };
 function abrir(k) {
+  if (!dejarPagina()) return;
+  PENDIENTE = null;
   actual = k; history.replaceState(null, "", "#" + k); pintaNav(); window.scrollTo(0, 0);
   $("fab").classList.remove("oculto");
   const sec = SECCIONES[k];
@@ -594,6 +599,7 @@ async function pintaResumen() {
     .sort((a, b) => new Date(b.f) - new Date(a.f)).slice(0, 6);
   $("ultimos").innerHTML = todos.length ? todos.map(({ k, x }) => itemHTML(k, x, true)).join("") : `<div class="panel vacio">${icono("avisos")}Todavía no has publicado nada.</div>`;
   enlazarItems($("ultimos"));
+  resaltaGuardado($("ultimos"));
   pintaVisitas();
   pintaEstadisticas();
   // Próximos días y programados
@@ -749,6 +755,15 @@ function abrirHojaNuevo() {
   $("hoja-mas").querySelector("button")?.focus();
 }
 
+// Tras guardar, la lista vuelve a pintarse: se baja hasta lo guardado y se resalta un momento para encontrarlo
+let RESALTAR = null;
+function resaltaGuardado(cont) {
+  const r = RESALTAR; RESALTAR = null;
+  const el = r && cont?.querySelector(`.item-adm[data-k="${r.k}"][data-id="${r.id}"], [data-abrir-ap="${r.id}"]`);
+  if (!el) return;
+  el.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  el.classList.add("recien"); setTimeout(() => el.classList.remove("recien"), 2600);
+}
 function enlazarItems(cont) {
   cont.querySelectorAll(".item-adm[data-k]").forEach(b => b.onclick = () => abrirEditor(b.dataset.k, datos[b.dataset.k].find(x => x.id == b.dataset.id)));
   cont.querySelectorAll("[data-abrir-ap]").forEach(b => b.onclick = () => abrir("ap" + b.dataset.abrirAp));
@@ -784,6 +799,7 @@ async function pintaSeccion(k) {
       `<div class="panel vacio">${icono(s.icono)}${q || ff.a || ff.m || ff.d ? "Nada coincide con la búsqueda o la fecha." : `Todavía no hay nada. Pulsa «${s.nuevo}» para empezar.`}</div>`;
     enlazarItems($("lista"));
     if (ordenable) hacerOrdenable($("lista"), k);
+    resaltaGuardado($("lista"));
   };
   $("buscar").oninput = pinta; pinta();
 }
@@ -866,8 +882,10 @@ function abrirEditor(k, orig = null, preset = {}) {
   $("ed-borrar").classList.toggle("oculto", !orig);
   $("ed-duplicar").classList.toggle("oculto", !orig || k === "documentos");
   $("ed-duplicar").innerHTML = icono("copia", "p") + "<span>Duplicar</span>";
-  $("ed-guardar").innerHTML = icono(orig ? "check" : "subir", "p") + (orig ? "Guardar cambios" : (k === "documentos" ? "Subir" : "Publicar"));
-  $("ed-guardar").disabled = false; msg("ed-msg", "");
+  $("ed-guardar").disabled = false; msg("ed-msg", ""); // el texto del botón lo pone actualizarPrevia (dice si va a avisar)
+  const web = orig ? enLaWeb(k, orig) : "";
+  $("ed-ver-web").classList.toggle("oculto", !web);
+  if (web) { $("ed-ver-web").href = "index.html#" + web; $("ed-ver-web").innerHTML = icono("ver", "p") + "<span>Ver en la web</span>"; $("ed-ver-web").title = "Abre la web en otra pestaña, justo aquí"; }
 
   $("ed-form").innerHTML =
     (k === "apartados" && orig ? `<div class="aviso-ajustes"><p>Aquí solo cambias el nombre y el aspecto. Para subir documentos y fotos, pulsa «Abrir y publicar contenido».</p>
@@ -931,7 +949,7 @@ function prepararArchivos(c) {
     if (!multi) { ED.pendientes = []; if (ED.existentes[0]) { ED.quitar.push(ED.existentes[0].url); ED.existentes = []; } }
     lista.slice(0, multi ? 20 : 1).forEach(f => ED.pendientes.push({ file: f, error: validarArchivo(f), vista: f.type.startsWith("image/") ? URL.createObjectURL(f) : null }));
     if (!multi && lista[0] && !$("f-titulo").value.trim()) $("f-titulo").value = lista[0].name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ");
-    ED.sucio = true; input.value = ""; pintaArchivos(c); actualizarPrevia();
+    ED.sucio = true; input.value = ""; quitaFalta(dz); pintaArchivos(c); actualizarPrevia();
   };
   input.onchange = () => añadir(input.files);
   dz.ondragover = (e) => { e.preventDefault(); dz.classList.add("encima"); };
@@ -1026,6 +1044,7 @@ function actualizarPrevia() {
   if (ED.k === "documentos") { x.fecha = ED.orig?.fecha || ahora; const a = adj[0]; Object.assign(x, a ? { url: a.url, nombre_archivo: a.nombre, tipo_archivo: a.tipo, tamano: a.tamano } : {}); }
   if (ED.k === "calendario" || s.filtro) x.fecha = f.fecha || hoyISO();
   $("ed-titulo").textContent = (s.tituloDe ? s.tituloDe(f) : f.titulo) || (ED.orig ? "Sin título" : "Sin título todavía");
+  if (!$("ed-guardar").disabled) { const [ic, txt] = textoGuardar(f); $("ed-guardar").innerHTML = icono(ic, "p") + esc(txt); }
   $("ed-previa").innerHTML = s.previa(x);
   $("ed-previa").querySelectorAll("[data-canal]").forEach(b => b.onclick = () => { PREVIA_CANAL = b.dataset.canal; actualizarPrevia(); });
   aplicarCondiciones();
@@ -1033,6 +1052,43 @@ function actualizarPrevia() {
   if (["avisos", "recurrentes"].includes(ED.k)) avisoTitulo(f);
   $("ed-previa").querySelectorAll("a").forEach(a => a.onclick = (e) => { if (a.getAttribute("href") === "#" || a.href.startsWith("blob:")) e.preventDefault(); });
 }
+// El botón de guardar dice lo que va a pasar: un aviso a los móviles no se puede retirar, así que se ve antes de pulsar
+function textoGuardar(f) {
+  if (ED.orig) return ["check", "Guardar cambios"];
+  if (f.publicado === false || f.publicada === false || f.visible === false) return ["check", "Guardar sin publicar"];
+  const avisa = "notificar" in f && ED.k !== "recurrentes";
+  if (f.publicar_en && new Date(f.publicar_en) > new Date()) return ["reloj", avisa ? (f.notificar ? "Programar y avisar" : "Programar sin avisar") : "Programar"];
+  const base = ED.k === "documentos" ? "Subir" : "Publicar";
+  return ["subir", avisa ? base + (f.notificar ? " y avisar" : " sin avisar") : base];
+}
+// Dónde se ve en la web lo que se está editando (para el botón «Ver en la web»). Vacío si no se ve todavía.
+function enLaWeb(k, x) {
+  if (x.publicado === false || x.publicada === false || x.visible === false) return "";
+  if (x.publicar_en && new Date(x.publicar_en) > new Date()) return "";
+  if (k === "avisos") return "aviso-" + x.id;
+  if (/^ap\d+$/.test(k)) return "pub-" + x.id;
+  if (k === "encuestas") return "encuesta-" + x.id;
+  if (k === "apartados") return x.slug ? "ap-" + x.slug : "";
+  return { calendario: "calendario", actas: "actas", convenio: "convenio", documentos: "documentos", preguntas: "preguntas", delegados: "delegados", enlaces: "info" }[k] || "";
+}
+// Campo que falta o está mal: borde rojo y la frase debajo del propio campo (en el pie casi no se veía en el móvil)
+function marcaFalta(id, texto) {
+  msg("ed-msg", texto); cambiarPestana("form");
+  const el = $(id); if (!el) return;
+  el.classList.add("falta"); el.setAttribute("aria-invalid", "true");
+  let p = $(id + "-falta");
+  if (!p) { p = document.createElement("p"); p.id = id + "-falta"; p.className = "falta-txt"; el.after(p); }
+  p.innerHTML = icono("alerta", "p") + esc(texto); el.setAttribute("aria-describedby", p.id);
+  el.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  if (el.matches("input, textarea, select")) el.focus({ preventScroll: true });
+}
+function quitaFalta(el) {
+  if (!el?.classList?.contains("falta")) return;
+  el.classList.remove("falta"); el.removeAttribute("aria-invalid"); el.removeAttribute("aria-describedby");
+  $(el.id + "-falta")?.remove(); msg("ed-msg", "");
+}
+document.addEventListener("input", (e) => quitaFalta(e.target));
+document.addEventListener("change", (e) => quitaFalta(e.target));
 function cambiarPestana(p) {
   $("editor").classList.toggle("ver-previa", p === "previa");
   document.querySelectorAll(".ed-pestanas button").forEach(b => b.classList.toggle("activa", b.dataset.p === p));
@@ -1058,18 +1114,18 @@ $("ed-cerrar").onclick = () => cerrarEditor();
 $("ed-cancelar").onclick = () => cerrarEditor();
 $("velo-ed").onclick = () => cerrarEditor();
 window.addEventListener("popstate", () => { if (ED) cerrarEditor(true); });
-window.addEventListener("beforeunload", (e) => { if (ED?.sucio) { e.preventDefault(); e.returnValue = ""; } });
+window.addEventListener("beforeunload", (e) => { if (ED?.sucio || PENDIENTE?.()) { e.preventDefault(); e.returnValue = ""; } });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && ED) cerrarEditor(); });
 
 $("ed-guardar").onclick = async () => {
   const s = SECCIONES[ED.k], btn = $("ed-guardar"), fila = leerFormulario();
   for (const c of camposPlanos(s)) {
-    if (c.req && c.t !== "archivo" && c.t !== "archivos" && !fila[c.k]) { cambiarPestana("form"); $("f-" + c.k)?.focus(); return msg("ed-msg", "Falta: " + c.l.toLowerCase() + "."); }
+    if (c.req && c.t !== "archivo" && c.t !== "archivos" && !fila[c.k]) return marcaFalta("f-" + c.k, "Falta: " + c.l.toLowerCase() + ".");
   }
   if (["avisos"].includes(ED.k) && /\[[^\]]{1,30}\]/.test((fila.titulo || "") + (fila.contenido || "")) && !confirm("El aviso todavía tiene partes entre [corchetes] sin rellenar. ¿Publicar igualmente?")) return;
   if (ED.k === "encuestas") {
     const n = opcionesEncuesta(fila).length;
-    if (n < 2 || n > 6) { cambiarPestana("form"); $("f-opciones")?.focus(); return msg("ed-msg", "Pon de 2 a 6 opciones, una por línea."); }
+    if (n < 2 || n > 6) return marcaFalta("f-opciones", "Pon de 2 a 6 opciones, una por línea.");
   }
   if (!(await revisarOrtografia(s, fila))) return;
   if (["enlaces", "restricciones"].includes(ED.k) && fila.url && !/^https?:\/\//.test(fila.url)) fila.url = "https://" + fila.url;
@@ -1085,7 +1141,7 @@ $("ed-guardar").onclick = async () => {
   }
   const malos = ED.pendientes.filter(p => p.error);
   if (malos.length) { cambiarPestana("form"); return msg("ed-msg", "Quita los archivos marcados en rojo antes de guardar."); }
-  if (ED.k === "documentos" && !ED.existentes.length && !ED.pendientes.length) { cambiarPestana("form"); return msg("ed-msg", "Falta elegir el archivo."); }
+  if (ED.k === "documentos" && !ED.existentes.length && !ED.pendientes.length) return marcaFalta("dz-archivo", "Falta elegir el archivo.");
   btn.disabled = true;
   const subidos = [];
   try {
@@ -1111,6 +1167,7 @@ $("ed-guardar").onclick = async () => {
       abrir("ap" + guardado.id);
       return aviso("Apartado creado. Ahora pulsa «Publicar» para subir textos, fotos y documentos.");
     }
+    RESALTAR = { k, id: guardado.id };
     abrir(["resumen", "calendario"].includes(actual) ? actual : (s.volver || k));
     if (fila.publicado === false || fila.publicada === false || (k === "convenio" && fila.visible === false)) return aviso(editado ? "Cambios guardados. Está oculto: no se ve en la web." : "Guardado sin publicar: no se ve en la web y no se ha avisado a nadie. Para publicarlo, ábrelo y marca «Se ve en la web».");
     if (editado || s.oculta) return aviso(editado ? "Cambios guardados. Ya se ven en la web." : "Guardado. Ya se ve en la web.");
@@ -1742,12 +1799,29 @@ async function pintaTextos() {
     ${TEXTOS.map(t => `<label for="t-${t.slug}">${t.l}</label>${t.t === "date" ? `<input type="date" id="t-${t.slug}" value="${esc(p[t.slug]?.contenido || "")}">` : `<textarea id="t-${t.slug}" style="min-height:${t.corto ? 70 : 100}px" ${t.corto ? 'maxlength="400"' : ""}>${esc(p[t.slug]?.contenido || "")}</textarea>`}
       <p class="ayuda">${t.ayuda ? t.ayuda + " " : ""}${p[t.slug]?.actualizado ? "Cambiado " + haceTxt(p[t.slug].actualizado) + "." : ""}</p>`).join("")}
     ${FORMATO}
-    <div class="botones"><button class="btn" id="b-textos">${icono("check", "p")}Guardar textos</button></div>
+    <div class="botones"><button class="btn" id="b-textos"></button></div>
     <div class="msg" id="m-textos"></div></div>`;
+  // Solo se guarda lo que ha cambiado: así «Cambiado hace…» sigue diciendo la verdad en los demás
+  const original = Object.fromEntries(TEXTOS.map(t => [t.slug, p[t.slug]?.contenido || ""]));
+  const cambiados = () => TEXTOS.filter(t => $("t-" + t.slug) && $("t-" + t.slug).value !== original[t.slug]);
+  const marca = () => {
+    const c = cambiados(), n = c.length;
+    TEXTOS.forEach(t => document.querySelector(`label[for="t-${t.slug}"]`)?.classList.toggle("sin-guardar", c.includes(t)));
+    $("b-textos").innerHTML = icono("check", "p") + (n ? (n === 1 ? "Guardar 1 texto cambiado" : `Guardar ${n} textos cambiados`) : "Guardar textos");
+    $("b-textos").disabled = !n;
+  };
+  marca();
+  $("textos").addEventListener("input", marca);
+  PENDIENTE = () => cambiados().length ? "Has cambiado textos y no los has guardado. ¿Salir sin guardar?" : "";
   $("b-textos").onclick = async () => {
-    const filas = TEXTOS.map(t => ({ slug: t.slug, contenido: $("t-" + t.slug).value, actualizado: new Date().toISOString() }));
+    const c = cambiados(); if (!c.length) return;
+    const ahora = new Date().toISOString(), filas = c.map(t => ({ slug: t.slug, contenido: $("t-" + t.slug).value, actualizado: ahora }));
+    $("b-textos").disabled = true;
     const { error } = await sb.from("paginas").upsert(filas);
-    error ? msg("m-textos", "No se ha podido guardar: " + errTxt(error)) : aviso("Textos guardados. Ya se ven en la web.");
+    if (error) { msg("m-textos", "No se ha podido guardar: " + errTxt(error)); return marca(); }
+    filas.forEach(f => { original[f.slug] = f.contenido; });
+    msg("m-textos", ""); marca();
+    aviso(filas.length === 1 ? "Texto guardado. Ya se ve en la web." : "Textos guardados. Ya se ven en la web.");
   };
   $("t-ir-camiones").onclick = (e) => { e.preventDefault(); abrir("camiones"); };
 }
@@ -1762,6 +1836,11 @@ const LISTAS = {
   pregunta: { l: "Categorías de las preguntas", ayuda: "Son los filtros de Preguntas frecuentes.", tabla: "preguntas", col: "categoria" },
 };
 let filasLista = {};
+const LISTAS_SUCIAS = new Set(); // filtros y categorías con cambios sin guardar
+const pendienteAjustes = () => {
+  const sin = Object.keys(LISTAS).filter(k => LISTAS_SUCIAS.has(k) || $("nn-" + k)?.value.trim());
+  return sin.length ? `No has guardado los cambios en: ${sin.map(k => LISTAS[k].l.toLowerCase()).join(", ")}. ¿Salir sin guardar?` : "";
+};
 // ---------- Verificación en dos pasos (Ajustes) ----------
 async function pinta2p() {
   const z = $("zona-2p"); if (!z) return;
@@ -1814,7 +1893,7 @@ async function pinta2p() {
 async function pintaAjustes() {
   await cargarOpciones();
   const todas = window.OPC_FILAS || [];
-  filasLista = {};
+  filasLista = {}; LISTAS_SUCIAS.clear();
   Object.keys(LISTAS).forEach(k => filasLista[k] = todas.filter(o => o.lista === k).map(o => ({ ...o, original: o.nombre })));
   $("zona").innerHTML = `<div class="sec-cab"><div><h1>Ajustes</h1><p>Canales y avisos, copia de seguridad, archivo, filtros de cada sección y quién puede publicar. Versión ${VERSION_WEB}.</p></div></div>
   <nav class="indice-ajustes">
@@ -1912,10 +1991,11 @@ async function pintaAjustes() {
     if (!n) return msg("m-" + k, "Escribe el nombre de la nueva opción.");
     if (filasLista[k].some(o => !o.borrar && o.nombre.toLowerCase() === n.toLowerCase())) return msg("m-" + k, "Esa opción ya existe.");
     filasLista[k].push({ lista: k, nombre: n, color: $("nc-" + k).value, nuevo: true });
-    $("nn-" + k).value = ""; pintaLista(k); msg("m-" + k, "Añadida. Pulsa «Guardar cambios» para que se guarde.", true);
+    $("nn-" + k).value = ""; LISTAS_SUCIAS.add(k); pintaLista(k); msg("m-" + k, "Añadida. Pulsa «Guardar cambios» para que se guarde.", true);
   });
   document.querySelectorAll("[data-guardar]").forEach(b => b.onclick = () => guardarLista(b.dataset.guardar));
   document.querySelectorAll("[id^=nn-]").forEach(i => i.onkeydown = (e) => { if (e.key === "Enter") document.querySelector(`[data-anadir="${i.id.slice(3)}"]`).click(); });
+  PENDIENTE = pendienteAjustes;
   cargarAdmins(); cargarCanales(); prepararCopiaYArchivo(); prepararClave(); prepararRescate();
   $("b-limpiar").onclick = limpiarArchivos;
 }
@@ -1934,14 +2014,14 @@ function pintaLista(k) {
       </div></div>`).join("") : `<p class="fecha-txt">No hay opciones. Añade la primera abajo.</p>`;
   $("lst-" + k).querySelectorAll(".fila-op").forEach(f => {
     const o = filasLista[k][f.dataset.i];
-    f.querySelector("select").onchange = (e) => { o.color = e.target.value; e.target.className = "sel-color c-" + o.color; };
-    f.querySelector("input").oninput = (e) => { o.nombre = e.target.value; };
+    f.querySelector("select").onchange = (e) => { LISTAS_SUCIAS.add(k); o.color = e.target.value; e.target.className = "sel-color c-" + o.color; };
+    f.querySelector("input").oninput = (e) => { LISTAS_SUCIAS.add(k); o.nombre = e.target.value; };
     f.querySelectorAll("[data-mov]").forEach(b => b.onclick = () => {
       const vis = filasLista[k].filter(x => !x.borrar), i = vis.indexOf(o), j = i + +b.dataset.mov;
       const a = filasLista[k].indexOf(vis[i]), c = filasLista[k].indexOf(vis[j]);
-      [filasLista[k][a], filasLista[k][c]] = [filasLista[k][c], filasLista[k][a]]; pintaLista(k);
+      [filasLista[k][a], filasLista[k][c]] = [filasLista[k][c], filasLista[k][a]]; LISTAS_SUCIAS.add(k); pintaLista(k);
     });
-    f.querySelector("[data-quitar]").onclick = () => { o.borrar = true; pintaLista(k); msg("m-" + k, "Quitada. Pulsa «Guardar cambios» para confirmar.", true); };
+    f.querySelector("[data-quitar]").onclick = () => { o.borrar = true; LISTAS_SUCIAS.add(k); pintaLista(k); msg("m-" + k, "Quitada. Pulsa «Guardar cambios» para confirmar.", true); };
   });
 }
 async function guardarLista(k) {

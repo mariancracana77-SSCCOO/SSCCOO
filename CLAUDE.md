@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, GitHub Pages, con `.nojekyll`)
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **64**
+- Versión actual: **65**
 
 ## Reglas del proyecto (no negociables)
 - **No publicar nada en GitHub sin que la usuaria lo confirme antes** (enseñar lo que cambia y esperar a «publica»).
@@ -81,6 +81,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
   - Corrector de ortografía (`revisarOrtografia`, `difHTML`): al pulsar Guardar, los campos de texto que han cambiado (salvo `NO_CORREGIR`) van a la edge function `corregir`; si propone cambios, modal con «Corregir y guardar / Guardar sin corregir / Volver a editar». Si falla o tarda más de 15 s, se guarda sin más. Textareas e inputs de texto con `spellcheck`.
   - Revisar la ortografía de todo (v53, página `ortografia`, `pintaOrtografia`, `empiezaOrtografia`, `aplicaOrto`): tandas de hasta 10 campos/6000 letras a `corregir` (claves `c_aa`…), 1,5 s entre tandas, un reintento a los 20 s. Aplica campo a campo solo si el texto en la base sigue igual. Excluye `NO_CORREGIR_TODO` y la tabla `paginas`. Lo revisado se guarda por huella en localStorage `ccoo-revisado`.
   - v64: `errTxt(e)` traduce los errores de Supabase (si es la sesión, el editor guarda el borrador y ofrece «Volver a entrar»). `reducirFoto` (JPEG/PNG/WebP de más de 600 KB → 2000 px, JPEG 85 %, solo si pesa menos) antes de `subirArchivo`; archivos con `cacheControl` de un año. `sinCambiosDeOtro` compara la fila del servidor con `ED.orig` (salvo `NO_CUENTA`) antes de guardar. Borrar (salvo apartados) no pregunta: `avisoDeshacer` con «Deshacer» 8 s, que llama a `recuperar_cambio` con la fila de `historial`.
+  - Panel v65: el botón de guardar dice si va a avisar (`textoGuardar`, lo pone `actualizarPrevia`); campo que falta marcado en el propio campo (`marcaFalta`/`quitaFalta`, clase `.falta` y `#<id>-falta`); «Ver en la web» en la cabecera del editor (`#ed-ver-web`, `enLaWeb`); lo guardado se resalta en la lista (`RESALTAR`, `resaltaGuardado`, clase `.recien`). Páginas que se guardan con un botón avisan al salir con cambios: `PENDIENTE` (función que devuelve la pregunta) y `dejarPagina()` en `abrir`, `salir` y `beforeunload`; Textos guarda solo lo cambiado (`label.sin-guardar`) y Ajustes usa `LISTAS_SUCIAS`.
   - «Apartados de la web» (`SECCIONES.apartados`) crea apartados. Cada uno genera una sección dinámica `ap<id>` (`seccionApartado`, tabla `publicaciones` filtrada por `apartado_id`) que se coloca tras Actas (`construirPaginas`).
 - `config.js`: cliente Supabase, `VERSION_WEB`, `WEB_URL`, `VAPID_PUBLICA`, ayudas (textoHTML, compartir, ICS, lectura «Aa», `urlSegura`).
 - `render.js`: plantillas HTML de tarjetas. `iconos.js`: iconos SVG. `styles.css`: estilos (al final, bloques «Tablón», portada, modales, filtro de fechas, tema oscuro manual).
