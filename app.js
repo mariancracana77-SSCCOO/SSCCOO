@@ -823,7 +823,7 @@ async function cargar(idNuevo) {
   pintaInicio(); pintaEncuestas(); pintaAvisos(idNuevo); pintaCalendario(); pintaConvenio(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaInfo(); pintaCanales(); pintaContadores();
   if (/^#aviso-\d+$/.test(location.hash) && !cargar.hecho) { cargar.hecho = true; irA(); }
 }
-// Pantalla de bienvenida: dura lo que tarda el camión en formar el logo (4,85 s) y se quita al terminar de cargar.
+// Pantalla de bienvenida: dura lo que tarda el camión en formar el logo (4,3 s) y se quita al terminar de cargar.
 // Tocarla la salta. Sale aunque el móvil tenga «quitar animaciones» (muchos lo activan solos con el ahorro de batería).
 // La animación no empieza hasta que la página ha cargado: en la app instalada, Android tapa los primeros segundos
 // con su propia pantalla y, si empezaba antes, terminaba sin que se viera.
@@ -877,7 +877,7 @@ const BV_DURA = (() => {
     if (!vista) localStorage.setItem("ccoo-bienvenida", String(Date.now()));
   } catch (_) {}
   if (vista) document.documentElement.classList.add("bv-corta"); // normalmente ya lo ha puesto lectura.js
-  return vista ? 1100 : 4850;
+  return vista ? 1100 : 4300;
 })();
 // En la app instalada, Android tapa el principio con su pantalla de carga (en el móvil de Lorena, 1,5 s más o menos)
 // y el evento load llega antes de que se quite: si la animación empezaba entonces, del primer plano 3D solo se veía un segundo.

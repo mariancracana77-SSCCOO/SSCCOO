@@ -976,222 +976,73 @@ body.publica.con-aviso-priv { padding-bottom: calc(84px + var(--alto-aviso, 90px
    de la del logo para que encaje justo encima y al fundirse quede el logo original. ====== */
 .bienvenida {
   position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
-  color: #fff; padding: 16px; text-align: center; overflow: hidden; cursor: pointer; isolation: isolate;
+  background: var(--asfalto); color: #fff; padding: 16px; text-align: center; overflow: hidden; cursor: pointer;
   transition: opacity .5s ease, visibility .5s;
   animation: bv-seguro .45s 11s forwards; /* por si la web no llega a quitarla */
 }
-.bienvenida::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(ellipse 85% 60% at 50% 46%, #26303b 0%, #1a2028 45%, var(--asfalto) 80%); }
 .bienvenida.fuera { opacity: 0; visibility: hidden; pointer-events: none; }
 @keyframes bv-seguro { to { opacity: 0; visibility: hidden; pointer-events: none; } }
 .bv-logo-caja { position: relative; width: min(240px, 62vw); aspect-ratio: 1; }
 /* El logo nace del camión: un aro rojo se dibuja alrededor, el logo sale desde el camión con un círculo de borde difuminado
    y todo (logo y camión juntos, para que no se descuadren) da un pequeño latido de sello; al final, un destello de luz */
-.bv-sello { position: absolute; inset: 0; animation: bv-sello 1.1s 3.25s cubic-bezier(.34, 1.3, .5, 1) both; }
+.bv-sello { position: absolute; inset: 0; animation: bv-sello 1.1s 2.3s cubic-bezier(.34, 1.3, .5, 1) both; }
 @keyframes bv-sello { 0% { transform: scale(1); } 28% { transform: scale(.93); } 100% { transform: scale(1); } }
 .bv-aro { position: absolute; inset: -2%; width: 104%; height: 104%; transform: rotate(-60deg); overflow: visible; }
-.bv-aro circle { opacity: 0; fill: none; stroke: var(--rojo); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100;
-  animation: bv-traza .8s 2.9s cubic-bezier(.6, 0, .3, 1) forwards, bv-funde .5s 3.85s forwards; }
-@keyframes bv-traza { from { opacity: 1; } to { stroke-dashoffset: 0; opacity: 1; } }
+.bv-aro circle { fill: none; stroke: var(--rojo); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100;
+  animation: bv-traza .8s 1.95s cubic-bezier(.6, 0, .3, 1) forwards, bv-funde .5s 2.9s forwards; }
+@keyframes bv-traza { to { stroke-dashoffset: 0; } }
 @property --bv-r { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
 .bv-logo { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; --bv-r: 0%;
   -webkit-mask: radial-gradient(circle at 54.8% 52.7%, #000 calc(var(--bv-r) - 22%), transparent var(--bv-r));
   mask: radial-gradient(circle at 54.8% 52.7%, #000 calc(var(--bv-r) - 22%), transparent var(--bv-r));
-  animation: bv-revela 1.2s 3.35s cubic-bezier(.22, .61, .36, 1) forwards; }
+  animation: bv-revela 1.2s 2.4s cubic-bezier(.22, .61, .36, 1) forwards; }
 @keyframes bv-revela { 0% { --bv-r: 8%; opacity: 0; } 25% { opacity: 1; } 100% { --bv-r: 100%; opacity: 1; } }
 .bv-brillo { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; pointer-events: none; }
 .bv-brillo::before { content: ""; position: absolute; top: -20%; bottom: -20%; width: 45%; left: 0; transform: translateX(-160%) skewX(-20deg);
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent); animation: bv-brillo .9s 3.9s ease-in-out forwards; }
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent); animation: bv-brillo .9s 3.3s ease-in-out forwards; }
 @keyframes bv-brillo { to { transform: translateX(330%) skewX(-20deg); } }
-.bv-camion { position: absolute; left: 29.785%; top: 39.941%; width: 50.049%; height: 25.586%; animation: bv-funde .9s 3.55s ease-in-out forwards; }
+.bv-camion { position: absolute; left: 29.785%; top: 39.941%; width: 50.049%; height: 25.586%; animation: bv-funde .9s 2.6s ease-in-out forwards; }
 @keyframes bv-funde { to { opacity: 0; } }
-/* Cámara (v71): empieza en primer plano del conductor (centrado y ampliado) y se aleja mientras saluda */
-/* Va dibujado 7 veces más grande y se reduce al final: si no, el navegador pinta el 3D a tamaño pequeño y al ampliarlo se ve pixelado */
-.bv-escala { position: relative; width: 700%; height: 700%; transform-origin: 82.7% 42.9%;
-  animation: bv-camara 1.65s 1.25s linear both; --bw: calc(min(240px, 62vw) * 3.5034); }
-/* Recorrido: de tres cuartos por delante, pasa por el lateral (hacia la caja) y termina de lado */
-@keyframes bv-camara {
-  from { transform: translate(-83.5%, -38.4%) perspective(450px) rotateX(-14deg) rotateY(-50deg) scale3d(1.6, 1.6, 1.6); animation-timing-function: cubic-bezier(.42, 0, .75, .65); }
-  50% { transform: translate(-56.5%, -39.3%) perspective(450px) rotateX(-7deg) rotateY(-26deg) scale3d(.4286, .4286, .4286); animation-timing-function: cubic-bezier(.25, .35, .3, 1); }
-  to { transform: translate(-70.9%, -36.8%) perspective(450px) rotateX(0) rotateY(0) scale3d(.142857, .142857, .142857); } }
-/* Volumen del camión: el lateral es la imagen del logo (en z = 0) y desde ahí salen hacia el fondo el frontal de la caja,
-   los techos, el parabrisas y el frontal de la cabina (fondo = 30 % del largo). Al final la cámara queda de lado y no se ven. */
-.bv-escala, .bv-mueve, .bv-bote, .bv-caras, .bv-int, .bv-ruedas3d, .bv-r3 { transform-style: preserve-3d; }
-/* Hueco de la ventanilla en la imagen para ver la cabina por dentro (el cristal que sube lo tapa al final) */
-/* El dibujo de encima (cristal, brazos) un pelo por delante de la imagen: si están en el mismo plano, el navegador a veces pinta la imagen encima */
-.bv-extras { transform: translateZ(1px); }
-.bv-bote > img { clip-path: polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, 75.2% 33.6%, 84.3% 33.6%, 89% 50.8%, 74.8% 50.8%, 75.2% 33.6%); }
-/* Cabina por dentro: pared del fondo, salpicadero y el conductor (dibujo con sombras, algo girado hacia la cámara) */
-/* Ojo: un contenedor 3D no puede llevar animación de opacidad (el navegador lo aplana y se pinta encima del lateral):
-   el fundido va en cada pieza */
-.bv-int { position: absolute; inset: 0; pointer-events: none; }
-.bv-int > * { animation: bv-oculta .15s 2.3s forwards; }
-.bv-int > * { position: absolute; display: block; }
-.bv-int-fondo { left: 70%; top: 28%; width: 26%; height: 50%; transform: translateZ(calc(var(--bw) * -.29));
-  background: linear-gradient(#3C4B5B, #1E2833 60%, #141B23); clip-path: polygon(0 0, 53.8% 0, 100% 56%, 100% 100%, 0 100%); }
-.bv-int-salpi { left: 86%; top: 52%; width: 10%; height: 58.7%; transform-origin: 0 0; transform: rotateX(-90deg); background: linear-gradient(#323D49, #1E262F); }
-/* El conductor mira siempre a la cámara: gira al revés que ella (mismos tiempos que bv-camara), así se le ve de frente
-   también por el parabrisas */
-.bv-chofer { left: 76%; top: 33%; width: 16%; height: 28%; transform: translateX(-60%) translateZ(calc(var(--bw) * -.1)) rotateY(64deg);
-  animation: bv-chofer 1.65s 1.25s linear both, bv-oculta .15s 2.3s forwards; }
-@keyframes bv-chofer {
-  from { transform: translateX(-60%) translateZ(calc(var(--bw) * -.1)) rotateY(64deg); animation-timing-function: cubic-bezier(.42, 0, .75, .65); }
-  50% { transform: translateX(-28%) translateZ(calc(var(--bw) * -.1)) rotateY(30deg); animation-timing-function: cubic-bezier(.25, .35, .3, 1); }
-  to { transform: translateX(0) translateZ(calc(var(--bw) * -.1)) rotateY(0); } }
-.bv-chofer svg { display: block; width: 100%; height: 100%; overflow: visible; }
-.bv-salpi-tras { left: 86%; top: 52%; width: calc(var(--bw) * .3); height: 11%; transform-origin: 0 0; transform: rotateY(90deg);
-  background: radial-gradient(circle calc(var(--bw) * .016) at 22% 40%, #9BE0F7 0 45%, #0C1115 50% 85%, transparent 90%),
-    radial-gradient(circle calc(var(--bw) * .016) at 40% 40%, #F7D58B 0 45%, #0C1115 50% 85%, transparent 90%),
-    linear-gradient(#2B343E, #171D23); }
-/* Asiento con volumen: respaldo (frente y lateral) y reposacabezas */
-.bv-asi-fr { left: 71.5%; top: 34%; width: calc(var(--bw) * .12); height: 29%; transform-origin: 0 0;
-  transform: translateZ(calc(var(--bw) * -.045)) rotateY(90deg); background: linear-gradient(90deg, #3A4652, #26303A); border-radius: 18px; }
-.bv-asi-la { left: 70.2%; top: 34%; width: 1.3%; height: 29%; transform: translateZ(calc(var(--bw) * -.045)); background: linear-gradient(#46525F, #2A333D); border-radius: 12px; }
-.bv-asi-cab { left: 70.3%; top: 27%; width: 2%; height: 7%; transform: translateZ(calc(var(--bw) * -.08)); background: #3A4652; border-radius: 10px; }
-/* Volante con grosor (siete aros apilados), buje que sobresale y una sola mano (la otra va fuera de la ventanilla);
-   inclinado hacia el conductor. El brazo es una barra 3D (dos planos en cruz) del hombro a la mano */
-.bv-volante { left: 84%; top: 37%; width: 8%; height: 15.65%; transform-style: preserve-3d;
-  transform: translateZ(calc(var(--bw) * -.1)) rotateZ(-30deg) rotateY(90deg); }
-.bv-volante i { position: absolute; display: block; border-radius: 50%; }
-.bv-vol-aro { inset: 0; border: calc(var(--bw) * .016) solid #1B1F24; }
-.bv-vol-aro:nth-child(1) { transform: translateZ(calc(var(--bw) * -.014)); border-color: #0B0D10; }
-.bv-vol-aro:nth-child(2) { transform: translateZ(calc(var(--bw) * -.0095)); border-color: #101317; }
-.bv-vol-aro:nth-child(3) { transform: translateZ(calc(var(--bw) * -.005)); border-color: #15181C; }
-.bv-vol-aro:nth-child(4) { transform: translateZ(calc(var(--bw) * -.0005)); }
-.bv-vol-aro:nth-child(5) { transform: translateZ(calc(var(--bw) * .004)); border-color: #22272D; }
-.bv-vol-aro:nth-child(6) { transform: translateZ(calc(var(--bw) * .0085)); border-color: #2A3038; }
-.bv-vol-cara { transform: translateZ(calc(var(--bw) * .013)); border-color: #3A424C;
-  box-shadow: inset 0 0 0 calc(var(--bw) * .004) #6A7480, 0 0 0 calc(var(--bw) * .002) #59626D;
-  background: linear-gradient(transparent 45%, #2A3038 45% 55%, transparent 55%),
-    linear-gradient(90deg, transparent 46%, #2A3038 46% 54%, transparent 54%) 0 100% / 100% 50% no-repeat; }
-.bv-vol-buje { left: 34%; top: 34%; width: 32%; height: 32%; transform: translateZ(calc(var(--bw) * .02));
-  background: radial-gradient(circle at 40% 35%, #5A636E, #1E2329); }
-.bv-mano { left: 61%; top: 3%; width: 26%; height: 26%; transform: translateZ(calc(var(--bw) * .018));
-  background: radial-gradient(circle at 35% 35%, #FAD7B5, #D49770 70%, #B87A57); }
-.bv-brazo3d { left: 80%; top: 47.7%; width: 8%; height: 2.4%; transform-style: preserve-3d; transform-origin: 0 50%;
-  transform: translateZ(calc(var(--bw) * -.13)) rotateZ(-34.4deg); }
-.bv-brazo3d i { position: absolute; inset: 0; display: block; border-radius: 999px;
-  background: linear-gradient(90deg, #C4122F 0 62%, #EDB98F 62%); }
-.bv-brazo3d i:nth-child(1) { background: linear-gradient(90deg, #E2263F 0 62%, #FAD7B5 62%), #C4122F; }
-.bv-brazo3d i:nth-child(2) { transform: rotateX(90deg); background: linear-gradient(90deg, #8E0B22 0 62%, #D49770 62%); }
-.bv-columna { left: 88%; top: 45.4%; width: 4.5%; height: 1.6%; border-radius: 8px; background: linear-gradient(#3A4048, #1C2026);
-  transform-origin: 0 50%; transform: translateZ(calc(var(--bw) * -.1)) rotateZ(32deg); }
-/* Gira la cabeza hacia nosotros sin saltos: el perfil se estrecha y se va mientras la cara de frente se abre;
-   luego ladea la cabeza al saludar y parpadea */
-.bv-perfil, .bv-frente, .bv-ojos { transform-box: fill-box; transform-origin: 50% 60%; }
-.bv-perfil { animation: bv-cabeza-va .45s .7s cubic-bezier(.45, 0, .55, 1) forwards; }
-.bv-frente { opacity: 0; transform: translateX(8%) scaleX(.82); animation: bv-cabeza-viene .45s .78s cubic-bezier(.3, 0, .3, 1) forwards; }
-@keyframes bv-cabeza-va { to { opacity: 0; transform: translateX(-6%) scaleX(.82); } }
-@keyframes bv-cabeza-viene { to { opacity: 1; transform: none; } }
-.bv-cabeza { transform-box: view-box; transform-origin: 71px 80px; animation: bv-ladea .5s ease-in-out 1.25s 2 alternate; }
-@keyframes bv-ladea { to { transform: rotate(-6deg); } }
-.bv-ojos { animation: bv-parpadea .18s ease-in-out 1.8s; }
-@keyframes bv-parpadea { 50% { transform: scaleY(.1); } }
-/* Ruedas con grosor: cinco capas de neumático hacia dentro y la cara que gira un poco por fuera */
-.bv-ruedas3d { position: absolute; inset: 0; pointer-events: none; }
-/* Al final de la cámara (casi de lado) las piezas 3D se quitan: en esa posición el navegador las ordena mal y tapaba la cabina.
-   Siguen girando unas ruedas planas encima de las del logo hasta que frena */
-.bv-r3 i, .bv-r3 b, .bv-caras i { animation: bv-oculta .15s 2.3s forwards; }
-@keyframes bv-oculta { to { opacity: 0; visibility: hidden; } }
-.bv-ruedas-planas { opacity: 0; animation: bv-aparece .1s 2.25s forwards, bv-funde .3s 2.85s forwards; }
-.bv-rueda-p { transform-box: fill-box; transform-origin: center; animation: bv-gira 2.9s cubic-bezier(.25, .25, .5, 1) both; }
-.bv-r3 { position: absolute; width: 12.49%; height: 24.43%; }
-.bv-r3-1 { left: 11.32%; top: 73.28%; } .bv-r3-2 { left: 33.76%; top: 73.66%; } .bv-r3-3 { left: 77.37%; top: 73.85%; }
-.bv-r3 i, .bv-r3 b { position: absolute; inset: 0; border-radius: 50%; }
-.bv-r3 i { background: radial-gradient(circle, #3A434E 0 50%, #151B22 51% 84%, #2E3741 85% 92%, #12171D 93%); box-shadow: 0 0 0 3px #0B0F14; }
-.bv-r3 i:nth-child(1) { transform: translateZ(calc(var(--bw) * 0.050)); }
-.bv-r3 i:nth-child(2) { transform: translateZ(calc(var(--bw) * 0.040)); }
-.bv-r3 i:nth-child(3) { transform: translateZ(calc(var(--bw) * 0.030)); }
-.bv-r3 i:nth-child(4) { transform: translateZ(calc(var(--bw) * 0.020)); }
-.bv-r3 i:nth-child(5) { transform: translateZ(calc(var(--bw) * 0.010)); }
-.bv-r3 i:nth-child(6) { transform: translateZ(calc(var(--bw) * 0.000)); }
-.bv-r3 i:nth-child(7) { transform: translateZ(calc(var(--bw) * -0.010)); }
-.bv-r3 i:nth-child(8) { transform: translateZ(calc(var(--bw) * -0.020)); }
-.bv-r3 b { transform: translateZ(calc(var(--bw) * .056)); }
-.bv-r3 b svg { display: block; width: 100%; height: 100%; }
-.bv-caras { position: absolute; inset: 0; pointer-events: none; }
-.bv-caras i { position: absolute; display: block; transform-origin: 0 0; }
-.bv-c-caja-fr { left: 68.9%; top: 6.4%; width: 30%; height: 66%; transform: rotateY(90deg); background: linear-gradient(90deg, #164882, #0E3463); }
-.bv-c-caja-te { left: 1.4%; top: 6.4%; width: 67.5%; height: 58.7%; transform: rotateX(-90deg); background: linear-gradient(#2F6DB3, #3E7FC6); }
-.bv-c-cab-te { left: 70%; top: 28%; width: 14.2%; height: 58.7%; transform: rotateX(-90deg); background: linear-gradient(#2A66AA, #3877BD); }
-.bv-c-luna { left: 84.2%; top: 28%; width: 30%; height: 36.6%; transform: rotateZ(-39.9deg) rotateY(90deg);
-  background: linear-gradient(160deg, rgba(238, 243, 246, .38), rgba(185, 200, 213, .08) 35%, rgba(255, 255, 255, .28) 47%, rgba(147, 169, 189, .08) 55%, rgba(120, 145, 168, .16));
-  box-shadow: inset 0 0 0 14px #1B4F8E; }
-.bv-c-cab-fr { left: 96%; top: 56%; width: 30%; height: 29%; transform: rotateY(90deg);
-  background: linear-gradient(#F4F7FA, #F4F7FA) 8% 25% / 16% 26% no-repeat, linear-gradient(#F4F7FA, #F4F7FA) 92% 25% / 16% 26% no-repeat,
-    repeating-linear-gradient(#0B2C55 0 10px, #2C5E99 10px 20px) 50% 25% / 46% 42% no-repeat,
-    linear-gradient(#A3ADB8, #5D6874) 0 100% / 100% 24% no-repeat, linear-gradient(90deg, #1B4F8E, #123E70); }
-/* Línea discontinua blanca de la carretera, dentro de la cámara para que se acerque y se aleje con el camión */
-.bv-carretera { position: absolute; top: 98%; left: calc(50% - 350vw); width: calc(700vw + 280px); height: 21px; will-change: transform;
-  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .9) 0 154px, transparent 154px 280px); animation: bv-carretera .4s linear 7, bv-funde .3s 2.7s forwards; }
-@keyframes bv-carretera { to { transform: translateX(-280px); } }
-.bv-mueve { position: relative; width: 100%; height: 100%; animation: bv-frena .35s 2.6s ease-out; }
-@keyframes bv-frena { 50% { transform: translateX(1.5%) rotate(.8deg); } }
-.bv-bote { position: relative; width: 100%; height: 100%; animation: bv-bache .48s ease-in-out 6; }
+.bv-escala { width: 100%; height: 100%; transform: scale(2); animation: bv-encoge .7s 1.6s cubic-bezier(.45, 0, .2, 1) forwards; }
+@keyframes bv-encoge { to { transform: none; } }
+.bv-mueve { position: relative; width: 100%; height: 100%; animation: bv-llega 1.2s cubic-bezier(.3, .55, .3, 1) both; }
+@keyframes bv-llega { from { transform: translateX(-100vw); } 88% { transform: translateX(1.5%) rotate(.8deg); } to { transform: none; } }
+.bv-bote { position: relative; width: 100%; height: 100%; animation: bv-bache .32s ease-in-out 3.5; }
 .bv-bote img, .bv-extras { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; }
-@keyframes bv-bache { 50% { transform: translateY(-.9%); } }
+@keyframes bv-bache { 50% { transform: translateY(-2.5%); } }
 /* Camionero: saluda con la mano y se va al encoger (el camión del logo no lleva a nadie) */
-/* Después de saludar, sube la ventanilla (del color de la del logo) y lo tapa; luego sale el logo */
-.bv-cristal { transform-box: view-box; transform: translateY(100px); animation: bv-ventanilla .3s 2.0s cubic-bezier(.45, 0, .3, 1) forwards; }
-@keyframes bv-ventanilla { to { transform: none; } }
-/* Llega con el brazo apoyado fuera de la ventanilla, nos mira (se le ven los dos ojos), saluda con la mano y lo mete */
-@keyframes bv-aparece { to { opacity: 1; } }
-/* Un solo brazo con codo: cuelga fuera, sube la mano, saluda con un vaivén suave, baja y se mete */
-.bv-brazo-fuera { transform-box: view-box; animation: bv-guarda .22s 1.88s cubic-bezier(.5, 0, .75, 0) forwards; }
-@keyframes bv-guarda { to { opacity: 0; transform: translate(16px, 5px); } }
-.bv-brazo { transform-box: view-box; transform-origin: 800px 266px; transform: rotate(168deg);
-  animation: bv-saluda 1.05s .95s both; }
-@keyframes bv-saluda {
-  0% { transform: rotate(168deg); animation-timing-function: cubic-bezier(.35, 0, .25, 1); }
-  24% { transform: rotate(342deg); animation-timing-function: ease-in-out; }
-  41% { transform: rotate(374deg); animation-timing-function: ease-in-out; }
-  58% { transform: rotate(342deg); animation-timing-function: ease-in-out; }
-  75% { transform: rotate(374deg); animation-timing-function: cubic-bezier(.45, 0, .7, .4); }
-  100% { transform: rotate(200deg); } }
+.bv-conductor { animation: bv-funde .35s 1.65s forwards; }
+.bv-brazo { transform-box: view-box; transform-origin: 810px 240px; animation: bv-saluda .32s ease-in-out .5s 4 alternate; transform: rotate(-14deg); }
+@keyframes bv-saluda { from { transform: rotate(-14deg); } to { transform: rotate(16deg); } }
 /* Ruedas dibujadas encima de las del logo para que giren (al mismo ritmo que avanza); al frenar se funden y quedan las originales */
-.bv-rueda { animation: bv-gira 2.9s cubic-bezier(.25, .25, .5, 1) both; }
-@keyframes bv-gira { from { transform: rotate(-3600deg); } to { transform: none; } }
+.bv-ruedas { animation: bv-funde .3s 1.15s forwards; }
+.bv-rueda { transform-box: fill-box; transform-origin: center; animation: bv-gira 1.2s cubic-bezier(.3, .55, .3, 1) both; }
+@keyframes bv-gira { from { transform: rotate(-2900deg); } to { transform: none; } }
 .bv-neum { fill: url(#bv-g-neum); stroke: #0E2C55; stroke-width: 5; }
 .bv-buje { fill: url(#bv-g-buje); stroke: #EEF2F6; stroke-width: 4; }
 .bv-tuerca { fill: #7D8B9B; }
 .bv-eje { fill: #9AA7B5; }
-.bv-viento { position: absolute; right: 102%; top: 15%; width: 40%; height: 55%; animation: bv-funde .3s 2.5s forwards; }
-.bv-viento i { position: absolute; right: 0; height: 14px; border-radius: 14px; background: rgba(255,255,255,.6); animation: bv-viento .55s linear infinite; }
+.bv-viento { position: absolute; right: 102%; top: 15%; width: 40%; height: 55%; animation: bv-funde .3s .95s forwards; }
+.bv-viento i { position: absolute; right: 0; height: 2px; border-radius: 2px; background: rgba(255,255,255,.6); animation: bv-viento .55s linear infinite; }
 .bv-viento i:nth-child(1) { top: 0; width: 70%; }
 .bv-viento i:nth-child(2) { top: 45%; width: 100%; animation-delay: .18s; }
 .bv-viento i:nth-child(3) { top: 90%; width: 55%; animation-delay: .36s; }
 @keyframes bv-viento { from { transform: translateX(30%); opacity: 0; } 40% { opacity: 1; } to { transform: translateX(-60%); opacity: 0; } }
-.bv-humo { position: absolute; left: -4%; bottom: 12%; width: 7%; aspect-ratio: 1; animation: bv-funde .3s 2.6s forwards; }
+.bv-humo { position: absolute; left: -4%; bottom: 12%; width: 7%; aspect-ratio: 1; animation: bv-funde .3s 1.15s forwards; }
 .bv-humo i { position: absolute; inset: 0; border-radius: 50%; background: rgba(255,255,255,.3); animation: bv-humo .9s ease-out infinite; }
 .bv-humo i:nth-child(2) { animation-delay: .3s; }
 .bv-humo i:nth-child(3) { animation-delay: .6s; }
 @keyframes bv-humo { from { transform: scale(.5); opacity: .9; } to { transform: translate(-160%, -80%) scale(2.2); opacity: 0; } }
-/* La carretera se mueve con transform (y no con background-position) para que no dependa de que el móvil esté libre mientras carga */
-.bienvenida:not(.bv-anda) .bv-carretera { opacity: 0; }
-.bv-onda { position: absolute; inset: 0; border-radius: 50%; border: 3px solid var(--rojo); opacity: 0; animation: bv-onda 1s 3.7s ease-out; }
+.bv-carretera { position: absolute; top: 75.9%; left: 50%; width: 100vw; height: 4px; transform: translateX(-50%);
+  background: repeating-linear-gradient(90deg, #e0262b 0 22px, transparent 22px 40px); animation: bv-carretera .4s linear 3, bv-funde .45s 1.15s forwards; }
+@keyframes bv-carretera { to { background-position: -40px 0; } }
+.bv-onda { position: absolute; inset: 0; border-radius: 50%; border: 3px solid var(--rojo); opacity: 0; animation: bv-onda 1s 2.75s ease-out; }
 @keyframes bv-onda { from { opacity: .8; transform: scale(.97); } to { opacity: 0; transform: scale(1.3); } }
-.bv-nombre { font-family: var(--cond); font-weight: 700; font-size: 1.7rem; letter-spacing: .02em; opacity: 0; animation: bv-sube .6s 3.75s ease-out forwards; }
+.bv-nombre { font-family: var(--cond); font-weight: 700; font-size: 1.7rem; letter-spacing: .02em; opacity: 0; animation: bv-sube .6s 3.2s ease-out forwards; }
 @keyframes bv-sube { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-.bv-carga { width: min(200px, 60vw); height: 5px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; opacity: 0; transition: opacity .3s; }
-/* La barra de carga solo sale si, acabada la animación, la web aún no ha terminado de cargar */
-.bienvenida.bv-espera .bv-carga { opacity: 1; }
+.bv-carga { width: min(200px, 60vw); height: 5px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; }
 .bv-carga span { display: block; width: 40%; height: 100%; border-radius: 3px; background: var(--rojo); animation: bv-barra 1.3s ease-in-out infinite; }
 @keyframes bv-barra { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
-/* Al aparecer el logo (v71): rayos rojos que giran detrás y chispas que salen con el latido del sello */
-.bv-rayos { position: absolute; inset: -38%; border-radius: 50%; pointer-events: none; opacity: 0; will-change: transform, opacity;
-  background: repeating-conic-gradient(from 0deg, rgba(171, 16, 18, .7) 0 5deg, transparent 5deg 15deg);
-  -webkit-mask: radial-gradient(circle, #000 28%, transparent 68%); mask: radial-gradient(circle, #000 28%, transparent 68%);
-  animation: bv-rayos 1.9s 3.25s ease-out forwards; }
-@keyframes bv-rayos { 0% { opacity: 0; transform: scale(.55) rotate(0); } 30% { opacity: 1; } 100% { opacity: 0; transform: scale(1.1) rotate(70deg); } }
-.bv-chispas { position: absolute; inset: 0; pointer-events: none; --d: min(240px, 62vw); }
-.bv-chispas i { position: absolute; left: calc(50% - 2.5px); top: calc(50% - 11px); width: 5px; height: 22px; border-radius: 2px; background: #fff; opacity: 0;
-  transform: rotate(var(--a)) translateY(calc(var(--d) * -.5)); animation: bv-chispa .7s 3.5s cubic-bezier(.2, .7, .3, 1) forwards; }
-.bv-chispas i:nth-child(even) { background: var(--rojo); height: 16px; animation-delay: 3.57s; }
-.bv-chispas i:nth-child(1) { --a: 0deg; } .bv-chispas i:nth-child(2) { --a: 36deg; } .bv-chispas i:nth-child(3) { --a: 72deg; }
-.bv-chispas i:nth-child(4) { --a: 108deg; } .bv-chispas i:nth-child(5) { --a: 144deg; } .bv-chispas i:nth-child(6) { --a: 180deg; }
-.bv-chispas i:nth-child(7) { --a: 216deg; } .bv-chispas i:nth-child(8) { --a: 252deg; } .bv-chispas i:nth-child(9) { --a: 288deg; }
-.bv-chispas i:nth-child(10) { --a: 324deg; }
-@keyframes bv-chispa { 0% { opacity: 1; transform: rotate(var(--a)) translateY(calc(var(--d) * -.5)) scaleY(1); }
-  100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(var(--d) * -.85)) scaleY(.3); } }
 /* Versión corta (segunda vez del mismo día): sin camión, el logo aparece de golpe con su aro y el destello */
 .bv-corta .bienvenida .bv-camion, .bv-corta .bienvenida .bv-carretera, .bv-corta .bienvenida .bv-onda { display: none; }
 .bv-corta .bienvenida .bv-sello { animation: none; }
@@ -1222,12 +1073,6 @@ body.publica.con-aviso-priv { padding-bottom: calc(84px + var(--alto-aviso, 90px
 /* Al llegar el logo a la cabecera, un pequeño rebote, como si aterrizara */
 .cab-logo.bv-aterriza { animation: bv-aterriza .4s cubic-bezier(.3, 1.6, .5, 1); }
 @keyframes bv-aterriza { 45% { transform: scale(1.14); } 100% { transform: none; } }
-/* Bienvenida en 3D real (bienvenida3d.js): el canvas ocupa toda la pantalla, detrás del logo; si funciona (.bv-gl) se quita la versión de CSS.
-   El canvas se funde por encima del logo mientras éste aparece desde el camión. */
-.bv-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; animation: bv-funde .6s 3.45s ease-in forwards; }
-.bv-gl .bv-escala { display: none; }
-.bienvenida.bv-vuela .bv-canvas { opacity: 0; }
-.bv-corta .bv-canvas { display: none; }
 /* Quieta hasta que app.js pone .bv-anda (al terminar de cargar). Sale también con «reducir movimiento»: dura 4 s y se salta tocando. */
 .bienvenida:not(.bv-anda) * { animation-play-state: paused !important; }
 
