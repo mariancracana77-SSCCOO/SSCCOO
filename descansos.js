@@ -53,10 +53,12 @@
   // Guía rápida (plegable, traducible)
   const GUIA = () => [
     [T("Al empezar a trabajar"), T("En «Hoy», pulsa «Empiezo la jornada» (si empezaste antes, pon antes la hora real). Te digo hasta qué hora puedes estar antes de parar para el descanso diario (11 h, 9 h reducido o partido 3 h + 9 h).")],
+    [T("Si empezaste antes"), T("Si ya son las 10 y empezaste a las 8, pon las 8 en el campo de la hora antes de pulsar «Empiezo la jornada». Con la jornada en marcha, también puedes cambiarla en «Cambiar la hora de inicio». Esas horas cuentan igual.")],
     [T("Al parar"), T("Pulsa «Termino la jornada»: se apunta sola y empieza a contar tu descanso diario.")],
     [T("El descanso semanal"), T("Cuando lo termines, ve a «Apuntar» > «Un descanso semanal» y pon cuándo empezó y acabó. Te calculo cuándo te toca el siguiente y si tienes horas que compensar.")],
     [T("Si se te olvidó"), T("En «Apuntar» puedes poner a mano cualquier jornada o descanso de días pasados.")],
     [T("Revisar"), T("En «Lo apuntado» ves todo, con filtros (semanales, en fin de semana, entre semana o jornadas). Lo que no cumple sale marcado en rojo.")],
+    [T("Corregir lo apuntado"), T("En «Lo apuntado», pulsa el lápiz de una jornada o de un descanso semanal para cambiar la hora de inicio o de fin.")],
     [T("Avisos y copia"), T("En «Ajustes» eliges cuándo te avisa el móvil. Guarda de vez en cuando la copia en PDF para no perder nada.")],
   ];
   function pintaGuia() {
