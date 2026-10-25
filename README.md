@@ -75,6 +75,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 80: confirmar al terminar la jornada
+
+- Mis descansos: «Termino la jornada» pide confirmación (antes un toque sin querer la cerraba y, con menos de 10 minutos, la perdía sin avisar). Quitar un apunte, anular la jornada, borrar todo y recuperar una copia ya la pedían.
+
 ## Versión 79: panel sin botón «Nuevo» donde no crea nada
 
 - En el panel (móvil), el botón flotante «Nuevo» ya no sale en Revisar la ortografía, Historial, Textos, Ajustes ni Archivos: tapaba los mensajes de estado.

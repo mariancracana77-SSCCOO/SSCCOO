@@ -254,8 +254,9 @@
       h.ini = ini; guarda(); pinta();
     };
     $("desc-termina").onclick = () => {
-      const t = Date.now();
-      if (t - h.ini < 10 * MIN) { DATOS.hoy = null; guarda(); pinta(); return; }
+      const t = Date.now(), corta = t - h.ini < 10 * MIN;
+      if (!confirm(corta ? T("¿Terminar la jornada? Lleva menos de 10 minutos, así que no se apuntará.") : T("¿Terminar la jornada ahora? Se apuntará y empezará tu descanso diario."))) return;
+      if (corta) { DATOS.hoy = null; guarda(); pinta(); return; }
       DATOS.jornadas.push({ id: Date.now().toString(36), ini: h.ini, fin: t, doble: !!h.doble, partido: !!h.partido, ferry: false });
       DATOS.hoy = null; guarda(); pinta();
       const m = $("desc-j-msg"); m.textContent = T("Jornada apuntada. Tu descanso diario empieza ahora."); m.className = "msg ok";
