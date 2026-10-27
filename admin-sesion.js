@@ -249,6 +249,7 @@ function abrir(k) {
   else if (k === "buzon") pintaBuzon();
   else if (k === "calculadoras") pintaCalculadoras();
   else if (k === "camiones") pintaCamiones();
+  else if (k === "ganancias") pintaImportes();
   else if (k === "historial") pintaHistorial();
   else if (k === "textos") pintaTextos();
   else if (k === "ajustes") pintaAjustes();

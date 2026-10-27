@@ -75,6 +75,11 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 81: Mis ganancias
+
+- Zona Conductores > **Mis ganancias**: cada conductor apunta lo que hace cada día (dieta completa o por partes, noche fuera, fin de semana, cargas, kilómetros, ADR, nocturnidad, festivo…) y ve lo que gana ese día, la semana y el mes (con el salario). Se guarda solo en su móvil, con copia en PDF y traducible.
+- Los importes salen de la tabla de 2026 y se cambian en el panel: Zona Conductores > «Importes de «Mis ganancias»». Se pueden añadir conceptos nuevos, ocultarlos o poner topes (como mucho 2 fines de semana al mes) y lo que no se paga (la primera carga del día).
+
 ## Versión 80: confirmar al terminar la jornada
 
 - Mis descansos: «Termino la jornada» pide confirmación (antes un toque sin querer la cerraba y, con menos de 10 minutos, la perdía sin avisar). Quitar un apunte, anular la jornada, borrar todo y recuperar una copia ya la pedían.

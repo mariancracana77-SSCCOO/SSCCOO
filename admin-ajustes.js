@@ -424,7 +424,7 @@ async function prepararPlantillas() {
 }
 
 // ---------- Copia de seguridad y archivo ----------
-const TABLAS_COPIA = ["comunicados", "eventos", "convenio_secciones", "actas", "documentos", "preguntas", "plantillas", "apartados", "publicaciones", "buzon", "avisos_recurrentes", "calc_permisos", "calc_categorias", "calc_ajustes", "restricciones", "paginas", "opciones", "admins"];
+const TABLAS_COPIA = ["comunicados", "eventos", "convenio_secciones", "actas", "documentos", "preguntas", "plantillas", "apartados", "publicaciones", "buzon", "avisos_recurrentes", "calc_permisos", "calc_categorias", "calc_ajustes", "restricciones", "tarifas_conductor", "paginas", "opciones", "admins"];
 async function prepararCopiaYArchivo() {
   const { data } = await sb.from("paginas").select("slug, contenido, actualizado").in("slug", ["archivo_meses", "ultima_copia"]);
   const p = Object.fromEntries((data || []).map(x => [x.slug, x]));

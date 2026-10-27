@@ -6,7 +6,7 @@
 const NOMBRE_TABLA = { comunicados: "el aviso", eventos: "la fecha", convenio_secciones: "el apartado del convenio", actas: "el acta", documentos: "el documento",
   preguntas: "la pregunta frecuente", plantillas: "la plantilla", delegados: "el delegado", enlaces: "el enlace", apartados: "el apartado de la web",
   publicaciones: "la publicación", opciones: "la opción de lista", calc_permisos: "el permiso de la calculadora", calc_categorias: "el precio de horas extra",
-  avisos_recurrentes: "el aviso que se repite", buzon: "el mensaje del buzón", paginas: "el texto", calc_ajustes: "el ajuste de la calculadora", admins: "el administrador", restricciones: "el país de restricciones para camiones" };
+  avisos_recurrentes: "el aviso que se repite", buzon: "el mensaje del buzón", paginas: "el texto", calc_ajustes: "el ajuste de la calculadora", admins: "el administrador", restricciones: "el país de restricciones para camiones", tarifas_conductor: "el importe de «Mis ganancias»" };
 const VERBO = { crear: "creó", cambiar: "cambió", borrar: "borró" };
 const BOTON_DESHACER = { borrar: "Recuperar", cambiar: "Volver a como estaba", crear: "Deshacer (quitarlo)" };
 const CAMPOS_NOMBRE = { titulo: "Título", contenido: "Texto", categoria: "Categoría", urgente: "Urgente", fijado: "Fijado", adjuntos: "Archivos", fecha: "Fecha", hora: "Hora", hora_fin: "Hora de fin",
@@ -306,6 +306,19 @@ async function pintaCamiones() {
   $("lista-restricciones").innerHTML = l.length ? l.map(x => filaOrden("restricciones", x)).join("") : `<div class="panel vacio">${icono("lugar")}No hay ningún país. Pulsa «Añadir país». Sin países, el bloque no sale en la web.</div>`;
   enlazarItems($("lista-restricciones"));
   if (l.length > 1) hacerOrdenable($("lista-restricciones"), "restricciones");
+}
+
+// ---------- Importes de «Mis ganancias» (Zona Conductores, v81) ----------
+async function pintaImportes() {
+  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Importes de «Mis ganancias»</h1><p>Los importes que usa la calculadora de los conductores (Zona Conductores > Mis ganancias): salario, dietas, suplementos y pluses. Cuando cambien las tablas de la empresa, cámbialos aquí y la web los usa al momento. Lo que apunta cada conductor se queda en su móvil: aquí no se ve.</p></div><button class="btn" data-nuevo="tarifas">${icono("mas", "p")}Añadir concepto</button></div>
+    <div class="lista-adm" id="lista-tarifas"><p class="fecha-txt">Cargando…</p></div>
+    ${SECCIONES[Object.keys(SECCIONES).find(k => SECCIONES[k].slug === "zona-conductores")] ? "" : `<p class="msg err">No hay ningún apartado «Zona Conductores» en la web, así que la calculadora sale suelta en las pestañas.</p>`}`;
+  $("zona").querySelector("[data-nuevo]").onclick = () => abrirEditor("tarifas");
+  try { await cargarDatos("tarifas"); } catch (e) { $("lista-tarifas").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
+  const l = datos.tarifas;
+  $("lista-tarifas").innerHTML = l.length ? l.map(x => filaOrden("tarifas", x)).join("") : `<div class="panel vacio">${icono("euro")}No hay ningún importe. Pulsa «Añadir concepto».</div>`;
+  enlazarItems($("lista-tarifas"));
+  if (l.length > 1) hacerOrdenable($("lista-tarifas"), "tarifas");
 }
 
 // ---------- Buzón anónimo ----------

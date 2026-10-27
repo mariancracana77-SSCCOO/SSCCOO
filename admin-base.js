@@ -228,6 +228,30 @@ SECCIONES.categorias = {
   extracto: () => "", chips: (x) => [eurosTxt(x.precio_extra) + " la hora", Number(x.precio_extra_festiva) ? eurosTxt(x.precio_extra_festiva) + " en festivo" : null], fechas: (x) => [null, x.actualizado],
 };
 
+// Importes de «Mis ganancias» (Zona Conductores de la web, v81). Se editan en la página «Importes conductores».
+// La unidad dice cómo lo apunta el conductor cada día (casilla, contador o número) o si es fijo al mes.
+const UNIDADES_TARIFA = [["dia", "Por día (casilla)"], ["noche", "Por noche (casilla)"], ["finde", "Por fin de semana (casilla)"], ["vez", "Cada vez (contador: desayuno, carga…)"],
+  ["hora", "Por hora"], ["km", "Por kilómetro"], ["minuto", "Por minuto"], ["mes", "Fijo al mes (salario, plus fijo)"]];
+const UNIDAD_CORTA = { dia: "por día", noche: "por noche", finde: "por fin de semana", vez: "cada vez", hora: "por hora", km: "por km", minuto: "por minuto", mes: "al mes" };
+const precioTxt = (n) => Number(n || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 8 }) + " €";
+SECCIONES.tarifas = {
+  nombre: "Importes de «Mis ganancias»", icono: "euro", tabla: "tarifas_conductor", orden: ["orden", true], uno: "importe", nuevo: "Añadir concepto", lista: "aviso", campoColor: "_", oculta: true, volver: "ganancias",
+  intro: "", tituloDe: (x) => x.concepto,
+  campos: [
+    { k: "concepto", l: "Concepto (así lo verá el conductor)", t: "text", req: true, ph: "Ej: Dieta completa nacional" },
+    { k: "grupo", l: "Grupo", t: "text", opc: true, ph: "Ej: Dieta fraccionada nacional", ayuda: "Los conceptos con el mismo grupo salen juntos, con este título encima." },
+    { fila: [{ k: "importe", l: "Importe (€)", t: "number", dec: true, paso: "any" }, { k: "unidad", l: "Cómo se cuenta", t: "select", ops: UNIDADES_TARIFA, def: "dia" }] },
+    { k: "pago", l: "Cuándo se cobra", t: "select", ops: [["Semanal", "Semanal"], ["Mensual", "Mensual (con la nómina)"]], def: "Semanal" },
+    { fila: [{ k: "sin_pagar", l: "No se pagan las primeras… (cada día)", t: "number", ayuda: "Ej: 1 si la primera carga del día no se paga. Si no, 0." },
+      { k: "max_mes", l: "Como mucho al mes", t: "number", ayuda: "Ej: 2 fines de semana al mes. 0 = sin tope." }] },
+    { k: "nota", l: "Nota para el conductor", t: "text", opc: true, ph: "Ej: Solo si haces ADR." },
+    { k: "orden", l: "Posición en la lista", t: "number" },
+    { checks: [{ k: "visible", l: "Se ve en la web", def: true }] },
+  ],
+  previa: (x) => `<div class="panel calc"><div class="resultado-calc"><span class="rc-tit">${esc(x.concepto || "Concepto")}</span><span class="rc-num">${esc(precioTxt(x.importe))} <small>${esc(UNIDAD_CORTA[x.unidad] || "")}</small></span>${x.nota ? `<span class="rc-sub">${esc(x.nota)}</span>` : ""}</div></div>`,
+  extracto: (x) => x.nota, chips: (x) => [precioTxt(x.importe) + " " + (UNIDAD_CORTA[x.unidad] || ""), x.grupo || null, x.pago === "Mensual" ? "Con la nómina" : "Semanal", Number(x.sin_pagar) ? (Number(x.sin_pagar) === 1 ? "La primera de cada día no se paga" : `Las ${x.sin_pagar} primeras de cada día no se pagan`) : null, Number(x.max_mes) ? `Máx. ${x.max_mes} al mes` : null, x.visible === false ? "Oculto" : null], fechas: (x) => [null, x.actualizado],
+};
+
 // Restricciones para camiones (Zona Conductores de la web). Se editan en la página «Restricciones camiones».
 SECCIONES.restricciones = {
   nombre: "Restricciones para camiones", icono: "lugar", tabla: "restricciones", orden: ["orden", true], uno: "país", nuevo: "Añadir país", lista: "aviso", campoColor: "_", oculta: true, volver: "camiones",
@@ -270,8 +294,8 @@ async function cargarApartados() {
 let PAGINAS = {};
 // Menú agrupado igual que las pestañas de la web (v52): cada apartado principal con lo que va dentro, un poco metido.
 // «cab» pone un título encima; «sub» lo mete dentro del de arriba. Si falta el apartado de arriba, va suelto.
-const DENTRO_PANEL = { actas: "comite", convenio: "convenio-y-leyes", calculadoras: "convenio-y-leyes", camiones: "zona-conductores" };
-const PAG_FIJAS = { calculadoras: { nombre: "Calculadoras", icono: "reloj" }, camiones: { nombre: "Restricciones camiones", icono: "lugar" },
+const DENTRO_PANEL = { actas: "comite", convenio: "convenio-y-leyes", calculadoras: "convenio-y-leyes", camiones: "zona-conductores", ganancias: "zona-conductores" };
+const PAG_FIJAS = { calculadoras: { nombre: "Calculadoras", icono: "reloj" }, camiones: { nombre: "Restricciones camiones", icono: "lugar" }, ganancias: { nombre: "Importes conductores", icono: "euro" },
   buzon: { nombre: "Buzón anónimo", icono: "correo" }, ortografia: { nombre: "Revisar ortografía", icono: "check" }, historial: { nombre: "Historial", icono: "reloj" }, textos: { nombre: "Textos", icono: "texto" }, ajustes: { nombre: "Ajustes", icono: "ajustes" } };
 const padreDe = (a) => a.padre_id ? APARTADOS.find(p => p.id === a.padre_id && !p.padre_id) : null;
 function construirPaginas() {
