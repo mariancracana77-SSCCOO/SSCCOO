@@ -3,7 +3,7 @@
 window.SUPABASE_URL = "https://kdfedwcskymaitvpryvg.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_RLt0HuAMskXkKl2hxhUF2w_sCexGznp";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "81"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "82"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/SSCCOO/";
 // Clave pública de las notificaciones (la privada solo está en el servidor)
 window.VAPID_PUBLICA = "BMMdZjehtNipsScHJ__kzOIn9XCgIpya3UDDRlexxOAWJU-J6ZICDlf72ItPOebzl-SfzoU234pd82Chp87Vm1w";
@@ -139,7 +139,7 @@ aplicarLectura();
 // Botón «Aa» (tamaño de letra y colores)
 document.addEventListener("click", (e) => { if (e.target.closest?.("[data-aa]")) abrirLectura(); });
 
-// ---- PDF sencillo hecho aquí mismo (sin librerías ni servidores): copias de «Mis descansos» y «Mis ganancias» ----
+// ---- PDF sencillo hecho aquí mismo (sin librerías ni servidores): copias de «Mis descansos» y «Mis incentivos» ----
 // lineas = [texto, tamaño, negrita, sangría]. «marca» va en una línea de comentario que los lectores de PDF no enseñan
 // (ahí van los datos para recuperarlos). Letra Helvetica en Windows-1252: solo alfabeto latino.
 window.pdfSencillo = (lineas, marca) => {

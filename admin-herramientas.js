@@ -6,7 +6,7 @@
 const NOMBRE_TABLA = { comunicados: "el aviso", eventos: "la fecha", convenio_secciones: "el apartado del convenio", actas: "el acta", documentos: "el documento",
   preguntas: "la pregunta frecuente", plantillas: "la plantilla", delegados: "el delegado", enlaces: "el enlace", apartados: "el apartado de la web",
   publicaciones: "la publicación", opciones: "la opción de lista", calc_permisos: "el permiso de la calculadora", calc_categorias: "el precio de horas extra",
-  avisos_recurrentes: "el aviso que se repite", buzon: "el mensaje del buzón", paginas: "el texto", calc_ajustes: "el ajuste de la calculadora", admins: "el administrador", restricciones: "el país de restricciones para camiones", tarifas_conductor: "el importe de «Mis ganancias»" };
+  avisos_recurrentes: "el aviso que se repite", buzon: "el mensaje del buzón", paginas: "el texto", calc_ajustes: "el ajuste de la calculadora", admins: "el administrador", restricciones: "el país de restricciones para camiones", tarifas_conductor: "el importe de «Mis incentivos»" };
 const VERBO = { crear: "creó", cambiar: "cambió", borrar: "borró" };
 const BOTON_DESHACER = { borrar: "Recuperar", cambiar: "Volver a como estaba", crear: "Deshacer (quitarlo)" };
 const CAMPOS_NOMBRE = { titulo: "Título", contenido: "Texto", categoria: "Categoría", urgente: "Urgente", fijado: "Fijado", adjuntos: "Archivos", fecha: "Fecha", hora: "Hora", hora_fin: "Hora de fin",
@@ -308,9 +308,9 @@ async function pintaCamiones() {
   if (l.length > 1) hacerOrdenable($("lista-restricciones"), "restricciones");
 }
 
-// ---------- Importes de «Mis ganancias» (Zona Conductores, v81) ----------
+// ---------- Importes de «Mis incentivos» (Zona Conductores, v81) ----------
 async function pintaImportes() {
-  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Importes de «Mis ganancias»</h1><p>Los importes que usa la calculadora de los conductores (Zona Conductores > Mis ganancias): salario, dietas, suplementos y pluses. Cuando cambien las tablas de la empresa, cámbialos aquí y la web los usa al momento. Lo que apunta cada conductor se queda en su móvil: aquí no se ve.</p></div><button class="btn" data-nuevo="tarifas">${icono("mas", "p")}Añadir concepto</button></div>
+  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Importes de «Mis incentivos»</h1><p>Los importes que usa la calculadora de los conductores (Zona Conductores > Mis incentivos): salario, dietas, suplementos y pluses. Cuando cambien las tablas de la empresa, cámbialos aquí y la web los usa al momento. Lo que apunta cada conductor se queda en su móvil: aquí no se ve.</p></div><button class="btn" data-nuevo="tarifas">${icono("mas", "p")}Añadir concepto</button></div>
     <div class="lista-adm" id="lista-tarifas"><p class="fecha-txt">Cargando…</p></div>
     ${SECCIONES[Object.keys(SECCIONES).find(k => SECCIONES[k].slug === "zona-conductores")] ? "" : `<p class="msg err">No hay ningún apartado «Zona Conductores» en la web, así que la calculadora sale suelta en las pestañas.</p>`}`;
   $("zona").querySelector("[data-nuevo]").onclick = () => abrirEditor("tarifas");

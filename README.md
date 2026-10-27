@@ -75,6 +75,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 82: «Mis incentivos»
+
+- La calculadora de la Zona Conductores pasa a llamarse **Mis incentivos** (lo pidió el secretario). Lo apuntado en los móviles se mantiene.
+- Carga o descarga internacional: la tabla dice «1.ª carga no se paga; de la 2.ª en adelante, 6 €». Ahora el conductor apunta solo las de la segunda en adelante y cada una suma 6 € (antes la calculadora quitaba una cada día, y no es así).
+- Traducir: si el modelo de Gemini no contesta en 40 s se pasa al otro, y los textos se traducen en tandas a la vez (antes se quedaba esperando y no traducía nada).
+
 ## Versión 81: Mis ganancias
 
 - Zona Conductores > **Mis ganancias**: cada conductor apunta lo que hace cada día (dieta completa o por partes, noche fuera, fin de semana, cargas, kilómetros, ADR, nocturnidad, festivo…) y ve lo que gana ese día, la semana y el mes (con el salario). Se guarda solo en su móvil, con copia en PDF y traducible.

@@ -166,7 +166,7 @@ async function pintaSeccion(k) {
   if (k === "calendario" && VISTA_CAL.modo === "mes") return pintaCalAdm();
   $("zona").innerHTML = `<div class="sec-cab">
       <div><h1>${esc(s.nombre)}</h1><p id="cuenta">${esc(s.intro)}</p></div>
-      <div class="botones" style="margin:0">${k === "avisos" ? `<button class="btn sec" id="b-recurrentes">${icono("reloj2", "p")}Avisos que se repiten</button>` : ""}${k === "documentos" ? `<button class="btn sec" id="b-archivos">${icono("imagen", "p")}Todos los archivos y fotos</button>` : ""}${s.slug === "zona-conductores" ? `<button class="btn sec" id="b-camiones">${icono("lugar", "p")}Restricciones para camiones</button><button class="btn sec" id="b-importes">${icono("euro", "p")}Importes de «Mis ganancias»</button>` : ""}<button class="btn btn-nuevo" id="b-nuevo">${icono("mas", "p")}${s.nuevo}</button></div>
+      <div class="botones" style="margin:0">${k === "avisos" ? `<button class="btn sec" id="b-recurrentes">${icono("reloj2", "p")}Avisos que se repiten</button>` : ""}${k === "documentos" ? `<button class="btn sec" id="b-archivos">${icono("imagen", "p")}Todos los archivos y fotos</button>` : ""}${s.slug === "zona-conductores" ? `<button class="btn sec" id="b-camiones">${icono("lugar", "p")}Restricciones para camiones</button><button class="btn sec" id="b-importes">${icono("euro", "p")}Importes de «Mis incentivos»</button>` : ""}<button class="btn btn-nuevo" id="b-nuevo">${icono("mas", "p")}${s.nuevo}</button></div>
     </div>
     ${k === "calendario" ? cambioVistaCal() : ""}
     <div class="herramientas"><div class="buscador">${icono("buscar", "p")}<input id="buscar" type="search" placeholder="Buscar en ${s.nombre.toLowerCase()} (también fechas: 12/10, octubre…)" aria-label="Buscar"></div></div>
