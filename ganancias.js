@@ -201,7 +201,7 @@
     $("gan-dia").innerHTML = `<div class="gan-nav"><button type="button" class="btn-ic" data-dia="-1" aria-label="${esc(T("Día anterior"))}">${icono("izq")}</button>
         <label class="gan-fecha"><span>${esc(fDia(f, true))}${f === hoy() ? ` · ${esc(T("hoy"))}` : ""}</span><small class="gan-sem-n">${esc(semTxt(f))}</small><input type="date" id="gan-fecha" value="${f}" aria-label="${esc(T("Elegir día"))}"></label>
         <button type="button" class="btn-ic" data-dia="1" aria-label="${esc(T("Día siguiente"))}">${icono("der")}</button></div>
-      <div class="gan-total"><span>${esc(T("Este día"))}</span><b>${esc(eur(r.total))}</b></div>
+      <div class="gan-total"><span>${esc(T("Ganas este día"))}<small>${esc(T("sin el salario"))}</small></span><b>${esc(eur(r.total))}</b></div>
       ${(() => { const k = cuentasMes(c, f.slice(0, 7)); return `<button type="button" class="gan-mini-mes" data-ir-mes><span>${esc(T("Nómina de {mes}", { mes: fMes(f.slice(0, 7)) }))} <b class="c-nom">${esc(eur(k.nomina))}</b></span> <span>${esc(T("Cobro semanal del mes"))} <b class="c-sem">${esc(eur(k.semanal))}</b></span>${icono("der", "p")}</button>`; })()}
       ${doble ? `<p class="desc-alerta">${icono("alerta", "p")}<span>${esc(T("Has marcado la dieta completa y también partes de la dieta. Normalmente se cobra una cosa o la otra: revísalo."))}</span></p>` : ""}
       ${grupos.map(g => `<section class="gan-grupo">${g.n ? `<h3>${esc(TD(g.n))}</h3>` : ""}<ul>${g.ts.map(fila).join("")}</ul></section>`).join("")}
@@ -226,7 +226,7 @@
     $("gan-semana").innerHTML = `<div class="gan-nav"><button type="button" class="btn-ic" data-sem="-7" aria-label="${esc(T("Semana anterior"))}">${icono("izq")}</button>
         <b class="gan-fecha"><span>${esc(T("Semana {n}", { n: w.n }))}${l === esta ? ` · ${esc(T("esta semana"))}` : ""}</span><small>${esc(T("Del {a} al {b}", { a: fDia(dias[0]), b: fDia(dias[6]) }))}${w.a !== +l.slice(0, 4) ? " · " + w.a : ""}</small></b>
         <button type="button" class="btn-ic" data-sem="7" aria-label="${esc(T("Semana siguiente"))}">${icono("der")}</button></div>
-      <div class="gan-total"><span>${esc(T("Esta semana"))}</span><b>${esc(eur(r.total))}</b></div>${reparto(r)}
+      <div class="gan-total"><span>${esc(T("Ganas esta semana"))}<small>${esc(T("sin el salario"))}</small></span><b>${esc(eur(r.total))}</b></div>${reparto(r)}
       <ul class="gan-dias">${dias.map(f => { const x = c[f]; return `<li><button type="button" data-ir-dia="${f}" class="${f === hoy() ? "hoy" : ""}"><span>${esc(fDia(f))}</span><b>${x && x.lineas.length ? esc(eur(x.total)) : `<small>${esc(T("Sin apuntar"))}</small>`}</b>${icono("der", "p")}</button></li>`; }).join("")}</ul>
       <details class="gan-ir-caja"><summary>${icono("calendario", "p")}<span>${esc(T("Ir a otra semana"))}</span></summary>
         <form class="gan-ir-sem" id="gan-ir-sem"><label><span>${esc(T("Semana número"))}</span><input type="number" id="gan-sem-n" min="1" max="53" inputmode="numeric" value="${w.n}" aria-label="${esc(T("Número de semana"))}"></label>
@@ -256,7 +256,7 @@
     $("gan-mes").innerHTML = `<div class="gan-nav"><button type="button" class="btn-ic" data-mes="-1" aria-label="${esc(T("Mes anterior"))}">${icono("izq")}</button>
         <b class="gan-fecha"><span>${esc(fMes(m))}</span></b>
         <button type="button" class="btn-ic" data-mes="1" aria-label="${esc(T("Mes siguiente"))}">${icono("der")}</button></div>
-      <div class="gan-total"><span>${esc(T("Total del mes (bruto)"))}</span><b>${esc(eur(k.total))}</b></div>
+      <div class="gan-total"><span>${esc(T("Ganas este mes"))}<small>${esc(T("con el salario, en bruto"))}</small></span><b>${esc(eur(k.total))}</b></div>
       <div class="desc-cifras gan-cifras">
         <div><b class="c-nom">${esc(eur(k.nomina))}</b><span>${esc(T("En la nómina de fin de mes: salario y lo que se paga con la nómina (festivos, nocturnidad, ADR)"))}</span></div>
         <div><b class="c-sem">${esc(eur(k.semanal))}</b><span>${esc(T("Cobro semanal: dietas, suplementos, cargas, kilómetros y horas sindicales de {n} días apuntados (te los pagan por semanas)", { n: r.apuntados }))}</span></div>
