@@ -8,7 +8,7 @@ const fs = require("fs"), path = require("path");
 const { chromium } = require("playwright");
 const BASE = process.env.BASE || "http://localhost:8765/";
 const MOCK = fs.readFileSync(path.join(__dirname, "mock-supabase.js"), "utf8");
-const VISTAS = ["inicio", "avisos", "calendario", "convenio", "actas", "documentos", "preguntas", "info", "calcula", "descansos", "buscar", "ap-comite", "ap-zona-conductores"];
+const VISTAS = ["inicio", "avisos", "calendario", "convenio", "actas", "documentos", "preguntas", "info", "calcula", "descansos", "ganancias", "buscar", "ap-comite", "ap-zona-conductores"];
 const CASOS = [
   { nombre: "móvil 320 claro", w: 320, h: 640, tema: "light" },
   { nombre: "móvil 412 oscuro", w: 412, h: 860, tema: "dark" },

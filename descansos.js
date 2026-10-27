@@ -474,37 +474,7 @@
     L("");
     L("Solo es una ayuda para organizarte; no es una prueba oficial ni sustituye al tacógrafo. Manda lo que registra el tacógrafo y el Reglamento (CE) 561/2006. Cálculos según el cuadernillo «Tiempos de conducción y descanso» de FENADISMER (mayo 2026) y el II Acuerdo Marco.", 8);
     L("Para volver a cargar estos datos en la app: Zona Conductores > Mis descansos > Recuperar una copia, y elige este PDF.", 8);
-    // Partir en renglones que quepan (Helvetica ~0,5 em por letra) y en páginas A4
-    const ANCHO = 515, renglones = [];
-    lineas.forEach(([t, tam, neg, x]) => {
-      const max = Math.floor((ANCHO - x) / (tam * 0.5)); let resto = String(t);
-      if (!resto) { renglones.push(["", tam, neg, x]); return; }
-      while (resto.length > max) { let i = resto.lastIndexOf(" ", max); if (i < max * 0.5) i = max; renglones.push([resto.slice(0, i), tam, neg, x]); resto = resto.slice(i).trimStart(); }
-      renglones.push([resto, tam, neg, x]);
-    });
-    const paginas = [[]]; let y = 800;
-    renglones.forEach(r => { const alto = r[1] * 1.45; if (y - alto < 50) { paginas.push([]); y = 800; } y -= alto; paginas[paginas.length - 1].push([...r, y]); });
-    // Texto en Windows-1252 (letras con tilde, ñ, «») y escapado para el PDF
-    const cp = (t) => [...t].map(ch => { const n = ch.charCodeAt(0); return n < 256 ? ch : ({ "–": "\x96", "—": "\x97", "‘": "'", "’": "'", "“": '"', "”": '"', "€": "\x80", "…": "..." }[ch] || "?"); }).join("").replace(/[\\()]/g, m => "\\" + m);
-    const objs = [], pag = [];
-    objs[1] = "<< /Type /Catalog /Pages 2 0 R >>";
-    objs[3] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
-    objs[4] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>";
-    paginas.forEach((ls, i) => {
-      const n = 5 + i * 2, cont = ls.map(([t, tam, neg, x, yy]) => t ? `BT /${neg ? "F2" : "F1"} ${tam} Tf ${40 + x} ${yy.toFixed(1)} Td (${cp(t)}) Tj ET` : "").filter(Boolean).join("\n")
-        + `\nBT /F1 8 Tf 40 30 Td (${cp("Página " + (i + 1) + " de " + paginas.length)}) Tj ET`;
-      objs[n] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${n + 1} 0 R >>`;
-      objs[n + 1] = `<< /Length ${cont.length} >>\nstream\n${cont}\nendstream`;
-      pag.push(`${n} 0 R`);
-    });
-    objs[2] = `<< /Type /Pages /Kids [${pag.join(" ")}] /Count ${pag.length} >>`;
-    const datos = btoa(JSON.stringify({ app: "ccoo-descansos", ...DATOS }));
-    let out = "%PDF-1.4\n%\xe2\xe3\xcf\xd3\n" + MARCA + datos + "\n";
-    const pos = [];
-    for (let i = 1; i < objs.length; i++) { pos[i] = out.length; out += `${i} 0 obj\n${objs[i]}\nendobj\n`; }
-    const xref = out.length;
-    out += `xref\n0 ${objs.length}\n0000000000 65535 f \n` + pos.slice(1).map(p => String(p).padStart(10, "0") + " 00000 n \n").join("") + `trailer\n<< /Size ${objs.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
-    return new Blob([Uint8Array.from(out, ch => ch.charCodeAt(0) & 255)], { type: "application/pdf" });
+    return pdfSencillo(lineas, MARCA + btoa(JSON.stringify({ app: "ccoo-descansos", ...DATOS })));
   }
 
   // ---------- Formularios ----------

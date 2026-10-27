@@ -3,7 +3,7 @@
 window.SUPABASE_URL = "https://kdfedwcskymaitvpryvg.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_RLt0HuAMskXkKl2hxhUF2w_sCexGznp";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "80"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "81"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/SSCCOO/";
 // Clave pública de las notificaciones (la privada solo está en el servidor)
 window.VAPID_PUBLICA = "BMMdZjehtNipsScHJ__kzOIn9XCgIpya3UDDRlexxOAWJU-J6ZICDlf72ItPOebzl-SfzoU234pd82Chp87Vm1w";
@@ -138,6 +138,48 @@ aplicarLectura();
 
 // Botón «Aa» (tamaño de letra y colores)
 document.addEventListener("click", (e) => { if (e.target.closest?.("[data-aa]")) abrirLectura(); });
+
+// ---- PDF sencillo hecho aquí mismo (sin librerías ni servidores): copias de «Mis descansos» y «Mis ganancias» ----
+// lineas = [texto, tamaño, negrita, sangría]. «marca» va en una línea de comentario que los lectores de PDF no enseñan
+// (ahí van los datos para recuperarlos). Letra Helvetica en Windows-1252: solo alfabeto latino.
+window.pdfSencillo = (lineas, marca) => {
+  // Partir en renglones que quepan (Helvetica ~0,5 em por letra) y en páginas A4
+  const ANCHO = 515, renglones = [];
+  lineas.forEach(([t, tam = 10, neg = false, x = 0]) => {
+    const max = Math.floor((ANCHO - x) / (tam * 0.5)); let resto = String(t);
+    if (!resto) { renglones.push(["", tam, neg, x]); return; }
+    while (resto.length > max) { let i = resto.lastIndexOf(" ", max); if (i < max * 0.5) i = max; renglones.push([resto.slice(0, i), tam, neg, x]); resto = resto.slice(i).trimStart(); }
+    renglones.push([resto, tam, neg, x]);
+  });
+  const paginas = [[]]; let y = 800;
+  renglones.forEach(r => { const alto = r[1] * 1.45; if (y - alto < 50) { paginas.push([]); y = 800; } y -= alto; paginas[paginas.length - 1].push([...r, y]); });
+  // Texto en Windows-1252 (letras con tilde, ñ, «») y escapado para el PDF
+  const cp = (t) => [...t].map(ch => { const n = ch.charCodeAt(0); return n < 256 ? ch : ({ "–": "\x96", "—": "\x97", "‘": "'", "’": "'", "“": '"', "”": '"', "€": "\x80", "…": "..." }[ch] || "?"); }).join("").replace(/[\\()]/g, m => "\\" + m);
+  const objs = [], pag = [];
+  objs[1] = "<< /Type /Catalog /Pages 2 0 R >>";
+  objs[3] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
+  objs[4] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>";
+  paginas.forEach((ls, i) => {
+    const n = 5 + i * 2, cont = ls.map(([t, tam, neg, x, yy]) => t ? `BT /${neg ? "F2" : "F1"} ${tam} Tf ${40 + x} ${yy.toFixed(1)} Td (${cp(t)}) Tj ET` : "").filter(Boolean).join("\n")
+      + `\nBT /F1 8 Tf 40 30 Td (${cp("Página " + (i + 1) + " de " + paginas.length)}) Tj ET`;
+    objs[n] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${n + 1} 0 R >>`;
+    objs[n + 1] = `<< /Length ${cont.length} >>\nstream\n${cont}\nendstream`;
+    pag.push(`${n} 0 R`);
+  });
+  objs[2] = `<< /Type /Pages /Kids [${pag.join(" ")}] /Count ${pag.length} >>`;
+  let out = "%PDF-1.4\n%\xe2\xe3\xcf\xd3\n" + (marca ? marca + "\n" : "");
+  const pos = [];
+  for (let i = 1; i < objs.length; i++) { pos[i] = out.length; out += `${i} 0 obj\n${objs[i]}\nendobj\n`; }
+  const xref = out.length;
+  out += `xref\n0 ${objs.length}\n0000000000 65535 f \n` + pos.slice(1).map(p => String(p).padStart(10, "0") + " 00000 n \n").join("") + `trailer\n<< /Size ${objs.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return new Blob([Uint8Array.from(out, ch => ch.charCodeAt(0) & 255)], { type: "application/pdf" });
+};
+// Lee los datos guardados en la «marca» de un PDF hecho con pdfSencillo (o un .json antiguo)
+window.leePDFSencillo = (txt, marca) => {
+  if (!txt.startsWith("%PDF")) return JSON.parse(txt);
+  const i = txt.indexOf(marca); if (i < 0) throw 0;
+  return JSON.parse(decodeURIComponent(escape(atob(txt.slice(i + marca.length, txt.indexOf("\n", i)).trim()))));
+};
 
 // Solo enlaces web, email o teléfono (nunca «javascript:» ni otros esquemas)
 window.urlSegura = (u) => { u = String(u || "").trim(); return /^(https?:\/\/|mailto:|tel:)/i.test(u) ? u : "#"; };

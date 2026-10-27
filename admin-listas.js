@@ -166,7 +166,7 @@ async function pintaSeccion(k) {
   if (k === "calendario" && VISTA_CAL.modo === "mes") return pintaCalAdm();
   $("zona").innerHTML = `<div class="sec-cab">
       <div><h1>${esc(s.nombre)}</h1><p id="cuenta">${esc(s.intro)}</p></div>
-      <div class="botones" style="margin:0">${k === "avisos" ? `<button class="btn sec" id="b-recurrentes">${icono("reloj2", "p")}Avisos que se repiten</button>` : ""}${k === "documentos" ? `<button class="btn sec" id="b-archivos">${icono("imagen", "p")}Todos los archivos y fotos</button>` : ""}${s.slug === "zona-conductores" ? `<button class="btn sec" id="b-camiones">${icono("lugar", "p")}Restricciones para camiones</button>` : ""}<button class="btn btn-nuevo" id="b-nuevo">${icono("mas", "p")}${s.nuevo}</button></div>
+      <div class="botones" style="margin:0">${k === "avisos" ? `<button class="btn sec" id="b-recurrentes">${icono("reloj2", "p")}Avisos que se repiten</button>` : ""}${k === "documentos" ? `<button class="btn sec" id="b-archivos">${icono("imagen", "p")}Todos los archivos y fotos</button>` : ""}${s.slug === "zona-conductores" ? `<button class="btn sec" id="b-camiones">${icono("lugar", "p")}Restricciones para camiones</button><button class="btn sec" id="b-importes">${icono("euro", "p")}Importes de «Mis ganancias»</button>` : ""}<button class="btn btn-nuevo" id="b-nuevo">${icono("mas", "p")}${s.nuevo}</button></div>
     </div>
     ${k === "calendario" ? cambioVistaCal() : ""}
     <div class="herramientas"><div class="buscador">${icono("buscar", "p")}<input id="buscar" type="search" placeholder="Buscar en ${s.nombre.toLowerCase()} (también fechas: 12/10, octubre…)" aria-label="Buscar"></div></div>
@@ -176,6 +176,7 @@ async function pintaSeccion(k) {
   $("b-nuevo").onclick = () => abrirEditor(k);
   if ($("b-recurrentes")) $("b-recurrentes").onclick = () => abrir("recurrentes");
   if ($("b-camiones")) $("b-camiones").onclick = () => abrir("camiones");
+  if ($("b-importes")) $("b-importes").onclick = () => abrir("ganancias");
   if ($("b-archivos")) $("b-archivos").onclick = () => abrir("archivos");
   enlazarVistaCal();
   try { await Promise.all([cargarDatos(k), TABLAS_LEIDAS.includes(s.tabla) ? cargarLecturas() : null, k === "apartados" ? contarPublicaciones() : null, k === "encuestas" ? cargarVotos() : null]); } catch (e) { $("lista").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(errTxt(e))}</p>`; return; }

@@ -28,6 +28,16 @@
     publicaciones: [{ id: 1, apartado_id: 2, titulo: "Normas de descanso", contenido: "Contenido de prueba.", fecha: dia(-2), publicado: true, adjuntos: [] },
       { id: 2, apartado_id: 5, titulo: "Reunión de seguridad y salud", contenido: "Se revisa la evaluación de riesgos.", fecha: dia(-3), publicado: true, adjuntos: [] }],
     calc_permisos: [], calc_categorias: [], calc_ajustes: [{ clave: "vac_dias", valor: "23" }],
+    tarifas_conductor: [
+      { id: 1, grupo: "Salario", concepto: "Salario bruto (sin antigüedad)", importe: 1725.28, unidad: "mes", pago: "Mensual", sin_pagar: 0, max_mes: null, nota: "", orden: 10, visible: true },
+      { id: 3, grupo: "Dieta completa", concepto: "Dieta completa nacional", importe: 48.6, unidad: "dia", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "", orden: 30, visible: true },
+      { id: 5, grupo: "Suplementos", concepto: "Fin de semana fuera (domingo)", importe: 100, unidad: "finde", pago: "Semanal", sin_pagar: 0, max_mes: 2, nota: "Como mucho 2 al mes.", orden: 50, visible: true },
+      { id: 7, grupo: "Dieta fraccionada nacional", concepto: "Desayuno", importe: 5.72, unidad: "vez", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "", orden: 70, visible: true },
+      { id: 20, grupo: "Otros pluses", concepto: "ADR (por minuto)", importe: 0.00812196, unidad: "minuto", pago: "Mensual", sin_pagar: 0, max_mes: null, nota: "Promedio: depende de la antigüedad.", orden: 200, visible: true },
+      { id: 21, grupo: "Otros pluses", concepto: "ADR (fijo al mes)", importe: 70, unidad: "mes", pago: "Mensual", sin_pagar: 0, max_mes: null, nota: "Solo si haces ADR.", orden: 210, visible: true },
+      { id: 22, grupo: "Otros pluses", concepto: "Carga o descarga (internacional)", importe: 6, unidad: "vez", pago: "Semanal", sin_pagar: 1, max_mes: null, nota: "La primera carga no se paga; de la segunda en adelante, 6 €.", orden: 220, visible: true },
+      { id: 25, grupo: "Otros pluses", concepto: "Kilómetros", importe: 0.037, unidad: "km", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "", orden: 250, visible: true },
+    ],
   };
   window.__LLAMADAS = []; // lo que la web ha pedido (para comprobar que no recarga de más)
   function consulta(tabla) {
