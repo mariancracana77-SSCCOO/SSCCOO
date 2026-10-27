@@ -10,7 +10,7 @@
 // elegidos en un calendario.
 (function () {
   const CLAVE = "ccoo-ganancias", CACHE_TARIFAS = "ccoo-tarifas";
-  const DEF = () => ({ dias: {}, salario: "", precio: {}, oculto: {}, fijo: {}, tab: "dia", dia: "", semana: "", mes: "" });
+  const DEF = () => ({ dias: {}, salario: "", precio: {}, oculto: {}, fijo: {}, tab: "dia", dia: "", semana: "", mes: "", inicio: "" });
   const lee = () => { try { const d = JSON.parse(localStorage.getItem(CLAVE) || "null"); if (d && typeof d.dias === "object") { const x = { ...DEF(), ...d }; if (!x.precio || typeof x.precio !== "object") x.precio = {}; return x; } } catch (_) {} return DEF(); };
   let DATOS = lee();
   const guarda = () => {
@@ -40,7 +40,7 @@
   const GUIA = () => [
     [T("Cada día"), T("En «Día», marca lo que has hecho: dieta completa o partes (dormir, desayuno, comida, cena), noche fuera, cargas, kilómetros… El total sale arriba y se guarda solo.")],
     [T("Otro día"), T("Cambia de día con las flechas o tocando la fecha. «Copiar el día anterior» rellena lo mismo que el último día apuntado.")],
-    [T("La semana y el mes"), T("En «Semana» ves cada día y el total de la semana. En «Mes», el total del mes con el salario y lo que se cobra con la nómina.")],
+    [T("La semana y el mes"), T("Arriba del todo ves siempre lo de hoy, lo de esta semana y lo del mes: toca una cifra para ir a esa vista. En «Semana» va cada día con la semana del año (la 44, la 45…) y puedes ir a una escribiendo su número. En «Mes», el total con el salario y lo que se cobra con la nómina, semana por semana.")],
     [T("Lo que cobras tú"), T("En «Ajustes», pon tu salario y lo que cobras tú de cada cosa (por ejemplo, el precio de tus horas sindicales). Si lo dejas vacío, se usa el de la tabla.")],
     [T("Descargar"), T("En «Ajustes», elige en el calendario las semanas o los días que quieras y descárgalos en PDF.")],
   ];
@@ -99,6 +99,11 @@
   const suma = (s, n) => { const d = deIso(s); d.setDate(d.getDate() + n); return iso(d); };
   const lunesDe = (s) => { const d = deIso(s); return suma(s, -((d.getDay() + 6) % 7)); };
   const hoy = () => iso(new Date());
+  // Semana del año (ISO, la de los calendarios de pared y los tacógrafos): «Semana 44». Lo pidió el padre en la v84.
+  const semDe = (s) => semanaISO(deIso(s));
+  const semTxt = (s) => T("Semana {n}", { n: semDe(s).n });
+  const nombreSem = (l) => { const w = semDe(l); return "semana-" + w.n + "-" + w.a; };
+  const diasDe = (l) => Array.from({ length: 7 }, (_, i) => suma(l, i));
   const fDia = (s, larga) => deIso(s).toLocaleDateString(LOC, larga ? { weekday: "long", day: "numeric", month: "long" } : { weekday: "short", day: "numeric", month: "short" });
   const fMes = (m) => deIso(m + "-01").toLocaleDateString(LOC, { month: "long", year: "numeric" });
   const eur = (n) => (Math.round(n * 100) / 100).toLocaleString(LOC, { style: "currency", currency: "EUR" });
@@ -143,6 +148,18 @@
   const reparto = (r) => r.semanal && r.mensual ? `<p class="gan-reparto"><span>${esc(T("Se cobra cada semana"))}: <b>${esc(eur(r.semanal))}</b></span><span>${esc(T("Con la nómina del mes"))}: <b>${esc(eur(r.mensual))}</b></span></p>` : "";
 
   // ---------- Pintar ----------
+  // Las cifras que cambian dan un pequeño «salto» (clase gan-pulsa): se compara el texto de antes con el de después
+  const antesDe = (sel) => [...document.querySelectorAll(sel)].map(e => e.textContent);
+  const pulsa = (sel, antes) => { if (!antes.length) return; [...document.querySelectorAll(sel)].forEach((e, i) => { if (antes[i] !== undefined && antes[i] !== e.textContent) { e.classList.remove("gan-pulsa"); void e.offsetWidth; e.classList.add("gan-pulsa"); } }); };
+  function pintaTira(c) {
+    const caja = $("gan-tira"); if (!caja) return;
+    const h = hoy(), l = lunesDe(h), m = h.slice(0, 7), w = semDe(h), rs = resumen(c, diasDe(l)), k = cuentasMes(c, m), TAB = DATOS.tab || "dia";
+    const antes = antesDe("#gan-tira b");
+    const celda = (tab, et, v, extra) => `<button type="button" data-tira="${tab}" class="${TAB === tab ? "activa" : ""}" aria-current="${TAB === tab ? "true" : "false"}"><span>${esc(et)}</span><b>${esc(eur(v))}</b>${extra ? `<small>${esc(extra)}</small>` : ""}</button>`;
+    caja.innerHTML = celda("dia", T("Hoy"), c[h]?.total || 0, fDia(h)) + celda("semana", T("Semana {n}", { n: w.n }), rs.total, T("sin salario")) + celda("mes", fMes(m).replace(/ de \d{4}$| \d{4}$/, ""), k.total, T("con nómina"));
+    pulsa("#gan-tira b", antes);
+    caja.querySelectorAll("[data-tira]").forEach(b => b.onclick = () => { DATOS.tab = b.dataset.tira; DATOS.dia = h; DATOS.semana = ""; DATOS.mes = ""; guarda(); pinta(); });
+  }
   function pinta() {
     const v = $("v-ganancias"); if (!v) return;
     const TAB = DATOS.tab || "dia";
@@ -151,8 +168,9 @@
     const inst = typeof INSTALADA === "function" && INSTALADA();
     $("gan-app").innerHTML = `<details class="desc-mini"><summary>${icono(inst ? "alerta" : "movil", "p")}<span>${esc(inst ? T("Para no perder lo apuntado") : T("Instala la app para no perder lo apuntado"))}</span></summary><div><p>${esc(T("Se guarda solo en este móvil (no en internet). Se pierde si borras los datos de la app o del navegador, si usas una pestaña de incógnito o si cambias de móvil. Guarda de vez en cuando la copia en PDF (en «Ajustes»)."))}</p>${inst ? "" : `<button class="btn" id="gan-instalar">${icono("descargar", "p")}${esc(T("Instalar la app"))}</button>`}</div></details>`;
     if ($("gan-instalar")) $("gan-instalar").onclick = () => instalar();
-    if (!TARIFAS.length) { ["gan-dia", "gan-semana", "gan-mes"].forEach(id => $(id).innerHTML = `<p class="desc-vacio">${esc(T("Cargando los importes… Si no salen, comprueba la conexión."))}</p>`); pintaAjustes(); return; }
+    if (!TARIFAS.length) { ["gan-dia", "gan-semana", "gan-mes"].forEach(id => $(id).innerHTML = `<p class="desc-vacio">${esc(T("Cargando los importes… Si no salen, comprueba la conexión."))}</p>`); $("gan-tira").innerHTML = ""; pintaAjustes(); return; }
     const c = calcula();
+    pintaTira(c);
     if (TAB === "dia") pintaDia(c);
     if (TAB === "semana") pintaSemana(c);
     if (TAB === "mes") pintaMes(c);
@@ -178,8 +196,9 @@
     const lleva = (p) => r.lineas.some(l => /dieta/i.test(l.t.grupo + " " + l.t.concepto) && p(l.t));
     const doble = lleva(t => CASILLA.includes(t.unidad) && /complet/i.test(t.grupo + " " + t.concepto)) && lleva(t => t.unidad === "vez" && !/carga/i.test(t.concepto));
     const anterior = Object.keys(DATOS.dias).filter(x => x < f && Object.keys(DATOS.dias[x] || {}).length).sort().pop();
+    const antes = antesDe("#gan-dia .gan-total b, #gan-dia .gan-mini-mes b");
     $("gan-dia").innerHTML = `<div class="gan-nav"><button type="button" class="btn-ic" data-dia="-1" aria-label="${esc(T("Día anterior"))}">${icono("izq")}</button>
-        <label class="gan-fecha"><span>${esc(fDia(f, true))}${f === hoy() ? ` · ${esc(T("hoy"))}` : ""}</span><input type="date" id="gan-fecha" value="${f}" aria-label="${esc(T("Elegir día"))}"></label>
+        <label class="gan-fecha"><span>${esc(fDia(f, true))}${f === hoy() ? ` · ${esc(T("hoy"))}` : ""}</span><small class="gan-sem-n">${esc(semTxt(f))}</small><input type="date" id="gan-fecha" value="${f}" aria-label="${esc(T("Elegir día"))}"></label>
         <button type="button" class="btn-ic" data-dia="1" aria-label="${esc(T("Día siguiente"))}">${icono("der")}</button></div>
       <div class="gan-total"><span>${esc(T("Este día"))}</span><b>${esc(eur(r.total))}</b></div>
       ${(() => { const k = cuentasMes(c, f.slice(0, 7)); return `<button type="button" class="gan-mini-mes" data-ir-mes>${esc(fMes(f.slice(0, 7)))}: <span>${esc(T("nómina"))} <b>${esc(eur(k.nomina))}</b></span> <span>${esc(T("cada semana"))} <b>${esc(eur(k.semanal))}</b></span>${icono("der", "p")}</button>`; })()}
@@ -188,6 +207,7 @@
       ${lista.length < variables().length ? `<p class="ayuda">${esc(T("Hay conceptos escondidos. Los vuelves a sacar en «Ajustes»."))}</p>` : ""}
       <div class="botones">${anterior && !Object.keys(dia).length ? `<button class="btn sec" id="gan-copiar">${icono("copia", "p")}${esc(T("Copiar el día anterior ({fecha})", { fecha: fDia(anterior) }))}</button>` : ""}
         ${Object.keys(dia).length ? `<button class="btn sec" id="gan-vaciar">${icono("borrar", "p")}${esc(T("Vaciar este día"))}</button>` : ""}</div>`;
+    pulsa("#gan-dia .gan-total b, #gan-dia .gan-mini-mes b", antes);
     const v = $("gan-dia"), pon = (id, n) => { const d = { ...(DATOS.dias[f] || {}) }; if (n > 0) d[id] = Math.round(n * 100) / 100; else delete d[id]; if (Object.keys(d).length) DATOS.dias[f] = d; else delete DATOS.dias[f]; guarda(); };
     v.querySelectorAll("[data-dia]").forEach(b => b.onclick = () => { DATOS.dia = suma(f, +b.dataset.dia); guarda(); pinta(); });
     v.querySelector("[data-ir-mes]").onclick = () => { DATOS.mes = f.slice(0, 7); DATOS.tab = "mes"; guarda(); pinta(); };
@@ -200,18 +220,30 @@
   }
 
   function pintaSemana(c) {
-    const l = DATOS.semana || lunesDe(DATOS.dia || hoy()), dias = Array.from({ length: 7 }, (_, i) => suma(l, i)), r = resumen(c, dias);
+    const l = DATOS.semana || lunesDe(DATOS.dia || hoy()), dias = diasDe(l), r = resumen(c, dias), w = semDe(l), esta = lunesDe(hoy());
+    const pasada = resumen(c, diasDe(suma(l, -7))), wp = semDe(suma(l, -7));
+    const corto = (f) => deIso(f).toLocaleDateString(LOC, { weekday: "narrow" });
     $("gan-semana").innerHTML = `<div class="gan-nav"><button type="button" class="btn-ic" data-sem="-7" aria-label="${esc(T("Semana anterior"))}">${icono("izq")}</button>
-        <b class="gan-fecha"><span>${esc(T("Del {a} al {b}", { a: fDia(dias[0]), b: fDia(dias[6]) }))}</span></b>
+        <b class="gan-fecha"><span>${esc(T("Semana {n}", { n: w.n }))}${l === esta ? ` · ${esc(T("esta semana"))}` : ""}</span><small>${esc(T("Del {a} al {b}", { a: fDia(dias[0]), b: fDia(dias[6]) }))}${w.a !== +l.slice(0, 4) ? " · " + w.a : ""}</small></b>
         <button type="button" class="btn-ic" data-sem="7" aria-label="${esc(T("Semana siguiente"))}">${icono("der")}</button></div>
+      <form class="gan-ir-sem" id="gan-ir-sem"><label><span>${esc(T("Ir a la semana"))}</span><input type="number" id="gan-sem-n" min="1" max="53" inputmode="numeric" value="${w.n}" aria-label="${esc(T("Número de semana"))}"></label>
+        <label><span>${esc(T("del año"))}</span><input type="number" id="gan-sem-a" min="2020" max="2100" inputmode="numeric" value="${w.a}" aria-label="${esc(T("Año"))}"></label>
+        <button class="btn sec">${esc(T("Ir"))}</button>${l !== esta ? `<button type="button" class="btn sec" data-sem="hoy">${esc(T("Esta semana"))}</button>` : ""}</form>
       <div class="gan-total"><span>${esc(T("Esta semana"))}</span><b>${esc(eur(r.total))}</b></div>${reparto(r)}
-      <ul class="gan-dias">${dias.map(f => { const x = c[f]; return `<li><button type="button" data-ir-dia="${f}" class="${f === hoy() ? "hoy" : ""}"><span>${esc(fDia(f))}</span><b>${x && x.lineas.length ? esc(eur(x.total)) : `<small>${esc(T("Sin apuntar"))}</small>`}</b>${icono("der", "p")}</button></li>`; }).join("")}</ul>
-      ${r.por.length ? `<h3 class="gan-sub">${esc(T("Por conceptos"))}</h3>${desglose(r)}` : ""}
+      <ul class="gan-sem-dias" aria-label="${esc(T("Los días de la semana"))}">${dias.map(f => { const x = c[f], hay = x && x.lineas.length; return `<li><button type="button" data-ir-dia="${f}" class="${f === hoy() ? "hoy" : ""} ${hay ? "con" : ""}" aria-label="${esc(fDia(f, true))}${hay ? ": " + esc(eur(x.total)) : ""}"><span class="d">${esc(corto(f))}</span><span class="n">${+f.slice(8)}</span><b>${hay ? esc((Math.round(x.total * 100) / 100).toLocaleString(LOC, { minimumFractionDigits: 2, maximumFractionDigits: 2 })) : "–"}</b></button></li>`; }).join("")}</ul>
+      ${pasada.apuntados ? `<p class="gan-compara">${esc(T("La semana pasada (semana {n}): {total}", { n: wp.n, total: eur(pasada.total) }))}${r.apuntados ? ` · <b class="${r.total >= pasada.total ? "mas" : "menos"}">${r.total >= pasada.total ? "+" : "−"}${esc(eur(Math.abs(r.total - pasada.total)))}</b>` : ""}</p>` : ""}
+      ${r.por.length ? `<h3 class="gan-sub">${esc(T("Por conceptos"))}</h3>${desglose(r)}` : `<p class="desc-vacio">${esc(T("Esta semana todavía no has apuntado ningún día. Toca un día para apuntar."))}</p>`}
       <p class="ayuda">${esc(T("Sin el salario: es lo que suman las dietas, suplementos y pluses de la semana. El salario sale en «Mes»."))}</p>
       <div class="botones"><button class="btn sec" id="gan-pdf-semana">${icono("descargar", "p")}${esc(T("Descargar esta semana (PDF)"))}</button></div>`;
     const v = $("gan-semana");
-    $("gan-pdf-semana").onclick = () => descarga(dias, "semana-" + dias[0]);
-    v.querySelectorAll("[data-sem]").forEach(b => b.onclick = () => { DATOS.semana = suma(l, +b.dataset.sem); guarda(); pinta(); });
+    $("gan-pdf-semana").onclick = () => descarga(dias, nombreSem(l));
+    v.querySelectorAll("[data-sem]").forEach(b => b.onclick = () => { DATOS.semana = b.dataset.sem === "hoy" ? esta : suma(l, +b.dataset.sem); guarda(); pinta(); });
+    $("gan-ir-sem").onsubmit = (e) => {
+      e.preventDefault();
+      const n = parseInt($("gan-sem-n").value, 10), a = parseInt($("gan-sem-a").value, 10);
+      if (!(a >= 2020 && a <= 2100) || !(n >= 1 && n <= semanasDelAnio(a))) return msg(T("Ese año tiene {n} semanas: escribe un número entre 1 y {n}.", { n: semanasDelAnio(a) }), true);
+      DATOS.semana = iso(lunesSemanaISO(a, n)); guarda(); pinta();
+    };
     v.querySelectorAll("[data-ir-dia]").forEach(b => b.onclick = () => { DATOS.dia = b.dataset.irDia; DATOS.tab = "dia"; guarda(); pinta(); });
   }
 
@@ -227,6 +259,9 @@
         <div><b>${esc(eur(k.nomina))}</b><span>${esc(T("Nómina del mes: salario, fijos y lo que se paga con la nómina (festivos, nocturnidad, ADR, horas sindicales…)"))}</span></div>
         <div><b>${esc(eur(k.semanal))}</b><span>${esc(T("Cada semana: dietas, suplementos, cargas y kilómetros de {n} días apuntados", { n: r.apuntados }))}</span></div>
       </div>
+      ${(() => { const ult = `${m}-${String(new Date(a, mm, 0).getDate()).padStart(2, "0")}`, sems = []; for (let l = lunesDe(m + "-01"); l <= ult; l = suma(l, 7)) sems.push(l);
+        const filas = sems.map(l => { const todos = diasDe(l), ds = todos.filter(f => f.slice(0, 7) === m), x = resumen(c, ds), w = semDe(l); return { l, ds, x, w, parte: ds.length < 7 }; }).filter(f => f.x.apuntados);
+        return filas.length ? `<h3 class="gan-sub">${esc(T("Por semanas"))}</h3><ul class="gan-dias gan-semanas">${filas.map(f => `<li><button type="button" data-ir-sem="${f.l}"><span>${esc(T("Semana {n}", { n: f.w.n }))}<small>${esc(T("Del {a} al {b}", { a: fDia(f.ds[0]), b: fDia(f.ds[f.ds.length - 1]) }))}${f.parte ? " · " + esc(T("solo los días de este mes")) : ""}</small></span><b>${esc(eur(f.x.total))}</b>${icono("der", "p")}</button></li>`).join("")}</ul>` : ""; })()}
       <h3 class="gan-sub">${esc(T("Con la nómina"))}</h3>
       <ul class="gan-desglose">${k.fijos.map(x => `<li><span>${esc(TD(x.t.concepto))}${esPropio(x.t) ? ` <small>${esc(T("el tuyo, de «Ajustes»"))}</small>` : ""}</span><b>${esc(eur(x.imp))}</b></li>`).join("")}</ul>
       ${desglose({ por: enNomina })}
@@ -234,6 +269,7 @@
       ${r.por.length ? "" : `<p class="desc-vacio">${esc(T("Este mes todavía no has apuntado ningún día."))}</p>`}
       <p class="ayuda">${esc(T("Las horas extra y los descuentos (IRPF, Seguridad Social) no están incluidos. Si cobras antigüedad, pon tu salario en «Ajustes»."))}</p>`;
     $("gan-mes").querySelectorAll("[data-mes]").forEach(b => b.onclick = () => { DATOS.mes = otroMes(+b.dataset.mes); guarda(); pinta(); });
+    $("gan-mes").querySelectorAll("[data-ir-sem]").forEach(b => b.onclick = () => { DATOS.semana = b.dataset.irSem; DATOS.tab = "semana"; guarda(); pinta(); });
   }
 
   // ---------- Ajustes ----------
@@ -253,6 +289,7 @@
           <input inputmode="decimal" data-precio="${t.id}" value="${esc(valor(t))}" placeholder="${esc(t.importe ? precio(t.importe) : T("tu precio"))}" aria-label="${esc(TD(t.concepto) + " · " + UNIDAD()[t.unidad])}"></label>`).join("")}</div>`).join("")}
       </details>
       ${fm.length ? `<fieldset class="gan-checks"><legend>${esc(T("Lo que cobro fijo cada mes"))}</legend>${fm.map(t => `<label class="check"><input type="checkbox" data-fijo="${t.id}" ${cobraFijo(t) ? "checked" : ""}><span>${esc(TD(t.concepto))} · ${esc(precio(imp(t)))}</span></label>`).join("")}</fieldset>` : ""}
+      <fieldset class="gan-checks gan-inicio"><legend>${esc(T("Al abrir «Mis incentivos», enséñame"))}</legend><div class="gan-cal-rapido">${[["", T("Lo último que miré")], ["dia", T("Día")], ["semana", T("Semana")], ["mes", T("Mes")]].map(([k, n]) => `<label class="filtro ${(DATOS.inicio || "") === k ? "activo" : ""}"><input type="radio" name="gan-inicio" value="${k}" ${(DATOS.inicio || "") === k ? "checked" : ""}>${esc(n)}</label>`).join("")}</div></fieldset>
       ${vs.length ? `<fieldset class="gan-checks"><legend>${esc(T("Conceptos que uso"))}</legend><p class="ayuda">${esc(T("Quita los que no usas nunca: salen de «Día» y no cuentan en los totales."))}</p>${vs.map(t => `<label class="check"><input type="checkbox" data-ver="${t.id}" ${DATOS.oculto[t.id] ? "" : "checked"}><span>${esc(TD(t.concepto))}${t.grupo && !t.concepto.includes(t.grupo) ? ` <small>· ${esc(TD(t.grupo))}</small>` : ""}</span></label>`).join("")}</fieldset>` : ""}`;
     const v = $("gan-ajustes");
     v.querySelectorAll("[data-precio]").forEach(i => i.onchange = () => {
@@ -263,6 +300,7 @@
       v.querySelectorAll("[data-fijo]").forEach(c => { const t = TARIFAS.find(x => String(x.id) === c.dataset.fijo); c.nextElementSibling.textContent = TD(t.concepto) + " · " + precio(imp(t)); });
     });
     v.querySelectorAll("[data-fijo]").forEach(i => i.onchange = () => { DATOS.fijo[i.dataset.fijo] = i.checked; guarda(); pintaResumenAj(); });
+    v.querySelectorAll("[name=gan-inicio]").forEach(i => i.onchange = () => { DATOS.inicio = i.value; guarda(); msg(T("Guardado.")); v.querySelectorAll(".gan-inicio .filtro").forEach(f => f.classList.toggle("activo", f.querySelector("input").checked)); });
     v.querySelectorAll("[data-ver]").forEach(i => i.onchange = () => { if (i.checked) delete DATOS.oculto[i.dataset.ver]; else DATOS.oculto[i.dataset.ver] = true; guarda(); pintaResumenAj(); });
     pintaResumenAj(); pintaCalendario();
   }
@@ -285,7 +323,7 @@
       <div class="gan-cal" role="grid" aria-label="${esc(fMes(m))}">
         <span></span>${nombres.map(x => `<span class="gan-cal-cab">${esc(x)}</span>`).join("")}
         ${semanas.map((l, i) => { const ds = Array.from({ length: 7 }, (_, k) => suma(l, k)), todas = ds.every(d => ELEGIDOS.has(d));
-          return `<button type="button" class="gan-cal-sem ${todas ? "sel" : ""}" data-csem="${l}" aria-pressed="${todas}" aria-label="${esc(T("Semana del {a} al {b}", { a: fDia(ds[0]), b: fDia(ds[6]) }))}">${esc(T("S{n}", { n: i + 1 }))}</button>` +
+          return `<button type="button" class="gan-cal-sem ${todas ? "sel" : ""}" data-csem="${l}" aria-pressed="${todas}" aria-label="${esc(T("Semana {n}", { n: semDe(l).n }) + ", " + T("Del {a} al {b}", { a: fDia(ds[0]), b: fDia(ds[6]) }))}">${esc(T("S{n}", { n: semDe(l).n }))}</button>` +
             ds.map(d => `<button type="button" class="gan-cal-dia ${d.slice(0, 7) !== m ? "fuera" : ""} ${ELEGIDOS.has(d) ? "sel" : ""} ${hay(d) ? "con" : ""} ${d === hoy() ? "hoy" : ""}" data-cdia="${d}" aria-pressed="${ELEGIDOS.has(d)}" aria-label="${esc(fDia(d, true))}">${+d.slice(8)}</button>`).join(""); }).join("")}
       </div>
       <p class="gan-cal-ley"><span class="gan-cal-dia con"></span>${esc(T("con algo apuntado"))}</p>
@@ -303,7 +341,7 @@
       if (k === "mes") { const dm = new Date(a, mm, 0).getDate(); for (let i = 1; i <= dm; i++) ELEGIDOS.add(`${m}-${String(i).padStart(2, "0")}`); }
       pintaCalendario();
     });
-    $("gan-pdf-elegidos").onclick = () => { const ds = [...ELEGIDOS].sort(); descarga(ds, ds.length === 1 ? ds[0] : ds[0] + "-a-" + ds[ds.length - 1]); };
+    $("gan-pdf-elegidos").onclick = () => { const ds = [...ELEGIDOS].sort(), l = lunesDe(ds[0]); descarga(ds, ds.length === 1 ? ds[0] : ds.length === 7 && ds.join() === diasDe(l).join() ? nombreSem(l) : ds[0] + "-a-" + ds[ds.length - 1]); };
   }
 
   // ---------- PDF (siempre en español) ----------
@@ -321,7 +359,7 @@
       const semanas = [...new Set(dias.map(lunesDe))];
       semanas.forEach(l => {
         const ds = dias.filter(f => lunesDe(f) === l), r = resumen(c, ds);
-        L.push(["Semana del " + fDia(l) + " al " + fDia(suma(l, 6)) + ": " + eur(r.total), 13, true]);
+        L.push(["Semana " + semDe(l).n + " (del " + fDia(l) + " al " + fDia(suma(l, 6)) + "): " + eur(r.total), 13, true]);
         ds.forEach(f => { const x = c[f]; L.push([fDia(f, true) + ": " + eur(x.total), 10, true, 6]); L.push([x.lineas.map(li => li.t.concepto + (cantidadTxt(li.t, li.n) ? " " + cantidadTxt(li.t, li.n) : "") + " " + eur(li.imp)).join(" · "), 9, false, 14]); });
         L.push(["Cada semana: " + eur(r.semanal) + " · Con la nómina: " + eur(r.mensual), 9, false, 6], [""]);
       });
@@ -363,7 +401,7 @@
     $("gan-idioma").onchange = () => ponMiIdioma($("gan-idioma").value);
     addEventListener("mi-idioma", async () => { await cargaIdioma(); pintaFijos(); pinta(); });
     // Al entrar, el día de hoy (salvo que se esté mirando otro en esta visita)
-    const alEntrar = () => { if (location.hash === "#ganancias") { DATOS.dia = hoy(); DATOS.semana = ""; DATOS.mes = ""; pinta(); } };
+    const alEntrar = () => { if (location.hash === "#ganancias") { DATOS.dia = hoy(); DATOS.semana = ""; DATOS.mes = ""; if (["dia", "semana", "mes"].includes(DATOS.inicio)) DATOS.tab = DATOS.inicio; pinta(); } };
     addEventListener("hashchange", alEntrar);
     pintaFijos(); alEntrar(); pinta();
     cargaTarifas().then(async () => { await cargaIdioma(); pintaFijos(); pinta(); });

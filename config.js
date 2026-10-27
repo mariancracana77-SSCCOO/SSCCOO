@@ -3,7 +3,7 @@
 window.SUPABASE_URL = "https://kdfedwcskymaitvpryvg.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_RLt0HuAMskXkKl2hxhUF2w_sCexGznp";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "83"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "84"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/SSCCOO/";
 // Clave pública de las notificaciones (la privada solo está en el servidor)
 window.VAPID_PUBLICA = "BMMdZjehtNipsScHJ__kzOIn9XCgIpya3UDDRlexxOAWJU-J6ZICDlf72ItPOebzl-SfzoU234pd82Chp87Vm1w";
@@ -142,6 +142,23 @@ document.addEventListener("click", (e) => { if (e.target.closest?.("[data-aa]"))
 // ---- PDF sencillo hecho aquí mismo (sin librerías ni servidores): copias de «Mis descansos» y «Mis incentivos» ----
 // lineas = [texto, tamaño, negrita, sangría]. «marca» va en una línea de comentario que los lectores de PDF no enseñan
 // (ahí van los datos para recuperarlos). Letra Helvetica en Windows-1252: solo alfabeto latino.
+// Semana del año (ISO 8601: de lunes a domingo; la semana 1 es la que tiene el primer jueves). Es la numeración de los
+// calendarios de pared, los tacógrafos y las empresas de transporte (v84, lo pidió el padre: «estamos en la 44»).
+// Devuelve { n: número de semana, a: año al que pertenece (una semana de enero puede ser la 52/53 del año anterior) }.
+window.semanaISO = (d) => {
+  const x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())), dia = x.getUTCDay() || 7;
+  x.setUTCDate(x.getUTCDate() + 4 - dia); // al jueves de esa semana
+  const a = x.getUTCFullYear(), n = Math.ceil(((x - Date.UTC(a, 0, 1)) / 864e5 + 1) / 7);
+  return { n, a };
+};
+// Lunes (hora local, a mediodía) de la semana n del año a (ISO)
+window.lunesSemanaISO = (a, n) => {
+  const j4 = new Date(a, 0, 4, 12), lunes1 = new Date(j4); lunes1.setDate(j4.getDate() - ((j4.getDay() + 6) % 7));
+  lunes1.setDate(lunes1.getDate() + (n - 1) * 7); return lunes1;
+};
+// Cuántas semanas ISO tiene un año (52 o 53)
+window.semanasDelAnio = (a) => semanaISO(new Date(a, 11, 28)).n;
+
 window.pdfSencillo = (lineas, marca) => {
   // Partir en renglones que quepan (Helvetica ~0,5 em por letra) y en páginas A4
   const ANCHO = 515, renglones = [];

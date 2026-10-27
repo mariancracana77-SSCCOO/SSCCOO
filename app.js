@@ -463,6 +463,8 @@ function pintaCalendario() {
     const d = new Date(m.getFullYear(), m.getMonth(), 1 - desfase + i), iso = isoDe(d);
     if (i >= 35 && d.getMonth() !== m.getMonth()) break;
     const evs = porDia[iso] || [], dow = d.getDay();
+    // v84: al principio de cada fila, el número de la semana del año (ISO), como en los calendarios de pared
+    if (i % 7 === 0) { const s = semanaISO(d); html += `<span class="cal-sem ${semanaISO(fechaDia(hoy)).n === s.n && semanaISO(fechaDia(hoy)).a === s.a ? "actual" : ""}" title="${esc("Semana " + s.n + " del año")}" aria-label="${esc("Semana " + s.n)}">${s.n}</span>`; }
     html += `<button class="dia ${d.getMonth() !== m.getMonth() ? "fuera" : ""} ${iso === hoy ? "hoy" : ""} ${iso === estado.diaSel ? "sel" : ""} ${dow === 0 || dow === 6 ? "finde" : ""}"
       data-d="${iso}" aria-label="${d.toLocaleDateString("es-ES", { day: "numeric", month: "long" })}${evs.length ? ", " + evs.length + " evento(s)" : ""}">
       <span class="n">${d.getDate()}</span>

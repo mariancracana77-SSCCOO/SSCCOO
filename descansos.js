@@ -383,7 +383,7 @@
         s.enCabina ? T("El descanso normal (45 h o más) no se puede hacer en la cabina: la empresa paga un alojamiento.") : ""].filter(Boolean);
       const dTxt = deuda ? (deuda.queda > 0.05 ? T("faltan {horas} por compensar", { horas: horas(deuda.queda) }) : T("compensado")) : "";
       return `<li class="desc-fila ${s.clase}"><div><b>${esc(fmt(x.ini))} → ${esc(fmt(x.fin))}</b>
-        <small><span class="desc-clase">${esc(T("Descanso semanal"))} · ${esc(et)}</span> · ${esc(horas(s.h))}${dTxt ? " · " + esc(dTxt) : ""}${notas.length ? " · " + notas.map(esc).join(" · ") : ""}</small>
+        <small><span class="desc-clase">${esc(T("Descanso semanal"))} · ${esc(et)}</span> · ${esc(T("Semana {n}", { n: semanaISO(new Date(x.ini)).n }))} · ${esc(horas(s.h))}${dTxt ? " · " + esc(dTxt) : ""}${notas.length ? " · " + notas.map(esc).join(" · ") : ""}</small>
         ${malas.map(m => `<span class="desc-mal">${icono("alerta", "p")}${esc(m)}</span>`).join("")}</div>${quitar(x.id, T("Quitar este descanso"), 1)}</li>`;
     }).join("") : `<li class="desc-vacio">${esc(F === "todo" ? T("Todavía no has apuntado nada.") : T("No hay nada de este tipo."))}</li>`;
     $("desc-lista").querySelectorAll("[data-quita]").forEach(b => b.onclick = () => {
