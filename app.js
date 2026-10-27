@@ -45,6 +45,7 @@ function irA() {
   const iAntes = orden.indexOf(irA.antes), iAhora = orden.indexOf(clave), lado = iAntes < 0 || iAhora < 0 || iAntes === iAhora ? "" : iAhora > iAntes ? "desde-der" : "desde-izq";
   const cambia = irA.antes !== undefined && irA.antes !== clave; irA.antes = clave;
   document.querySelectorAll(".vista").forEach(s => { s.classList.toggle("activa", s.id === "v-" + v); s.classList.remove("desde-der", "desde-izq"); });
+  document.body.dataset.vista = v; // v87: el pie largo solo en Inicio (CSS)
   if (lado && cambia) $("v-" + v)?.classList.add(lado);
   if (v === "inicio" && cambia) animaPortada();
   marcaPestanas(clave);
@@ -868,8 +869,8 @@ function vuelaAlLogo(bv) {
   cab.classList.add("bv-oculto");
   return true;
 }
-// Horas que tienen que pasar para que vuelva a salir entera. 0 = entera cada vez que la app arranca de cero (lo pidió Lorena en la v73); al volver de segundo plano sin recargar no se repite.
-const BV_HORAS = 0;
+// Horas que tienen que pasar para que vuelva a salir entera. v87: 12 (entera una vez al día; el resto, solo el logo, para quien entra varias veces al día). Antes 0 = entera cada vez (v73). Al volver de segundo plano sin recargar no se repite.
+const BV_HORAS = 12;
 // Entera si han pasado BV_HORAS horas desde la última vez que salió entera; si no, solo el logo (algo más de 1 s).
 // localStorage "ccoo-bienvenida" guarda cuándo salió entera (en ms); lectura.js hace la misma cuenta antes de pintar.
 const BV_DURA = (() => {

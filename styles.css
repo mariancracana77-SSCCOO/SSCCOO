@@ -726,6 +726,10 @@ html[data-contraste="alto"] .rotulo { border-color: #fff; }
 
 /* --- Ir a --- */
 .accesos-tablon { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }
+/* v87: en PC a tres columnas; la letra un poco menor para que quepa «Zona conductores», y la última no ocupa toda la fila */
+@media (min-width: 860px) { .accesos-tablon { grid-template-columns: repeat(3, minmax(0, 1fr)); } .accesos-tablon b, :root:root .accesos-tablon b { font-size: 1.05rem; letter-spacing: .01em; } .accesos-tablon a { padding: 12px; } :root .accesos-tablon a:last-child:nth-child(odd) { grid-column: auto; min-height: 84px; } }
+/* v87: el párrafo del pie solo en Inicio; en las demás vistas, una línea con los enlaces */
+body[data-vista]:not([data-vista="inicio"]) .pie .pie-largo { display: none; }
 .accesos-tablon a { display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; gap: 10px; min-height: 92px; padding: 14px; background: var(--tarjeta); border: 1px solid var(--linea); border-radius: 12px; color: var(--tinta); text-decoration: none; transition: border-color .15s; }
 .accesos-tablon a:hover { border-color: var(--tinta); }
 .accesos-tablon .icono { width: 28px; height: 28px; color: var(--rojo); }
@@ -736,8 +740,8 @@ html[data-contraste="alto"] .rotulo { border-color: #fff; }
 
 /* --- Barra fija de abajo --- */
 body.publica { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
-.barra-acciones { background: var(--fondo); border-top: 1px solid var(--linea); padding: 10px 16px calc(12px + env(safe-area-inset-bottom)); }
-.accion-baja { min-height: 58px; border-radius: 12px; font-size: 1.05rem; }
+.barra-acciones { background: var(--fondo); border-top: 1px solid var(--linea); padding: 6px 16px calc(8px + env(safe-area-inset-bottom)); } /* v87: más baja */
+.accion-baja { min-height: 52px; border-radius: 12px; font-size: 1.05rem; }
 .accion-baja.principal, .accion-baja.principal * { background: var(--rojo); border-color: var(--rojo); color: #fff; }
 .accion-baja.principal:hover { background: var(--rojo-osc); }
 .accion-baja.campana { flex: 0 0 76px; flex-direction: column; gap: 2px; font-size: .8rem; border: 2px solid var(--tinta); background: transparent; }
@@ -1058,7 +1062,7 @@ body.publica.con-aviso-priv { padding-bottom: calc(84px + var(--alto-aviso, 90px
 @keyframes bv-barra { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
 /* Al aparecer el logo (v71): rayos rojos que giran detrás y chispas que salen con el latido del sello */
 .bv-rayos { position: absolute; inset: -38%; border-radius: 50%; pointer-events: none; opacity: 0; will-change: transform, opacity;
-  background: repeating-conic-gradient(from 0deg, rgba(171, 16, 18, .7) 0 5deg, transparent 5deg 15deg);
+  background: repeating-conic-gradient(from 0deg, rgba(196, 24, 26, .95) 0 5deg, transparent 5deg 15deg); /* v87: un poco más vivos */
   -webkit-mask: radial-gradient(circle, #000 28%, transparent 68%); mask: radial-gradient(circle, #000 28%, transparent 68%);
   animation: bv-rayos 1.9s 2.3s ease-out forwards; }
 @keyframes bv-rayos { 0% { opacity: 0; transform: scale(.55) rotate(0); } 30% { opacity: 1; } 100% { opacity: 0; transform: scale(1.1) rotate(70deg); } }
@@ -1595,6 +1599,12 @@ html[data-letra] .subpestanas a { font-size: .92rem; }
 .desc-mini summary, .desc-mini.fila-aviso { display: flex; align-items: center; gap: 8px; min-height: 46px; padding: 6px 12px; cursor: pointer; font-weight: 600; font-size: .95rem; }
 .desc-mini .icono { color: var(--rojo-ic); flex: none; }
 .desc-mini > div { padding: 0 14px 12px; }
+/* v87: las tiras de «Instala la app» y «Activa los avisos» en una sola línea, una al lado de la otra */
+.desc-minis { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 8px; }
+.desc-minis > .desc-mini { flex: 1 1 0; min-width: 0; margin: 0; }
+.desc-minis > details[open] { flex-basis: 100%; }
+button.desc-mini.fila-aviso { width: auto; border: 0; font: inherit; color: inherit; text-align: left; font-weight: 600; font-size: .95rem; }
+.desc-mini summary span, .desc-mini.fila-aviso span { min-width: 0; }
 .desc-mini.fila-aviso { cursor: default; }
 .desc-mini.fila-aviso span { flex: 1; min-width: 0; }
 .desc-tipo-apunte { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
