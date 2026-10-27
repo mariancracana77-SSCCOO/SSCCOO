@@ -157,7 +157,11 @@ h1, h2, h3 { font-family: var(--cond); line-height: 1.1; margin: 0; }
 .btn-ic { border: 1px solid var(--linea); background: var(--tarjeta); border-radius: 10px; padding: 7px; display: grid; place-items: center; cursor: pointer; min-width: 44px; min-height: 44px; }
 .btn-ic:hover { border-color: var(--tinta); }
 .btn-hoy { border: 1px solid var(--linea); background: var(--tarjeta); border-radius: 10px; padding: 6px 12px; cursor: pointer; font-weight: 600; font-size: .9rem; min-height: 44px; }
-.semana, .dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.semana, .dias { display: grid; grid-template-columns: minmax(26px, auto) repeat(7, 1fr); gap: 4px; }
+/* v84: columna con el número de la semana del año (ISO) */
+.cal-sem, .cal-sem-cab { display: grid; place-items: center; font-size: .72rem; font-weight: 700; color: var(--suave); }
+.cal-sem { border-right: 1px solid var(--linea); padding-right: 4px; }
+.cal-sem.actual { color: var(--rojo-ic); }
 .semana div { text-align: center; font-size: .78rem; font-weight: 600; color: var(--suave); padding: 4px 0; }
 .dia {
   aspect-ratio: 1 / 1; border: 0; background: none; border-radius: 10px; cursor: pointer;
@@ -1723,3 +1727,53 @@ b.gan-fecha { cursor: default; }
 .gan-cal-ley .gan-cal-dia { display: inline-block; width: 22px; min-height: 22px; height: 22px; cursor: default; }
 .gan-cal-ley .gan-cal-dia.con::after { bottom: 3px; }
 #gan-pdf-elegidos[disabled] { opacity: .55; cursor: not-allowed; }
+
+/* Mis incentivos v84: semana del año, tira de totales, tarjetas de los días y animaciones */
+.gan-tira { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0 0 10px; }
+.gan-tira button { display: grid; gap: 2px; min-height: 64px; padding: 8px 6px; border: 1px solid var(--linea); border-radius: 12px; background: var(--tarjeta); color: var(--suave); font: inherit; font-size: .78rem; font-weight: 700; text-align: center; cursor: pointer; min-width: 0; transition: transform .15s ease, box-shadow .15s ease, background .2s, color .2s; }
+.gan-tira button span::first-letter { text-transform: uppercase; }
+.gan-tira button b { font-family: var(--cond); font-size: 1.35rem; line-height: 1; color: var(--tinta); overflow-wrap: anywhere; }
+.gan-tira button small { font-weight: 400; font-size: .72rem; opacity: .85; }
+.gan-tira button.activa { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+.gan-tira button.activa b { color: #fff; }
+.gan-tira button:hover { transform: translateY(-1px); box-shadow: var(--sombra); }
+.gan-tira button:active { transform: scale(.97); }
+.gan-fecha small, .gan-sem-n { display: block; font-weight: 600; font-size: .8rem; color: var(--suave); }
+.gan-fecha small::first-letter { text-transform: uppercase; }
+.gan-ir-sem { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; margin: 0; }
+.gan-ir-sem label { display: grid; gap: 2px; margin: 0; font-size: .82rem; font-weight: 600; color: var(--suave); }
+.gan-ir-sem input { width: 5.2em; min-height: 44px; padding: 6px 8px; font: inherit; font-weight: 700; text-align: center; }
+.gan-ir-sem .btn { min-height: 44px; padding: 6px 14px; }
+.gan-sem-dias { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.gan-sem-dias button { display: grid; gap: 2px; width: 100%; min-height: 66px; padding: 6px 2px; border: 1px solid var(--linea); border-radius: 10px; background: var(--tarjeta); color: var(--tinta); font: inherit; cursor: pointer; text-align: center; min-width: 0; transition: transform .15s ease, background .2s, border-color .2s; }
+.gan-sem-dias button:hover { background: var(--fondo); }
+.gan-sem-dias button:active { transform: scale(.95); }
+.gan-sem-dias .d { font-size: .72rem; font-weight: 700; color: var(--suave); text-transform: uppercase; }
+.gan-sem-dias .n { font-weight: 700; font-size: 1.05rem; line-height: 1; }
+.gan-sem-dias b { font-size: .68rem; color: var(--suave); font-weight: 600; overflow-wrap: anywhere; line-height: 1.1; }
+.gan-sem-dias button { padding: 6px 1px; }
+.gan-sem-dias button.con { border-color: var(--rojo); }
+.gan-sem-dias button.con b { color: var(--rojo-ic); }
+.gan-sem-dias button.hoy .n { color: var(--rojo-ic); }
+.gan-sem-dias button.hoy { box-shadow: inset 0 0 0 2px var(--rojo); }
+.gan-compara { margin: 0; font-size: .9rem; color: var(--suave); }
+.gan-compara b.mas { color: var(--tinta); }
+.gan-compara b.menos { color: var(--rojo-ic); }
+.gan-semanas button small { display: block; }
+.gan-inicio .filtro { display: inline-flex; align-items: center; gap: 6px; margin: 0; min-height: 40px; }
+.gan-inicio .filtro input { width: 16px; height: 16px; min-height: 0; margin: 0; accent-color: var(--rojo); }
+.gan-inicio .filtro.activo input { accent-color: #fff; }
+/* Animaciones: la pantalla entra suave al cambiar de pestaña, las cifras que cambian dan un salto, las filas marcadas se encienden */
+@keyframes gan-entra { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+#v-ganancias .desc-panel:not([hidden]) > .gan-panel { animation: gan-entra .28s ease-out both; }
+@keyframes gan-pulsa { 0% { transform: scale(1.18); } 60% { transform: scale(.98); } 100% { transform: none; } }
+.gan-pulsa { display: inline-block; animation: gan-pulsa .45s cubic-bezier(.2, .7, .3, 1.2); transform-origin: right center; }
+.gan-tira .gan-pulsa { transform-origin: center; }
+.gan-fila { transition: border-color .25s, background .25s; border-left: 4px solid transparent; padding-left: 10px; }
+.gan-fila.con { background: linear-gradient(90deg, color-mix(in srgb, var(--rojo) 7%, transparent), transparent 60%); }
+[dir="rtl"] .gan-fila { border-left: 0; border-right: 4px solid transparent; padding: 10px 10px 10px 0; }
+.gan-ctrl input[type="checkbox"], .gan-paso .btn-ic { transition: transform .15s ease; }
+.gan-ctrl input[type="checkbox"]:active, .gan-paso .btn-ic:active { transform: scale(.85); }
+.gan-cal-dia, .gan-cal-sem { transition: background .15s, color .15s, transform .15s; }
+.gan-cal-dia:active, .gan-cal-sem:active { transform: scale(.9); }
+@media (prefers-reduced-motion: reduce) { #v-ganancias .desc-panel:not([hidden]) > .gan-panel, .gan-pulsa { animation: none; } .gan-tira button, .gan-sem-dias button, .gan-fila, .gan-cal-dia, .gan-cal-sem { transition: none; } }

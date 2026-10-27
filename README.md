@@ -75,6 +75,14 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 84: semanas del año y «Mis incentivos» más cómodo
+
+- **Semana del año** (la 44, la 45…, de lunes a domingo, como en los calendarios de pared y los tacógrafos): sale en el Calendario de la web (columna «Sem.», la actual en rojo), en «Mis descansos» (en cada descanso semanal) y en toda «Mis incentivos»: «Día» (bajo la fecha), «Semana» (título, con «Ir a la semana…» para escribir el número), «Mes» (desglose «Por semanas», que lleva a cada una), el calendario para descargar (S44, S45…) y los PDF («mis-incentivos-semana-44-2026.pdf», «Semana 44 (del … al …)»).
+- **Tira de totales** siempre arriba: Hoy, Semana N y el mes; tocando una cifra vas a esa vista.
+- **«Semana»**: los siete días en tarjetas (con lo ganado y marcados los que tienen algo), «Esta semana», y «La semana pasada (semana 43): …» con la diferencia.
+- **Ajustes**: «Al abrir Mis incentivos, enséñame: lo último que miré / Día / Semana / Mes».
+- Animaciones suaves: la pantalla entra al cambiar de pestaña, las cifras que cambian dan un pequeño salto, las filas marcadas se encienden. Con «reducir movimiento» no hay ninguna.
+
 ## Versión 83: Mis incentivos, cada uno con lo suyo
 
 - **Horas sindicales**: nuevo concepto (con la nómina). Cada persona pone su precio por hora.
