@@ -16,6 +16,9 @@ document.querySelector(".contacto-btn").innerHTML = icono("correo", "p") + "Escr
 
 // ---------- Navegación ----------
 const VISTAS = ["inicio", "avisos", "calendario", "convenio", "calcula", "actas", "documentos", "preguntas", "info", "buscar", "legal", "descansos"];
+// Título de la pestaña del navegador según la sección (se ve en el historial, al compartir y con lector de pantalla)
+const TITULO_WEB = document.title;
+const ponTitulo = (nombre) => { document.title = nombre ? nombre + " · CCOO Calsina Carré" : TITULO_WEB; };
 function irA() {
   // Enlace a una publicación de un apartado (al compartirla): #pub-<id> lleva a su apartado y la enseña
   const pubDirecto = /^pub-\d+$/.test(location.hash.slice(1)) ? +location.hash.slice(5) : null;
@@ -45,6 +48,7 @@ function irA() {
   if (lado && cambia) $("v-" + v)?.classList.add(lado);
   if (v === "inicio" && cambia) animaPortada();
   marcaPestanas(clave);
+  ponTitulo(v === "inicio" ? "" : ap ? D.apartados.find(x => x.slug === ap)?.titulo : v === "buscar" ? "Buscar" : legal ? (legal === "privacidad" ? "Privacidad" : "Aviso legal") : NOMBRE_FIJO[v]);
   if (!avisoDirecto && !legal && !aDelegados && !aBuzon && !aEncuesta) window.scrollTo(0, 0);
   const sec = ap ? "ap-" + ap : v;
   if (sec !== "inicio") { marcaVisto(sec); if (cargar.listo) pintaContadores(); }
@@ -53,6 +57,18 @@ function irA() {
 }
 
 window.addEventListener("hashchange", irA);
+
+// Calendario para suscribirse (v70): la función «calendario» de Supabase da las fechas en formato .ics y el móvil la vuelve a pedir solo
+const CAL_SUSCRIBIR = window.SUPABASE_URL + "/functions/v1/calendario";
+$("cal-sus-webcal").href = CAL_SUSCRIBIR.replace(/^https:/, "webcal:");
+$("cal-sus-google").href = "https://calendar.google.com/calendar/render?cid=" + encodeURIComponent(CAL_SUSCRIBIR.replace(/^https:/, "webcal:"));
+$("cal-sus-copiar").addEventListener("click", async () => {
+  const nota = $("cal-sus-nota");
+  try { await navigator.clipboard.writeText(CAL_SUSCRIBIR); nota.textContent = "Enlace copiado. Pégalo en tu calendario, en «Añadir calendario desde una URL» o «Suscribirse»."; }
+  catch (_) { nota.textContent = "Copia este enlace: " + CAL_SUSCRIBIR; }
+});
+// «Saltar al contenido» (teclado y lector de pantalla): lleva el foco a la sección abierta sin cambiar de sección
+document.querySelector("[data-saltar]").addEventListener("click", (ev) => { ev.preventDefault(); $("principal").focus({ preventScroll: true }); window.scrollTo(0, 0); });
 
 // ---------- Pestañas agrupadas (v52) ----------
 // Arriba solo salen los apartados principales; lo que va dentro (Actas en «Comité de empresa», los subapartados
@@ -85,11 +101,17 @@ function pintaPestanas() {
   flechasPestanas();
   if (irA.antes === "buscar") buscarTodo();
 }
+// Centra la pestaña elegida moviendo solo la barra. No se usa scrollIntoView: en Chrome cambia el punto desde el que
+// sigue el tabulador y el primer Tab se saltaba «Saltar al contenido», «Aa» y la lupa (v70).
+function centraPestana(b) {
+  const barra = b.parentElement, rb = b.getBoundingClientRect(), rn = barra.getBoundingClientRect();
+  barra.scrollLeft += (rb.left + rb.width / 2) - (rn.left + rn.width / 2);
+}
 function marcaPestanas(clave) {
   const g = GRUPO_DE[clave], arriba = g ? g.clave : clave;
   document.querySelectorAll(".pestanas-web a").forEach(b => {
     const on = b.dataset.v === arriba; b.classList.toggle("activa", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current");
-    if (on) b.scrollIntoView({ inline: "center", block: "nearest" });
+    if (on) centraPestana(b);
   });
   const sub = $("subpestanas"), hay = g && g.miembros.length > 1;
   $("subpest-caja").classList.toggle("oculto", !hay);
@@ -531,6 +553,7 @@ $("buscar-docs").oninput = () => pintaDocumentos();
 // Solo fuentes oficiales y gratuitas, comprobadas el 17/10/2026. La lista sale de la tabla «restricciones»
 // y la fecha de revisión de paginas.restricciones_revisado: las dos se cambian en el panel («Restricciones camiones»).
 // RESTRICCIONES_RESERVA solo se usa si la tabla no se puede leer (por ejemplo, sin conexión y sin caché).
+const APARTADO_ACTAS_PRL = "actas-prl"; // sus publicaciones salen con el aspecto de acta (v78)
 const APARTADO_CONDUCTORES = "zona-conductores"; // dirección del apartado (no cambia aunque se renombre)
 const RESTRICCIONES_REVISADO = "2026-10-17";
 const RESTRICCIONES_RESERVA = [
@@ -559,13 +582,14 @@ function pintaApartado() {
   const a = D.apartados.find(x => x.slug === estado.ap);
   if (!a) { $("ap-extra").innerHTML = ""; $("ap-titulo").textContent = D.apartados.length || !cargar.listo ? "Cargando…" : "Apartado no encontrado"; $("lista-ap").innerHTML = ""; $("ap-desc").textContent = ""; $("fechas-ap").innerHTML = ""; return; }
   $("ap-titulo").textContent = a.titulo;
+  if (location.hash === "#ap-" + a.slug) ponTitulo(a.titulo); // al entrar por enlace directo, el nombre llega al cargar
   $("ap-desc").textContent = a.descripcion || "";
   $("ap-extra").innerHTML = a.slug === APARTADO_CONDUCTORES ? `<a class="panel desc-promo" href="#descansos">${icono("reloj")}<span><b>Mis descansos</b><small>Tu descanso diario y semanal: cuándo te toca, si puede ser reducido y qué tienes que compensar. Con avisos al móvil.</small></span>${icono("der", "p")}</a>` + restriccionesHTML() : "";
   const todas = D.publicaciones.filter(x => x.apartado_id === a.id);
   pintaFechas("fechas-ap", "ap", todas, x => x.fecha, () => pintaApartado());
   const qr = $("buscar-ap").value.trim(), q = normal(qr);
   const l = todas.filter(x => pasaFecha("ap", x.fecha) && (!q || coincide(x.titulo + " " + x.contenido + " " + (x.adjuntos || []).map(j => j.nombre).join(" ") + " " + textoFecha(x.fecha), q)));
-  $("lista-ap").innerHTML = l.length ? porMeses(l, x => x.fecha, x => publicacionHTML(x, qr))
+  $("lista-ap").innerHTML = l.length ? porMeses(l, x => x.fecha, x => (a.slug === APARTADO_ACTAS_PRL ? actaPubHTML : publicacionHTML)(x, qr))
     : vacio(a.icono || "carpeta", q || hayFecha("ap") ? "No hay nada que coincida con la búsqueda o la fecha." : "Todavía no hay nada publicado en este apartado.");
 }
 $("buscar-ap").oninput = () => pintaApartado();
@@ -584,6 +608,7 @@ function sitiosWeb() {
     { t: "Buzón anónimo", h: "buzon", donde: rutaDe("preguntas") + " (abajo del todo)", p: "buzon anonimo sugerencia queja pregunta escribir" },
     { t: "Activar los avisos en el móvil", h: "info", donde: "Campana de abajo, o Nosotros", p: "avisos notificaciones campana movil" },
     { t: "Restricciones de camiones por país", h: "ap-" + APARTADO_CONDUCTORES, donde: rutaDe("ap-" + APARTADO_CONDUCTORES), p: "restricciones circulacion camiones prohibiciones dgt francia" },
+    { t: "Las fechas en el calendario del móvil", h: "calendario", donde: rutaDe("calendario") + " (debajo de «Próximas fechas»)", p: "calendario movil google iphone outlook suscribir añadir fechas" },
     { t: "Tamaño de letra y modo oscuro", donde: "Botón «Aa» de arriba a la derecha", p: "letra grande tamaño oscuro contraste colores" },
     { t: "Buscar en toda la web", h: "buscar", donde: "Lupa de arriba a la derecha", p: "buscar lupa encontrar" },
     { t: "Instalar la app", donde: "Botón con la flecha de arriba a la derecha (si aún no la tienes)", p: "instalar app descargar icono" },
@@ -771,7 +796,16 @@ async function cargar(idNuevo) {
     }
     if (cargar.listo) return; // ya hay datos en pantalla: se quedan
     [a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs, enc, vot] = copia.r.map(x => ({ data: x, error: null }));
-  } else { guardaCopia([a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs, enc, vot]); sinRed(false); }
+  } else {
+    // Si falla alguna consulta suelta, esa parte sale de la copia anterior en vez de quedarse vacía
+    const res = [a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs, enc, vot], fallo = res.some(x => x.error);
+    const copia = fallo ? leeCopia() : null;
+    if (copia) res.forEach((x, i) => { if (x.error) res[i] = { data: copia.r[i], error: null }; });
+    [a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs, enc, vot] = res;
+    if (!fallo) guardaCopia(res); // la copia solo se renueva cuando ha llegado todo bien
+    sinRed(false);
+  }
+  cargar.ultima = Date.now();
   // La web enseña solo lo publicado, también si en este móvil está abierta la sesión del panel
   // (el servidor a un administrador le da todo: avisos programados, publicaciones y apartados ocultos)
   const ahoraMs = Date.now();
@@ -794,7 +828,8 @@ async function cargar(idNuevo) {
 // Tocarla la salta. Sale aunque el móvil tenga «quitar animaciones» (muchos lo activan solos con el ahorro de batería).
 // La animación no empieza hasta que la página ha cargado: en la app instalada, Android tapa los primeros segundos
 // con su propia pantalla y, si empezaba antes, terminaba sin que se viera.
-// Al quitarla, lo que hay en pantalla entra escalonado (solo esta vez, no en cada actualización).
+// Al quitarla, el logo vuela hasta el de la cabecera mientras el fondo se abre en círculo (v69; con «reducir movimiento»
+// o si se ha tocado para saltarla, se funde sin más) y lo que hay en pantalla entra escalonado (solo esta vez, no en cada actualización).
 function quitarBienvenida() {
   const bv = $("bienvenida"); if (!bv || bv.classList.contains("fuera")) return;
   if (!quitarBienvenida.ya && quitarBienvenida.t0 == null) { quitarBienvenida.pend = true; return; }
@@ -803,15 +838,61 @@ function quitarBienvenida() {
   quitarBienvenida.t = setTimeout(() => {
     const listas = document.querySelectorAll("#inicio-feed, #inicio-paradas, .accesos-tablon, [id^='lista-']");
     if (!quieto) listas.forEach(el => el.classList.add("anima-entra"));
-    bv.classList.add("fuera");
+    if (!quieto && !quitarBienvenida.ya && vuelaAlLogo(bv)) {
+      bv.classList.add("bv-vuela");
+      setTimeout(() => {
+        const cab = $("cab-logo");
+        bv.classList.add("fuera");
+        cab.classList.remove("bv-oculto"); cab.classList.add("bv-aterriza");
+        setTimeout(() => cab.classList.remove("bv-aterriza"), 450);
+      }, 700);
+    } else bv.classList.add("fuera");
     if (!location.hash || location.hash === "#inicio") animaPortada();
     setTimeout(() => { bv.remove(); listas.forEach(el => el.classList.remove("anima-entra")); }, 1200);
-  }, quitarBienvenida.ya ? 0 : Math.max(0, 4300 - (performance.now() - quitarBienvenida.t0)));
+  }, quitarBienvenida.ya ? 0 : Math.max(0, BV_DURA - (performance.now() - quitarBienvenida.t0)));
 }
+// Prepara el vuelo del logo de la bienvenida hasta el de la cabecera: distancia, tamaño y centro del círculo que se abre.
+// Si el logo de la cabecera no está a la vista, no vuela (se funde).
+function vuelaAlLogo(bv) {
+  const cab = $("cab-logo"), caja = bv.querySelector(".bv-logo-caja");
+  const a = cab && cab.getBoundingClientRect(), b = caja && caja.getBoundingClientRect();
+  if (!a || !b || !a.width || !b.width || a.bottom <= 0 || a.top >= innerHeight) return false;
+  const cx = b.left + b.width / 2, cy = b.top + b.height / 2;
+  bv.style.setProperty("--bv-dx", (a.left + a.width / 2 - cx) + "px");
+  bv.style.setProperty("--bv-dy", (a.top + a.height / 2 - cy) + "px");
+  bv.style.setProperty("--bv-s", (a.width / b.width).toFixed(4));
+  bv.style.setProperty("--bv-cx", cx + "px");
+  bv.style.setProperty("--bv-cy", cy + "px");
+  cab.classList.add("bv-oculto");
+  return true;
+}
+// Horas que tienen que pasar para que vuelva a salir entera. 0 = entera cada vez que la app arranca de cero (lo pidió Lorena en la v73); al volver de segundo plano sin recargar no se repite.
+const BV_HORAS = 0;
+// Entera si han pasado BV_HORAS horas desde la última vez que salió entera; si no, solo el logo (algo más de 1 s).
+// localStorage "ccoo-bienvenida" guarda cuándo salió entera (en ms); lectura.js hace la misma cuenta antes de pintar.
+const BV_DURA = (() => {
+  let vista = false;
+  try {
+    const t = Number(localStorage.getItem("ccoo-bienvenida")), pasa = Date.now() - t;
+    vista = t > 0 && pasa >= 0 && pasa < BV_HORAS * 3600e3;
+    if (!vista) localStorage.setItem("ccoo-bienvenida", String(Date.now()));
+  } catch (_) {}
+  if (vista) document.documentElement.classList.add("bv-corta"); // normalmente ya lo ha puesto lectura.js
+  return vista ? 1100 : 4300;
+})();
+// En la app instalada, Android tapa el principio con su pantalla de carga (en el móvil de Lorena, 1,5 s más o menos)
+// y el evento load llega antes de que se quite: si la animación empezaba entonces, del primer plano 3D solo se veía un segundo.
+const BV_APP = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 function empiezaBienvenida() {
   const bv = $("bienvenida"); if (!bv || quitarBienvenida.t0 != null) return;
+  // Si la página sigue oculta (el móvil aún enseña su pantalla de carga), no empieza hasta que se vea
+  if (document.hidden) { document.addEventListener("visibilitychange", empiezaBienvenida, { once: true }); return; }
+  const falta = BV_APP ? 1700 - performance.now() : 0;
+  if (falta > 0) { clearTimeout(empiezaBienvenida.t); empiezaBienvenida.t = setTimeout(empiezaBienvenida, falta); return; }
   quitarBienvenida.t0 = performance.now();
   bv.classList.add("bv-anda");
+  // La barra de carga solo sale si la animación ya ha terminado y la web sigue cargando
+  setTimeout(() => bv.classList.add("bv-espera"), BV_DURA);
   if (quitarBienvenida.pend) quitarBienvenida();
 }
 if (document.readyState === "complete") requestAnimationFrame(empiezaBienvenida);
@@ -852,16 +933,25 @@ async function verNovedades() {
   if (x.t === "publicaciones") { const ap = D.apartados.find(a => a.id === x.apartado_id); return irAHash(ap ? "ap-" + ap.slug : "inicio"); }
   irAHash(x.t === "actas" ? "actas" : "documentos");
 }
+// Cambios que no se ven en la web (p. ej. el servidor marca «notificado» tras mandar el aviso): no hace falta recargar
+const SIN_EFECTO = ["notificado", "notificar", "actualizado", "ultima_publicacion"];
+const LISTA_DE = { comunicados: "avisos", actas: "actas", documentos: "docs", eventos: "eventos", publicaciones: "publicaciones" };
+function soloInterno(t, pl) {
+  if (pl.eventType !== "UPDATE" || !pl.new || pl.new.id == null) return false;
+  const antes = (D[LISTA_DE[t]] || []).find(x => x.id === pl.new.id);
+  return !!antes && Object.keys(pl.new).every(k => SIN_EFECTO.includes(k) || JSON.stringify(pl.new[k]) === JSON.stringify(antes[k]));
+}
 const canal = sb.channel("web-directo");
 Object.keys(QUE).forEach(t => canal.on("postgres_changes", { event: "*", schema: "public", table: t }, (pl) => {
   if (pl.eventType === "INSERT" && pl.new?.id != null) {
     if (pl.new.publicado === false || (pl.new.publicar_en && new Date(pl.new.publicar_en) > new Date())) return; // oculto o programado: no es novedad todavía
     if (!PEND.some(x => x.t === t && x.id === pl.new.id)) PEND.push({ t, id: pl.new.id, titulo: pl.new.titulo, fecha: pl.new.fecha, apartado_id: pl.new.apartado_id });
     pintaBandaNovedad();
-  } else { clearTimeout(recarga); recarga = setTimeout(() => cargar(), 400); } // cambios y borrados: se actualiza en silencio
+  } else if (!soloInterno(t, pl)) { clearTimeout(recarga); recarga = setTimeout(() => cargar(), 400); } // cambios y borrados: se actualiza en silencio
 }));
 canal.subscribe();
-document.addEventListener("visibilitychange", () => { if (!document.hidden) cargar(); });
+// Al volver a la web se actualiza, pero no si se ha cargado hace menos de un minuto (ahorra datos y batería)
+document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - (cargar.ultima || 0) > 60000) cargar(); });
 
 // ---------- Desliza hacia abajo para actualizar (móvil) ----------
 (function () {
@@ -1127,7 +1217,7 @@ function colocaMenuIdiomas(menu, btn) {
 function menuIdiomas(caja, btn) {
   let ult = ""; try { ult = localStorage.getItem("ccoo-ultimo-idioma") || ""; } catch (_) {}
   const lista = Object.entries(IDIOMAS).sort((x, y) => (y[0] === ult) - (x[0] === ult));
-  caja.insertAdjacentHTML("beforeend", `<div class="menu-idiomas" role="menu">${lista.map(([k, n]) => `<button role="menuitem" data-idioma="${k}" class="${k === ult ? "activo" : ""}" ${k === "ar" ? 'dir="rtl"' : ""}>${n}</button>`).join("")}</div>`);
+  caja.insertAdjacentHTML("beforeend", `<div class="menu-idiomas" role="menu"><p class="menu-aviso">Traducción automática con IA: puede tener errores. Si hay dudas, vale el texto en español.</p>${lista.map(([k, n]) => `<button role="menuitem" data-idioma="${k}" class="${k === ult ? "activo" : ""}" ${k === "ar" ? 'dir="rtl"' : ""}>${n}</button>`).join("")}</div>`);
   colocaMenuIdiomas(caja.querySelector(".menu-idiomas"), btn);
 }
 document.addEventListener("click", async (ev) => {
@@ -1180,6 +1270,10 @@ async function traduceReg(reg, idioma) {
       if (idioma === "ar") el.setAttribute("dir", "rtl"); else el.removeAttribute("dir");
     });
     reg.dataset.idiomaActual = idioma;
+    if (!reg.closest("[data-reg-lista]") && !reg.querySelector(".aviso-trad")) {
+      const pie = reg.querySelector(".pie-tarjeta"), av = `<p class="aviso-trad">Traducción automática con IA: puede tener errores. Si hay dudas, vale el texto en español.</p>`;
+      if (pie) pie.insertAdjacentHTML("beforebegin", av); else reg.insertAdjacentHTML("beforeend", av);
+    }
     reg.querySelectorAll(LARGOS).forEach(el => { if (el.dataset.largo !== "abierto") { el.dataset.largo = "?"; revisaLargo(el); } });
     if (boton) boton.innerHTML = icono("idioma", "p") + "Ver en español";
   } catch (e) { if (boton) boton.innerHTML = icono("idioma", "p") + "Traducir"; throw e; }
@@ -1187,6 +1281,7 @@ async function traduceReg(reg, idioma) {
 }
 const originalReg = (reg) => {
   reg.querySelectorAll("[data-campo]").forEach(el => { if (el.dataset.original != null) { el.innerHTML = el.dataset.original; delete el.dataset.original; } el.removeAttribute("dir"); });
+  reg.querySelectorAll(".aviso-trad").forEach(n => n.remove());
   delete reg.dataset.idiomaActual; const b = reg.querySelector("[data-traducir='']"); if (b) b.innerHTML = icono("idioma", "p") + "Traducir";
 };
 // Bloques de Inicio (el rótulo y «Lo último»): un solo botón traduce todo lo de dentro, de dos en dos.

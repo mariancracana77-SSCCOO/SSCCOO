@@ -610,3 +610,41 @@ textarea.crece { resize: vertical; overflow-y: auto; }
 .sel-color option { background: var(--tarjeta); color: var(--tinta); }
 :root:root .ev-mini { background: var(--tc, var(--rojo)); color: #fff; border-left-color: rgba(0, 0, 0, .25); }
 :root:root .ev-mini.f-acta { background: transparent; color: var(--tinta); border-left: 3px solid var(--tc, var(--rojo)); }
+
+/* Botón «Deshacer» dentro del aviso de abajo (tras borrar) */
+.toast-deshacer { margin-left: 6px; padding: 8px 14px; min-height: 40px; border-radius: 10px; border: 2px solid currentColor; background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+.toast-deshacer:hover, .toast-deshacer:focus-visible { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+
+/* v65: «Ver en la web» en la cabecera del editor (en el móvil estrecho, solo el dibujo) */
+#ed-ver-web { margin-left: auto; flex-shrink: 0; }
+@media (max-width: 420px) { #ed-ver-web span { display: none; } #ed-ver-web { padding: 10px; } }
+
+/* v65: campo que falta, marcado en el propio campo */
+.ed-form .falta, .dropzone.falta { border-color: var(--rojo) !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--rojo) 25%, transparent); }
+.falta-txt { display: flex; gap: 6px; align-items: center; margin: 6px 0 0; color: var(--rojo-ic); font-weight: 700; font-size: .95rem; }
+
+/* v65: textos cambiados sin guardar */
+label.sin-guardar::after { content: " · sin guardar"; color: var(--rojo-ic); font-weight: 700; font-size: .85em; }
+
+/* v65: lo recién guardado se resalta un momento en la lista */
+.item-adm.recien { animation: recien 2.6s ease-out; }
+@keyframes recien { 0%, 40% { box-shadow: 0 0 0 3px var(--rojo); } 100% { box-shadow: 0 0 0 3px transparent; } }
+@media (prefers-reduced-motion: reduce) { .item-adm.recien { animation: none; box-shadow: 0 0 0 3px var(--rojo); } }
+
+/* v66: «¿Problemas para entrar?» recoge los enlaces de la pantalla de entrar */
+.problemas-entrar { margin-top: 16px; border-top: 1px solid var(--linea); padding-top: 12px; }
+.problemas-entrar summary { cursor: pointer; font-weight: 700; color: var(--rojo-ic); padding: 6px 0; }
+.problemas-entrar .enlaces-login { flex-direction: column; align-items: flex-start; gap: 14px; margin: 10px 0 4px; }
+.problemas-entrar .enlaces-login button { padding: 4px 0; text-align: left; }
+
+/* v66: atajos para programar */
+.atajos-hora { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+/* v66: Inicio del panel con visitas y estadísticas plegadas al final */
+.plegable-est { margin-top: 18px; }
+.plegable-est > summary { cursor: pointer; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; list-style: none; }
+.plegable-est > summary::-webkit-details-marker { display: none; }
+.plegable-est > summary::before { content: "+"; font-weight: 700; font-size: 1.4rem; color: var(--rojo-ic); width: 1ch; }
+.plegable-est[open] > summary::before { content: "−"; }
+.plegable-est > summary .titulo-bloque { margin: 0; }
+.plegable-est[open] > summary .fecha-txt { display: none; }

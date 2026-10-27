@@ -13,10 +13,10 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="fuentes.css?v=63">
-<script src="lectura.js?v=63"></script>
-<link rel="stylesheet" href="styles.css?v=63">
-<link rel="stylesheet" href="admin.css?v=63">
+<link rel="stylesheet" href="fuentes.css?v=80">
+<script src="lectura.js?v=80"></script>
+<link rel="stylesheet" href="styles.css?v=80">
+<link rel="stylesheet" href="admin.css?v=80">
 </head>
 <body class="admin">
 <header class="cabecera">
@@ -35,13 +35,16 @@
     <label for="email">Email</label><input id="email" type="email" value="ssccoo.calsinacarre@gmail.com" autocomplete="username">
     <label for="pass">Contraseña</label><input id="pass" type="password" autocomplete="current-password">
     <div class="botones"><button class="btn" id="b-entrar" style="flex:1">Entrar</button></div>
-    <div class="enlaces-login">
-      <button id="b-registro">Primera vez: crear la cuenta</button>
-      <button id="b-olvido">He olvidado la contraseña</button>
-      <button id="b-tengo-codigo">Ya tengo el código del email</button>
-      <button id="b-rescate">Tengo un código de rescate</button>
-    </div>
     <div class="msg" id="m-login"></div>
+    <details class="problemas-entrar" id="problemas-entrar">
+      <summary>¿Problemas para entrar?</summary>
+      <div class="enlaces-login">
+        <button id="b-olvido">He olvidado la contraseña</button>
+        <button id="b-tengo-codigo">Ya tengo el código del email</button>
+        <button id="b-rescate">Tengo un código de rescate</button>
+        <button id="b-registro">Primera vez: crear la cuenta</button>
+      </div>
+    </details>
   </section>
 </main>
 
@@ -118,6 +121,7 @@
   <div class="ed-cab">
     <button class="btn-ic" id="ed-cerrar" aria-label="Cerrar"></button>
     <div class="ed-quees"><small id="ed-modo"></small><b id="ed-titulo"></b></div>
+    <a class="btn sec peq oculto" id="ed-ver-web" target="_blank" rel="noopener" aria-label="Ver en la web (se abre en otra pestaña)">Ver en la web</a>
   </div>
   <div class="ed-pestanas" role="tablist">
     <button role="tab" class="activa" data-p="form">Escribir</button>
@@ -139,10 +143,16 @@
   </div>
 </section>
 
-<script src="lib/supabase.js?v=63"></script>
-<script src="iconos.js?v=63"></script>
-<script src="config.js?v=63"></script>
-<script src="render.js?v=63"></script>
-<script src="admin.js?v=63"></script>
+<script src="lib/supabase.js?v=80"></script>
+<script src="iconos.js?v=80"></script>
+<script src="config.js?v=80"></script>
+<script src="render.js?v=80"></script>
+<script src="admin-base.js?v=80"></script>
+<script src="admin-sesion.js?v=80"></script>
+<script src="admin-listas.js?v=80"></script>
+<script src="admin-editor.js?v=80"></script>
+<script src="admin-herramientas.js?v=80"></script>
+<script src="admin-ajustes.js?v=80"></script>
+<script src="admin-calendario.js?v=80"></script>
 </body>
 </html>

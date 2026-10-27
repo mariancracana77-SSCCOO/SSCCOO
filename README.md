@@ -22,7 +22,7 @@ Entra en `admin.html`. En el móvil, abajo: Inicio, Avisos, Calendario, Actas y 
 Para dar formato al texto: línea en blanco entre párrafos; `- ` al principio de la línea para listas; `**así**` para negrita.
 
 ## Archivos (no hace falta tocarlos)
-`index.html`, `app.js` (web) · `cartel.html` (cartel QR) · `qr.js` (códigos QR, librería qrcode-generator, licencia MIT) · `admin.html`, `admin.js`, `admin.css` (panel) · `render.js` (piezas comunes) · `styles.css` · `config.js` (conexión con Supabase) · `iconos.js` · `manifest.json`, `sw.js` (para instalarla como app) · `logo.png`, `icon-*.png` · `.nojekyll`
+`index.html`, `app.js` (web) · `cartel.html` (cartel QR) · `qr.js` (códigos QR, librería qrcode-generator, licencia MIT) · `admin.html`, `admin-*.js` (7 partes), `admin.css` (panel) · `render.js` (piezas comunes) · `styles.css` · `config.js` (conexión con Supabase) · `iconos.js` · `manifest.json`, `sw.js` (para instalarla como app) · `logo.png`, `icon-*.png` · `_config.yml` (deja fuera de la web la documentación)
 
 ## Ajustes (todo desde el panel, sin tocar código)
 En la pestaña **Ajustes** del panel se pueden añadir, renombrar, ordenar, cambiar de color y quitar las categorías y tipos de todas las secciones (filtros de avisos, tipos de acta, tipos del calendario, categorías del convenio y de documentos).
@@ -75,6 +75,67 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 80: confirmar al terminar la jornada
+
+- Mis descansos: «Termino la jornada» pide confirmación (antes un toque sin querer la cerraba y, con menos de 10 minutos, la perdía sin avisar). Quitar un apunte, anular la jornada, borrar todo y recuperar una copia ya la pedían.
+
+## Versión 79: panel sin botón «Nuevo» donde no crea nada
+
+- En el panel (móvil), el botón flotante «Nuevo» ya no sale en Revisar la ortografía, Historial, Textos, Ajustes ni Archivos: tapaba los mensajes de estado.
+
+## Versión 78: Actas de PRL
+
+- Nuevo subapartado «Actas de PRL» dentro de PRL (creado en Supabase, slug `actas-prl`). Sus publicaciones salen con el aspecto de las actas del comité (fecha en rojo, etiqueta «Acta de PRL», «Reunión del…»). Se publican desde el panel, en «Apartados de la web».
+
+## Versión 77: avisos claros de usos y límites
+
+- Traducir: el menú de idiomas y cada tarjeta traducida avisan de que es traducción automática con IA, que puede tener errores y que vale el texto en español (`.menu-aviso`, `.aviso-trad`).
+- Mis descansos: el aviso de que es solo una ayuda (no prueba oficial, no sustituye al tacógrafo) sube arriba de la pantalla y explica para qué sirve y para qué no; la copia en PDF lleva lo mismo.
+- Función `traducir` (Supabase): reintenta con espera si Gemini da 503 o 429 y apunta cada fallo en el registro.
+
+## Versión 76: guía de Mis descansos al día
+
+La guía rápida explica cómo empezar con una hora anterior y cómo corregir lo apuntado con el lápiz.
+
+## Versión 75: Mis descansos, hora de inicio anterior
+
+En «Hoy» se puede poner la hora real a la que empezaste (si te acuerdas tarde), y cambiarla con la jornada en marcha. En la lista, el lápiz permite cambiar las horas de una jornada o de un descanso semanal ya apuntados.
+
+## Versión 74: la bienvenida vuelve al camión plano
+- Se quita el 3D: vuelve el camión del logo de lado, con el conductor dentro de la ventanilla, y el logo sale de él.
+- Se mantienen los rayos rojos y las chispas al aparecer el logo y el vuelo del logo hasta la cabecera.
+
+## Versión 73: la bienvenida no empieza con la app oculta
+- Si al abrir la app el móvil aún está enseñando su pantalla de carga (página oculta), la animación espera a que se vea. Sale entera cada vez que la app arranca de cero.
+
+## Versión 72: la bienvenida en 3D se ve entera
+- En la app instalada en Android, la animación empieza cuando se quita la pantalla de carga de Android. Antes empezaba por detrás y del primer plano en 3D solo se veía un segundo.
+- Por ahora la animación entera sale siempre (`BV_HORAS = 0` en `app.js`) para comprobar que se ve bien; después saldrá entera si han pasado 3 horas desde la última vez y, si no, la corta (solo el logo).
+- La versión corta ya no enseña un segundo el camión antes del logo.
+
+## Versión 71: final nuevo de la bienvenida
+- Empieza con un primer plano en 3D del camión (con frontal, parabrisas, faros y techo), visto un poco de frente, con el conductor y el brazo fuera de la ventanilla. Se ve la cabina por dentro y el conductor con detalle, con una mano en un volante con grosor y el brazo que llega hasta ella; las ruedas tienen grosor. Nos mira y saluda mientras la cámara se aleja pasando por el lateral del camión hasta verlo de lado. Mete el brazo, sube la ventanilla, el camión frena y se forma el logo. La línea discontinua de la carretera ahora es blanca. Al salir el logo, rayos rojos que giran detrás y chispas con el latido (el logo es el mismo).
+- Al terminar, el logo vuela hasta su sitio en la cabecera mientras la web se abre en círculo, y el logo de la cabecera da un pequeño rebote al llegar.
+- La barra de carga solo sale si la web sigue cargando cuando acaba la animación. La animación dura algo más que antes (unos 5 segundos).
+- Con «reducir movimiento» en el móvil, o si se toca para saltarla, desaparece fundiéndose como antes.
+
+## Versión 70: calendario en el móvil y atajos
+- En Calendario, «Las fechas, en tu calendario»: con un toque se añade el calendario de la Sección Sindical a Google Calendar, iPhone u Outlook, y las fechas nuevas aparecen solas. Lo sirve la función `calendario` de Supabase (pública, solo lo que ya se ve en la web).
+- Al mantener pulsado el icono de la app: atajos a Avisos, Calendario, Mis descansos y Buzón.
+- El nombre de la pestaña del navegador cambia según la sección.
+- Página propia en español cuando un enlace no existe (`404.html`).
+- Enlace «Saltar al contenido» para quien usa teclado o lector de pantalla.
+
+## Versión 69: guía del panel en el menú
+- En el panel, «Guía del panel» en el menú (en el PC, abajo del menú lateral; en el móvil, en «Más») abre la guía con capturas en otra pestaña.
+
+## Versión 68: aviso de versión nueva
+- Cuando se publica una versión, la web y el panel que estén abiertos (también la app instalada que el móvil deja en segundo plano) enseñan «Hay una versión nueva» con el botón «Actualizar». Al volver a la app se comprueba si hay versión nueva.
+
+## Versión 67: el panel, en partes más pequeñas
+- `admin.js` (unas 2.600 líneas) pasa a 7 archivos por temas: `admin-base.js`, `admin-sesion.js`, `admin-listas.js`, `admin-editor.js`, `admin-herramientas.js`, `admin-ajustes.js` y `admin-calendario.js`. El código es el mismo; solo cambia que el arranque espera a que estén cargadas todas las partes. No cambia nada de lo que se ve.
+- La prueba rápida (`pruebas/humo.cjs`) entra también en el panel con una sesión de prueba y abre todas las páginas y editores.
+
 ## Versión 10
 - **Botón «Aa»** (arriba, en la web y en el panel): tamaño de letra (normal, grande, muy grande), contraste alto y colores (automático, claro, oscuro). Se guarda en cada móvil.
 - **Activar avisos** más fiable: si el navegador falla («Registration failed»), lo reintenta solo; si aun así no puede, explica qué hacer (por ejemplo, en Brave hay que activar los servicios de Google para mensajería push).
@@ -90,6 +151,29 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Saludo con la fecha y un resumen de la semana (avisos, actas, documentos y citas nuevas).
 - **Próxima cita** (el rótulo de Inicio cuando no hay nada urgente): diseño nuevo de carretera. El título sale en un panel luminoso de autopista (letras blancas de puntos y luces rojas que parpadean en las esquinas) y, debajo, en un poste, dos señales en el rojo del logo: el lugar con los días que faltan (como los kilómetros de una señal) y el día y la hora. Prefiere reuniones y asambleas a los festivos y, si es la misma cita que la cuenta atrás, no se repite.
 - **Animación de entrada**: ahora empieza cuando la página ha cargado (en la app instalada, Android tapaba los primeros segundos con su pantalla y la animación terminaba sin verse) y sale aunque el móvil tenga «quitar animaciones» (lo activa el ahorro de batería). Se sigue saltando tocándola.
+
+## Versión 66: Inicio del panel y formularios más cómodos
+- **Inicio del panel**: lo de cada día arriba (accesos, próximas fechas, avisos programados y lo último); las visitas y estadísticas, plegadas al final, solo se cargan al abrirlas. Nuevo acceso «Publicar en un apartado» (Comité, Zona Conductores…).
+- **Programar con atajos**: «Mañana a las 8:00», «El lunes a las 8:00» y «Ahora (sin programar)».
+- **Avisos de errores fáciles**: hora de fin antes que la de inicio en el calendario, y opciones movidas o quitadas en una encuesta que ya tiene votos.
+- **Filtros rápidos** encima de cada lista: Programados, Ocultos, Urgentes, Fijados y Con cuenta atrás (solo salen los que tienen algo).
+- **Volver a avisar de un cambio**: al editar un aviso, fecha, acta, documento, publicación o encuesta, casilla «Avisar otra vez de este cambio»; la notificación sale como «Cambio: …».
+- **Pantalla de entrar** más limpia: los enlaces de contraseña y cuenta nueva, dentro de «¿Problemas para entrar?» (se abre solo si falla la entrada).
+
+## Versión 65: panel más claro al publicar
+- **El botón dice lo que va a pasar**: «Publicar y avisar», «Publicar sin avisar», «Programar y avisar» o «Guardar sin publicar», según lo marcado. Un aviso a los móviles no se puede retirar, así que se ve antes de pulsar.
+- **Lo que falta, en el propio campo**: borde rojo y la frase debajo (por ejemplo, el título o el archivo de un documento); se quita al escribir.
+- **Textos**: solo se guarda lo que has cambiado (el botón dice cuántos), cada texto cambiado pone «sin guardar» y, si te vas sin guardar, pregunta antes. Lo mismo en Ajustes con los filtros y categorías.
+- **«Ver en la web»** en el editor de lo ya publicado: abre la web justo en ese aviso, publicación o encuesta.
+- **Lo recién guardado** se resalta un momento en la lista para encontrarlo.
+
+## Versión 64: más ligera y más cómoda
+- **Gasta menos datos**: al volver a la web no se recarga todo si se cargó hace menos de un minuto, y los cambios internos del servidor (marcar un aviso como enviado) ya no hacen recargar a todos los móviles. Las fotos grandes se reducen al subirlas (2000 px) y los archivos se guardan un año en el móvil.
+- **Bienvenida**: entera la primera vez de cada día; si se vuelve a abrir el mismo día, solo el logo (algo más de 1 s).
+- **Más fiable**: si falla una sola parte al cargar, esa parte sale de la copia guardada en vez de quedarse vacía; sin conexión, los enlaces compartidos con «?…» (WhatsApp, Facebook) también abren.
+- **Panel**: errores explicados en español (y, si se cierra la sesión, botón para volver a entrar sin perder lo escrito); aviso si otra persona ha cambiado lo que estás editando; al borrar sale «Deshacer» en vez de preguntar.
+- **Accesibilidad**: las ventanas reciben el foco, se cierran con Escape y no se sale de ellas con Tab.
+- **Mantenimiento**: `herramientas/version.py N` cambia la versión en todos los sitios; `pruebas/humo.cjs` prueba la web y el panel con datos de prueba.
 
 ## Versión 63: Mis descansos más ligero y «¿Dónde está…?»
 - **Mis descansos**: solo descansos (sin conducción ni pausas), en pestañas (Hoy, Apuntar, Lo apuntado, Ajustes), guía rápida plegable y traducible, y avisos de instalar/activar en una línea.

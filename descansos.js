@@ -48,15 +48,17 @@
     avisar: T("Avisarme en el móvil antes de mis descansos y de los plazos de compensación. Al servidor solo va cuándo avisarte y el texto del aviso, sin tu nombre; se borra al enviarse."),
     copia: T("Guardar una copia (PDF)"), recupera: T("Recuperar una copia"), borrar: T("Borrar todo"),
     ayudacopia: T("Guarda una copia de vez en cuando (y antes de cambiar de móvil): si se borran los datos del navegador, se pierde lo apuntado."),
-    oficial: T("Orientativo. Manda lo que registra el tacógrafo y el Reglamento (CE) 561/2006. Cálculos según el cuadernillo «Tiempos de conducción y descanso» de FENADISMER (mayo 2026) y el II Acuerdo Marco. Ante la duda, pregunta a un delegado."),
+    oficial: T("Solo es una ayuda para organizarte: sirve para saber cuándo te toca descansar y llevar la cuenta de lo que tienes que compensar. No es una prueba oficial ni sustituye al tacógrafo: manda lo que registra el tacógrafo y el Reglamento (CE) 561/2006. Cálculos según el cuadernillo «Tiempos de conducción y descanso» de FENADISMER (mayo 2026) y el II Acuerdo Marco. Ante la duda, pregunta a un delegado."),
   });
   // Guía rápida (plegable, traducible)
   const GUIA = () => [
-    [T("Al empezar a trabajar"), T("En «Hoy», pulsa «Empiezo la jornada». Te digo hasta qué hora puedes estar antes de parar para el descanso diario (11 h, 9 h reducido o partido 3 h + 9 h).")],
+    [T("Al empezar a trabajar"), T("En «Hoy», pulsa «Empiezo la jornada» (si empezaste antes, pon antes la hora real). Te digo hasta qué hora puedes estar antes de parar para el descanso diario (11 h, 9 h reducido o partido 3 h + 9 h).")],
+    [T("Si empezaste antes"), T("Si ya son las 10 y empezaste a las 8, pon las 8 en el campo de la hora antes de pulsar «Empiezo la jornada». Con la jornada en marcha, también puedes cambiarla en «Cambiar la hora de inicio». Esas horas cuentan igual.")],
     [T("Al parar"), T("Pulsa «Termino la jornada»: se apunta sola y empieza a contar tu descanso diario.")],
     [T("El descanso semanal"), T("Cuando lo termines, ve a «Apuntar» > «Un descanso semanal» y pon cuándo empezó y acabó. Te calculo cuándo te toca el siguiente y si tienes horas que compensar.")],
     [T("Si se te olvidó"), T("En «Apuntar» puedes poner a mano cualquier jornada o descanso de días pasados.")],
     [T("Revisar"), T("En «Lo apuntado» ves todo, con filtros (semanales, en fin de semana, entre semana o jornadas). Lo que no cumple sale marcado en rojo.")],
+    [T("Corregir lo apuntado"), T("En «Lo apuntado», pulsa el lápiz de una jornada o de un descanso semanal para cambiar la hora de inicio o de fin.")],
     [T("Avisos y copia"), T("En «Ajustes» eliges cuándo te avisa el móvil. Guarda de vez en cuando la copia en PDF para no perder nada.")],
   ];
   function pintaGuia() {
@@ -197,16 +199,31 @@
 
   // ---------- Jornada de hoy ----------
   const hora = (t) => new Date(t).toLocaleTimeString(LOC, { hour: "2-digit", minute: "2-digit" });
+  // «14:30» -> momento más reciente con esa hora que no sea futuro (si es más tarde que ahora, es de ayer)
+  const horaAMs = (v) => {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(v || ""); if (!m) return null;
+    const d = new Date(); d.setHours(+m[1], +m[2], 0, 0);
+    if (d.getTime() > Date.now() + MIN) d.setDate(d.getDate() - 1);
+    return d.getTime();
+  };
+  const avisoHoy = (t) => { const m = $("desc-hoy-msg"); if (m) { m.textContent = t; m.className = "msg err"; } };
+  const horaInput = (t) => { const d = new Date(t); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
   function pintaHoy(dd) {
     const h = DATOS.hoy, ahora = Date.now(), quedanRed = Math.max(0, 3 - dd.reducidosAhora);
     const red = `<p class="desc-red"><span class="desc-puntos">${[0, 1, 2].map(i => `<i class="${i < dd.reducidosAhora ? "usado" : ""}"></i>`).join("")}</span>${esc(T("Descansos diarios reducidos usados: {n} de 3 (hasta el próximo descanso semanal).", { n: Math.min(3, dd.reducidosAhora) }))}</p>`;
     if (!h) {
       $("desc-hoy").innerHTML = `<h2 class="desc-tit">${icono("reloj", "p")}${esc(T("Descanso diario"))}</h2>
         <p class="desc-vacio">${esc(T("Pulsa al empezar a trabajar y te digo hasta qué hora puedes estar antes de parar para el descanso diario."))}</p>
+        <label class="desc-antes"><span>${esc(T("¿Empezaste antes? Pon la hora real (si lo dejas vacío, cuenta desde ahora)"))}</span><input type="time" id="desc-hoy-hora"></label>
         <button class="btn grande" id="desc-empieza">${icono("reloj", "p")}${esc(T("Empiezo la jornada"))}</button>
+        <p class="msg" id="desc-hoy-msg" role="alert"></p>
         <label class="check"><input type="checkbox" id="desc-hoy-doble" ${DATOS.doble ? "checked" : ""}><span>${esc(T("Hoy voy con otro conductor (doble tripulación)"))}</span></label>
         ${red}`;
-      $("desc-empieza").onclick = () => { DATOS.hoy = { ini: Date.now(), doble: $("desc-hoy-doble").checked, partido: false }; guarda(); pinta(); };
+      $("desc-empieza").onclick = () => {
+        const v = $("desc-hoy-hora").value, ini = v ? horaAMs(v) : Date.now();
+        if (ini == null || Date.now() - ini > 30 * H) return avisoHoy(T("Esa hora es de hace más de 30 horas. Si fue antes, apúntala en «Apuntar» > «Una jornada»."));
+        DATOS.hoy = { ini, doble: $("desc-hoy-doble").checked, partido: false }; guarda(); pinta();
+      };
       return;
     }
     const l11 = h.ini + 13 * H, l9 = h.ini + 15 * H, l30 = h.ini + 21 * H;
@@ -223,13 +240,23 @@
       </div>
       <details class="desc-mas"><summary>${esc(T("Otras opciones (reducido o partido)"))}</summary><ul class="desc-limites">${lim.join("")}</ul></details>
       ${h.doble ? "" : `<label class="check"><input type="checkbox" id="desc-hoy-partido" ${h.partido ? "checked" : ""}><span>${esc(T("Hoy hago el descanso partido (una parada de 3 h o más y 9 h al final)"))}</span></label>`}
+      <details class="desc-mas"><summary>${esc(T("Cambiar la hora de inicio"))}</summary>
+        <label class="desc-antes"><span>${esc(T("Hora a la que empezaste de verdad"))}</span><input type="time" id="desc-hoy-cambia" value="${horaInput(h.ini)}"></label>
+        <button class="btn" id="desc-cambia-ok">${esc(T("Cambiar la hora"))}</button>
+        <p class="msg" id="desc-hoy-msg" role="alert"></p></details>
       <div class="botones desc-hoy-bot">
         <button class="btn grande" id="desc-termina">${esc(T("Termino la jornada"))}</button>
         <button class="enlace-desact" id="desc-cancela">${esc(T("Anular esta jornada"))}</button></div>
       ${red}`;
+    $("desc-cambia-ok").onclick = () => {
+      const ini = horaAMs($("desc-hoy-cambia").value);
+      if (ini == null || Date.now() - ini > 30 * H) return avisoHoy(T("Esa hora es de hace más de 30 horas. Si fue antes, apúntala en «Apuntar» > «Una jornada»."));
+      h.ini = ini; guarda(); pinta();
+    };
     $("desc-termina").onclick = () => {
-      const t = Date.now();
-      if (t - h.ini < 10 * MIN) { DATOS.hoy = null; guarda(); pinta(); return; }
+      const t = Date.now(), corta = t - h.ini < 10 * MIN;
+      if (!confirm(corta ? T("¿Terminar la jornada? Lleva menos de 10 minutos, así que no se apuntará.") : T("¿Terminar la jornada ahora? Se apuntará y empezará tu descanso diario."))) return;
+      if (corta) { DATOS.hoy = null; guarda(); pinta(); return; }
       DATOS.jornadas.push({ id: Date.now().toString(36), ini: h.ini, fin: t, doble: !!h.doble, partido: !!h.partido, ferry: false });
       DATOS.hoy = null; guarda(); pinta();
       const m = $("desc-j-msg"); m.textContent = T("Jornada apuntada. Tu descanso diario empieza ahora."); m.className = "msg ok";
@@ -334,7 +361,7 @@
       return F === "finde" ? tocaFinde(x.ini, x.fin) : !tocaFinde(x.ini, x.fin);
     };
     const filas = [...DATOS.lista, ...dd.js.map(j => ({ ...j, _j: true }))].filter(pasa).sort((a, b) => b.fin - a.fin);
-    const quitar = (id, txt) => `<button class="btn-ic" data-quita="${esc(id)}" aria-label="${esc(txt)}">${icono("borrar", "p")}</button>`;
+    const quitar = (id, txt, edita) => (edita ? `<button class="btn-ic" data-edita="${esc(id)}" aria-label="${esc(T("Cambiar las horas"))}" title="${esc(T("Cambiar las horas"))}">${icono("editar", "p")}</button>` : "") + `<button class="btn-ic" data-quita="${esc(id)}" aria-label="${esc(txt)}">${icono("borrar", "p")}</button>`;
     $("desc-lista").innerHTML = filas.length ? filas.map(x => {
       if (x._j) {
         const et = { normal: x.doble ? T("Descanso diario de 9 h (doble tripulación)") : T("Descanso diario normal"), reducido: T("Descanso diario reducido"), partido: T("Descanso diario partido (3 h + 9 h)"), falta: T("Descanso diario insuficiente"), pendiente: T("Falta apuntar lo siguiente") }[x.clase];
@@ -345,7 +372,7 @@
         return `<li class="desc-fila jornada ${x.clase}"><div><b>${esc(fmt(x.ini))} → ${esc(fmt(x.fin))}</b>
           <small><span class="desc-clase">${esc(T("Jornada"))}</span> · ${esc(horas((x.fin - x.ini) / H))}${notas.length ? " · " + notas.map(esc).join(" · ") : ""}</small>
           <small><span class="desc-clase">${esc(et)}</span></small>
-          ${malas.map(m => `<span class="desc-mal">${icono("alerta", "p")}${esc(m)}</span>`).join("")}</div>${quitar(x.id, T("Quitar esta jornada"))}</li>`;
+          ${malas.map(m => `<span class="desc-mal">${icono("alerta", "p")}${esc(m)}</span>`).join("")}</div>${quitar(x.id, T("Quitar esta jornada"), 1)}</li>`;
       }
       if (x.tipo === "comp") return `<li class="desc-fila comp"><div><b>${esc(T("Compensación: {horas}", { horas: horas(+x.horas) }))}</b><small>${esc(T("Sumadas a un descanso diario que acabó el {fecha}", { fecha: fmt(x.fin) }))}</small></div>${quitar(x.id, T("Quitar"))}</li>`;
       const s = c.sem.find(y => y.id === x.id), et = s.clase === "normal" ? T("Normal") : s.clase === "reducido" ? T("Reducido") : T("No llega a 24 h"), deuda = c.deudas.find(d => d.de.id === x.id);
@@ -357,11 +384,33 @@
       const dTxt = deuda ? (deuda.queda > 0.05 ? T("faltan {horas} por compensar", { horas: horas(deuda.queda) }) : T("compensado")) : "";
       return `<li class="desc-fila ${s.clase}"><div><b>${esc(fmt(x.ini))} → ${esc(fmt(x.fin))}</b>
         <small><span class="desc-clase">${esc(T("Descanso semanal"))} · ${esc(et)}</span> · ${esc(horas(s.h))}${dTxt ? " · " + esc(dTxt) : ""}${notas.length ? " · " + notas.map(esc).join(" · ") : ""}</small>
-        ${malas.map(m => `<span class="desc-mal">${icono("alerta", "p")}${esc(m)}</span>`).join("")}</div>${quitar(x.id, T("Quitar este descanso"))}</li>`;
+        ${malas.map(m => `<span class="desc-mal">${icono("alerta", "p")}${esc(m)}</span>`).join("")}</div>${quitar(x.id, T("Quitar este descanso"), 1)}</li>`;
     }).join("") : `<li class="desc-vacio">${esc(F === "todo" ? T("Todavía no has apuntado nada.") : T("No hay nada de este tipo."))}</li>`;
     $("desc-lista").querySelectorAll("[data-quita]").forEach(b => b.onclick = () => {
       if (!confirm(T("¿Quitarlo de tu lista?"))) return;
       DATOS.lista = DATOS.lista.filter(x => x.id !== b.dataset.quita); DATOS.jornadas = DATOS.jornadas.filter(x => x.id !== b.dataset.quita); guarda(); pinta();
+    });
+    $("desc-lista").querySelectorAll("[data-edita]").forEach(b => b.onclick = () => {
+      const li = b.closest("li"), id = b.dataset.edita, j = DATOS.jornadas.find(x => x.id === id), x = j || DATOS.lista.find(y => y.id === id);
+      if (!x || li.querySelector(".desc-edita")) return;
+      const f = document.createElement("div"); f.className = "desc-edita";
+      f.innerHTML = `<label>${esc(j ? T("Empezaste") : T("Empezó el descanso"))}<input type="datetime-local" id="ed-ini" value="${aLocal(x.ini)}"></label>
+        <label>${esc(j ? T("Terminaste") : T("Terminó el descanso"))}<input type="datetime-local" id="ed-fin" value="${aLocal(x.fin)}"></label>
+        <p class="msg" id="ed-msg" role="alert"></p>
+        <div class="botones"><button class="btn" id="ed-ok">${esc(T("Guardar los cambios"))}</button><button class="enlace-desact" id="ed-no">${esc(T("Cancelar"))}</button></div>`;
+      li.appendChild(f);
+      $("ed-no").onclick = () => f.remove();
+      $("ed-ok").onclick = () => {
+        const ini = new Date($("ed-ini").value).getTime(), fin = new Date($("ed-fin").value).getTime(), m = $("ed-msg");
+        const mal = (t) => { m.textContent = t; m.className = "msg err"; };
+        if (!ini || !fin) return mal(T("Pon cuándo empezó y cuándo acabó."));
+        if (fin <= ini) return mal(T("El final tiene que ser después del principio."));
+        if (fin > Date.now() + MIN) return mal(T("El final no puede ser en el futuro."));
+        if (j ? fin - ini > 30 * H : fin - ini > 14 * DIA) return mal(j ? T("Una jornada no puede pasar de 30 horas. Revisa las fechas.") : T("Un descanso de más de 14 días no parece un descanso semanal (¿vacaciones?). Revisa las fechas."));
+        if (DATOS.jornadas.some(y => y.id !== id && ini < y.fin && fin > y.ini) && j) return mal(T("Se solapa con otra jornada que ya tienes apuntada."));
+        if (DATOS.lista.some(y => y.id !== id && y.tipo !== "comp" && ini < y.fin && fin > y.ini)) return mal(T("Se solapa con otro descanso que ya tienes apuntado."));
+        x.ini = ini; x.fin = fin; guarda(); pinta();
+      };
     });
     $("desc-doble").checked = !!DATOS.doble;
     $("desc-internacional").checked = !!DATOS.internacional;
@@ -423,7 +472,7 @@
       if (sd.enCabina) L("Atención: el descanso normal no se puede hacer en la cabina.", 9, false, 12);
     });
     L("");
-    L("Orientativo. Manda lo que registra el tacógrafo y el Reglamento (CE) 561/2006. Cálculos según el cuadernillo «Tiempos de conducción y descanso» de FENADISMER (mayo 2026) y el II Acuerdo Marco.", 8);
+    L("Solo es una ayuda para organizarte; no es una prueba oficial ni sustituye al tacógrafo. Manda lo que registra el tacógrafo y el Reglamento (CE) 561/2006. Cálculos según el cuadernillo «Tiempos de conducción y descanso» de FENADISMER (mayo 2026) y el II Acuerdo Marco.", 8);
     L("Para volver a cargar estos datos en la app: Zona Conductores > Mis descansos > Recuperar una copia, y elige este PDF.", 8);
     // Partir en renglones que quepan (Helvetica ~0,5 em por letra) y en páginas A4
     const ANCHO = 515, renglones = [];

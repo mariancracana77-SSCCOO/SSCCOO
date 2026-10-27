@@ -988,9 +988,9 @@ body.publica.con-aviso-priv { padding-bottom: calc(84px + var(--alto-aviso, 90px
 .bv-sello { position: absolute; inset: 0; animation: bv-sello 1.1s 2.3s cubic-bezier(.34, 1.3, .5, 1) both; }
 @keyframes bv-sello { 0% { transform: scale(1); } 28% { transform: scale(.93); } 100% { transform: scale(1); } }
 .bv-aro { position: absolute; inset: -2%; width: 104%; height: 104%; transform: rotate(-60deg); overflow: visible; }
-.bv-aro circle { fill: none; stroke: var(--rojo); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100;
+.bv-aro circle { opacity: 0; fill: none; stroke: var(--rojo); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100;
   animation: bv-traza .8s 1.95s cubic-bezier(.6, 0, .3, 1) forwards, bv-funde .5s 2.9s forwards; }
-@keyframes bv-traza { to { stroke-dashoffset: 0; } }
+@keyframes bv-traza { from { opacity: 1; } to { stroke-dashoffset: 0; opacity: 1; } }
 @property --bv-r { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
 .bv-logo { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; --bv-r: 0%;
   -webkit-mask: radial-gradient(circle at 54.8% 52.7%, #000 calc(var(--bv-r) - 22%), transparent var(--bv-r));
@@ -1043,6 +1043,53 @@ body.publica.con-aviso-priv { padding-bottom: calc(84px + var(--alto-aviso, 90px
 .bv-carga { width: min(200px, 60vw); height: 5px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; }
 .bv-carga span { display: block; width: 40%; height: 100%; border-radius: 3px; background: var(--rojo); animation: bv-barra 1.3s ease-in-out infinite; }
 @keyframes bv-barra { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+@keyframes bv-barra { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+/* Al aparecer el logo (v71): rayos rojos que giran detrás y chispas que salen con el latido del sello */
+.bv-rayos { position: absolute; inset: -38%; border-radius: 50%; pointer-events: none; opacity: 0; will-change: transform, opacity;
+  background: repeating-conic-gradient(from 0deg, rgba(171, 16, 18, .7) 0 5deg, transparent 5deg 15deg);
+  -webkit-mask: radial-gradient(circle, #000 28%, transparent 68%); mask: radial-gradient(circle, #000 28%, transparent 68%);
+  animation: bv-rayos 1.9s 2.3s ease-out forwards; }
+@keyframes bv-rayos { 0% { opacity: 0; transform: scale(.55) rotate(0); } 30% { opacity: 1; } 100% { opacity: 0; transform: scale(1.1) rotate(70deg); } }
+.bv-chispas { position: absolute; inset: 0; pointer-events: none; --d: min(240px, 62vw); }
+.bv-chispas i { position: absolute; left: calc(50% - 2.5px); top: calc(50% - 11px); width: 5px; height: 22px; border-radius: 2px; background: #fff; opacity: 0;
+  transform: rotate(var(--a)) translateY(calc(var(--d) * -.5)); animation: bv-chispa .7s 2.55s cubic-bezier(.2, .7, .3, 1) forwards; }
+.bv-chispas i:nth-child(even) { background: var(--rojo); height: 16px; animation-delay: 2.62s; }
+.bv-chispas i:nth-child(1) { --a: 0deg; } .bv-chispas i:nth-child(2) { --a: 36deg; } .bv-chispas i:nth-child(3) { --a: 72deg; }
+.bv-chispas i:nth-child(4) { --a: 108deg; } .bv-chispas i:nth-child(5) { --a: 144deg; } .bv-chispas i:nth-child(6) { --a: 180deg; }
+.bv-chispas i:nth-child(7) { --a: 216deg; } .bv-chispas i:nth-child(8) { --a: 252deg; } .bv-chispas i:nth-child(9) { --a: 288deg; }
+.bv-chispas i:nth-child(10) { --a: 324deg; }
+@keyframes bv-chispa { 0% { opacity: 1; transform: rotate(var(--a)) translateY(calc(var(--d) * -.5)) scaleY(1); }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(var(--d) * -.85)) scaleY(.3); } }
+/* Versión corta (segunda vez del mismo día): sin camión, el logo aparece de golpe con su aro y el destello */
+.bv-corta .bienvenida .bv-camion, .bv-corta .bienvenida .bv-carretera, .bv-corta .bienvenida .bv-onda { display: none; }
+.bv-corta .bienvenida .bv-sello { animation: none; }
+.bv-corta .bienvenida .bv-logo { animation: bv-revela .5s cubic-bezier(.22, .61, .36, 1) forwards; }
+.bv-corta .bienvenida .bv-aro circle { animation: bv-traza .5s cubic-bezier(.6, 0, .3, 1) forwards, bv-funde .3s .65s forwards; }
+.bv-corta .bienvenida .bv-brillo::before { animation-delay: .35s; }
+.bv-corta .bienvenida .bv-rayos { animation-delay: 0s; animation-duration: 1.2s; }
+.bv-corta .bienvenida .bv-chispas i { animation-delay: .25s; }
+.bv-corta .bienvenida .bv-chispas i:nth-child(even) { animation-delay: .32s; }
+.bv-corta .bienvenida .bv-nombre { animation: bv-sube .4s .1s ease-out forwards; }
+/* Salida (v69): el logo vuela hasta el de la cabecera mientras el fondo se abre en círculo y deja ver la web.
+   app.js pone .bv-vuela con --bv-dx/--bv-dy/--bv-s (distancia y tamaño hasta #cab-logo) y --bv-cx/--bv-cy (centro del logo).
+   Con «reducir movimiento», o si el logo de la cabecera no se ve, se funde como antes. */
+@property --bv-hueco { syntax: "<percentage>"; inherits: false; initial-value: -8%; }
+.bienvenida.bv-vuela { cursor: default; }
+.bienvenida.bv-vuela::before {
+  -webkit-mask: radial-gradient(circle at var(--bv-cx, 50%) var(--bv-cy, 50%), transparent var(--bv-hueco), #000 calc(var(--bv-hueco) + 7%));
+  mask: radial-gradient(circle at var(--bv-cx, 50%) var(--bv-cy, 50%), transparent var(--bv-hueco), #000 calc(var(--bv-hueco) + 7%));
+  animation: bv-abre .7s cubic-bezier(.55, 0, .3, 1) forwards; }
+@keyframes bv-abre { to { --bv-hueco: 108%; } }
+.bienvenida.bv-vuela .bv-logo-caja { transition: transform .7s cubic-bezier(.55, 0, .3, 1); will-change: transform;
+  transform: translate(var(--bv-dx), var(--bv-dy)) scale(var(--bv-s)); }
+.bienvenida.bv-vuela .bv-nombre { animation: bv-sale .25s ease-in forwards; }
+.bienvenida.bv-vuela .bv-carga { opacity: 0; transition-duration: .15s; }
+@keyframes bv-sale { from { opacity: 1; } to { opacity: 0; transform: translateY(10px); } }
+.bienvenida.bv-vuela.fuera { transition-duration: .15s; }
+.cab-logo.bv-oculto { opacity: 0; }
+/* Al llegar el logo a la cabecera, un pequeño rebote, como si aterrizara */
+.cab-logo.bv-aterriza { animation: bv-aterriza .4s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes bv-aterriza { 45% { transform: scale(1.14); } 100% { transform: none; } }
 /* Quieta hasta que app.js pone .bv-anda (al terminar de cargar). Sale también con «reducir movimiento»: dura 4 s y se salta tocando. */
 .bienvenida:not(.bv-anda) * { animation-play-state: paused !important; }
 
@@ -1419,7 +1466,7 @@ html[data-letra] .subpestanas a { font-size: .92rem; }
 .desc-mas { border-top: 1px solid var(--linea); padding-top: 10px; }
 .desc-mas[open] summary { margin-bottom: 10px; }
 #v-descansos .aviso-oficial, #v-descansos .aviso-oficial span { font-weight: 400; }
-#v-descansos .aviso-oficial { margin-top: 16px; }
+#v-descansos .aviso-oficial { margin: 0 0 14px; }
 .desc-copias { display: flex; gap: 8px; flex-wrap: wrap; }
 .desc-copias .btn { flex: 1 1 auto; }
 .desc-cifras > div { padding: 12px 14px; }
@@ -1555,3 +1602,40 @@ html[data-letra] .subpestanas a { font-size: .92rem; }
 #buzon { scroll-margin-top: 150px; }
 .adjunto b { white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; } /* v63: el nombre del archivo se ve (antes se cortaba en una línea) */
 .desc-idioma > span { white-space: nowrap; } .desc-hoy .check { margin: 0; }
+
+/* Banda «Hay una versión nueva · Actualizar» (config.js) */
+.banda-version { position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 1200;
+  display: flex; align-items: center; gap: 12px; width: max-content; max-width: calc(100% - 32px); padding: 10px 10px 10px 16px;
+  background: var(--asfalto); color: #fff; border: 2px solid var(--rojo); border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.35); font-weight: 700; }
+.banda-version span { flex: 1 1 auto; min-width: 0; }
+.banda-version .btn { flex: none; min-height: 44px; background: var(--rojo); color: #fff; border: 0; }
+
+/* «Saltar al contenido» (v70): solo aparece al llegar con el teclado (Tab) */
+.saltar { position: fixed; left: 12px; top: -80px; z-index: 1300; padding: 12px 18px; border-radius: 10px; background: var(--rojo); color: #fff; font-weight: 700; text-decoration: none; box-shadow: 0 4px 14px rgba(0, 0, 0, .35); }
+.saltar:focus { top: calc(12px + env(safe-area-inset-top)); outline: 3px solid #fff; outline-offset: 2px; }
+#principal:focus { outline: none; }
+
+/* Calendario para suscribirse (v70) */
+.cal-suscribir { margin-top: 18px; padding: 16px; }
+.cal-suscribir h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-family: "Barlow Condensed", sans-serif; font-size: 1.3rem; }
+.cal-suscribir h2 .icono { color: var(--rojo-ic); flex: none; }
+.cal-suscribir p { margin: 0 0 12px; }
+.cal-sus-botones { display: flex; flex-wrap: wrap; gap: 8px; }
+.cal-sus-botones .btn { flex: 1 1 200px; min-height: 48px; text-decoration: none; text-align: center; }
+.cal-sus-nota:empty { display: none; }
+.cal-sus-nota { margin-top: 12px; font-weight: 700; overflow-wrap: anywhere; }
+.cal-suscribir .cal-sus-ayuda { margin: 12px 0 0; font-size: .9rem; color: var(--suave); }
+
+/* Mis descansos: empezar con una hora anterior (v75) */
+.desc-antes { display: grid; gap: 6px; margin: 12px 0; font-weight: 600; }
+.desc-antes input[type="time"] { font: inherit; font-size: 1.1rem; padding: 10px 12px; min-height: 48px; max-width: 100%; box-sizing: border-box; border: 1px solid var(--linea); border-radius: 10px; background: var(--tarjeta); color: var(--tinta); }
+.desc-edita { flex-basis: 100%; display: grid; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--linea); font-weight: 600; }
+.desc-edita input { font: inherit; padding: 10px 12px; min-height: 48px; max-width: 100%; box-sizing: border-box; border: 1px solid var(--linea); border-radius: 10px; background: var(--tarjeta); color: var(--tinta); }
+.desc-edita label { display: grid; gap: 6px; }
+.desc-fila { flex-wrap: wrap; }
+.desc-fila > div:first-child { flex: 1 1 0; min-width: 0; }
+.desc-fila > .desc-edita { flex: 1 1 100%; order: 5; }
+
+/* v77: aviso de traducción automática */
+.menu-idiomas .menu-aviso { grid-column: 1 / -1; margin: 0 0 4px; padding: 6px 10px 8px; font-size: .8rem; line-height: 1.35; color: var(--suave); border-bottom: 1px solid var(--linea); }
+.aviso-trad { margin: 8px 0 0; font-size: .8rem; line-height: 1.35; color: var(--suave); }

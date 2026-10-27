@@ -3,7 +3,7 @@
 window.SUPABASE_URL = "https://kdfedwcskymaitvpryvg.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_RLt0HuAMskXkKl2hxhUF2w_sCexGznp";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "63"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "80"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/SSCCOO/";
 // Clave pública de las notificaciones (la privada solo está en el servidor)
 window.VAPID_PUBLICA = "BMMdZjehtNipsScHJ__kzOIn9XCgIpya3UDDRlexxOAWJU-J6ZICDlf72ItPOebzl-SfzoU234pd82Chp87Vm1w";
@@ -172,3 +172,58 @@ window.coincide = (texto, q) => {
     return f.palabras.some(p => distancia(w, p, max) <= max || (p.length > w.length && distancia(w, p.slice(0, w.length), max) <= max));
   });
 };
+
+// Ventanas (.modal-velo), en la web y en el panel: el foco entra en la ventana (el lector de pantalla lee su título),
+// Tab no se sale de ella, Escape la cierra como «Cancelar» y, al cerrarse, el foco vuelve a donde estaba.
+(function () {
+  let n = 0;
+  const FOCO = "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])";
+  const ultima = () => { const vs = document.querySelectorAll(".modal-velo"); return vs[vs.length - 1] || null; };
+  const preparar = (v) => {
+    const m = v.querySelector("[role=dialog], .modal"); if (!m) return;
+    v._antes = document.activeElement;
+    m.setAttribute("role", "dialog"); m.setAttribute("aria-modal", "true");
+    const h = m.querySelector("h2, h3");
+    if (h && !m.hasAttribute("aria-labelledby")) { h.id = h.id || "ventana-tit-" + (++n); m.setAttribute("aria-labelledby", h.id); }
+    if (!m.hasAttribute("tabindex")) m.setAttribute("tabindex", "-1");
+    requestAnimationFrame(() => { if (v.isConnected && !m.contains(document.activeElement)) m.focus({ preventScroll: true }); });
+  };
+  new MutationObserver((ms) => ms.forEach(r => {
+    r.addedNodes.forEach(el => { if (el.nodeType === 1 && el.classList.contains("modal-velo")) preparar(el); });
+    r.removedNodes.forEach(el => {
+      if (el.nodeType !== 1 || !el.classList.contains("modal-velo")) return;
+      const a = el._antes; if (a && a.isConnected && !ultima() && (document.activeElement === document.body || !document.activeElement)) a.focus({ preventScroll: true });
+    });
+  })).observe(document.body, { childList: true });
+  document.addEventListener("keydown", (e) => {
+    const v = ultima(); if (!v) return;
+    if (e.key === "Escape") {
+      const no = v.querySelector("[data-no], [data-r='no'], [data-r='volver'], [data-cerrar]");
+      if (no) no.click(); else v.click(); // tocar fuera de la ventana también la cierra
+      e.preventDefault(); e.stopPropagation();
+    } else if (e.key === "Tab") {
+      const fs = [...v.querySelectorAll(FOCO)].filter(x => x.offsetParent !== null); if (!fs.length) return e.preventDefault();
+      const i = fs.indexOf(document.activeElement);
+      if (e.shiftKey && i <= 0) { e.preventDefault(); fs[fs.length - 1].focus(); }
+      else if (!e.shiftKey && (i === -1 || i === fs.length - 1)) { e.preventDefault(); fs[0].focus(); }
+    }
+  }, true);
+})();
+
+// Versión nueva: cuando el service worker nuevo toma el control (se publicó otra versión), se avisa con una banda
+// «Actualizar». Sin esto, la app instalada que se reanuda (Android la deja abierta en segundo plano) seguía enseñando
+// la versión vieja. Al volver a la app se pregunta si hay versión nueva.
+(function () {
+  if (!("serviceWorker" in navigator)) return;
+  const habia = !!navigator.serviceWorker.controller; // la primera vez que se instala no hay que avisar de nada
+  const comprobar = () => navigator.serviceWorker.getRegistration().then(r => r && r.update()).catch(() => {});
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) comprobar(); });
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!habia || document.getElementById("banda-version")) return;
+    const b = document.createElement("div");
+    b.id = "banda-version"; b.className = "banda-version"; b.setAttribute("role", "status");
+    b.innerHTML = `<span>Hay una versión nueva.</span><button type="button" class="btn">Actualizar</button>`;
+    b.querySelector("button").addEventListener("click", () => location.reload());
+    document.body.appendChild(b);
+  });
+})();
