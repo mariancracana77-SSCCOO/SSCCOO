@@ -256,6 +256,16 @@ function abrir(k) {
   else if (k === "archivos") pintaTodosArchivos();
   else if (k === "ortografia") pintaOrtografia();
   else pintaSeccion(k);
+  vigilaFab();
+}
+// v86: el botón flotante se esconde mientras se ve el «+ Nuevo» de la cabecera de la sección (hacía lo mismo y tapaba la primera tarjeta)
+let OBS_FAB = null;
+function vigilaFab() {
+  OBS_FAB?.disconnect(); OBS_FAB = null; $("fab").classList.remove("escondido");
+  const b = $("b-nuevo"); if (!b || !("IntersectionObserver" in window)) return;
+  // Se mira cuánto se ve del botón (isIntersecting es verdadero con cualquier trocito) y se descuenta la cabecera fija
+  OBS_FAB = new IntersectionObserver(es => $("fab").classList.toggle("escondido", es[0].intersectionRatio >= 0.6), { threshold: [0, 0.6, 1], rootMargin: "-70px 0px 0px 0px" });
+  OBS_FAB.observe(b);
 }
 
 // ---------- Resumen ----------

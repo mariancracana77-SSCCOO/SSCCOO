@@ -69,6 +69,17 @@
     const f = FIJOS(), v = $("v-descansos"), idi = miIdioma();
     v.querySelectorAll("[data-dt]").forEach(el => { const t = f[el.dataset.dt]; if (t) el.textContent = t; });
     $("desc-comp-h").placeholder = T("Ej: 9"); pintaGuia();
+    // v86: a partir de la segunda visita el aviso legal sale plegado (ocupaba media pantalla cada vez); el texto no cambia
+    const av = v.querySelector(".aviso-oficial");
+    if (av) {
+      let b = av.querySelector(".aviso-mas");
+      if (!b && !av.dataset.visto) {
+        av.dataset.visto = "1";
+        let visto = false; try { visto = !!localStorage.getItem("ccoo-desc-aviso"); localStorage.setItem("ccoo-desc-aviso", "1"); } catch (_) {}
+        if (visto) { av.classList.add("plegado"); b = document.createElement("button"); b.type = "button"; b.className = "aviso-mas"; b.onclick = () => { av.classList.remove("plegado"); b.remove(); }; av.appendChild(b); }
+      }
+      if (b) b.textContent = T("Leer el aviso completo");
+    }
     v.setAttribute("dir", idi === "ar" ? "rtl" : "ltr"); v.setAttribute("lang", idi || "es");
     const sel = $("desc-idioma");
     if (!sel.options.length) sel.innerHTML = `<option value="">Español</option>` + Object.entries(IDIOMAS).map(([k, n]) => `<option value="${k}">${esc(n)}</option>`).join("");

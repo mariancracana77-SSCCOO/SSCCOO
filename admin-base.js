@@ -233,7 +233,10 @@ SECCIONES.categorias = {
 const UNIDADES_TARIFA = [["dia", "Por día (casilla)"], ["noche", "Por noche (casilla)"], ["finde", "Por fin de semana (casilla)"], ["vez", "Cada vez (contador: desayuno, carga…)"],
   ["hora", "Por hora"], ["km", "Por kilómetro"], ["minuto", "Por minuto"], ["mes", "Fijo al mes (salario, plus fijo)"]];
 const UNIDAD_CORTA = { dia: "por día", noche: "por noche", finde: "por fin de semana", vez: "cada vez", hora: "por hora", km: "por km", minuto: "por minuto", mes: "al mes" };
-const precioTxt = (n) => Number(n || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 8 }) + " €";
+const precioTxt = (n) => Number(n || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: Number(n) < 1 ? 4 : 2 }) + " €"; // v86: 0,0081 € y no 0,00812196 €
+// Importe con su unidad; por minuto añade lo que es por hora, que se entiende mejor
+const precioUnidad = (x) => precioTxt(x.importe) + " " + (UNIDAD_CORTA[x.unidad] || "") + (x.unidad === "minuto" ? ` (unos ${eurTxt(Number(x.importe || 0) * 60)} por hora)` : "");
+const eurTxt = (n) => Number(n || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
 SECCIONES.tarifas = {
   nombre: "Importes de «Mis incentivos»", icono: "euro", tabla: "tarifas_conductor", orden: ["orden", true], uno: "importe", nuevo: "Añadir concepto", lista: "aviso", campoColor: "_", oculta: true, volver: "ganancias",
   intro: "", tituloDe: (x) => x.concepto,
@@ -248,8 +251,8 @@ SECCIONES.tarifas = {
     { k: "orden", l: "Posición en la lista", t: "number" },
     { checks: [{ k: "visible", l: "Se ve en la web", def: true }] },
   ],
-  previa: (x) => `<div class="panel calc"><div class="resultado-calc"><span class="rc-tit">${esc(x.concepto || "Concepto")}</span><span class="rc-num">${esc(precioTxt(x.importe))} <small>${esc(UNIDAD_CORTA[x.unidad] || "")}</small></span>${x.nota ? `<span class="rc-sub">${esc(x.nota)}</span>` : ""}</div></div>`,
-  extracto: (x) => x.nota, chips: (x) => [precioTxt(x.importe) + " " + (UNIDAD_CORTA[x.unidad] || ""), x.grupo || null, x.pago === "Mensual" ? "Con la nómina" : "Semanal", Number(x.sin_pagar) ? (Number(x.sin_pagar) === 1 ? "La primera de cada día no se paga" : `Las ${x.sin_pagar} primeras de cada día no se pagan`) : null, Number(x.max_mes) ? `Máx. ${x.max_mes} al mes` : null, x.visible === false ? "Oculto" : null], fechas: (x) => [null, x.actualizado],
+  previa: (x) => `<div class="panel calc"><div class="resultado-calc"><span class="rc-tit">${esc(x.concepto || "Concepto")}</span><span class="rc-num">${esc(precioTxt(x.importe))} <small>${esc(UNIDAD_CORTA[x.unidad] || "")}${x.unidad === "minuto" ? esc(` (unos ${eurTxt(Number(x.importe || 0) * 60)} por hora)`) : ""}</small></span>${x.nota ? `<span class="rc-sub">${esc(x.nota)}</span>` : ""}</div></div>`,
+  extracto: (x) => x.nota, chips: (x) => [precioUnidad(x), x.grupo || null, x.pago === "Mensual" ? "Con la nómina" : "Semanal", Number(x.sin_pagar) ? (Number(x.sin_pagar) === 1 ? "La primera de cada día no se paga" : `Las ${x.sin_pagar} primeras de cada día no se pagan`) : null, Number(x.max_mes) ? `Máx. ${x.max_mes} al mes` : null, x.visible === false ? "Oculto" : null], fechas: (x) => [null, x.actualizado],
 };
 
 // Restricciones para camiones (Zona Conductores de la web). Se editan en la página «Restricciones camiones».

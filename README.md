@@ -75,6 +75,14 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 86: más cómodo en el móvil (revisión de comodidad)
+
+- **Calendario en el móvil** (web y panel): el mes va en una línea y «Hoy» y las flechas en fila debajo (antes el título se partía y los botones se apilaban).
+- **Panel en el móvil**: cabecera más baja («Panel» y «CCOO Calsina Carré»): se gana casi un tercio de pantalla en cada página. El botón flotante «+ Nuevo» se esconde mientras se ve el «+ Nuevo aviso» de arriba, que hace lo mismo y tapaba la primera tarjeta.
+- **Importes por minuto** (ADR): «0,0081 € por minuto (unos 0,49 € por hora)» en vez de «0,00812196 €», en la web y en la lista del panel.
+- **«Mis descansos»**: a partir de la segunda visita el aviso legal sale plegado en dos líneas con «Leer el aviso completo» (el texto no cambia).
+- **Ajustes del panel en PC**: «Copia de seguridad», «Archivos sin usar» y «Archivo de avisos» van a la derecha de «Avisos y canales», sin hueco.
+
 ## Versión 85: «Cobro semanal» y «En la nómina»
 
 - El PDF de una semana se llama «mis-incentivos-semana-44-2026.pdf» y arriba del todo pone «Semana 44 de 2026» (si son varias, «Semanas 43 a 44 de 2026»).
