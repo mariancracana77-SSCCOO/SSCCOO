@@ -1693,3 +1693,33 @@ b.gan-fecha { cursor: default; }
 #gan-ajustes > label { font-weight: 700; margin: 0; }
 #gan-ajustes > .ayuda { margin: -6px 0 0; }
 [dir="rtl"] .gan-fila.con { border-left: 0; border-right: 4px solid var(--rojo); padding: 10px 10px 10px 0; }
+
+/* Mis incentivos v83: resumen del mes, «Lo que cobras tú» y calendario para descargar */
+.gan-mini-mes { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; width: 100%; padding: 8px 12px; border: 1px solid var(--linea); border-radius: 10px; background: var(--fondo); color: var(--suave); font: inherit; font-size: .9rem; text-align: left; cursor: pointer; text-transform: none; }
+.gan-mini-mes::first-letter { text-transform: uppercase; }
+.gan-mini-mes b { color: var(--tinta); }
+.gan-mini-mes .icono { margin-left: auto; color: var(--rojo-ic); }
+.gan-aj-resumen { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; padding: 12px 14px; border-radius: 12px; background: var(--rojo); color: #fff; }
+.gan-aj-resumen > b { flex-basis: 100%; font-family: var(--cond); font-size: 1.15rem; }
+.gan-aj-resumen > b::first-letter { text-transform: uppercase; }
+.gan-precios summary { cursor: pointer; font-weight: 700; min-height: 40px; display: flex; align-items: center; color: var(--rojo-ic); }
+.gan-precios-grupo { display: grid; gap: 6px; }
+.gan-precios-grupo h4 { margin: 8px 0 0; font-size: .95rem; color: var(--rojo-ic); }
+.gan-precio { display: grid; grid-template-columns: minmax(0, 1fr) 7.5em; gap: 10px; align-items: center; margin: 0; font-weight: 400; }
+.gan-precio span { display: grid; gap: 1px; min-width: 0; }
+.gan-precio small { color: var(--suave); font-size: .82rem; }
+.gan-precio input { min-height: 44px; padding: 6px 8px; text-align: right; font: inherit; font-weight: 700; width: 100%; box-sizing: border-box; }
+.gan-cal-rapido { display: flex; flex-wrap: wrap; gap: 6px; }
+.gan-cal { display: grid; grid-template-columns: minmax(34px, auto) repeat(7, minmax(0, 1fr)); gap: 4px; }
+.gan-cal-cab { text-align: center; font-size: .8rem; font-weight: 700; color: var(--suave); text-transform: uppercase; }
+.gan-cal-dia, .gan-cal-sem { position: relative; min-height: 42px; border: 1px solid var(--linea); border-radius: 8px; background: var(--tarjeta); color: var(--tinta); font: inherit; font-weight: 700; cursor: pointer; padding: 0; }
+.gan-cal-sem { font-size: .8rem; color: var(--rojo-ic); padding: 0 6px; }
+.gan-cal-dia.fuera { opacity: .45; }
+.gan-cal-dia.hoy { box-shadow: inset 0 0 0 2px var(--rojo); }
+.gan-cal-dia.con::after { content: ""; position: absolute; left: 50%; bottom: 4px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--rojo); }
+.gan-cal-dia.sel, .gan-cal-sem.sel { background: var(--rojo); border-color: var(--rojo); color: #fff; opacity: 1; }
+.gan-cal-dia.sel.con::after { background: #fff; }
+.gan-cal-ley { display: flex; align-items: center; gap: 8px; margin: 0; font-size: .85rem; color: var(--suave); }
+.gan-cal-ley .gan-cal-dia { display: inline-block; width: 22px; min-height: 22px; height: 22px; cursor: default; }
+.gan-cal-ley .gan-cal-dia.con::after { bottom: 3px; }
+#gan-pdf-elegidos[disabled] { opacity: .55; cursor: not-allowed; }
