@@ -75,6 +75,15 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 87: detalles de diseño
+
+- **Bienvenida**: el camión entero sale una vez al día; si vuelves a abrir la app antes de 12 horas, solo el logo (algo más de un segundo). Los rayos rojos del final, un poco más vivos.
+- **Ceros sin barra**: las horas y cifras se leen «10:00» y no «1Ø:ØØ» (solo cambia el cero; el resto de la letra es la misma).
+- **Barra de abajo** («Hablar con un delegado» y «Avisos») un poco más baja: tapa menos.
+- **«Mis descansos»**: «Instala la app» y «Activa los avisos» en una sola línea, uno al lado del otro (antes eran dos tiras). «Activa los avisos» sigue siendo un solo toque.
+- **«Ir a» en el PC** a tres columnas.
+- **Pie de página**: el párrafo sobre la web solo en Inicio; en el resto, una línea con «Aviso legal · Privacidad · Acceso para publicar».
+
 ## Versión 86: más cómodo en el móvil (revisión de comodidad)
 
 - **Calendario en el móvil** (web y panel): el mes va en una línea y «Hoy» y las flechas en fila debajo (antes el título se partía y los botones se apilaban).
