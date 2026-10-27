@@ -6,7 +6,7 @@
 // Lo apuntado se guarda SOLO en este móvil (localStorage «ccoo-ganancias»): no va a ningún servidor.
 // v83: cada conductor puede poner su propio importe de cualquier concepto (DATOS.precio, «Lo que cobras tú»): cada uno cobra
 // distinto (antigüedad, horas sindicales…). Los conceptos que quita en Ajustes no cuentan. La nómina del mes suma el salario,
-// los fijos y lo que se paga «Mensual» (festivo, nocturnidad, ADR, horas sindicales). Descargar en PDF por semanas o días
+// los fijos y lo que se paga «Mensual» (festivo, nocturnidad, ADR; las horas sindicales son semanales desde la v88). Descargar en PDF por semanas o días
 // elegidos en un calendario.
 (function () {
   const CLAVE = "ccoo-ganancias", CACHE_TARIFAS = "ccoo-tarifas";
@@ -40,7 +40,7 @@
   const GUIA = () => [
     [T("Cada día"), T("En «Día», marca lo que has hecho: dieta completa o partes (dormir, desayuno, comida, cena), noche fuera, cargas, kilómetros… El total sale arriba y se guarda solo.")],
     [T("Otro día"), T("Cambia de día con las flechas o tocando la fecha. «Copiar el día anterior» rellena lo mismo que el último día apuntado.")],
-    [T("Cobro semanal y nómina"), T("Lo que la empresa paga por semanas (dietas, suplementos, cargas, kilómetros) sale como «Cobro semanal». Lo que va con el salario a fin de mes (festivo, nocturnidad, ADR, horas sindicales) sale como «En la nómina». Es la columna «Periodicidad pago» de la tabla de la empresa.")],
+    [T("Cobro semanal y nómina"), T("Lo que la empresa paga por semanas (dietas, suplementos, cargas, kilómetros, horas sindicales) sale como «Cobro semanal». Lo que va con el salario a fin de mes (festivo, nocturnidad, ADR) sale como «En la nómina». Es la columna «Periodicidad pago» de la tabla de la empresa.")],
     [T("La semana y el mes"), T("Arriba del todo ves siempre lo de hoy, lo de esta semana y lo del mes: toca una cifra para ir a esa vista. En «Semana» va cada día con la semana del año (la 44, la 45…) y puedes ir a una escribiendo su número. En «Mes», el total con el salario y lo que se cobra con la nómina, semana por semana.")],
     [T("Lo que cobras tú"), T("En «Ajustes», pon tu salario y lo que cobras tú de cada cosa (por ejemplo, el precio de tus horas sindicales). Si lo dejas vacío, se usa el de la tabla.")],
     [T("Descargar"), T("En «Ajustes», elige en el calendario las semanas o los días que quieras y descárgalos en PDF.")],
@@ -146,7 +146,7 @@
   }
   const cantidadTxt = (t, n) => CASILLA.includes(t.unidad) ? (n === 1 ? "" : "× " + n) : t.unidad === "vez" ? "× " + n : n.toLocaleString(LOC, { maximumFractionDigits: 2 }) + " " + QUE()[t.unidad];
   const desglose = (r) => r.por.length ? `<ul class="gan-desglose">${r.por.map(p => `<li><span>${esc(TD(p.t.concepto))}${p.t.grupo && !p.t.concepto.includes(p.t.grupo) ? ` <small>· ${esc(TD(p.t.grupo))}</small>` : ""}${p.n && cantidadTxt(p.t, p.n) ? ` <small>${esc(cantidadTxt(p.t, p.n))}</small>` : ""}${p.tope ? ` <small class="gan-tope">${esc(p.n ? T("con tope al mes") : T("no suma: ya estaba el máximo del mes"))}</small>` : ""}</span><b>${esc(eur(p.imp))}</b></li>`).join("")}</ul>` : "";
-  const reparto = (r) => r.semanal && r.mensual ? `<p class="gan-reparto"><span>${esc(T("Cobro semanal"))}: <b>${esc(eur(r.semanal))}</b></span><span>${esc(T("En la nómina de fin de mes"))}: <b>${esc(eur(r.mensual))}</b></span></p>` : "";
+  const reparto = (r) => r.semanal && r.mensual ? `<p class="gan-reparto"><span>${esc(T("Cobro semanal"))}: <b class="c-sem">${esc(eur(r.semanal))}</b></span><span>${esc(T("En la nómina de fin de mes"))}: <b class="c-nom">${esc(eur(r.mensual))}</b></span></p>` : "";
 
   // ---------- Pintar ----------
   // Las cifras que cambian dan un pequeño «salto» (clase gan-pulsa): se compara el texto de antes con el de después
@@ -202,7 +202,7 @@
         <label class="gan-fecha"><span>${esc(fDia(f, true))}${f === hoy() ? ` · ${esc(T("hoy"))}` : ""}</span><small class="gan-sem-n">${esc(semTxt(f))}</small><input type="date" id="gan-fecha" value="${f}" aria-label="${esc(T("Elegir día"))}"></label>
         <button type="button" class="btn-ic" data-dia="1" aria-label="${esc(T("Día siguiente"))}">${icono("der")}</button></div>
       <div class="gan-total"><span>${esc(T("Este día"))}</span><b>${esc(eur(r.total))}</b></div>
-      ${(() => { const k = cuentasMes(c, f.slice(0, 7)); return `<button type="button" class="gan-mini-mes" data-ir-mes><span>${esc(T("Nómina de {mes}", { mes: fMes(f.slice(0, 7)) }))} <b>${esc(eur(k.nomina))}</b></span> <span>${esc(T("Cobro semanal del mes"))} <b>${esc(eur(k.semanal))}</b></span>${icono("der", "p")}</button>`; })()}
+      ${(() => { const k = cuentasMes(c, f.slice(0, 7)); return `<button type="button" class="gan-mini-mes" data-ir-mes><span>${esc(T("Nómina de {mes}", { mes: fMes(f.slice(0, 7)) }))} <b class="c-nom">${esc(eur(k.nomina))}</b></span> <span>${esc(T("Cobro semanal del mes"))} <b class="c-sem">${esc(eur(k.semanal))}</b></span>${icono("der", "p")}</button>`; })()}
       ${doble ? `<p class="desc-alerta">${icono("alerta", "p")}<span>${esc(T("Has marcado la dieta completa y también partes de la dieta. Normalmente se cobra una cosa o la otra: revísalo."))}</span></p>` : ""}
       ${grupos.map(g => `<section class="gan-grupo">${g.n ? `<h3>${esc(TD(g.n))}</h3>` : ""}<ul>${g.ts.map(fila).join("")}</ul></section>`).join("")}
       ${lista.length < variables().length ? `<p class="ayuda">${esc(T("Hay conceptos escondidos. Los vuelves a sacar en «Ajustes»."))}</p>` : ""}
@@ -234,7 +234,7 @@
         <button class="btn sec">${esc(T("Ir"))}</button>${l !== esta ? `<button type="button" class="btn sec" data-sem="hoy">${esc(T("Esta semana"))}</button>` : ""}</form></details>
       ${pasada.apuntados ? `<p class="gan-compara">${esc(T("La semana pasada (semana {n}): {total}", { n: wp.n, total: eur(pasada.total) }))}${r.apuntados ? ` · <b class="${r.total >= pasada.total ? "mas" : "menos"}">${r.total >= pasada.total ? "+" : "−"}${esc(eur(Math.abs(r.total - pasada.total)))}</b>` : ""}</p>` : ""}
       ${r.por.length ? `<h3 class="gan-sub">${esc(T("Por conceptos"))}</h3>${desglose(r)}` : `<p class="desc-vacio">${esc(T("Esta semana todavía no has apuntado ningún día. Toca un día para apuntar."))}</p>`}
-      <p class="ayuda">${esc(T("Cobro semanal: dietas, suplementos, cargas y kilómetros (te los pagan por semanas). En la nómina: festivo, nocturnidad, ADR y horas sindicales (van con el salario a fin de mes, en «Mes»)."))}</p>
+      <p class="ayuda">${esc(T("Cobro semanal: dietas, suplementos, cargas, kilómetros y horas sindicales (te los pagan por semanas). En la nómina: festivo, nocturnidad y ADR (van con el salario a fin de mes, en «Mes»)."))}</p>
       <div class="botones"><button class="btn sec" id="gan-pdf-semana">${icono("descargar", "p")}${esc(T("Descargar esta semana (PDF)"))}</button></div>`;
     const v = $("gan-semana");
     $("gan-pdf-semana").onclick = () => descarga(dias, nombreSem(l));
@@ -257,8 +257,8 @@
         <button type="button" class="btn-ic" data-mes="1" aria-label="${esc(T("Mes siguiente"))}">${icono("der")}</button></div>
       <div class="gan-total"><span>${esc(T("Total del mes (bruto)"))}</span><b>${esc(eur(k.total))}</b></div>
       <div class="desc-cifras gan-cifras">
-        <div><b>${esc(eur(k.nomina))}</b><span>${esc(T("En la nómina de fin de mes: salario y lo que se paga con la nómina (festivos, nocturnidad, ADR, horas sindicales)"))}</span></div>
-        <div><b>${esc(eur(k.semanal))}</b><span>${esc(T("Cobro semanal: dietas, suplementos, cargas y kilómetros de {n} días apuntados (te los pagan por semanas)", { n: r.apuntados }))}</span></div>
+        <div><b class="c-nom">${esc(eur(k.nomina))}</b><span>${esc(T("En la nómina de fin de mes: salario y lo que se paga con la nómina (festivos, nocturnidad, ADR)"))}</span></div>
+        <div><b class="c-sem">${esc(eur(k.semanal))}</b><span>${esc(T("Cobro semanal: dietas, suplementos, cargas, kilómetros y horas sindicales de {n} días apuntados (te los pagan por semanas)", { n: r.apuntados }))}</span></div>
       </div>
       ${(() => { const ult = `${m}-${String(new Date(a, mm, 0).getDate()).padStart(2, "0")}`, sems = []; for (let l = lunesDe(m + "-01"); l <= ult; l = suma(l, 7)) sems.push(l);
         const filas = sems.map(l => { const todos = diasDe(l), ds = todos.filter(f => f.slice(0, 7) === m), x = resumen(c, ds), w = semDe(l); return { l, ds, x, w, parte: ds.length < 7 }; }).filter(f => f.x.apuntados);
@@ -277,7 +277,7 @@
   function pintaResumenAj() {
     const caja = $("gan-aj-resumen"); if (!caja) return;
     const m = hoy().slice(0, 7), k = cuentasMes(calcula(), m);
-    caja.innerHTML = `<b>${esc(T("Así queda {mes}", { mes: fMes(m) }))}</b><span>${esc(T("En la nómina"))}: <b>${esc(eur(k.nomina))}</b></span><span>${esc(T("Cobro semanal"))}: <b>${esc(eur(k.semanal))}</b></span><span>${esc(T("Total"))}: <b>${esc(eur(k.total))}</b></span>`;
+    caja.innerHTML = `<b>${esc(T("Así queda {mes}", { mes: fMes(m) }))}</b><span>${esc(T("En la nómina"))}: <b class="c-nom">${esc(eur(k.nomina))}</b></span><span>${esc(T("Cobro semanal"))}: <b class="c-sem">${esc(eur(k.semanal))}</b></span><span>${esc(T("Total"))}: <b class="c-tot">${esc(eur(k.total))}</b></span>`;
   }
   function pintaAjustes() {
     const fm = fijosMes(), vs = variables(), base = fm[0];
@@ -353,20 +353,25 @@
     try {
       const c = calcula(), L = [], todos = !elegidos;
       const dias = (elegidos || Object.keys(DATOS.dias)).filter(f => c[f]?.lineas.length).sort();
-      L.push(["Mis incentivos", 18, true], ["Sección Sindical CCOO Calsina Carré", 11], ["Hecho el " + new Date().toLocaleString("es-ES", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }), 9]);
-      // Encabezado con la semana del año (lo pidió el padre): «Semana 44 de 2026» o «Semanas 43 a 44 de 2026»
-      if (dias.length && !todos) { const ws = [...new Set(dias.map(f => { const w = semDe(f); return w.n + " de " + w.a; }))]; L.push([ws.length === 1 ? "Semana " + ws[0] : "Semanas " + ws[0].replace(/ de \d+$/, "") + " a " + ws[ws.length - 1], 15, true]); }
-      if (dias.length) L.push([todos ? "Todo lo apuntado" : "Del " + fDia(dias[0], true) + " al " + fDia(dias[dias.length - 1], true), 11, true]);
-      L.push([""]);
+      // v88 (lo pidió el padre): banda roja de encabezado, la semana del año grande y colores fijos para que se vea de un vistazo:
+      // rojo = total, verde = cobro semanal, azul = en la nómina (los mismos que en la app)
+      const ROJO = [0.671, 0.063, 0.071], VERDE = [0.106, 0.498, 0.231], AZUL = [0.118, 0.31, 0.612], GRIS = [0.42, 0.42, 0.42];
+      L.push({ banda: "Mis incentivos · Sección Sindical CCOO Calsina Carré", color: ROJO, tam: 13 }, ["", 4]);
+      // «Semana 44 de 2026» o «Semanas 43 a 44 de 2026»
+      if (dias.length && !todos) { const ws = [...new Set(dias.map(f => { const w = semDe(f); return w.n + " de " + w.a; }))]; L.push([ws.length === 1 ? "Semana " + ws[0] : "Semanas " + ws[0].replace(/ de \d+$/, "") + " a " + ws[ws.length - 1], 22, true, 0, ROJO]); }
+      else L.push([todos ? "Todo lo apuntado" : "Días elegidos", 22, true, 0, ROJO]);
+      if (dias.length) L.push(["Del " + fDia(dias[0], true) + " al " + fDia(dias[dias.length - 1], true), 12, true]);
+      L.push(["Hecho el " + new Date().toLocaleString("es-ES", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }), 9, false, 0, GRIS]);
+      L.push(["Rojo: total · Verde: cobro semanal (dietas, suplementos, cargas, kilómetros, horas sindicales) · Azul: en la nómina de fin de mes", 9, false, 0, GRIS], [""]);
       if (!dias.length) L.push(["No hay nada apuntado en esos días."]);
       const semanas = [...new Set(dias.map(lunesDe))];
       semanas.forEach(l => {
         const ds = dias.filter(f => lunesDe(f) === l), r = resumen(c, ds);
-        L.push(["Semana " + semDe(l).n + " (del " + fDia(l) + " al " + fDia(suma(l, 6)) + "): " + eur(r.total), 13, true]);
+        L.push(["Semana " + semDe(l).n + " (del " + fDia(l) + " al " + fDia(suma(l, 6)) + ")", 13, true]);
         ds.forEach(f => { const x = c[f]; L.push([fDia(f, true) + ": " + eur(x.total), 10, true, 6]); L.push([x.lineas.map(li => li.t.concepto + (cantidadTxt(li.t, li.n) ? " " + cantidadTxt(li.t, li.n) : "") + " " + eur(li.imp)).join(" · "), 9, false, 14]); });
-        L.push(["Cobro semanal: " + eur(r.semanal) + " · En la nómina: " + eur(r.mensual), 9, false, 6], [""]);
+        L.push(["Cobro semanal: " + eur(r.semanal), 11, true, 6, VERDE], ["En la nómina: " + eur(r.mensual), 11, true, 6, AZUL], ["Total de la semana: " + eur(r.total), 13, true, 6, ROJO], [""]);
       });
-      if (semanas.length > 1) { const r = resumen(c, dias); L.push(["Total de estos días: " + eur(r.total) + " (cobro semanal " + eur(r.semanal) + " · en la nómina " + eur(r.mensual) + ")", 12, true], [""]); }
+      if (semanas.length > 1) { const r = resumen(c, dias); L.push(["Cobro semanal de estos días: " + eur(r.semanal), 11, true, 0, VERDE], ["En la nómina: " + eur(r.mensual), 11, true, 0, AZUL], ["Total de estos días: " + eur(r.total), 15, true, 0, ROJO], [""]); }
       L.push(["Sin el salario ni los fijos del mes. Orientativo y en bruto: manda tu nómina.", 8], ["Para volver a cargar estos días en la app: Zona Conductores > Mis incentivos > Ajustes > Recuperar una copia, y elige este PDF.", 8]);
       const datos = { app: "ccoo-ganancias", dias: Object.fromEntries((elegidos ? dias : Object.keys(DATOS.dias)).map(f => [f, DATOS.dias[f]])), salario: DATOS.salario, precio: DATOS.precio, oculto: DATOS.oculto, fijo: DATOS.fijo };
       return pdfSencillo(L, MARCA + btoa(unescape(encodeURIComponent(JSON.stringify(datos)))));

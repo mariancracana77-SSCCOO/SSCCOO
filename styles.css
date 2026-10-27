@@ -1709,6 +1709,13 @@ b.gan-fecha { cursor: default; }
 .gan-desglose b { white-space: nowrap; }
 .gan-reparto { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; font-size: .95rem; color: var(--suave); }
 .gan-reparto b { color: var(--tinta); }
+/* v88 (lo pidió el padre): colores fijos para ver de un vistazo qué es qué: rojo = total, verde = cobro semanal, azul = en la nómina (igual en el PDF) */
+:root { --gan-verde: #1B7F3B; --gan-azul: #1E4F9C; }
+:root[data-theme="dark"] { --gan-verde: #4CC26E; --gan-azul: #5B8DE6; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --gan-verde: #4CC26E; --gan-azul: #5B8DE6; } }
+#v-ganancias .c-sem { color: var(--gan-verde); }
+#v-ganancias .c-nom { color: var(--gan-azul); }
+#v-ganancias .c-tot { color: var(--rojo-ic); }
 .gan-cifras b { font-size: 1.5rem; }
 .gan-checks { border: 1px solid var(--linea); border-radius: var(--radio); padding: 10px 14px; margin: 0; display: grid; gap: 8px; min-width: 0; }
 .gan-checks legend { font-weight: 700; padding: 0 6px; }

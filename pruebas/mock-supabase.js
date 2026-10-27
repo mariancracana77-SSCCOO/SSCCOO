@@ -36,7 +36,7 @@
       { id: 20, grupo: "Otros pluses", concepto: "ADR (por minuto)", importe: 0.00812196, unidad: "minuto", pago: "Mensual", sin_pagar: 0, max_mes: null, nota: "Promedio: depende de la antigüedad.", orden: 200, visible: true },
       { id: 21, grupo: "Otros pluses", concepto: "ADR (fijo al mes)", importe: 70, unidad: "mes", pago: "Mensual", sin_pagar: 0, max_mes: null, nota: "Solo si haces ADR.", orden: 210, visible: true },
       { id: 22, grupo: "Otros pluses", concepto: "Carga o descarga internacional (de la 2.ª en adelante)", importe: 6, unidad: "vez", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "La primera no se paga. Apunta solo las que hagas a partir de la segunda: 6 € cada una.", orden: 220, visible: true },
-      { id: 26, grupo: "Otros pluses", concepto: "Horas sindicales", importe: 0, unidad: "hora", pago: "Mensual", sin_pagar: 0, max_mes: null, nota: "Cada persona cobra distinto: pon tu precio por hora en «Ajustes» > «Lo que cobras tú».", orden: 245, visible: true },
+      { id: 26, grupo: "Otros pluses", concepto: "Horas sindicales", importe: 0, unidad: "hora", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "Cada persona cobra distinto: pon tu precio por hora en «Ajustes» > «Lo que cobras tú».", orden: 245, visible: true },
       { id: 19, grupo: "Otros pluses", concepto: "Festivo", importe: 50, unidad: "dia", pago: "Mensual", sin_pagar: 0, max_mes: null, nota: "", orden: 190, visible: true },
       { id: 25, grupo: "Otros pluses", concepto: "Kilómetros", importe: 0.037, unidad: "km", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "", orden: 250, visible: true },
     ],

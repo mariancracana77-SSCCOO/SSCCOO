@@ -75,6 +75,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 88: PDF con encabezado y colores; horas sindicales en el cobro semanal
+
+- **PDF de «Mis incentivos»**: banda roja de encabezado («Mis incentivos · Sección Sindical CCOO Calsina Carré»), la semana del año en grande («Semana 44 de 2026») y debajo las fechas. Cada semana acaba con tres líneas de color: **verde** el cobro semanal, **azul** lo de la nómina y **rojo** el total. Una línea gris explica los colores.
+- **Los mismos colores en la app**: en «Semana», «Mes», «Día» y «Ajustes», lo semanal sale en verde y lo de la nómina en azul; el total sigue en rojo.
+- **Horas sindicales** pasan al grupo «Cobro semanal» (lo dijo el padre). Está cambiado en la tabla de importes del panel, así que la app ya lo cuenta así; los textos de ayuda lo dicen desde esta versión.
+
 ## Versión 87: detalles de diseño
 
 - **Bienvenida**: el camión entero sale una vez al día; si vuelves a abrir la app antes de 12 horas, solo el logo (algo más de un segundo). Los rayos rojos del final, un poco más vivos.

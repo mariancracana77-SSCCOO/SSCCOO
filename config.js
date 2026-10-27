@@ -3,7 +3,7 @@
 window.SUPABASE_URL = "https://kdfedwcskymaitvpryvg.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_RLt0HuAMskXkKl2hxhUF2w_sCexGznp";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "87"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "88"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/SSCCOO/";
 // Clave pública de las notificaciones (la privada solo está en el servidor)
 window.VAPID_PUBLICA = "BMMdZjehtNipsScHJ__kzOIn9XCgIpya3UDDRlexxOAWJU-J6ZICDlf72ItPOebzl-SfzoU234pd82Chp87Vm1w";
@@ -161,15 +161,18 @@ window.semanasDelAnio = (a) => semanaISO(new Date(a, 11, 28)).n;
 
 window.pdfSencillo = (lineas, marca) => {
   // Partir en renglones que quepan (Helvetica ~0,5 em por letra) y en páginas A4
-  const ANCHO = 515, renglones = [];
-  lineas.forEach(([t, tam = 10, neg = false, x = 0]) => {
+  // v88: cada línea puede llevar color (5.º valor, [r, g, b] de 0 a 1; sin él, negro) y hay bandas de color con letra blanca: { banda: "texto", color, tam }
+  const ANCHO = 515, renglones = [], rgb = (c) => (c || [0, 0, 0]).map(v => (+v).toFixed(3)).join(" ");
+  lineas.forEach((ln) => {
+    if (ln && !Array.isArray(ln) && ln.banda != null) { renglones.push({ banda: String(ln.banda), color: ln.color, tam: ln.tam || 14 }); return; }
+    const [t, tam = 10, neg = false, x = 0, color = null] = ln;
     const max = Math.floor((ANCHO - x) / (tam * 0.5)); let resto = String(t);
-    if (!resto) { renglones.push(["", tam, neg, x]); return; }
-    while (resto.length > max) { let i = resto.lastIndexOf(" ", max); if (i < max * 0.5) i = max; renglones.push([resto.slice(0, i), tam, neg, x]); resto = resto.slice(i).trimStart(); }
-    renglones.push([resto, tam, neg, x]);
+    if (!resto) { renglones.push(["", tam, neg, x, color]); return; }
+    while (resto.length > max) { let i = resto.lastIndexOf(" ", max); if (i < max * 0.5) i = max; renglones.push([resto.slice(0, i), tam, neg, x, color]); resto = resto.slice(i).trimStart(); }
+    renglones.push([resto, tam, neg, x, color]);
   });
   const paginas = [[]]; let y = 800;
-  renglones.forEach(r => { const alto = r[1] * 1.45; if (y - alto < 50) { paginas.push([]); y = 800; } y -= alto; paginas[paginas.length - 1].push([...r, y]); });
+  renglones.forEach(r => { const alto = r.banda ? r.tam * 2.2 : r[1] * 1.45; if (y - alto < 50) { paginas.push([]); y = 800; } y -= alto; paginas[paginas.length - 1].push(r.banda ? { ...r, y } : [...r, y]); });
   // Texto en Windows-1252 (letras con tilde, ñ, «») y escapado para el PDF
   const cp = (t) => [...t].map(ch => { const n = ch.charCodeAt(0); return n < 256 ? ch : ({ "–": "\x96", "—": "\x97", "‘": "'", "’": "'", "“": '"', "”": '"', "€": "\x80", "…": "..." }[ch] || "?"); }).join("").replace(/[\\()]/g, m => "\\" + m);
   const objs = [], pag = [];
@@ -177,7 +180,10 @@ window.pdfSencillo = (lineas, marca) => {
   objs[3] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
   objs[4] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>";
   paginas.forEach((ls, i) => {
-    const n = 5 + i * 2, cont = ls.map(([t, tam, neg, x, yy]) => t ? `BT /${neg ? "F2" : "F1"} ${tam} Tf ${40 + x} ${yy.toFixed(1)} Td (${cp(t)}) Tj ET` : "").filter(Boolean).join("\n")
+    const n = 5 + i * 2, cont = ls.map(r => {
+      if (r.banda) return `q ${rgb(r.color)} rg 40 ${(r.y - r.tam * 0.55).toFixed(1)} ${ANCHO} ${(r.tam * 2).toFixed(1)} re f Q BT /F2 ${r.tam} Tf 1 1 1 rg 50 ${(r.y + r.tam * 0.1).toFixed(1)} Td (${cp(r.banda)}) Tj ET`;
+      const [t, tam, neg, x, color, yy] = r; return t ? `BT /${neg ? "F2" : "F1"} ${tam} Tf ${rgb(color)} rg ${40 + x} ${yy.toFixed(1)} Td (${cp(t)}) Tj ET` : "";
+    }).filter(Boolean).join("\n")
       + `\nBT /F1 8 Tf 40 30 Td (${cp("Página " + (i + 1) + " de " + paginas.length)}) Tj ET`;
     objs[n] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${n + 1} 0 R >>`;
     objs[n + 1] = `<< /Length ${cont.length} >>\nstream\n${cont}\nendstream`;
