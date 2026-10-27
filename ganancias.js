@@ -1,4 +1,4 @@
-// ===== «Mis ganancias»: lo que gana el conductor cada día, semana y mes (Zona Conductores, v81) =====
+// ===== «Mis incentivos»: lo que gana el conductor cada día, semana y mes (Zona Conductores, v81) =====
 // Los importes (salario, dietas, suplementos, pluses) los pone el padre en el panel (tabla tarifas_conductor, página
 // «Importes conductores»). Cada concepto tiene una unidad que dice cómo se apunta:
 //   mes → fijo al mes (salario, plus fijo); dia/noche/finde → casilla (sí o no ese día); vez → contador; hora/km/minuto → número.
@@ -25,7 +25,7 @@
   const TH = (s, v) => esc(T(s, v)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
   const TD = (s) => MAPA[s] || s; // textos de la tabla (los pone el panel)
   const FIJOS = () => ({
-    titulo: T("Mis ganancias"),
+    titulo: T("Mis incentivos"),
     intro: T("Apunta lo que haces cada día y te calculo lo que ganas: dietas, suplementos y pluses, por día, por semana y por mes. Se guarda solo en este móvil."),
     guiatit: T("Cómo se usa (guía rápida)"),
     tabdia: T("Día"), tabsemana: T("Semana"), tabmes: T("Mes"), tabajustes: T("Ajustes"),
@@ -234,7 +234,7 @@
     const locAntes = LOC, mapaAntes = MAPA; LOC = "es-ES"; MAPA = {};
     try {
       const c = calcula(), L = [], meses = [...new Set(Object.keys(DATOS.dias).map(f => f.slice(0, 7)))].sort().reverse();
-      L.push(["Mis ganancias", 18, true], ["Sección Sindical CCOO Calsina Carré", 11], ["Copia hecha el " + new Date().toLocaleString("es-ES", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }), 9], [""]);
+      L.push(["Mis incentivos", 18, true], ["Sección Sindical CCOO Calsina Carré", 11], ["Copia hecha el " + new Date().toLocaleString("es-ES", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }), 9], [""]);
       if (!meses.length) L.push(["Todavía no hay nada apuntado."]);
       meses.forEach(m => {
         const dias = Object.keys(DATOS.dias).filter(f => f.startsWith(m)).sort(), r = resumen(c, dias);
@@ -242,7 +242,7 @@
         dias.forEach(f => { const x = c[f]; if (!x?.lineas.length) return; L.push([fDia(f, true) + ": " + eur(x.total), 10, true, 6]); L.push([x.lineas.map(l => l.t.concepto + (cantidadTxt(l.t, l.n) ? " " + cantidadTxt(l.t, l.n) : "") + " " + eur(l.imp)).join(" · "), 9, false, 14]); });
         L.push([""]);
       });
-      L.push(["Orientativo y en bruto. Manda tu nómina.", 8], ["Para volver a cargar estos datos en la app: Zona Conductores > Mis ganancias > Ajustes > Recuperar una copia, y elige este PDF.", 8]);
+      L.push(["Orientativo y en bruto. Manda tu nómina.", 8], ["Para volver a cargar estos datos en la app: Zona Conductores > Mis incentivos > Ajustes > Recuperar una copia, y elige este PDF.", 8]);
       const datos = { app: "ccoo-ganancias", dias: DATOS.dias, salario: DATOS.salario, oculto: DATOS.oculto, fijo: DATOS.fijo };
       return pdfSencillo(L, MARCA + btoa(unescape(encodeURIComponent(JSON.stringify(datos)))));
     } finally { LOC = locAntes; MAPA = mapaAntes; }
@@ -253,7 +253,7 @@
     if (!$("v-ganancias")) return;
     document.querySelectorAll("#v-ganancias [data-gtab]").forEach(b => b.onclick = () => { DATOS.tab = b.dataset.gtab; guarda(); pinta(); });
     $("gan-copia").onclick = () => {
-      const a = document.createElement("a"); a.href = URL.createObjectURL(hazPDF()); a.download = "mis-ganancias-" + hoy() + ".pdf";
+      const a = document.createElement("a"); a.href = URL.createObjectURL(hazPDF()); a.download = "mis-incentivos-" + hoy() + ".pdf";
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     };
     $("gan-recupera").onchange = async () => {
@@ -267,7 +267,7 @@
         const limpio = (o) => Object.fromEntries(Object.entries(o && typeof o === "object" ? o : {}).filter(([k]) => /^\d+$/.test(k)).map(([k, v]) => [k, !!v]));
         DATOS = { ...DEF(), dias, salario: num(d.salario) ? String(num(d.salario)) : "", oculto: limpio(d.oculto), fijo: limpio(d.fijo), tab: "ajustes" };
         guarda(); pinta(); msg(T("Copia recuperada."));
-      } catch (_) { msg(T("Ese archivo no es una copia de «Mis ganancias». Elige el PDF que guardaste con «Guardar una copia»."), true); }
+      } catch (_) { msg(T("Ese archivo no es una copia de «Mis incentivos». Elige el PDF que guardaste con «Guardar una copia»."), true); }
     };
     $("gan-borrar").onclick = () => {
       if (!confirm(T("¿Borrar todo lo apuntado en este móvil? Si no tienes copia, no se podrá recuperar."))) return;

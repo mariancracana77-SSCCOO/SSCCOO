@@ -75,6 +75,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 82: «Mis incentivos»
+
+- La calculadora de la Zona Conductores pasa a llamarse **Mis incentivos** (lo pidió el secretario). Lo apuntado en los móviles se mantiene.
+
 ## Versión 81: Mis ganancias
 
 - Zona Conductores > **Mis ganancias**: cada conductor apunta lo que hace cada día (dieta completa o por partes, noche fuera, fin de semana, cargas, kilómetros, ADR, nocturnidad, festivo…) y ve lo que gana ese día, la semana y el mes (con el salario). Se guarda solo en su móvil, con copia en PDF y traducible.

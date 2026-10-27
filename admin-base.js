@@ -228,14 +228,14 @@ SECCIONES.categorias = {
   extracto: () => "", chips: (x) => [eurosTxt(x.precio_extra) + " la hora", Number(x.precio_extra_festiva) ? eurosTxt(x.precio_extra_festiva) + " en festivo" : null], fechas: (x) => [null, x.actualizado],
 };
 
-// Importes de «Mis ganancias» (Zona Conductores de la web, v81). Se editan en la página «Importes conductores».
+// Importes de «Mis incentivos» (Zona Conductores de la web, v81). Se editan en la página «Importes conductores».
 // La unidad dice cómo lo apunta el conductor cada día (casilla, contador o número) o si es fijo al mes.
 const UNIDADES_TARIFA = [["dia", "Por día (casilla)"], ["noche", "Por noche (casilla)"], ["finde", "Por fin de semana (casilla)"], ["vez", "Cada vez (contador: desayuno, carga…)"],
   ["hora", "Por hora"], ["km", "Por kilómetro"], ["minuto", "Por minuto"], ["mes", "Fijo al mes (salario, plus fijo)"]];
 const UNIDAD_CORTA = { dia: "por día", noche: "por noche", finde: "por fin de semana", vez: "cada vez", hora: "por hora", km: "por km", minuto: "por minuto", mes: "al mes" };
 const precioTxt = (n) => Number(n || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 8 }) + " €";
 SECCIONES.tarifas = {
-  nombre: "Importes de «Mis ganancias»", icono: "euro", tabla: "tarifas_conductor", orden: ["orden", true], uno: "importe", nuevo: "Añadir concepto", lista: "aviso", campoColor: "_", oculta: true, volver: "ganancias",
+  nombre: "Importes de «Mis incentivos»", icono: "euro", tabla: "tarifas_conductor", orden: ["orden", true], uno: "importe", nuevo: "Añadir concepto", lista: "aviso", campoColor: "_", oculta: true, volver: "ganancias",
   intro: "", tituloDe: (x) => x.concepto,
   campos: [
     { k: "concepto", l: "Concepto (así lo verá el conductor)", t: "text", req: true, ph: "Ej: Dieta completa nacional" },
