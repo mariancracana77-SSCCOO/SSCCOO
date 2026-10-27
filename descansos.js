@@ -443,7 +443,9 @@
   function hazPDFes() {
     const c = calcula(), lineas = []; // [texto, tamaño, negrita, sangría]
     const L = (t, tam = 10, neg = false, x = 0) => lineas.push([t, tam, neg, x]);
-    L("Mis descansos", 18, true); L("Sección Sindical CCOO Calsina Carré", 11);
+    // v88: con el logo a la izquierda, las dos primeras líneas van desplazadas
+    const X = LOGO ? 70 : 0;
+    L("Mis descansos", 18, true, X); L("Sección Sindical CCOO Calsina Carré", 11, false, X); L("", 10);
     L("Copia hecha el " + new Date().toLocaleString("es-ES", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) + " · Transporte " + (DATOS.internacional ? "internacional" : "nacional"), 9); L("");
     if (c.prox) {
       L("Próximo descanso semanal", 13, true);
@@ -486,12 +488,14 @@
     L("");
     L("Solo es una ayuda para organizarte; no es una prueba oficial ni sustituye al tacógrafo. Manda lo que registra el tacógrafo y el Reglamento (CE) 561/2006. Cálculos según el cuadernillo «Tiempos de conducción y descanso» de FENADISMER (mayo 2026) y el II Acuerdo Marco.", 8);
     L("Para volver a cargar estos datos en la app: Zona Conductores > Mis descansos > Recuperar una copia, y elige este PDF.", 8);
-    return pdfSencillo(lineas, MARCA + btoa(JSON.stringify({ app: "ccoo-descansos", ...DATOS })));
+    return pdfSencillo(lineas, MARCA + btoa(JSON.stringify({ app: "ccoo-descansos", ...DATOS })), { logo: LOGO });
   }
 
   // ---------- Formularios ----------
+  let LOGO = null; // el logo para el PDF (v88)
   function prepara() {
     if (!$("v-descansos")) return;
+    if (typeof logoParaPDF === "function") logoParaPDF().then(l => { LOGO = l; });
     const ahora = new Date(); ahora.setMinutes(0, 0, 0);
     $("desc-ini").value = aLocal(ahora.getTime() - 48 * H); $("desc-fin").value = aLocal(ahora.getTime());
     $("desc-guardar").onclick = () => {

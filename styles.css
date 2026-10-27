@@ -1709,6 +1709,7 @@ b.gan-fecha { cursor: default; }
 .gan-desglose b { white-space: nowrap; }
 .gan-reparto { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; font-size: .95rem; color: var(--suave); }
 .gan-reparto b { color: var(--tinta); }
+/* v88: los colores (verde total, azul semanal) van solo en el PDF; Lorena no quiso cambiar la web */
 .gan-cifras b { font-size: 1.5rem; }
 .gan-checks { border: 1px solid var(--linea); border-radius: var(--radio); padding: 10px 14px; margin: 0; display: grid; gap: 8px; min-width: 0; }
 .gan-checks legend { font-weight: 700; padding: 0 6px; }
