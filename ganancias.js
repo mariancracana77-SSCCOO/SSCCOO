@@ -354,6 +354,8 @@
       const c = calcula(), L = [], todos = !elegidos;
       const dias = (elegidos || Object.keys(DATOS.dias)).filter(f => c[f]?.lineas.length).sort();
       L.push(["Mis incentivos", 18, true], ["Sección Sindical CCOO Calsina Carré", 11], ["Hecho el " + new Date().toLocaleString("es-ES", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }), 9]);
+      // Encabezado con la semana del año (lo pidió el padre): «Semana 44 de 2026» o «Semanas 43 a 44 de 2026»
+      if (dias.length && !todos) { const ws = [...new Set(dias.map(f => { const w = semDe(f); return w.n + " de " + w.a; }))]; L.push([ws.length === 1 ? "Semana " + ws[0] : "Semanas " + ws[0].replace(/ de \d+$/, "") + " a " + ws[ws.length - 1], 15, true]); }
       if (dias.length) L.push([todos ? "Todo lo apuntado" : "Del " + fDia(dias[0], true) + " al " + fDia(dias[dias.length - 1], true), 11, true]);
       L.push([""]);
       if (!dias.length) L.push(["No hay nada apuntado en esos días."]);
