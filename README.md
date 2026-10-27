@@ -75,6 +75,14 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 83: Mis incentivos, cada uno con lo suyo
+
+- **Horas sindicales**: nuevo concepto (con la nómina). Cada persona pone su precio por hora.
+- **Lo que cobras tú** (Ajustes): cada conductor puede poner su propio importe de cualquier concepto (salario con antigüedad, dietas, pluses…). Vacío = el de la tabla.
+- **La nómina se mueve**: en «Mes» la nómina suma el salario, los fijos y lo que se paga con la nómina (festivo, nocturnidad, ADR, horas sindicales). En «Día» sale una línea con la nómina y lo semanal del mes, y en Ajustes el recuadro «Así queda…» cambia al momento. Los conceptos que se quitan ya no cuentan.
+- **Descargar por semanas**: calendario en Ajustes para elegir semanas o días y bajar solo eso en PDF (y «Descargar esta semana» en «Semana»). Recuperar una copia añade esos días sin borrar el resto.
+- Nombres como en la tabla de la empresa: Comer, Cenar, Desayunar, Festivo.
+
 ## Versión 82: «Mis incentivos»
 
 - La calculadora de la Zona Conductores pasa a llamarse **Mis incentivos** (lo pidió el secretario). Lo apuntado en los móviles se mantiene.
