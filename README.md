@@ -75,6 +75,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 85: «Cobro semanal» y «En la nómina»
+
+- El PDF de una semana se llama «mis-incentivos-semana-44-2026.pdf» y arriba del todo pone «Semana 44 de 2026» (si son varias, «Semanas 43 a 44 de 2026»).
+- En «Semana» vuelve la lista de días grande, uno debajo de otro (el padre la prefiere: hay gente mayor), con el título «Semana 44» y «Ir a otra semana» plegado.
+- En «Mis incentivos», los dos grupos de pago se llaman como los entiende un conductor: **Cobro semanal** (dietas, suplementos, cargas y kilómetros: lo que la empresa paga por semanas) y **En la nómina** (festivo, nocturnidad, ADR y horas sindicales: van con el salario a fin de mes). Es la columna «Periodicidad pago» de la tabla de la empresa. Cada concepto en «Día» dice a cuál va. En la tira de arriba: «incentivos» y «con el salario». La guía rápida lo explica.
+
 ## Versión 84: semanas del año y «Mis incentivos» más cómodo
 
 - **Semana del año** (la 44, la 45…, de lunes a domingo, como en los calendarios de pared y los tacógrafos): sale en el Calendario de la web (columna «Sem.», la actual en rojo), en «Mis descansos» (en cada descanso semanal) y en toda «Mis incentivos»: «Día» (bajo la fecha), «Semana» (título, con «Ir a la semana…» para escribir el número), «Mes» (desglose «Por semanas», que lleva a cada una), el calendario para descargar (S44, S45…) y los PDF («mis-incentivos-semana-44-2026.pdf», «Semana 44 (del … al …)»).
