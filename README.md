@@ -77,6 +77,7 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 
 ## Versión 85: «Cobro semanal» y «En la nómina»
 
+- En «Semana» vuelve la lista de días grande, uno debajo de otro (el padre la prefiere: hay gente mayor), con el título «Semana 44» y «Ir a otra semana» plegado.
 - En «Mis incentivos», los dos grupos de pago se llaman como los entiende un conductor: **Cobro semanal** (dietas, suplementos, cargas y kilómetros: lo que la empresa paga por semanas) y **En la nómina** (festivo, nocturnidad, ADR y horas sindicales: van con el salario a fin de mes). Es la columna «Periodicidad pago» de la tabla de la empresa. Cada concepto en «Día» dice a cuál va. En la tira de arriba: «incentivos» y «con el salario». La guía rápida lo explica.
 
 ## Versión 84: semanas del año y «Mis incentivos» más cómodo

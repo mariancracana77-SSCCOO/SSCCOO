@@ -1744,6 +1744,9 @@ b.gan-fecha { cursor: default; }
 .gan-ir-sem label { display: grid; gap: 2px; margin: 0; font-size: .82rem; font-weight: 600; color: var(--suave); }
 .gan-ir-sem input { width: 5.2em; min-height: 44px; padding: 6px 8px; font: inherit; font-weight: 700; text-align: center; }
 .gan-ir-sem .btn { min-height: 44px; padding: 6px 14px; }
+.gan-ir-caja { border: 1px solid var(--linea); border-radius: var(--radio); padding: 0 12px; }
+.gan-ir-caja summary { display: flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; font-weight: 700; color: var(--rojo-ic); }
+.gan-ir-caja .gan-ir-sem { padding: 0 0 12px; }
 .gan-sem-dias { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
 .gan-sem-dias button { display: grid; gap: 2px; width: 100%; min-height: 66px; padding: 6px 2px; border: 1px solid var(--linea); border-radius: 10px; background: var(--tarjeta); color: var(--tinta); font: inherit; cursor: pointer; text-align: center; min-width: 0; transition: transform .15s ease, background .2s, border-color .2s; }
 .gan-sem-dias button:hover { background: var(--fondo); }
