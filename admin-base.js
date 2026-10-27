@@ -244,6 +244,9 @@ SECCIONES.tarifas = {
     { k: "concepto", l: "Concepto (así lo verá el conductor)", t: "text", req: true, ph: "Ej: Dieta completa nacional" },
     { k: "grupo", l: "Grupo", t: "text", opc: true, ph: "Ej: Dieta fraccionada nacional", ayuda: "Los conceptos con el mismo grupo salen juntos, con este título encima." },
     { fila: [{ k: "importe", l: "Importe (€)", t: "number", dec: true, paso: "any" }, { k: "unidad", l: "Cómo se cuenta", t: "select", ops: UNIDADES_TARIFA, def: "dia" }] },
+    // v89: cambio de precio con fecha (la tabla del año siguiente): los días de antes siguen con «Importe»
+    { fila: [{ k: "importe_nuevo", l: "Importe nuevo (€)", t: "number", dec: true, paso: "any", opc: true },
+      { k: "desde", l: "A partir del día", t: "date", opc: true, ayuda: "Déjalos vacíos si el precio no cambia. Desde ese día la calculadora usa el importe nuevo; los días de antes siguen con el de arriba. Al año siguiente, pon este en «Importe» y el nuevo aquí." }] },
     { k: "pago", l: "Cuándo se cobra", t: "select", ops: [["Semanal", "Semanal"], ["Mensual", "Mensual (con la nómina)"]], def: "Semanal" },
     { fila: [{ k: "sin_pagar", l: "No se pagan las primeras… (cada día)", t: "number", ayuda: "Ej: 1 si la primera carga del día no se paga. Si no, 0." },
       { k: "max_mes", l: "Como mucho al mes", t: "number", ayuda: "Ej: 2 fines de semana al mes. 0 = sin tope." }] },
@@ -252,7 +255,7 @@ SECCIONES.tarifas = {
     { checks: [{ k: "visible", l: "Se ve en la web", def: true }] },
   ],
   previa: (x) => `<div class="panel calc"><div class="resultado-calc"><span class="rc-tit">${esc(x.concepto || "Concepto")}</span><span class="rc-num">${esc(precioTxt(x.importe))} <small>${esc(UNIDAD_CORTA[x.unidad] || "")}${x.unidad === "minuto" ? esc(` (unos ${eurTxt(Number(x.importe || 0) * 60)} por hora)`) : ""}</small></span>${x.nota ? `<span class="rc-sub">${esc(x.nota)}</span>` : ""}</div></div>`,
-  extracto: (x) => x.nota, chips: (x) => [precioUnidad(x), x.grupo || null, x.pago === "Mensual" ? "Con la nómina" : "Semanal", Number(x.sin_pagar) ? (Number(x.sin_pagar) === 1 ? "La primera de cada día no se paga" : `Las ${x.sin_pagar} primeras de cada día no se pagan`) : null, Number(x.max_mes) ? `Máx. ${x.max_mes} al mes` : null, x.visible === false ? "Oculto" : null], fechas: (x) => [null, x.actualizado],
+  extracto: (x) => x.nota, chips: (x) => [precioUnidad(x), x.desde && Number(x.importe_nuevo) > 0 ? `Desde el ${new Date(x.desde + "T12:00").toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}: ${precioTxt(x.importe_nuevo)}` : null, x.grupo || null, x.pago === "Mensual" ? "Con la nómina" : "Semanal", Number(x.sin_pagar) ? (Number(x.sin_pagar) === 1 ? "La primera de cada día no se paga" : `Las ${x.sin_pagar} primeras de cada día no se pagan`) : null, Number(x.max_mes) ? `Máx. ${x.max_mes} al mes` : null, x.visible === false ? "Oculto" : null], fechas: (x) => [null, x.actualizado],
 };
 
 // Restricciones para camiones (Zona Conductores de la web). Se editan en la página «Restricciones camiones».
