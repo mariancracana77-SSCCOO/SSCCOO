@@ -347,6 +347,19 @@
     <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span data-gt="oficial">Orientativo y en bruto (antes de impuestos y descuentos). Los importes los pone la sección sindical según la tabla de la empresa. Manda tu nómina: si no cuadra, pregunta a un delegado.</span></p>
   </section>
 
+  <!-- APARCAR CERCA (Zona Conductores): aparcamientos de camiones cercanos de OpenStreetMap; la ubicación no sale del móvil (aparcar.js) -->
+  <section class="vista" id="v-aparcar">
+    <h1 class="titulo-vista">Aparcar cerca</h1>
+    <p class="intro-vista">Toca el botón y te enseño los aparcamientos de camiones más cercanos. Eliges uno y te llevo con el Maps.</p>
+    <button type="button" class="btn apc-boton" id="apc-buscar"><svg class="icono" aria-hidden="true"><use href="#i-lugar"/></svg>Buscar aparcamientos cerca de mí</button>
+    <p class="apc-privado">Tu ubicación solo se usa en este momento y no sale del móvil: no se guarda ni se envía a nadie.</p>
+    <p class="msg" id="apc-estado" role="status" aria-live="polite"></p>
+    <details class="panel apc-opciones"><summary>Filtros</summary><div id="apc-filtros"></div></details>
+    <div id="apc-lista" aria-live="polite"></div>
+    <details class="panel apc-opciones"><summary>Países de la lista</summary><p class="ayuda">Elige por dónde sueles ir. La lista de esos países se guarda en el móvil y sirve también sin cobertura.</p><div id="apc-paises" class="apc-paises"></div></details>
+    <p class="aviso-oficial apc-aviso"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Los aparcamientos salen de OpenStreetMap, el mapa libre que hace la gente, y se renuevan cada mes: puede faltar alguno o haber cambiado. El Maps no sabe que vas en camión: mira las señales. Para ver si hay plazas libres ahora mismo hay apps gratuitas de camioneros, como <a href="https://play.google.com/store/apps/details?id=de.aparkado.lkwapp" target="_blank" rel="noopener">LKW.APP</a> (Android).</span></p>
+  </section>
+
   <!-- APARTADO (los crea el admin desde el panel: Comité de empresa, etc.) -->
   <section class="vista" id="v-apartado">
     <h1 class="titulo-vista" id="ap-titulo">Cargando…</h1>
@@ -457,5 +470,6 @@
 <script src="app.js?v=89"></script>
 <script src="descansos.js?v=89"></script>
 <script src="ganancias.js?v=89"></script>
+<script src="aparcar.js?v=89"></script>
 </body>
 </html>

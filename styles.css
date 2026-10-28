@@ -1803,3 +1803,47 @@ b.gan-fecha { cursor: default; }
 .gan-cal-dia, .gan-cal-sem { transition: background .15s, color .15s, transform .15s; }
 .gan-cal-dia:active, .gan-cal-sem:active { transform: scale(.9); }
 @media (prefers-reduced-motion: reduce) { #v-ganancias .desc-panel:not([hidden]) > .gan-panel, .gan-pulsa { animation: none; } .gan-tira button, .gan-sem-dias button, .gan-fila, .gan-cal-dia, .gan-cal-sem { transition: none; } }
+
+/* ====== Aparcar cerca (v89, aparcar.js) ======
+   Lo pidió el padre: que se distinga de un vistazo gratis (verde) y de pago (azul, con moneda); sin precio apuntado, gris. */
+:root { --apc-verde: #1B7F3B; --apc-azul: #1E4F9C; --apc-gris: #6b7078; }
+:root[data-theme="dark"] { --apc-verde: #2E9E52; --apc-azul: #3D6FC4; --apc-gris: #80868f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --apc-verde: #2E9E52; --apc-azul: #3D6FC4; --apc-gris: #80868f; } }
+.apc-boton { width: 100%; justify-content: center; min-height: 64px; font-size: 1.15rem; gap: 10px; }
+.apc-boton .icono { width: 26px; height: 26px; }
+.apc-privado { color: var(--suave); font-size: .9rem; margin: 8px 2px 4px; }
+#apc-estado:empty { display: none; }
+.apc-opciones { margin: 12px 0; padding: 0; }
+.apc-opciones > summary { padding: 14px 16px; font-weight: 700; cursor: pointer; min-height: 48px; }
+.apc-opciones > div, .apc-opciones > p { padding: 0 16px 14px; margin: 0; }
+#apc-filtros { display: grid; gap: 10px; }
+.apc-precios { display: flex; flex-wrap: wrap; gap: 8px; }
+.apc-radio { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.apc-radio select { width: auto; min-height: 44px; }
+.apc-paises { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px 12px; }
+.apc-res { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; background: var(--asfalto); color: #fff; border-radius: 12px; padding: 12px 16px; margin: 6px 0 10px; }
+.apc-res b { font-family: var(--cond); font-size: 1.7rem; line-height: 1; }
+.apc-res span { color: #cfd3d8; font-size: .88rem; }
+.apc-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.apc { background: var(--tarjeta); border: 1px solid var(--linea); border-left: 6px solid var(--apc-gris); border-radius: 12px; padding: 12px 14px; display: grid; gap: 6px; }
+.apc.gratis { border-left-color: var(--apc-verde); }
+.apc.pago { border-left-color: var(--apc-azul); }
+.apc.cerrado { opacity: .7; }
+.apc-cab { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 10px; }
+.apc-dist { font-family: var(--cond); font-weight: 700; font-size: 1.3rem; color: var(--tinta); }
+.apc-precio { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 4px 12px; font-weight: 700; font-size: .9rem; color: #fff; background: var(--apc-gris); }
+.apc-precio.gratis { background: var(--apc-verde); }
+.apc-precio.pago { background: var(--apc-azul); }
+.apc-precio .icono { width: 16px; height: 16px; }
+.apc-nom { font-size: 1.1rem; line-height: 1.25; }
+.apc-hor, .apc-hor small { color: var(--suave); font-size: .9rem; }
+.apc-abre { font-weight: 700; }
+.apc-abre.si { color: var(--apc-verde); }
+.apc-abre.no { color: var(--suave); }
+.apc-extra { display: flex; flex-wrap: wrap; gap: 6px; }
+.apc-extra span { background: var(--fondo); border: 1px solid var(--linea); border-radius: 6px; padding: 2px 8px; font-size: .82rem; font-weight: 700; }
+.apc-bots { display: grid; grid-template-columns: 1.3fr 1fr; gap: 8px; margin-top: 4px; }
+.apc-bots .btn { justify-content: center; text-align: center; min-height: 48px; text-decoration: none; }
+@media (max-width: 360px) { .apc-bots { grid-template-columns: 1fr; } }
+.apc-aviso { margin-top: 16px; }
+.apc-aviso a { color: inherit; font-weight: 700; }
