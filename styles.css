@@ -1954,3 +1954,32 @@ b.gan-fecha { cursor: default; }
 .apc-peajes-tabla th small { display: block; font-weight: 400; color: var(--suave); }
 .apc-peajes-notas summary { cursor: pointer; font-weight: 700; }
 .apc-peajes-notas ul { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 4px; }
+/* v91: buscar y filtrar la lista; «Dónde estoy» y buscador de sitios en el mapa; mapa sin ruta */
+.apc-filtros { display: grid; gap: 8px; margin: 6px 0 10px; }
+.apc-f-texto { display: grid; gap: 4px; font-weight: 700; }
+.apc-f-texto input { width: 100%; }
+.apc-f-mas summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
+.apc-f-mas[open] { display: grid; gap: 10px; }
+.apc-f-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.apc-f-chip { min-height: 44px; padding: 6px 14px; border-radius: 999px; border: 2px solid var(--linea); background: var(--tarjeta); color: var(--tinta); font: inherit; font-weight: 700; cursor: pointer; }
+.apc-f-chip.activa { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+.apc-f-plazas { display: grid; gap: 4px; font-weight: 700; max-width: 22em; }
+.apc-f-km { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 22em; }
+.apc-f-km label { display: grid; gap: 4px; font-weight: 700; }
+.apc-f-km input { width: 100%; }
+.apc-f-cuenta:empty { display: none; }
+.apc-f-cuenta { margin: 0; }
+.btn-txt { background: none; border: 0; padding: 4px 2px; color: var(--rojo-ic); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; min-height: 44px; }
+.apc-busca-sitio { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin: 0 0 8px; }
+.apc-busca-sitio input { width: 100%; min-width: 0; }
+.apc-busca-res:empty { display: none; }
+.apc-busca-res { margin-bottom: 8px; }
+.apc-yo-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 6px 12px; border: 2px solid rgba(0,0,0,.25); border-radius: 8px; background: #fff; color: #15191E; font: 700 .95rem/1 var(--cond, sans-serif); cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.apc-yo-btn .icono { width: 20px; height: 20px; }
+.apc-yo-btn.buscando { opacity: .6; }
+.apc-pin-sitio span { display: block; width: 22px; height: 22px; border-radius: 50%; background: #AB1012; border: 4px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.45); }
+.apc-mapa-libre { display: grid; gap: 8px; margin: 14px 0; }
+.apc-mapa-libre h2 { font-family: var(--cond); text-transform: uppercase; font-size: 1.3rem; margin: 0; }
+.apc-mapa-libre .apc-nota { margin: 0; }
+#apc-libre { display: grid; gap: 8px; }
+#apc-libre[hidden] { display: none; }

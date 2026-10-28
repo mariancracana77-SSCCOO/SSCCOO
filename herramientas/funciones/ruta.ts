@@ -6,6 +6,7 @@
 // v6: código postal opcional y, si hay varios pueblos con el mismo nombre, devuelve «elegir» con las opciones (el móvil
 // vuelve a pedir con las coordenadas de la elegida). Con la web nueva («elegir: true»), hasta 2 rutas alternativas en «alternativas».
 // v9: «peajes» (tramos de peaje en km) para el precio aproximado de los peajes.
+// v10: con «buscar» (texto) solo busca sitios (buscador del mapa) y devuelve «lugares» (hasta 5, de Europa); no calcula ruta.
 const UA = "CCOO-Calsina-Carre-web/1.0 (seccion sindical; rutas para camion)";
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...cors, "Content-Type": "application/json" } });
@@ -145,6 +146,17 @@ Deno.serve(async (req) => {
   let b: any = {};
   try { b = await req.json(); } catch { return json({ error: "Petición mal hecha" }, 400); }
   try {
+    if (typeof b.buscar === "string") {
+      const t = b.buscar.trim().slice(0, 120);
+      if (t.length < 2) return json({ lugares: [] });
+      let l: Lugar[] = [];
+      try { l = await photon(t); } catch (e) { console.error("ruta", String(e)); }
+      if (!l.length) try { l = await nominatim(t); } catch (e) { console.error("ruta", String(e)); }
+      l = l.filter(x => x.lat >= 34 && x.lat <= 72 && x.lon >= -25 && x.lon <= 45);
+      const vistos: Lugar[] = [];
+      for (const x of l) if (vistos.every(y => dist([y.lat, y.lon], [x.lat, x.lon]) > 2)) vistos.push(x);
+      return json({ lugares: vistos.slice(0, 5).map(({ tipo: _t, ...x }) => ({ ...x, nombre: [x.nombre, x.detalle?.split(", ").slice(-1)[0]].filter(Boolean).join(", ").slice(0, 80) })) });
+    }
     const [bd, bh] = await Promise.all([busca(b.desde, b.cp_desde), busca(b.hasta, b.cp_hasta)]);
     // Solo la web nueva (v90, manda «elegir: true») sabe preguntar; la publicada antes se queda con el primero, como siempre
     if ((bd.opciones || bh.opciones) && b.elegir === true) return json({ elegir: { desde: bd.opciones, hasta: bh.opciones } });
