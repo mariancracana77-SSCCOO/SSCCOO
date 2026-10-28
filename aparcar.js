@@ -213,12 +213,9 @@
       const { data, error } = await sb.functions.invoke("ruta", { body: { desde, hasta: ELEGIDO.hasta || AJ.hasta, cp_desde: AJ.cpDesde, cp_hasta: AJ.cpHasta, camion: AJ.camion, elegir: true } });
       if (data?.elegir) { estado(""); pintaElegir(data.elegir); return; }
       if (error || !data || data.error) throw new Error(data?.error || "No se ha podido calcular la ruta. Comprueba que tienes internet.");
-      RUTA = data;
-      estado("Buscando aparcamientos en la ruta…");
-      const lista = await cargaPaises(paisesDe(RUTA.puntos));
-      EN_RUTA = enRuta(lista, RUTA.puntos, RUTA);
-      estado("");
-      pintaRuta();
+      // La principal y hasta 2 alternativas (lo pidió el padre: «como cualquier navegador»)
+      RUTAS = [data, ...(data.alternativas || []).map(a => ({ ...a, desde: data.desde, hasta: data.hasta, camion: data.camion }))];
+      await eligeRuta(0);
     } catch (e) { estado(e.message || String(e), true); }
     finally { $("apc-buscar").disabled = false; }
   }
@@ -239,11 +236,33 @@
     caja.querySelector("button")?.focus();
   }
 
+  let RUTAS = [];
+  async function eligeRuta(i) {
+    RUTA = RUTAS[i] || RUTAS[0];
+    estado("Buscando aparcamientos en la ruta…");
+    const lista = await cargaPaises(paisesDe(RUTA.puntos));
+    EN_RUTA = enRuta(lista, RUTA.puntos, RUTA);
+    estado("");
+    pintaRuta();
+  }
+  // Las carreteras principales de una ruta (las de más km, en el orden en que se pasan)
+  const viasDe = (r) => { const v = [...r.tramos].filter(t => t.via).sort((a, b) => b.km - a.km).slice(0, 4).map(t => t.via); return r.tramos.map(t => t.via).filter((x, i, a) => v.includes(x) && a.indexOf(x) === i); };
+  function rutasHTML() {
+    if (RUTAS.length < 2) return "";
+    const mejor = Math.min(...RUTAS.map(r => r.min));
+    return `<section class="apc-rutas" aria-labelledby="apc-rutas-tit"><h2 id="apc-rutas-tit">Elige la ruta</h2>${RUTAS.map((r, i) => `
+      <button type="button" class="apc-ruta-op${r === RUTA ? " activa" : ""}" data-ruta="${i}" aria-pressed="${r === RUTA}">
+        <b>Ruta ${i + 1}${r.min === mejor ? " · la más rápida" : ` · ${durTxt(r.min - mejor)} más`}</b>
+        <span>${r.km} km · ${durTxt(r.min)}${r.peaje ? " · con peajes" : " · sin peajes"}${r.ferry ? " · con ferry" : ""}</span>
+        <small>${viasDe(r).map(esc).join(" → ") || "Carreteras locales"}</small></button>`).join("")}</section>`;
+  }
+
   function pintaRuta() {
     const caja = $("apc-ruta");
     if (!RUTA) { caja.innerHTML = ""; return; }
     caja.innerHTML = `
       <div class="apc-res"><b>${esc(RUTA.desde.nombre)} → ${esc(RUTA.hasta.nombre)}</b><span>${RUTA.km} km · ${durTxt(RUTA.min)} conduciendo${RUTA.peaje ? " · con peajes" : ""}${RUTA.ferry ? " · con ferry" : ""}</span></div>
+      ${rutasHTML()}
       <p class="apc-camion">Ruta calculada para tu camión: ${esc(AJ.camion.alto)} m de alto, ${esc(AJ.camion.peso)} t${AJ.camion.adr ? ", con ADR" : ""}.</p>
       <section class="apc-todos" aria-labelledby="apc-todos-tit">
         <h2 id="apc-todos-tit">Aparcamientos en tu ruta</h2>
@@ -257,6 +276,7 @@
       </div>
       <p class="apc-nota">Con «Empezar viaje» te enseño los que tienes por delante mientras conduces, con tu navegador de siempre.</p>`;
     $("apc-empezar").onclick = empiezaViaje;
+    caja.querySelectorAll("[data-ruta]").forEach(b => b.onclick = () => eligeRuta(+b.dataset.ruta));
     $("apc-salida").onchange = () => { SALIDA = $("apc-salida").value; pintaTodos(); };
     pintaTodos();
   }
@@ -320,12 +340,27 @@
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(mapa);
       m = MAPAS[id] = { div: caja, mapa, capa: L.layerGroup().addTo(mapa), ruta: null, rutaDe: null, yo: null, encuadrado: false };
     }
-    const conRuta = opc.ruta !== false && RUTA;
+    const conRuta = opc.ruta !== false && RUTA, linea = (r) => r.fina || r.puntos.map(q => [q[0], q[1]]);
+    if (conRuta && m.rutaDe !== RUTA) m.encuadrado = false;
+    // Primero se coloca el mapa (Leaflet no deja dibujar líneas en un mapa sin vista)
+    if (!m.encuadrado) {
+      m.encuadrado = true;
+      if (opc.yo) m.mapa.setView(opc.yo, 10);
+      else if (conRuta) m.mapa.fitBounds(L.latLngBounds(linea(RUTA)), { padding: [24, 24] });
+      else if (items.length) m.mapa.fitBounds(items.map(y => [y.x.lat, y.x.lon]), { padding: [24, 24], maxZoom: 12 });
+      else m.mapa.setView([46, 4], 5);
+    }
     if (!conRuta && m.ruta) { m.ruta.remove(); m.ruta = null; m.rutaDe = null; }
+    // Las otras rutas, en gris y antes que la elegida para que esta quede encima (el mapa se rehace al cambiar de ruta)
+    if (!m.otras && conRuta && RUTAS.length > 1 && !VIAJE) {
+      m.otras = L.layerGroup().addTo(m.mapa);
+      RUTAS.forEach((r, i) => { if (r !== RUTA) L.polyline(linea(r), { color: "#6b7078", weight: 5, opacity: .7, dashArray: "8 8" })
+        .bindTooltip(`Ruta ${i + 1}: ${r.km} km · ${durTxt(r.min)}. Tócala para elegirla.`).on("click", () => eligeRuta(i)).addTo(m.otras); });
+    }
     if (conRuta && m.rutaDe !== RUTA) {
       m.ruta?.remove();
-      m.ruta = L.polyline(RUTA.fina || RUTA.puntos.map(q => [q[0], q[1]]), { color: "#AB1012", weight: 5, opacity: .85 }).addTo(m.mapa);
-      m.rutaDe = RUTA; m.encuadrado = false;
+      m.ruta = L.polyline(linea(RUTA), { color: "#AB1012", weight: 5, opacity: .85 }).addTo(m.mapa);
+      m.rutaDe = RUTA;
     }
     m.capa.clearLayers();
     for (const y of items) {
@@ -335,13 +370,6 @@
         .bindPopup(`<ul class="apc-lista apc-popup">${tarjeta(y.x, y.falta ?? y.x.kmRuta, y.llega)}</ul>`, { maxWidth: 290, minWidth: 220 }).addTo(m.capa);
     }
     if (opc.yo) { if (m.yo) m.yo.setLatLng(opc.yo); else m.yo = L.circleMarker(opc.yo, { radius: 9, color: "#fff", weight: 3, fillColor: "#1E4F9C", fillOpacity: 1 }).addTo(m.mapa); }
-    if (!m.encuadrado) {
-      m.encuadrado = true;
-      if (opc.yo) m.mapa.setView(opc.yo, 10);
-      else if (m.ruta) m.mapa.fitBounds(m.ruta.getBounds(), { padding: [24, 24] });
-      else if (items.length) m.mapa.fitBounds(items.map(y => [y.x.lat, y.x.lon]), { padding: [24, 24], maxZoom: 12 });
-      else m.mapa.setView([46, 4], 5);
-    }
     setTimeout(() => m.mapa.invalidateSize(), 60);
   }
   function ponVista(v) {

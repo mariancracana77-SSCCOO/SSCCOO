@@ -73,7 +73,9 @@
   // Ruta de prueba Girona → Narbona: un punto cada ~1,5 km por la AP-7/A9 a 75 km/h
   const RUTA_PRUEBA = (() => { const p = [], n = 90; for (let i = 0; i <= n; i++) { const f = i / n; p.push([+(41.98 + f * 1.2).toFixed(5), +(2.82 + f * 0.18).toFixed(5), +(f * 135).toFixed(1), Math.round(f * 108)]); }
     return { desde: { nombre: "Girona", lat: 41.98, lon: 2.82 }, hasta: { nombre: "Narbona, Francia", lat: 43.18, lon: 3.0 }, km: 135, min: 108, peaje: true, ferry: false,
-      tramos: [{ via: "", km: 4, hacia: "" }, { via: "AP-7", km: 70, hacia: "La Jonquera / França" }, { via: "A9", km: 61, hacia: "Narbonne" }], puntos: p, fina: p.map(x => [x[0], x[1]]), autopista: [[4, 135]] }; })();
+      tramos: [{ via: "", km: 4, hacia: "" }, { via: "AP-7", km: 70, hacia: "La Jonquera / França" }, { via: "A9", km: 61, hacia: "Narbonne" }], puntos: p, fina: p.map(x => [x[0], x[1]]), autopista: [[4, 135]],
+    alternativas: [{ km: 142, min: 124, peaje: false, ferry: false, tramos: [{ via: "N-II", km: 60, hacia: "La Jonquera" }, { via: "D900", km: 82, hacia: "Narbonne" }],
+      puntos: p.map(x => [x[0], +(x[1] - 0.06).toFixed(5), +(x[2] * 1.05).toFixed(1), Math.round(x[3] * 1.15)]), fina: p.map(x => [x[0], +(x[1] - 0.06).toFixed(5)]), autopista: [] }] }; })();
   // Con localStorage «prueba-sesion» = 1, el panel entra como administrador de prueba
   const SES = (() => { try { return localStorage.getItem("prueba-sesion") === "1"; } catch (_) { return false; } })()
     ? { access_token: "x", user: { id: "u1", email: "prueba@example.com" } } : null;

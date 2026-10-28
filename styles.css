@@ -1916,3 +1916,9 @@ b.gan-fecha { cursor: default; }
 .apc-mapa .leaflet-container a.leaflet-popup-close-button, .apc-mapa a.leaflet-popup-close-button { color: var(--suave); width: 30px; height: 30px; font-size: 24px; }
 .leaflet-popup-content { margin: 12px 14px; font: inherit; }
 .apc-mapa .leaflet-bar a { width: 40px; height: 40px; line-height: 40px; font-size: 22px; color: #15191E; background: #fff; text-decoration: none; }
+/* v90: elegir entre la ruta principal y las alternativas */
+.apc-rutas { display: grid; gap: 8px; margin: 10px 0; }
+.apc-rutas h2 { font-family: var(--cond); text-transform: uppercase; font-size: 1.3rem; margin: 0; }
+.apc-ruta-op { display: grid; gap: 2px; text-align: left; padding: 10px 14px; border: 2px solid var(--linea); border-radius: 12px; background: var(--tarjeta); color: var(--tinta); font: inherit; cursor: pointer; min-height: 52px; }
+.apc-ruta-op.activa { border-color: var(--rojo); box-shadow: inset 6px 0 0 var(--rojo); }
+.apc-ruta-op small { color: var(--suave); }
