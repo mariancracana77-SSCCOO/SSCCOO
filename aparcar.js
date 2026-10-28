@@ -9,7 +9,7 @@
   const $ = (id) => document.getElementById(id);
   if (!$("v-aparcar")) return;
   const CLAVE = "ccoo-aparcar", CAJA = "ccoo-aparcamientos";
-  const DEF = () => ({ camion: { alto: "4", ancho: "2,55", largo: "16,5", peso: "40", adr: false }, voz: false, gratis: false, desde: "", hasta: "" });
+  const DEF = () => ({ camion: { alto: "4", ancho: "2,55", largo: "16,5", peso: "40", adr: false }, voz: false, gratis: false, cerrados: false, desde: "", hasta: "" });
   const lee = () => { try { const d = JSON.parse(localStorage.getItem(CLAVE) || "null") || {}; return { ...DEF(), ...d, camion: { ...DEF().camion, ...(d.camion || {}) } }; } catch (_) { return DEF(); } };
   let AJ = lee();
   const guarda = () => { try { localStorage.setItem(CLAVE, JSON.stringify(AJ)); } catch (_) {} };
@@ -105,6 +105,7 @@
   }
 
   // ---------- Estado del viaje ----------
+  let FILTRO = "abiertos", SALIDA = ""; // lista de toda la ruta: abiertos / cerrados / todos, y hora de salida (vacía = ahora)
   let RUTA = null, EN_RUTA = [], VIAJE = null, VIGIA = null, CANDADO = null, ULT_VOZ = "", CERCA = [], ANTES = null;
   const estado = (t, err) => { const m = $("apc-estado"); m.textContent = t || ""; m.classList.toggle("err", !!err); };
   const hora = (d) => d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
@@ -142,7 +143,7 @@
     const c = AJ.camion;
     $("apc-desde").value = AJ.desde; $("apc-hasta").value = AJ.hasta;
     $("apc-alto").value = c.alto; $("apc-ancho").value = c.ancho; $("apc-largo").value = c.largo; $("apc-peso").value = c.peso; $("apc-adr").checked = !!c.adr;
-    $("apc-voz").checked = !!AJ.voz; $("apc-gratis").checked = !!AJ.gratis;
+    $("apc-voz").checked = !!AJ.voz; $("apc-gratis").checked = !!AJ.gratis; $("apc-cerrados").checked = !!AJ.cerrados;
   }
   function leeFormulario() {
     AJ.desde = $("apc-desde").value.trim(); AJ.hasta = $("apc-hasta").value.trim();
@@ -178,7 +179,6 @@
     if (!RUTA) { caja.innerHTML = ""; return; }
     const p = RUTA.puntos, n = p.length, wp = [0.25, 0.5, 0.75].map(f => p[Math.round(f * (n - 1))]).map(x => x[0] + "," + x[1]).join("|");
     const maps = `https://www.google.com/maps/dir/?api=1&origin=${p[0][0]},${p[0][1]}&destination=${p[n - 1][0]},${p[n - 1][1]}&waypoints=${encodeURIComponent(wp)}&travelmode=driving`;
-    const abiertos = EN_RUTA.filter(x => estadoA(x, new Date(Date.now() + x.minRuta * 60000)) !== "no");
     caja.innerHTML = `
       <div class="apc-res"><b>${esc(RUTA.desde.nombre)} → ${esc(RUTA.hasta.nombre)}</b><span>${RUTA.km} km · ${durTxt(RUTA.min)} conduciendo${RUTA.peaje ? " · con peajes" : ""}${RUTA.ferry ? " · con ferry" : ""}</span></div>
       <p class="apc-camion">Ruta calculada para tu camión: ${esc(AJ.camion.alto)} m de alto, ${esc(AJ.camion.peso)} t${AJ.camion.adr ? ", con ADR" : ""}.</p>
@@ -189,8 +189,36 @@
         <a class="btn sec" href="${esc(urlSegura(maps))}" target="_blank" rel="noopener">Ir guiado con Google Maps</a>
       </div>
       <p class="apc-nota">El Maps no sabe que vas en camión: te lo paso con puntos de esta ruta para que siga el mismo camino. Si te propone otro, sigue las carreteras de arriba.</p>
-      <p class="apc-nota"><b>${EN_RUTA.length} aparcamientos en la ruta</b>, ${abiertos.length} abiertos si sales ahora. Pulsa «Empezar viaje» y te enseño los que tienes por delante mientras conduces.</p>`;
+      <p class="apc-nota">Pulsa «Empezar viaje» y te enseño los que tienes por delante mientras conduces.</p>
+      <section class="apc-todos" aria-labelledby="apc-todos-tit">
+        <h2 id="apc-todos-tit">Todos los aparcamientos de la ruta</h2>
+        <label class="apc-salida">Salgo a las <input type="time" id="apc-salida" value="${esc(SALIDA)}"> <small>(vacío = ahora)</small></label>
+        <div class="apc-filtro" role="group" aria-label="Qué aparcamientos ver">${[["abiertos", "Abiertos"], ["cerrados", "Cerrados"], ["todos", "Todos"]].map(([k, t]) => `<button type="button" class="filtro ${FILTRO === k ? "activo" : ""}" data-filtro="${k}" aria-pressed="${FILTRO === k}">${t}</button>`).join("")}</div>
+        <div id="apc-todos"></div>
+      </section>`;
     $("apc-empezar").onclick = empiezaViaje;
+    caja.querySelectorAll("[data-filtro]").forEach(b => b.onclick = () => { FILTRO = b.dataset.filtro; caja.querySelectorAll("[data-filtro]").forEach(x => { x.classList.toggle("activo", x === b); x.setAttribute("aria-pressed", x === b); }); pintaTodos(); });
+    $("apc-salida").onchange = () => { SALIDA = $("apc-salida").value; pintaTodos(); };
+    pintaTodos();
+  }
+  // Hora de salida: la que pone el conductor (si ya ha pasado hace rato, la de mañana) o ahora
+  function horaSalida() {
+    if (!SALIDA) return Date.now();
+    const [h, m] = SALIDA.split(":").map(Number), d = new Date(); d.setHours(h, m, 0, 0);
+    if (d.getTime() < Date.now() - 30 * 60000) d.setDate(d.getDate() + 1);
+    return d.getTime();
+  }
+  // Todos los de la ruta, desde la salida: abiertos, cerrados (los que lo estarán cuando pases) o todos
+  function pintaTodos() {
+    const caja = $("apc-todos"); if (!caja) return;
+    const t0 = horaSalida();
+    const lista = EN_RUTA.map(x => ({ x, llega: new Date(t0 + x.minRuta * 60000), e: null })).map(y => ({ ...y, e: estadoA(y.x, y.llega) }));
+    const cerrados = lista.filter(y => y.e === "no"), abiertos = lista.filter(y => y.e !== "no"), sinHorario = lista.filter(y => y.e === "nose").length;
+    const ver = FILTRO === "cerrados" ? cerrados : FILTRO === "abiertos" ? abiertos : lista;
+    const pl = (n, uno, varios) => n + " " + (n === 1 ? uno : varios);
+    caja.innerHTML = `<p class="apc-cuenta"><b>${lista.length}</b> en la ruta: <b class="apc-c-abierto">${pl(abiertos.length, "abierto", "abiertos")}</b> y <b class="apc-c-cerrado">${pl(cerrados.length, "cerrado", "cerrados")}</b> cuando pases. ${sinHorario ? `${sinHorario === 1 ? "1 no tiene" : sinHorario + " no tienen"} el horario apuntado: ${sinHorario === 1 ? "sale como abierto" : "salen como abiertos"}, pero no se sabe seguro.` : ""}</p>`
+      + (ver.length ? `<ul class="apc-lista">${ver.map(y => tarjeta(y.x, y.x.kmRuta, y.llega)).join("")}</ul>`
+        : `<p class="desc-vacio">${FILTRO === "cerrados" ? "Ninguno estará cerrado cuando pases, según los horarios apuntados." : "No hay ninguno."}</p>`);
   }
 
   // ---------- Viaje en marcha ----------
@@ -246,8 +274,10 @@
     const abiertos = lista.filter(y => estadoA(y.x, y.llega) !== "no");
     const vale = abiertos.filter(y => !AJ.gratis || y.x.pago === 0);
     const cerrados = lista.length - abiertos.length;
-    $("apc-proximos").innerHTML = vale.length
-      ? `<ul class="apc-lista">${vale.slice(0, 6).map(y => tarjeta(y.x, y.falta, y.llega)).join("")}</ul>${cerrados ? `<p class="apc-nota">${cerrados} por delante estarán cerrados cuando llegues: no salen.</p>` : ""}`
+    // Con «Ver también los cerrados» salen todos, los cerrados en gris y marcados
+    const mostrar = AJ.cerrados ? lista.filter(y => !AJ.gratis || y.x.pago === 0) : vale;
+    $("apc-proximos").innerHTML = mostrar.length
+      ? `<ul class="apc-lista">${mostrar.slice(0, AJ.cerrados ? 10 : 6).map(y => tarjeta(y.x, y.falta, y.llega)).join("")}</ul>${cerrados && !AJ.cerrados ? `<p class="apc-nota">${cerrados} por delante estarán cerrados cuando llegues: no salen. Para verlos, marca «Ver también los cerrados».</p>` : ""}`
       : `<p class="desc-vacio">${AJ.gratis ? "No hay ninguno gratis y abierto por delante." : "No hay aparcamientos abiertos por delante."}</p>`;
     const primero = vale[0];
     if (primero && primero.x.osm !== ULT_VOZ) {
@@ -264,6 +294,7 @@
     $("apc-terminar").onclick = terminaViaje;
     $("apc-voz").onchange = () => { AJ.voz = $("apc-voz").checked; guarda(); if (AJ.voz) habla("Te avisaré en voz alta del próximo aparcamiento abierto."); };
     $("apc-gratis").onchange = () => { AJ.gratis = $("apc-gratis").checked; guarda(); };
+    $("apc-cerrados").onchange = () => { AJ.cerrados = $("apc-cerrados").checked; guarda(); };
     // Al volver a la app con el viaje en marcha, la pantalla vuelve a quedarse encendida
     document.addEventListener("visibilitychange", () => { if (VIAJE && document.visibilityState === "visible") pideCandado(); });
     addEventListener("hashchange", () => { if (location.hash !== "#aparcar" && VIAJE) terminaViaje(); });

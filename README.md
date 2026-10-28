@@ -75,6 +75,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 90: aparcamientos cerrados de la ruta y aviso «En pruebas»
+
+- **«Aparcamientos en mi ruta» avisa de que está en pruebas**, arriba de la pantalla y en la tarjeta de Zona Conductores.
+- **Todos los aparcamientos de la ruta**, debajo de la ruta calculada, con tres botones: **Abiertos**, **Cerrados** y **Todos** (lo pidió el padre: le interesa sobre todo saber cuáles estarán cerrados). Cuenta cuántos hay abiertos, cuántos cerrados y cuántos no tienen el horario apuntado. Con **«Salgo a las…»** se calcula a qué hora pasas por cada uno (vacío = ahora).
+- **Durante el viaje**, «Ver también los cerrados» enseña también los que estarán cerrados cuando llegues, marcados.
+
 ## Versión 89: importes de 2027 desde el 1 de enero y «Aparcamientos en mi ruta»
 
 - **«Aparcamientos en mi ruta»** (nuevo en Zona Conductores, lo pidió el padre para usarlo durante el trayecto): pones adónde vas (vacío el origen = donde estás) y los datos del camión (alto, ancho, largo, peso, ADR, se guardan en el móvil). Calcula una ruta para camión (gratis, sin claves) y enseña las carreteras, los km y las horas, con «Ir guiado con Google Maps». Con «Empezar viaje», una pantalla con los aparcamientos que tienes **por delante** en la ruta, a cuántos km y a qué hora llegas, solo los **abiertos cuando llegues**; **verde** los gratis, **azul con moneda y precio** los de pago, gris si no se sabe; «Llevarme aquí» abre el Maps. Opciones: «Avisarme en voz alta» y «Solo gratis». Modo «Sin destino»: los que tienes delante en la dirección en la que vas. La pantalla se queda encendida durante el viaje.

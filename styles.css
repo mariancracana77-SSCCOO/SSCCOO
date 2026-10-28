@@ -1859,3 +1859,18 @@ b.gan-fecha { cursor: default; }
 .apc-ir { justify-content: center; text-align: center; min-height: 52px; text-decoration: none; margin-top: 4px; font-size: 1.05rem; }
 .apc-aviso { margin-top: 16px; }
 #v-aparcar .aviso-oficial, #v-aparcar .aviso-oficial span { font-weight: 400; font-size: .92rem; }
+/* v90: «En pruebas» y lista de toda la ruta (abiertos / cerrados / todos) */
+.apc-pruebas { background: var(--ambar-suave, #fff4d6); border: 2px dashed var(--rojo); border-radius: 12px; padding: 10px 14px; margin: 0 0 12px; font-size: .95rem; }
+.apc-etq-pruebas { display: inline-block; margin-left: 6px; padding: 1px 8px; border: 1px solid var(--rojo-ic); border-radius: 999px; color: var(--rojo-ic); font-size: .72rem; font-weight: 700; vertical-align: middle; text-transform: uppercase; letter-spacing: .03em; }
+.apc-todos { margin-top: 18px; }
+.apc-todos h2 { font-family: var(--cond); font-size: 1.5rem; text-transform: uppercase; margin: 0 0 8px; }
+.apc-salida { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-weight: 700; margin-bottom: 10px; }
+.apc-salida input { width: auto; min-height: 44px; }
+.apc-salida small { font-weight: 400; color: var(--suave); }
+.apc-filtro { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+.apc-filtro .filtro { min-height: 48px; font-size: 1rem; }
+.apc-cuenta { color: var(--suave); font-size: .95rem; margin: 0 0 10px; }
+.apc-c-abierto { color: var(--apc-verde); }
+.apc-c-cerrado { color: var(--tinta); }
+.apc.cerrado { opacity: 1; background: var(--fondo); border-style: dashed; border-left-style: solid; }
+.apc.cerrado .apc-abre.no { color: var(--tinta); background: var(--linea); border-radius: 6px; padding: 1px 8px; }
