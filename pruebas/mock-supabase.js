@@ -88,7 +88,10 @@
     createClient: () => ({
       from: consulta, auth, channel: () => canal, removeChannel() {},
       rpc: async (n) => ({ data: n === "avisar_aparcamiento" ? "ok" : null, error: null }),
-      functions: { invoke: async (n) => ({ data: n === "ruta" ? RUTA_PRUEBA : null, error: null }) },
+      // «Fleuré» sin código postal: hay dos pueblos y la función pregunta cuál (como la de verdad)
+      functions: { invoke: async (n, o) => ({ data: n !== "ruta" ? null : (o?.body?.elegir && typeof o.body.hasta === "string" && /fleur/i.test(o.body.hasta) && !o.body.cp_hasta)
+        ? { elegir: { hasta: [{ nombre: "Fleuré, France", detalle: "61200, Orne, Normandie, France", cp: "61200", lat: 48.69, lon: -0.058 }, { nombre: "Fleuré, France", detalle: "86340, Vienne, Nouvelle-Aquitaine, France", cp: "86340", lat: 46.478, lon: 0.522 }] } }
+        : RUTA_PRUEBA, error: null }) },
       storage: { from: () => ({ upload: async () => ({ error: null }), getPublicUrl: (r) => ({ data: { publicUrl: "https://example.com/documentos/" + r } }), remove: async () => ({}), list: async () => ({ data: [] }) }) },
     }),
   };

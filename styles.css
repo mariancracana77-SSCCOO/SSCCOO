@@ -1890,3 +1890,13 @@ b.gan-fecha { cursor: default; }
 .apc-lleno { font-weight: 700; color: var(--tinta); background: var(--linea); border-radius: 6px; padding: 3px 8px; justify-self: start; }
 /* v90: lista de toda la ruta con un rótulo cada 100 km */
 .apc-tramo { font-family: var(--cond); text-transform: uppercase; letter-spacing: .02em; font-size: 1.15rem; margin: 18px 0 8px; padding-bottom: 4px; border-bottom: 3px solid var(--rojo); }
+/* v90: sitio + código postal, y elegir entre pueblos con el mismo nombre */
+.apc-sitio { display: grid; grid-template-columns: minmax(0, 1fr) 8.5em; gap: 10px; align-items: end; }
+.apc-sitio label { display: grid; gap: 4px; font-weight: 700; margin-top: 6px; min-width: 0; }
+.apc-sitio input { width: 100%; }
+@media (max-width: 380px) { .apc-sitio { grid-template-columns: 1fr; gap: 0; } }
+.apc-cp-ayuda { margin: 4px 0 0; }
+.apc-elegir { border: 2px solid var(--rojo); border-radius: 12px; padding: 12px 14px; margin-top: 10px; display: grid; gap: 8px; }
+.apc-elegir h3 { margin: 0; font-size: 1.1rem; }
+.apc-elegir button { display: grid; text-align: left; gap: 2px; min-height: 52px; justify-content: stretch; }
+.apc-elegir button small { font-weight: 400; opacity: .85; }

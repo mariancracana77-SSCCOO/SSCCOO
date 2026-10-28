@@ -354,10 +354,16 @@
     <div id="apc-preparar">
       <p class="intro-vista">Pon adónde vas y te calculo una ruta para tu camión. Mientras conduces, te enseño los aparcamientos que tienes por delante y si estarán abiertos cuando llegues.</p>
       <form class="panel apc-form" id="apc-form" autocomplete="off">
-        <label for="apc-desde">Desde</label>
-        <input id="apc-desde" placeholder="Vacío = donde estás ahora" enterkeyhint="next">
-        <label for="apc-hasta">Hasta</label>
-        <input id="apc-hasta" placeholder="Ej: Milán, Italia" enterkeyhint="go">
+        <div class="apc-sitio">
+          <label>Desde<input id="apc-desde" placeholder="Vacío = donde estás ahora" enterkeyhint="next"></label>
+          <label>Código postal<input id="apc-desde-cp" placeholder="Opcional" autocomplete="off" maxlength="10" enterkeyhint="next"></label>
+        </div>
+        <div class="apc-sitio">
+          <label>Hasta<input id="apc-hasta" placeholder="Ej: Milán, Italia" enterkeyhint="next"></label>
+          <label>Código postal<input id="apc-hasta-cp" placeholder="Opcional" autocomplete="off" maxlength="10" enterkeyhint="go"></label>
+        </div>
+        <p class="apc-nota apc-cp-ayuda">Si hay varios pueblos con el mismo nombre, pon el código postal y saldrá el pueblo exacto. Si no lo pones y hay varios, te preguntaré cuál.</p>
+        <div id="apc-elegir"></div>
         <details class="apc-datos"><summary>Datos de tu camión</summary>
           <div class="apc-medidas">
             <label>Alto (m)<input id="apc-alto" inputmode="decimal"></label>

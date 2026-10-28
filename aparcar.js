@@ -13,7 +13,7 @@
   const $ = (id) => document.getElementById(id);
   if (!$("v-aparcar")) return;
   const CLAVE = "ccoo-aparcar", CAJA = "ccoo-aparcamientos";
-  const DEF = () => ({ camion: { alto: "4", ancho: "2,55", largo: "16,5", peso: "40", adr: false }, voz: false, cerrados: false, desde: "", hasta: "" });
+  const DEF = () => ({ camion: { alto: "4", ancho: "2,55", largo: "16,5", peso: "40", adr: false }, voz: false, cerrados: false, desde: "", hasta: "", cpDesde: "", cpHasta: "" });
   const lee = () => { try { const d = JSON.parse(localStorage.getItem(CLAVE) || "null") || {}; return { ...DEF(), ...d, camion: { ...DEF().camion, ...(d.camion || {}) } }; } catch (_) { return DEF(); } };
   let AJ = lee();
   const guarda = () => { try { localStorage.setItem(CLAVE, JSON.stringify(AJ)); } catch (_) {} };
@@ -187,12 +187,12 @@
   // ---------- Formulario ----------
   function pintaFormulario() {
     const c = AJ.camion;
-    $("apc-desde").value = AJ.desde; $("apc-hasta").value = AJ.hasta;
+    $("apc-desde").value = AJ.desde; $("apc-hasta").value = AJ.hasta; $("apc-desde-cp").value = AJ.cpDesde; $("apc-hasta-cp").value = AJ.cpHasta;
     $("apc-alto").value = c.alto; $("apc-ancho").value = c.ancho; $("apc-largo").value = c.largo; $("apc-peso").value = c.peso; $("apc-adr").checked = !!c.adr;
     $("apc-voz").checked = !!AJ.voz; $("apc-cerrados").checked = !!AJ.cerrados;
   }
   function leeFormulario() {
-    AJ.desde = $("apc-desde").value.trim(); AJ.hasta = $("apc-hasta").value.trim();
+    AJ.desde = $("apc-desde").value.trim(); AJ.hasta = $("apc-hasta").value.trim(); AJ.cpDesde = $("apc-desde-cp").value.trim(); AJ.cpHasta = $("apc-hasta-cp").value.trim();
     AJ.camion = { alto: $("apc-alto").value.trim(), ancho: $("apc-ancho").value.trim(), largo: $("apc-largo").value.trim(), peso: $("apc-peso").value.trim(), adr: $("apc-adr").checked };
     guarda();
   }
@@ -205,11 +205,13 @@
 
   async function buscaRuta() {
     leeFormulario();
-    if (!AJ.hasta) { estado("Escribe adónde vas.", true); $("apc-hasta").focus(); return; }
+    if (!AJ.hasta && !AJ.cpHasta) { estado("Escribe adónde vas.", true); $("apc-hasta").focus(); return; }
+    $("apc-elegir").innerHTML = "";
     $("apc-buscar").disabled = true; estado("Calculando la ruta para tu camión…");
     try {
-      const desde = AJ.desde || await posicion().then(p => ({ ...p, nombre: "Tu ubicación" }));
-      const { data, error } = await sb.functions.invoke("ruta", { body: { desde, hasta: AJ.hasta, camion: AJ.camion } });
+      const desde = ELEGIDO.desde || ((AJ.desde || AJ.cpDesde) ? AJ.desde : await posicion().then(p => ({ ...p, nombre: "Tu ubicación" })));
+      const { data, error } = await sb.functions.invoke("ruta", { body: { desde, hasta: ELEGIDO.hasta || AJ.hasta, cp_desde: AJ.cpDesde, cp_hasta: AJ.cpHasta, camion: AJ.camion, elegir: true } });
+      if (data?.elegir) { estado(""); pintaElegir(data.elegir); return; }
       if (error || !data || data.error) throw new Error(data?.error || "No se ha podido calcular la ruta. Comprueba que tienes internet.");
       RUTA = data;
       estado("Buscando aparcamientos en la ruta…");
@@ -219,6 +221,22 @@
       pintaRuta();
     } catch (e) { estado(e.message || String(e), true); }
     finally { $("apc-buscar").disabled = false; }
+  }
+
+  // Varios pueblos con el mismo nombre (lo pidió el padre: con el código postal sale el exacto; si no, se pregunta)
+  let ELEGIDO = { desde: null, hasta: null };
+  function pintaElegir(e) {
+    const caja = $("apc-elegir"), lados = [["desde", "salida"], ["hasta", "destino"]].filter(([k]) => e[k]?.length);
+    caja.innerHTML = lados.map(([k, txt]) => `<div class="apc-elegir" data-lado="${k}"><h3>Hay varios sitios con ese nombre. ¿Cuál es el de ${txt}?</h3>
+      ${e[k].map((x, i) => `<button type="button" class="btn sec" data-i="${i}"><b>${esc(x.nombre)}</b><small>${esc(x.detalle || "")}</small></button>`).join("")}
+      <p class="apc-nota">Si no está, escribe el código postal arriba.</p></div>`).join("");
+    caja.querySelectorAll(".apc-elegir").forEach(d => d.querySelectorAll("button").forEach(b => b.onclick = () => {
+      const x = e[d.dataset.lado][+b.dataset.i];
+      ELEGIDO[d.dataset.lado] = { lat: x.lat, lon: x.lon, nombre: [x.nombre, x.cp].filter(Boolean).join(" · ") };
+      d.remove();
+      if (!caja.querySelector(".apc-elegir")) buscaRuta();
+    }));
+    caja.querySelector("button")?.focus();
   }
 
   function pintaRuta() {
@@ -375,6 +393,8 @@
     pintaFormulario();
     // Durante el viaje, los avisos de los compañeros se refrescan cada 2 minutos
     $("apc-buscar").onclick = buscaRuta;
+    // Si cambia el sitio o el código postal, lo elegido antes ya no vale
+    [["apc-desde", "desde"], ["apc-desde-cp", "desde"], ["apc-hasta", "hasta"], ["apc-hasta-cp", "hasta"]].forEach(([id, k]) => $(id).addEventListener("input", () => { ELEGIDO[k] = null; $("apc-elegir").innerHTML = ""; }));
     $("apc-form").onsubmit = (e) => { e.preventDefault(); buscaRuta(); };
     $("apc-sin-destino").onclick = () => empiezaViaje(true);
     $("apc-terminar").onclick = terminaViaje;
