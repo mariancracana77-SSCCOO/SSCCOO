@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://kdfedwcskymaitvpryvg.supabase.co; connect-src 'self' https://kdfedwcskymaitvpryvg.supabase.co wss://kdfedwcskymaitvpryvg.supabase.co; media-src 'self' https://kdfedwcskymaitvpryvg.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://kdfedwcskymaitvpryvg.supabase.co https://tile.openstreetmap.org; connect-src 'self' https://kdfedwcskymaitvpryvg.supabase.co wss://kdfedwcskymaitvpryvg.supabase.co; media-src 'self' https://kdfedwcskymaitvpryvg.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -379,7 +379,7 @@
       <button type="button" class="btn sec apc-sin" id="apc-sin-destino">Sin destino: ver los que tengo delante</button>
       <p class="msg" id="apc-estado" role="status" aria-live="polite"></p>
       <div id="apc-ruta"></div>
-      <p class="aviso-oficial apc-aviso"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Los aparcamientos salen de OpenStreetMap, el mapa libre que hace la gente, y se renuevan cada mes: puede faltar alguno, haber cambiado o estar en el otro sentido de la autopista. «Abierto» sale del horario, no de si hay plazas libres. «Cerrado» sale del horario apuntado; si un aparcamiento no tiene horario, sale como «Sin horario». Para calcular la ruta, el origen y el destino pasan por el servidor de la sección sin guardarse; mientras conduces, tu ubicación no sale del móvil.</span></p>
+      <p class="aviso-oficial apc-aviso"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Los aparcamientos salen de OpenStreetMap, el mapa libre que hace la gente, y se renuevan cada mes: puede faltar alguno, haber cambiado o estar en el otro sentido de la autopista. «Abierto» sale del horario, no de si hay plazas libres. «Cerrado» sale del horario apuntado; si un aparcamiento no tiene horario, sale como «Sin horario». Para calcular la ruta, el origen y el destino pasan por el servidor de la sección sin guardarse; mientras conduces, tu ubicación no sale del móvil. El modo «Mapa» descarga el mapa de OpenStreetMap: su servidor ve la zona que miras, como cualquier mapa.</span></p>
     </div>
     <div id="apc-viaje" hidden>
       <div class="apc-viaje-cab"><h2 id="apc-viaje-tit">Por delante en tu ruta</h2><button type="button" class="btn sec" id="apc-terminar">Terminar</button></div>
@@ -388,7 +388,9 @@
         <label class="check"><input type="checkbox" id="apc-voz"> Avisarme en voz alta</label>
         <label class="check"><input type="checkbox" id="apc-cerrados"> Ver también los cerrados</label>
       </div>
+      <div class="apc-vista" role="group" aria-label="Ver como"><button type="button" data-apc-vista="lista">Lista</button><button type="button" data-apc-vista="mapa">Mapa</button></div>
       <div id="apc-proximos"></div>
+      <div id="apc-mapa-viaje" class="apc-mapa" role="region" aria-label="Mapa con tu posición y los aparcamientos" hidden></div>
       <p class="apc-nota">No toques el móvil mientras conduces: déjalo en el soporte y activa la voz. La pantalla se queda encendida mientras esté abierta.</p>
     </div>
 

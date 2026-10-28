@@ -13,7 +13,7 @@
   const $ = (id) => document.getElementById(id);
   if (!$("v-aparcar")) return;
   const CLAVE = "ccoo-aparcar", CAJA = "ccoo-aparcamientos";
-  const DEF = () => ({ camion: { alto: "4", ancho: "2,55", largo: "16,5", peso: "40", adr: false }, voz: false, cerrados: false, desde: "", hasta: "", cpDesde: "", cpHasta: "" });
+  const DEF = () => ({ camion: { alto: "4", ancho: "2,55", largo: "16,5", peso: "40", adr: false }, voz: false, cerrados: false, desde: "", hasta: "", cpDesde: "", cpHasta: "", vista: "lista" });
   const lee = () => { try { const d = JSON.parse(localStorage.getItem(CLAVE) || "null") || {}; return { ...DEF(), ...d, camion: { ...DEF().camion, ...(d.camion || {}) } }; } catch (_) { return DEF(); } };
   let AJ = lee();
   const guarda = () => { try { localStorage.setItem(CLAVE, JSON.stringify(AJ)); } catch (_) {} };
@@ -282,10 +282,72 @@
     caja.innerHTML = `<div class="apc-resumen" role="group" aria-label="Qué aparcamientos ver">
         ${cifra("cerrados", "cerr", cerrados.length, cerrados.length === 1 ? "cerrado" : "cerrados")}${cifra("abiertos", "abie", abiertos.length, abiertos.length === 1 ? "abierto" : "abiertos")}${cifra("nose", "nose", sinHorario.length, "sin horario")}</div>
       <button type="button" class="btn sec apc-ver-todos${FILTRO === "todos" ? " activa" : ""}" data-filtro="todos" aria-pressed="${FILTRO === "todos"}">Ver todos (${lista.length}), del primero al último</button>
+      ${vistaHTML()}
       <p class="apc-cuenta">De los ${pl(lista.length, "aparcamiento", "aparcamientos")} de la ruta, a la hora a la que pasas.${EN_RUTA.contrario ? ` Solo salen los de tu sentido de marcha: ${pl(EN_RUTA.contrario, "área", "áreas")} del otro lado de la autopista no ${EN_RUTA.contrario === 1 ? "sale" : "salen"}.` : ""}${sinHorario.length ? " «Sin horario»: nadie ha apuntado su horario, así que no se sabe si estará abierto." : ""}</p>`
-      + (ver.length ? listaPorTramos(ver)
+      + (AJ.vista === "mapa" ? `<div id="apc-mapa" class="apc-mapa" role="region" aria-label="Mapa de la ruta con los aparcamientos"></div>`
+        : ver.length ? listaPorTramos(ver)
         : `<p class="desc-vacio">${FILTRO === "cerrados" ? "Según los horarios apuntados, ninguno estará cerrado cuando pases." + (sinHorario.length ? ` Mira también «Sin horario» (${sinHorario.length}): de esos no se sabe.` : "") : "No hay ninguno."}</p>`);
     caja.querySelectorAll("[data-filtro]").forEach(b => b.onclick = () => ponFiltro(b.dataset.filtro));
+    if (AJ.vista === "mapa") pintaMapa("apc-mapa", ver);
+  }
+
+  // ---------- Mapa (lo pidió Lorena: «versión mapa y versión lista») ----------
+  // Leaflet alojado aquí (lib/leaflet.js, sin CDN) y el mapa de OpenStreetMap (tile.openstreetmap.org, está en la CSP).
+  // Se carga solo al tocar «Mapa». El servidor del mapa ve la zona que se mira (lo dice el aviso de privacidad de la vista).
+  const vistaHTML = () => `<div class="apc-vista" role="group" aria-label="Ver como">${[["lista", "Lista"], ["mapa", "Mapa"]].map(([k, t]) =>
+    `<button type="button" class="${AJ.vista === k ? "activa" : ""}" data-apc-vista="${k}" aria-pressed="${AJ.vista === k}">${t}</button>`).join("")}</div>`;
+  let LEAFLET = null;
+  function cargaLeaflet() {
+    if (LEAFLET) return LEAFLET;
+    return (LEAFLET = new Promise((ok, mal) => {
+      const v = typeof VERSION_WEB !== "undefined" ? VERSION_WEB : "";
+      const css = document.createElement("link"); css.rel = "stylesheet"; css.href = "lib/leaflet.css?v=" + v; document.head.appendChild(css);
+      const js = document.createElement("script"); js.src = "lib/leaflet.js?v=" + v;
+      js.onload = () => ok(window.L); js.onerror = () => { LEAFLET = null; js.remove(); mal(new Error("No se ha podido cargar el mapa.")); };
+      document.head.appendChild(js);
+    }));
+  }
+  const MAPAS = {};
+  // Pinta en el div «id» la ruta y los aparcamientos (cada uno con sus plazas para camiones; al tocarlo, su tarjeta)
+  async function pintaMapa(id, items, opc = {}) {
+    let L; try { L = await cargaLeaflet(); } catch (e) { const c = $(id); if (c) c.innerHTML = `<p class="msg err">${esc(e.message)} Comprueba que tienes internet.</p>`; return; }
+    const caja = $(id); if (!caja || caja.hidden) return;
+    let m = MAPAS[id];
+    if (!m || m.div !== caja) {
+      try { m?.mapa.remove(); } catch (_) {}
+      const mapa = L.map(caja, { zoomControl: true });
+      mapa.attributionControl.setPrefix(false);
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(mapa);
+      m = MAPAS[id] = { div: caja, mapa, capa: L.layerGroup().addTo(mapa), ruta: null, rutaDe: null, yo: null, encuadrado: false };
+    }
+    const conRuta = opc.ruta !== false && RUTA;
+    if (!conRuta && m.ruta) { m.ruta.remove(); m.ruta = null; m.rutaDe = null; }
+    if (conRuta && m.rutaDe !== RUTA) {
+      m.ruta?.remove();
+      m.ruta = L.polyline(RUTA.fina || RUTA.puntos.map(q => [q[0], q[1]]), { color: "#AB1012", weight: 5, opacity: .85 }).addTo(m.mapa);
+      m.rutaDe = RUTA; m.encuadrado = false;
+    }
+    m.capa.clearLayers();
+    for (const y of items) {
+      const e = estadoA(y.x, y.llega), cls = e === "no" ? "no" : e === "nose" ? "nose" : "si";
+      const icon = L.divIcon({ className: "apc-pin " + cls, html: `<span>${y.x.plazas ? y.x.plazas : "P"}</span>`, iconSize: [36, 36], iconAnchor: [18, 18], popupAnchor: [0, -16] });
+      L.marker([y.x.lat, y.x.lon], { icon, title: nombre(y.x) + (y.x.plazas ? `, ${y.x.plazas} plazas` : "") })
+        .bindPopup(`<ul class="apc-lista apc-popup">${tarjeta(y.x, y.falta ?? y.x.kmRuta, y.llega)}</ul>`, { maxWidth: 290, minWidth: 220 }).addTo(m.capa);
+    }
+    if (opc.yo) { if (m.yo) m.yo.setLatLng(opc.yo); else m.yo = L.circleMarker(opc.yo, { radius: 9, color: "#fff", weight: 3, fillColor: "#1E4F9C", fillOpacity: 1 }).addTo(m.mapa); }
+    if (!m.encuadrado) {
+      m.encuadrado = true;
+      if (opc.yo) m.mapa.setView(opc.yo, 10);
+      else if (m.ruta) m.mapa.fitBounds(m.ruta.getBounds(), { padding: [24, 24] });
+      else if (items.length) m.mapa.fitBounds(items.map(y => [y.x.lat, y.x.lon]), { padding: [24, 24], maxZoom: 12 });
+      else m.mapa.setView([46, 4], 5);
+    }
+    setTimeout(() => m.mapa.invalidateSize(), 60);
+  }
+  function ponVista(v) {
+    AJ.vista = v; guarda();
+    document.querySelectorAll("#v-aparcar [data-apc-vista]").forEach(b => { b.classList.toggle("activa", b.dataset.apcVista === v); b.setAttribute("aria-pressed", b.dataset.apcVista === v); });
+    if (VIAJE) { VIAJE.firma = ""; repinta(); } else pintaTodos();
   }
 
   // Lista larga de toda la ruta, con un rótulo cada 100 km para ubicarse al bajar (lo pidió el padre: verlos todos con sus distancias)
@@ -311,7 +373,9 @@
     ULT_VOZ = ""; ANTES = null;
     $("apc-preparar").hidden = true; $("apc-viaje").hidden = false;
     $("apc-viaje-tit").textContent = VIAJE.sinDestino ? "Delante de ti" : "Por delante en tu ruta";
-    $("apc-proximos").innerHTML = `<p class="apc-nota">Buscando dónde estás…</p>`;
+    $("apc-proximos").innerHTML = `<p class="apc-nota">Buscando dónde estás…</p>`; $("apc-proximos").hidden = false; $("apc-mapa-viaje").hidden = true;
+    if (MAPAS["apc-mapa-viaje"]) MAPAS["apc-mapa-viaje"].encuadrado = false;
+    document.querySelectorAll("#apc-viaje [data-apc-vista]").forEach(b => { b.classList.toggle("activa", b.dataset.apcVista === AJ.vista); b.setAttribute("aria-pressed", b.dataset.apcVista === AJ.vista); });
     pideCandado();
     VIGIA = navigator.geolocation.watchPosition(enMarcha, (e) => { $("apc-proximos").innerHTML = `<p class="msg err">${e.code === 1 ? "Sin permiso de ubicación no puedo saber qué tienes por delante. Dale permiso a la app en los ajustes del móvil." : "No se ha podido saber dónde estás. Comprueba que la ubicación está encendida."}</p>`; },
       { enableHighAccuracy: true, maximumAge: 10000, timeout: 30000 });
@@ -357,10 +421,14 @@
     const mostrar = AJ.cerrados ? lista : vale;
     // Salen todos los que quedan por delante (se baja para ver más). Para no mover la lista mientras se mira,
     // se repinta como mucho cada 10 s, salvo que cambie el primero.
-    const firma = mostrar.map(y => y.x.osm).join(), ahoraP = Date.now();
+    const enMapa = AJ.vista === "mapa";
+    $("apc-proximos").hidden = enMapa; $("apc-mapa-viaje").hidden = !enMapa;
+    if (enMapa) MAPAS["apc-mapa-viaje"]?.yo?.setLatLng([a, o]);
+    const firma = AJ.vista + mostrar.map(y => y.x.osm).join(), ahoraP = Date.now();
     if (firma === VIAJE.firma && ahoraP - PINTADO < 10000) return;
     VIAJE.firma = firma; PINTADO = ahoraP;
-    $("apc-proximos").innerHTML = mostrar.length
+    if (enMapa) pintaMapa("apc-mapa-viaje", mostrar, { yo: [a, o], ruta: !VIAJE.sinDestino });
+    else $("apc-proximos").innerHTML = mostrar.length
       ? `<p class="apc-cuenta">${mostrar.length === 1 ? "1 aparcamiento" : mostrar.length + " aparcamientos"} por delante, del más cercano al más lejano. Baja para verlos todos.</p><ul class="apc-lista">${mostrar.map(y => tarjeta(y.x, y.falta, y.llega)).join("")}</ul>${cerrados && !AJ.cerrados ? `<p class="apc-nota">${cerrados} por delante estarán cerrados cuando llegues: no salen. Para verlos, marca «Ver también los cerrados».</p>` : ""}`
       : `<p class="desc-vacio">No hay aparcamientos abiertos por delante.</p>`;
     const primero = vale[0];
@@ -393,6 +461,7 @@
     pintaFormulario();
     // Durante el viaje, los avisos de los compañeros se refrescan cada 2 minutos
     $("apc-buscar").onclick = buscaRuta;
+    $("v-aparcar").addEventListener("click", (e) => { const b = e.target.closest("[data-apc-vista]"); if (b) ponVista(b.dataset.apcVista); });
     // Si cambia el sitio o el código postal, lo elegido antes ya no vale
     [["apc-desde", "desde"], ["apc-desde-cp", "desde"], ["apc-hasta", "hasta"], ["apc-hasta-cp", "hasta"]].forEach(([id, k]) => $(id).addEventListener("input", () => { ELEGIDO[k] = null; $("apc-elegir").innerHTML = ""; }));
     $("apc-form").onsubmit = (e) => { e.preventDefault(); buscaRuta(); };

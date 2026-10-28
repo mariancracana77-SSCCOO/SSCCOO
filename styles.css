@@ -1900,3 +1900,19 @@ b.gan-fecha { cursor: default; }
 .apc-elegir h3 { margin: 0; font-size: 1.1rem; }
 .apc-elegir button { display: grid; text-align: left; gap: 2px; min-height: 52px; justify-content: stretch; }
 .apc-elegir button small { font-weight: 400; opacity: .85; }
+/* v90: Lista / Mapa (Leaflet + OpenStreetMap) */
+.apc-vista { display: inline-flex; border: 2px solid var(--rojo); border-radius: 999px; overflow: hidden; margin: 4px 0 10px; }
+.apc-vista button { min-height: 44px; min-width: 96px; padding: 6px 18px; border: 0; background: transparent; color: var(--tinta); font: inherit; font-weight: 700; cursor: pointer; }
+.apc-vista button.activa { background: var(--rojo); color: #fff; }
+.apc-mapa { height: min(68vh, 560px); min-height: 320px; border-radius: 12px; border: 1px solid var(--linea); overflow: hidden; background: #e8e4dc; }
+.apc-mapa .leaflet-control-attribution { font-size: .72rem; }
+.apc-pin { display: grid; place-items: center; }
+.apc-pin span { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.45); font: 700 .9rem/1 var(--cond, sans-serif); color: #fff; background: #1B7F3B; }
+.apc-pin.no span { background: #6b7078; }
+.apc-pin.nose span { background: #15191E; }
+.apc-popup { margin: 0; }
+.apc-popup .apc { border: 0; padding: 0; background: transparent; box-shadow: none; }
+.apc-mapa .leaflet-popup-content-wrapper, .apc-mapa .leaflet-popup-tip { background: var(--tarjeta); color: var(--tinta); }
+.apc-mapa .leaflet-container a.leaflet-popup-close-button, .apc-mapa a.leaflet-popup-close-button { color: var(--suave); width: 30px; height: 30px; font-size: 24px; }
+.leaflet-popup-content { margin: 12px 14px; font: inherit; }
+.apc-mapa .leaflet-bar a { width: 40px; height: 40px; line-height: 40px; font-size: 22px; color: #15191E; background: #fff; text-decoration: none; }
