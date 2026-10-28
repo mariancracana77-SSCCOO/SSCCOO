@@ -37,6 +37,8 @@
       { osm: "w5", pais: "FR", lat: 43.0500, lon: 2.9800, nombre: null, horario: null, pago: null, precio: null, vigilado: false, duchas: false, aseos: false, plazas: null, area: false, camion: true },
       { osm: "w6", pais: "FR", lat: 44.9000, lon: 4.8000, nombre: "Lejos de la ruta", horario: null, pago: 0, precio: null, vigilado: false, duchas: false, aseos: false, plazas: null, area: true, camion: true },
     ],
+    // Avisos de compañeros (el «Aire de prueba» avisado cerrado hace un rato)
+    avisos_aparcamiento: [{ id: 1, osm: "w3", tipo: "cerrado", cuando: new Date(Date.now() - 40 * 60000).toISOString() }],
     tarifas_conductor: [
       { id: 1, grupo: "Salario", concepto: "Salario bruto (sin antigüedad)", importe: 1725.28, unidad: "mes", pago: "Mensual", sin_pagar: 0, max_mes: null, nota: "", orden: 10, visible: true },
       { id: 3, grupo: "Dieta completa", concepto: "Dieta completa nacional", importe: 48.6, importe_nuevo: 50.82, desde: "2027-01-01", unidad: "dia", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "", orden: 30, visible: true },
@@ -83,7 +85,7 @@
   window.supabase = {
     createClient: () => ({
       from: consulta, auth, channel: () => canal, removeChannel() {},
-      rpc: async () => ({ data: null, error: null }),
+      rpc: async (n) => ({ data: n === "avisar_aparcamiento" ? "ok" : null, error: null }),
       functions: { invoke: async (n) => ({ data: n === "ruta" ? RUTA_PRUEBA : null, error: null }) },
       storage: { from: () => ({ upload: async () => ({ error: null }), getPublicUrl: (r) => ({ data: { publicUrl: "https://example.com/documentos/" + r } }), remove: async () => ({}), list: async () => ({ data: [] }) }) },
     }),

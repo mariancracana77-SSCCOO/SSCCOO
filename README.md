@@ -75,7 +75,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
-## Versión 90: aparcamientos cerrados de la ruta y aviso «En pruebas»
+## Versión 90: aparcamientos cerrados de la ruta, avisos de los compañeros y sin navegador
+
+- **Sin navegador** (lo pidió el padre: ya usa uno de pago y quiere solo información): fuera los botones de Google Maps («Ir guiado» y «Llevarme aquí»). La ruta sirve solo para saber qué aparcamientos hay en el camino.
+- **Avisos de los compañeros, en tiempo real:** en cada aparcamiento, «¿Lo ves ahora?» con «Está cerrado», «Está lleno» y, si alguien ya avisó, «Está abierto». A los demás les sale «Cerrado · avisado por un compañero hace 40 min» (dura 12 horas; «lleno», 3 horas). Un aparcamiento avisado como cerrado sale entre los cerrados y no entre los abiertos del viaje. Es anónimo: solo se guarda el aparcamiento, el aviso y la hora.
 
 - **«Aparcamientos en mi ruta» avisa de que está en pruebas**, arriba de la pantalla y en la tarjeta de Zona Conductores.
 - **Todos los aparcamientos de la ruta**, debajo de la ruta calculada, con tres botones: **Abiertos**, **Cerrados** y **Todos** (lo pidió el padre: le interesa sobre todo saber cuáles estarán cerrados). Cuenta cuántos hay abiertos, cuántos cerrados y cuántos no tienen el horario apuntado. Con **«Salgo a las…»** se calcula a qué hora pasas por cada uno (vacío = ahora).
