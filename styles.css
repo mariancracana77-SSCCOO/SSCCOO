@@ -1840,15 +1840,13 @@ b.gan-fecha { cursor: default; }
 .apc-interruptores .check { margin-top: 6px; font-size: 1.05rem; }
 .apc-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .apc { background: var(--tarjeta); border: 1px solid var(--linea); border-left: 8px solid var(--apc-gris); border-radius: 12px; padding: 12px 14px; display: grid; gap: 6px; }
-.apc.gratis { border-left-color: var(--apc-verde); }
-.apc.pago { border-left-color: var(--apc-azul); }
 .apc.cerrado { opacity: .7; }
 .apc-cab { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 10px; }
 .apc-dist { font-family: var(--cond); font-weight: 700; font-size: 1.4rem; color: var(--tinta); }
-.apc-precio { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 5px 12px; font-weight: 700; font-size: .95rem; color: #fff; background: var(--apc-gris); }
-.apc-precio.gratis { background: var(--apc-verde); }
-.apc-precio.pago { background: var(--apc-azul); }
-.apc-precio .icono { width: 17px; height: 17px; }
+/* v90: plazas para camiones, lo que más importa al conductor (sin gratis/de pago) */
+.apc-plazas { display: inline-flex; align-items: baseline; gap: 5px; border-radius: 8px; padding: 3px 12px; font-weight: 700; font-size: 1rem; color: var(--tarjeta); background: var(--tinta); }
+.apc-plazas b { font-family: var(--cond); font-size: 1.6rem; line-height: 1.1; }
+.apc-plazas.nose { background: transparent; color: var(--suave); border: 1px dashed var(--linea); font-size: .9rem; padding: 4px 10px; }
 .apc-nom { font-size: 1.15rem; line-height: 1.25; }
 .apc-hor, .apc-hor small { color: var(--suave); font-size: .92rem; }
 .apc-abre { font-weight: 700; }
@@ -1859,3 +1857,100 @@ b.gan-fecha { cursor: default; }
 .apc-ir { justify-content: center; text-align: center; min-height: 52px; text-decoration: none; margin-top: 4px; font-size: 1.05rem; }
 .apc-aviso { margin-top: 16px; }
 #v-aparcar .aviso-oficial, #v-aparcar .aviso-oficial span { font-weight: 400; font-size: .92rem; }
+/* v90: «En pruebas» y lista de toda la ruta (abiertos / cerrados / todos) */
+.apc-pruebas { background: var(--ambar-suave, #fff4d6); border: 2px dashed var(--rojo); border-radius: 12px; padding: 10px 14px; margin: 0 0 12px; font-size: .95rem; }
+.apc-etq-pruebas { display: inline-block; margin-left: 6px; padding: 1px 8px; border: 1px solid var(--rojo-ic); border-radius: 999px; color: var(--rojo-ic); font-size: .72rem; font-weight: 700; vertical-align: middle; text-transform: uppercase; letter-spacing: .03em; }
+.apc-todos { margin-top: 18px; }
+.apc-todos h2 { font-family: var(--cond); font-size: 1.5rem; text-transform: uppercase; margin: 0 0 8px; }
+.apc-salida { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-weight: 700; margin-bottom: 10px; }
+.apc-salida input { width: auto; min-height: 44px; }
+.apc-salida small { font-weight: 400; color: var(--suave); }
+.apc-filtro { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+.apc-filtro .filtro { min-height: 48px; font-size: 1rem; }
+.apc-cuenta { color: var(--suave); font-size: .95rem; margin: 0 0 10px; }
+.apc-c-abierto { color: var(--apc-verde); }
+.apc-c-cerrado { color: var(--tinta); }
+.apc.cerrado { opacity: 1; background: var(--fondo); border-style: dashed; border-left-style: solid; }
+.apc.cerrado .apc-abre.no { color: var(--tinta); background: var(--linea); border-radius: 6px; padding: 1px 8px; }
+/* v90: resumen de la ruta en tres cifras (cerrados / abiertos / sin horario); se pulsan para ver la lista */
+.apc-ver-todos { width: 100%; justify-content: center; min-height: 48px; margin-bottom: 8px; }
+.apc-ver-todos.activa { border-color: var(--tinta); box-shadow: inset 0 -4px 0 var(--tinta); }
+.apc-resumen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 4px 0 8px; }
+.apc-cifra { display: grid; justify-items: center; gap: 2px; padding: 10px 4px; border-radius: 12px; border: 2px solid var(--linea); background: var(--tarjeta); color: var(--tinta); font: inherit; font-weight: 700; cursor: pointer; min-height: 64px; }
+.apc-cifra b { font-family: var(--cond); font-size: 2rem; line-height: 1; }
+.apc-cifra.cerr b { color: var(--tinta); }
+.apc-cifra.abie b { color: var(--apc-verde); }
+.apc-cifra.nose b { color: var(--apc-gris); }
+.apc-cifra.activa { border-color: var(--tinta); box-shadow: inset 0 -4px 0 var(--tinta); }
+/* v90: avisos de los compañeros en cada aparcamiento */
+.apc-avisar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--linea); }
+.apc-avisar > span { color: var(--suave); font-size: .88rem; width: 100%; }
+.apc-avisar .btn { flex: 1 1 0; min-width: 0; min-height: 46px; justify-content: center; font-size: .95rem; padding: 8px; }
+.apc-aviso-comp { color: var(--suave); font-size: .85rem; }
+.apc-lleno { font-weight: 700; color: var(--tinta); background: var(--linea); border-radius: 6px; padding: 3px 8px; justify-self: start; }
+/* v90: lista de toda la ruta con un rótulo cada 100 km */
+.apc-tramo { font-family: var(--cond); text-transform: uppercase; letter-spacing: .02em; font-size: 1.15rem; margin: 18px 0 8px; padding-bottom: 4px; border-bottom: 3px solid var(--rojo); }
+/* v90: sitio + código postal, y elegir entre pueblos con el mismo nombre */
+.apc-sitio { display: grid; grid-template-columns: minmax(0, 1fr) 8.5em; gap: 10px; align-items: end; }
+.apc-sitio label { display: grid; gap: 4px; font-weight: 700; margin-top: 6px; min-width: 0; }
+.apc-sitio input { width: 100%; }
+@media (max-width: 380px) { .apc-sitio { grid-template-columns: 1fr; gap: 0; } }
+.apc-cp-ayuda { margin: 4px 0 0; }
+.apc-elegir { border: 2px solid var(--rojo); border-radius: 12px; padding: 12px 14px; margin-top: 10px; display: grid; gap: 8px; }
+.apc-elegir h3 { margin: 0; font-size: 1.1rem; }
+.apc-elegir button { display: grid; text-align: left; gap: 2px; min-height: 52px; justify-content: stretch; }
+.apc-elegir button small { font-weight: 400; opacity: .85; }
+/* v90: Lista / Mapa (Leaflet + OpenStreetMap) */
+.apc-vista { display: inline-flex; border: 2px solid var(--rojo); border-radius: 999px; overflow: hidden; margin: 4px 0 10px; }
+.apc-vista button { min-height: 44px; min-width: 96px; padding: 6px 18px; border: 0; background: transparent; color: var(--tinta); font: inherit; font-weight: 700; cursor: pointer; }
+.apc-vista button.activa { background: var(--rojo); color: #fff; }
+.apc-mapa { height: min(68vh, 560px); min-height: 320px; border-radius: 12px; border: 1px solid var(--linea); overflow: hidden; background: #e8e4dc; }
+.apc-mapa .leaflet-control-attribution { font-size: .72rem; }
+.apc-pin { display: grid; place-items: center; }
+.apc-pin span { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.45); font: 700 .9rem/1 var(--cond, sans-serif); color: #fff; background: #1B7F3B; }
+.apc-pin.no span { background: #6b7078; }
+.apc-pin.nose span { background: #15191E; }
+.apc-popup { margin: 0; }
+.apc-popup .apc { border: 0; padding: 0; background: transparent; box-shadow: none; }
+.apc-mapa .leaflet-popup-content-wrapper, .apc-mapa .leaflet-popup-tip { background: var(--tarjeta); color: var(--tinta); }
+.apc-mapa .leaflet-container a.leaflet-popup-close-button, .apc-mapa a.leaflet-popup-close-button { color: var(--suave); width: 30px; height: 30px; font-size: 24px; }
+.leaflet-popup-content { margin: 12px 14px; font: inherit; }
+.apc-mapa .leaflet-bar a { width: 40px; height: 40px; line-height: 40px; font-size: 22px; color: #15191E; background: #fff; text-decoration: none; }
+/* v90: elegir entre la ruta principal y las alternativas */
+.apc-rutas { display: grid; gap: 8px; margin: 10px 0; }
+.apc-rutas h2 { font-family: var(--cond); text-transform: uppercase; font-size: 1.3rem; margin: 0; }
+.apc-ruta-op { display: grid; gap: 2px; text-align: left; padding: 10px 14px; border: 2px solid var(--linea); border-radius: 12px; background: var(--tarjeta); color: var(--tinta); font: inherit; cursor: pointer; min-height: 52px; }
+.apc-ruta-op.activa { border-color: var(--rojo); box-shadow: inset 6px 0 0 var(--rojo); }
+.apc-ruta-op small { color: var(--suave); }
+/* v90: cortes y avisos oficiales en la ruta */
+.apc-cortes-sec { display: grid; gap: 8px; margin: 12px 0; }
+.apc-cortes-sec h2 { font-family: var(--cond); text-transform: uppercase; font-size: 1.3rem; margin: 0; }
+.apc-corte { background: var(--tarjeta); border: 1px solid var(--linea); border-left: 8px solid var(--suave); border-radius: 12px; padding: 10px 14px; display: grid; gap: 4px; }
+.apc-corte.grave { border-color: var(--rojo); border-left-color: var(--rojo); }
+.apc-corte b { font-size: 1.1rem; }
+.apc-corte.grave b { color: var(--rojo-ic); }
+.apc-corte small { color: var(--suave); }
+.apc-sin-cortes { margin: 0; font-weight: 700; }
+.apc-cortes-mas summary { cursor: pointer; font-weight: 700; }
+.apc-cortes-mas .apc-cortes { margin-top: 10px; }
+#apc-cortes-viaje:not(:empty) { margin-bottom: 12px; }
+.apc-pin-corte { display: grid; place-items: center; }
+.apc-pin-corte span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 6px; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.45); background: #6b7078; color: #fff; font: 700 1rem/1 sans-serif; }
+.apc-pin-corte.grave span { background: #AB1012; }
+/* v90: «Llevarme aquí» abre el navegador del conductor */
+.apc-llevar { justify-content: center; text-align: center; text-decoration: none; min-height: 48px; margin-top: 4px; font-size: 1.05rem; }
+.apc-llevar .icono { width: 20px; height: 20px; }
+/* v90: peajes aproximados de la ruta (camión 5 ejes) */
+.apc-peajes { display: grid; gap: 8px; margin: 12px 0; }
+.apc-peajes h2 { font-family: var(--cond); text-transform: uppercase; font-size: 1.3rem; margin: 0; }
+.apc-peaje-total { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0; }
+.apc-peaje-total b { font-family: var(--cond); font-size: 2.2rem; line-height: 1; }
+.apc-peaje-total span { color: var(--suave); }
+.apc-peajes .tabla-scroll { overflow-x: auto; }
+.apc-peajes-tabla { width: 100%; border-collapse: collapse; background: var(--tarjeta); border: 1px solid var(--linea); border-radius: 12px; overflow: hidden; }
+.apc-peajes-tabla th, .apc-peajes-tabla td { padding: 8px 10px; text-align: left; border-top: 1px solid var(--linea); vertical-align: top; }
+.apc-peajes-tabla thead th { border-top: 0; font-size: .85rem; color: var(--suave); }
+.apc-peajes-tabla td:last-child { font-weight: 700; white-space: nowrap; }
+.apc-peajes-tabla th small { display: block; font-weight: 400; color: var(--suave); }
+.apc-peajes-notas summary { cursor: pointer; font-weight: 700; }
+.apc-peajes-notas ul { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 4px; }

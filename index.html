@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://kdfedwcskymaitvpryvg.supabase.co; connect-src 'self' https://kdfedwcskymaitvpryvg.supabase.co wss://kdfedwcskymaitvpryvg.supabase.co; media-src 'self' https://kdfedwcskymaitvpryvg.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://kdfedwcskymaitvpryvg.supabase.co https://tile.openstreetmap.org; connect-src 'self' https://kdfedwcskymaitvpryvg.supabase.co wss://kdfedwcskymaitvpryvg.supabase.co; media-src 'self' https://kdfedwcskymaitvpryvg.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -25,9 +25,9 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="fuentes.css?v=89">
-<script src="lectura.js?v=89"></script>
-<link rel="stylesheet" href="styles.css?v=89">
+<link rel="stylesheet" href="fuentes.css?v=90">
+<script src="lectura.js?v=90"></script>
+<link rel="stylesheet" href="styles.css?v=90">
 </head>
 <body class="publica">
 
@@ -350,13 +350,20 @@
   <!-- APARCAMIENTOS EN MI RUTA (Zona Conductores): ruta para camión y aparcamientos por delante mientras conduces (aparcar.js) -->
   <section class="vista" id="v-aparcar">
     <h1 class="titulo-vista">Aparcamientos en mi ruta</h1>
+    <p class="apc-pruebas"><b>En pruebas.</b> Esta sección todavía se está terminando: puede faltar información o fallar algo. Si ves algo raro, díselo a un delegado.</p>
     <div id="apc-preparar">
       <p class="intro-vista">Pon adónde vas y te calculo una ruta para tu camión. Mientras conduces, te enseño los aparcamientos que tienes por delante y si estarán abiertos cuando llegues.</p>
       <form class="panel apc-form" id="apc-form" autocomplete="off">
-        <label for="apc-desde">Desde</label>
-        <input id="apc-desde" placeholder="Vacío = donde estás ahora" enterkeyhint="next">
-        <label for="apc-hasta">Hasta</label>
-        <input id="apc-hasta" placeholder="Ej: Milán, Italia" enterkeyhint="go">
+        <div class="apc-sitio">
+          <label>Desde<input id="apc-desde" placeholder="Vacío = donde estás ahora" enterkeyhint="next"></label>
+          <label>Código postal<input id="apc-desde-cp" placeholder="Opcional" autocomplete="off" maxlength="10" enterkeyhint="next"></label>
+        </div>
+        <div class="apc-sitio">
+          <label>Hasta<input id="apc-hasta" placeholder="Ej: Milán, Italia" enterkeyhint="next"></label>
+          <label>Código postal<input id="apc-hasta-cp" placeholder="Opcional" autocomplete="off" maxlength="10" enterkeyhint="go"></label>
+        </div>
+        <p class="apc-nota apc-cp-ayuda">Si hay varios pueblos con el mismo nombre, pon el código postal y saldrá el pueblo exacto. Si no lo pones y hay varios, te preguntaré cuál.</p>
+        <div id="apc-elegir"></div>
         <details class="apc-datos"><summary>Datos de tu camión</summary>
           <div class="apc-medidas">
             <label>Alto (m)<input id="apc-alto" inputmode="decimal"></label>
@@ -372,16 +379,19 @@
       <button type="button" class="btn sec apc-sin" id="apc-sin-destino">Sin destino: ver los que tengo delante</button>
       <p class="msg" id="apc-estado" role="status" aria-live="polite"></p>
       <div id="apc-ruta"></div>
-      <p class="aviso-oficial apc-aviso"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Los aparcamientos salen de OpenStreetMap, el mapa libre que hace la gente, y se renuevan cada mes: puede faltar alguno, haber cambiado o estar en el otro sentido de la autopista. «Abierto» sale del horario, no de si hay plazas libres. El Maps no sabe que vas en camión: mira siempre las señales. Para calcular la ruta, el origen y el destino pasan por el servidor de la sección sin guardarse; mientras conduces, tu ubicación no sale del móvil.</span></p>
+      <p class="aviso-oficial apc-aviso"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Los aparcamientos salen de OpenStreetMap, el mapa libre que hace la gente, y se renuevan cada mes: puede faltar alguno, haber cambiado o estar en el otro sentido de la autopista. «Abierto» sale del horario, no de si hay plazas libres. «Cerrado» sale del horario apuntado; si un aparcamiento no tiene horario, sale como «Sin horario». Para calcular la ruta, el origen y el destino pasan por el servidor de la sección sin guardarse; mientras conduces, tu ubicación no sale del móvil. El modo «Mapa» descarga el mapa de OpenStreetMap: su servidor ve la zona que miras, como cualquier mapa.</span></p>
     </div>
     <div id="apc-viaje" hidden>
       <div class="apc-viaje-cab"><h2 id="apc-viaje-tit">Por delante en tu ruta</h2><button type="button" class="btn sec" id="apc-terminar">Terminar</button></div>
       <p class="apc-nota" id="apc-viaje-info"></p>
       <div class="apc-interruptores">
         <label class="check"><input type="checkbox" id="apc-voz"> Avisarme en voz alta</label>
-        <label class="check"><input type="checkbox" id="apc-gratis"> Solo gratis</label>
+        <label class="check"><input type="checkbox" id="apc-cerrados"> Ver también los cerrados</label>
       </div>
-      <div id="apc-proximos" aria-live="polite"></div>
+      <div class="apc-vista" role="group" aria-label="Ver como"><button type="button" data-apc-vista="lista">Lista</button><button type="button" data-apc-vista="mapa">Mapa</button></div>
+      <div id="apc-cortes-viaje" aria-live="polite"></div>
+      <div id="apc-proximos"></div>
+      <div id="apc-mapa-viaje" class="apc-mapa" role="region" aria-label="Mapa con tu posición y los aparcamientos" hidden></div>
       <p class="apc-nota">No toques el móvil mientras conduces: déjalo en el soporte y activa la voz. La pantalla se queda encendida mientras esté abierta.</p>
     </div>
 
@@ -490,13 +500,13 @@
 <div class="barra-acciones" id="barra-acciones"></div>
 <button class="arriba-btn" id="arriba" type="button" aria-label="Volver arriba" title="Volver arriba"><svg class="arriba-aro" viewBox="0 0 52 52" aria-hidden="true"><circle class="aro-fondo" cx="26" cy="26" r="23"/><circle class="aro-prog" cx="26" cy="26" r="23" pathLength="100"/></svg><span data-i="arriba"></span></button>
 
-<script src="lib/supabase.js?v=89"></script>
-<script src="iconos.js?v=89"></script>
-<script src="config.js?v=89"></script>
-<script src="render.js?v=89"></script>
-<script src="app.js?v=89"></script>
-<script src="descansos.js?v=89"></script>
-<script src="ganancias.js?v=89"></script>
-<script src="aparcar.js?v=89"></script>
+<script src="lib/supabase.js?v=90"></script>
+<script src="iconos.js?v=90"></script>
+<script src="config.js?v=90"></script>
+<script src="render.js?v=90"></script>
+<script src="app.js?v=90"></script>
+<script src="descansos.js?v=90"></script>
+<script src="ganancias.js?v=90"></script>
+<script src="aparcar.js?v=90"></script>
 </body>
 </html>

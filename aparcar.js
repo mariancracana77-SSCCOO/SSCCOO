@@ -1,6 +1,10 @@
 // «Aparcamientos en mi ruta» (Zona Conductores, vista #aparcar). Lo pidió el padre para usarlo durante el trayecto:
-// los aparcamientos de camiones que hay POR DELANTE en tu ruta, los abiertos a la hora a la que llegas, gratis en verde,
-// de pago en azul con el precio, y «Llevarme aquí» con Google Maps. El conductor decide dónde para.
+// los aparcamientos de camiones que hay POR DELANTE en tu ruta y los abiertos a la hora a la que llegas.
+// Solo información, sin navegador (el padre ya usa uno de pago). El conductor decide dónde para.
+// v90: sin gratis/de pago (los datos de precio de OpenStreetMap fallaban y al padre no le servía); lo que importa son las
+// plazas para camiones. Se buscan hasta a 3 km de la ruta.
+// v90: el padre no quiere avisos de compañeros (nadie los pondría): solo información para consultar. Al calcular la ruta, lo primero son los CERRADOS.
+// (La tabla avisos_aparcamiento y la RPC avisar_aparcamiento quedan en Supabase sin usar.)
 // - Ruta para camión (alto, ancho, largo, peso, ADR): función «ruta» (Valhalla de OpenStreetMap, sin claves; no guarda nada).
 // - Aparcamientos: tabla «aparcamientos» (OpenStreetMap, se renueva sola cada mes). Se baja por países enteros y se busca
 //   en el móvil: la ubicación no sale del móvil mientras conduces. Sin conexión, usa la última lista guardada.
@@ -9,7 +13,7 @@
   const $ = (id) => document.getElementById(id);
   if (!$("v-aparcar")) return;
   const CLAVE = "ccoo-aparcar", CAJA = "ccoo-aparcamientos";
-  const DEF = () => ({ camion: { alto: "4", ancho: "2,55", largo: "16,5", peso: "40", adr: false }, voz: false, gratis: false, desde: "", hasta: "" });
+  const DEF = () => ({ camion: { alto: "4", ancho: "2,55", largo: "16,5", peso: "40", adr: false }, voz: false, cerrados: false, desde: "", hasta: "", cpDesde: "", cpHasta: "", vista: "lista" });
   const lee = () => { try { const d = JSON.parse(localStorage.getItem(CLAVE) || "null") || {}; return { ...DEF(), ...d, camion: { ...DEF().camion, ...(d.camion || {}) } }; } catch (_) { return DEF(); } };
   let AJ = lee();
   const guarda = () => { try { localStorage.setItem(CLAVE, JSON.stringify(AJ)); } catch (_) {} };
@@ -56,7 +60,26 @@
     return entendido ? res ?? false : null;
   }
   // Estado a la hora de llegar: «si», «no», «siempre» (área de autopista sin horario) o «nose»
-  const estadoA = (x, cuando) => { const a = abierto(x.horario, cuando); if (a === true) return "si"; if (a === false) return "no"; return x.area && !x.horario ? "siempre" : "nose"; };
+  // Avisos de los compañeros: el último de cada aparcamiento que siga valiendo (cerrado 12 h, lleno 3 h, abierto 12 h)
+  const VALE_H = { cerrado: 12, lleno: 3, abierto: 12 };
+  let AVISOS = {};
+  const avisoDe = (x) => { const v = AVISOS[x.osm]; return v && Date.now() - v.t < VALE_H[v.tipo] * 36e5 ? v : null; };
+  async function cargaAvisos() {
+    try {
+      const { data, error } = await sb.from("avisos_aparcamiento").select("osm,tipo,cuando").order("cuando", { ascending: false }).limit(1000);
+      if (error || !Array.isArray(data)) return;
+      const m = {};
+      for (const r of data) if (!m[r.osm]) m[r.osm] = { tipo: r.tipo, t: Date.parse(r.cuando) };
+      AVISOS = m;
+    } catch (_) { /* sin conexión: los de antes */ }
+  }
+  const haceTxt = (t) => { const m = Math.max(1, Math.round((Date.now() - t) / 60000)); return m < 60 ? `hace ${m} min` : `hace ${Math.round(m / 60)} h`; };
+  const estadoA = (x, cuando) => {
+    const av = avisoDe(x);
+    if (av?.tipo === "cerrado") return "no";
+    if (av?.tipo === "abierto") return "si";
+    const a = abierto(x.horario, cuando); if (a === true) return "si"; if (a === false) return "no"; return x.area && !x.horario ? "siempre" : "nose";
+  };
 
   // Precio legible: «2 EUR/hour» → «2 €/hora»
   const precioTxt = (c) => String(c || "").replace(/\s*(EUR|eur|euros?)\b/g, " €").replace(/€\s*(\d)/g, "$1 €")
@@ -70,13 +93,13 @@
   async function delPais(p) {
     if (MEM[p]) return MEM[p];
     let caja = null; try { caja = await caches.open(CAJA); } catch (_) {}
-    const clave = location.origin + "/__aparcamientos/" + p;
+    const clave = location.origin + "/__aparcamientos2/" + p; // «2»: desde la v90 trae «cerca»
     const guardado = caja ? await caja.match(clave).then(r => r && r.json()).catch(() => null) : null;
     if (guardado && Date.now() - guardado.t < 7 * 864e5 && Array.isArray(guardado.l)) return (MEM[p] = guardado.l);
     try {
       const l = [];
       for (let i = 0; i < 40000; i += 1000) {
-        const { data, error } = await sb.from("aparcamientos").select("osm,lat,lon,nombre,horario,pago,precio,vigilado,duchas,aseos,plazas,area,camion").eq("pais", p).order("osm").range(i, i + 999);
+        const { data, error } = await sb.from("aparcamientos").select("osm,lat,lon,nombre,horario,vigilado,duchas,aseos,plazas,area,camion,cerca").eq("pais", p).order("osm").range(i, i + 999);
         if (error) throw error;
         l.push(...(data || []));
         if (!data || data.length < 1000) break;
@@ -85,67 +108,106 @@
       return (MEM[p] = l.length ? l : guardado?.l || []);
     } catch (_) { return (MEM[p] = guardado?.l || []); }
   }
-  async function cargaPaises(ps) { const ls = await Promise.all(ps.map(delPais)); const vistos = new Set(); return ls.flat().filter(x => !vistos.has(x.osm) && vistos.add(x.osm)); }
+  async function cargaPaises(ps) { const ls = await Promise.all(ps.map(delPais)); const vistos = new Set(); return ls.flatMap((l, i) => l.map(x => ({ ...x, pais: ps[i] }))).filter(x => !vistos.has(x.osm) && vistos.add(x.osm)); }
 
   // ---------- Geometría ----------
   const R = Math.PI / 180;
   const km = (a1, o1, a2, o2) => { const x = Math.sin((a2 - a1) * R / 2) ** 2 + Math.cos(a1 * R) * Math.cos(a2 * R) * Math.sin((o2 - o1) * R / 2) ** 2; return 12742 * Math.asin(Math.sqrt(x)); };
   const rumbo = (a1, o1, a2, o2) => { const y = Math.sin((o2 - o1) * R) * Math.cos(a2 * R), x = Math.cos(a1 * R) * Math.sin(a2 * R) - Math.sin(a1 * R) * Math.cos(a2 * R) * Math.cos((o2 - o1) * R); return (Math.atan2(y, x) / R + 360) % 360; };
-  // Para cada aparcamiento, el punto de la ruta más cercano (los puntos van cada ~1,5 km)
-  function enRuta(lista, puntos) {
-    const res = [];
+  // Para cada aparcamiento, el punto de la ruta más cercano (los puntos van cada ~1,5 km). Hasta 3 km de la ruta (lo pidió el padre: más distancia)
+  const ANCHO_RUTA = 3;
+  // Lado de la ruta: el tramo más cercano de «fina» (la ruta a ~8 m) y a qué lado queda el aparcamiento (producto vectorial)
+  function ladoDe(x, fina) {
+    const k = Math.cos(x.lat * R) * 111.32, m = 110.54; let mejor = 1e9, cruz = 0;
+    for (let i = 0; i < fina.length - 1; i++) {
+      const [a1, o1] = fina[i], [a2, o2] = fina[i + 1];
+      if (Math.min(a1, a2) > x.lat + 0.02 || Math.max(a1, a2) < x.lat - 0.02 || Math.min(o1, o2) > x.lon + 0.03 || Math.max(o1, o2) < x.lon - 0.03) continue;
+      const dx = (o2 - o1) * k, dy = (a2 - a1) * m, px = (x.lon - o1) * k, py = (x.lat - a1) * m, l2 = dx * dx + dy * dy;
+      const t = l2 ? Math.max(0, Math.min(1, (px * dx + py * dy) / l2)) : 0, d = Math.hypot(px - t * dx, py - t * dy);
+      if (d < mejor) { mejor = d; cruz = dx * py - dy * px; }
+    }
+    return { d: mejor, izq: cruz > 0 };
+  }
+  // ¿Está en el otro sentido de la autopista? (lo pidió el padre: «no me sirve uno al que solo llego dando la vuelta»)
+  // Solo en autopista y si está pegado a ella (≤ 350 m): más lejos se llega por una salida desde los dos sentidos.
+  // Si está casi encima (< 25 m, p. ej. un área que da a los dos lados) se deja. En Reino Unido e Irlanda se conduce por la izquierda.
+  function otroSentido(x, ruta, kmR) {
+    if (!ruta.fina || !ruta.autopista?.some(([a, z]) => kmR >= a - 0.5 && kmR <= z + 0.5)) return false;
+    const l = ladoDe(x, ruta.fina);
+    if (l.d > 0.35 || l.d < 0.025) return false;
+    return l.izq !== (x.pais === "GB" || x.pais === "IE");
+  }
+  function enRuta(lista, puntos, ruta) {
+    const res = []; let contrario = 0;
     const caja = puntos.reduce((b, [la, lo]) => [Math.min(b[0], la), Math.max(b[1], la), Math.min(b[2], lo), Math.max(b[3], lo)], [90, -90, 180, -180]);
     for (const x of lista) {
       if (x.lat < caja[0] - 0.05 || x.lat > caja[1] + 0.05 || x.lon < caja[2] - 0.07 || x.lon > caja[3] + 0.07) continue;
       let mejor = 1e9, idx = -1;
       for (let i = 0; i < puntos.length; i++) { const d = km(x.lat, x.lon, puntos[i][0], puntos[i][1]); if (d < mejor) { mejor = d; idx = i; } }
-      if (mejor <= 1.5) res.push({ ...x, desvio: mejor, kmRuta: puntos[idx][2], minRuta: puntos[idx][3] });
+      if (mejor > ANCHO_RUTA) continue;
+      if (ruta && otroSentido(x, ruta, puntos[idx][2])) { contrario++; continue; }
+      res.push({ ...x, desvio: mejor, kmRuta: puntos[idx][2], minRuta: puntos[idx][3] });
     }
+    res.contrario = contrario;
     return res.sort((a, b) => a.kmRuta - b.kmRuta);
   }
 
   // ---------- Estado del viaje ----------
+  let FILTRO = "todos", SALIDA = "", PINTADO = 0; // lista de toda la ruta: abiertos / cerrados / todos, y hora de salida (vacía = ahora)
   let RUTA = null, EN_RUTA = [], VIAJE = null, VIGIA = null, CANDADO = null, ULT_VOZ = "", CERCA = [], ANTES = null;
   const estado = (t, err) => { const m = $("apc-estado"); m.textContent = t || ""; m.classList.toggle("err", !!err); };
   const hora = (d) => d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
   const kmTxt = (n) => n < 10 ? n.toFixed(1).replace(".", ",") : String(Math.round(n));
   const durTxt = (m) => { const h = Math.floor(m / 60), mm = Math.round(m % 60); return h ? `${h} h${mm ? " " + mm + " min" : ""}` : `${mm} min`; };
-  const nombre = (x) => x.nombre || (x.area ? "Área de servicio" : "Aparcamiento de camiones");
-  const mapsIr = (x) => `https://www.google.com/maps/dir/?api=1&destination=${x.lat},${x.lon}&travelmode=driving`;
+  // Nombre: el de OpenStreetMap; si no tiene, el oficial (Alemania); si tampoco, «Área en la AP-7, cerca de La Jonquera» (lo pidió el padre)
+  const viaEnKm = (k) => { if (!RUTA?.tramos || k == null) return ""; let ac = 0; for (const t of RUTA.tramos) { ac += t.km; if (k <= ac + 0.5) return t.via || ""; } return ""; };
+  const nombre = (x) => {
+    if (x.nombre) return x.nombre;
+    const via = x.kmRuta != null ? viaEnKm(x.kmRuta) : "";
+    return (x.area ? "Área" : "Aparcamiento de camiones") + (via ? " en la " + via : "") + (x.cerca ? ", cerca de " + x.cerca : "");
+  };
 
-  function precioHTML(x) {
-    if (x.pago === 0) return `<span class="apc-precio gratis">Gratis</span>`;
-    if (x.pago === 1) return `<span class="apc-precio pago">${icono("euro", "p")}De pago${x.precio ? " · " + esc(precioTxt(x.precio)) : ""}</span>`;
-    return `<span class="apc-precio nose">Precio sin apuntar</span>`;
-  }
+  // Plazas para camiones: lo más importante para el padre (capacity:hgv de OpenStreetMap)
+  const plazasHTML = (x) => x.plazas ? `<span class="apc-plazas"><b>${x.plazas}</b> ${x.plazas === 1 ? "plaza" : "plazas"} camión</span>` : `<span class="apc-plazas nose">Plazas sin apuntar</span>`;
   function abreHTML(x, cuando) {
+    const av = avisoDe(x);
+    if (av?.tipo === "cerrado") return `<span class="apc-abre no">Cerrado</span> <span class="apc-aviso-comp">avisado por un compañero ${haceTxt(av.t)}</span>`;
+    if (av?.tipo === "abierto") return `<span class="apc-abre si">Abierto</span> <span class="apc-aviso-comp">avisado por un compañero ${haceTxt(av.t)}</span>`;
     const e = estadoA(x, cuando);
     if (e === "si") return `<span class="apc-abre si">Abierto cuando llegues</span>`;
     if (e === "no") return `<span class="apc-abre no">Cerrado cuando llegues</span>${x.horario ? ` <small>${esc(x.horario)}</small>` : ""}`;
     if (e === "siempre") return `<span class="apc-abre si">Área de autopista: abierta siempre</span>`;
     return `<small>Horario sin apuntar</small>`;
   }
+  // «Llevarme aquí» (lo pidió el padre): abre SU navegador del móvil (iGO u otro) con el aparcamiento de destino.
+  // Android: enlace geo: (el móvil pregunta con qué aplicación); iPhone: el mapa de Apple. Sin Google. Se monta solo con números y el nombre codificado.
+  const ES_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  function llevarHref(x) {
+    const la = (+x.lat).toFixed(6), lo = (+x.lon).toFixed(6);
+    if (!Number.isFinite(+la) || !Number.isFinite(+lo)) return "";
+    return ES_IOS ? `https://maps.apple.com/?daddr=${la},${lo}&dirflg=d` : `geo:${la},${lo}?q=${la},${lo}(${encodeURIComponent(nombre(x))})`;
+  }
   function tarjeta(x, faltaKm, llegada) {
-    const extras = [x.camion ? "Para camiones" : "", x.vigilado ? "Vigilado" : "", x.duchas ? "Duchas" : "", x.aseos ? "Aseos" : "", x.plazas ? x.plazas + " plazas" : "", x.desvio > 0.6 ? `A ${kmTxt(x.desvio)} km de la ruta` : ""].filter(Boolean);
-    const cls = x.pago === 0 ? "gratis" : x.pago === 1 ? "pago" : "nose";
-    return `<li class="apc ${cls}${estadoA(x, llegada) === "no" ? " cerrado" : ""}">
-      <div class="apc-cab"><span class="apc-dist">a ${kmTxt(faltaKm)} km${llegada ? ` · llegas ${hora(llegada)}` : ""}</span>${precioHTML(x)}</div>
+    const extras = [x.camion ? "Para camiones" : "", x.vigilado ? "Vigilado" : "", x.duchas ? "Duchas" : "", x.aseos ? "Aseos" : "", x.desvio > 0.6 ? `A ${kmTxt(x.desvio)} km de la ruta` : ""].filter(Boolean);
+    return `<li class="apc${estadoA(x, llegada) === "no" ? " cerrado" : ""}">
+      <div class="apc-cab"><span class="apc-dist">a ${kmTxt(faltaKm)} km${llegada ? ` · llegas ${hora(llegada)}` : ""}</span>${plazasHTML(x)}</div>
       <b class="apc-nom">${esc(nombre(x))}</b>
       <div class="apc-hor">${abreHTML(x, llegada || new Date())}</div>
+      ${avisoDe(x)?.tipo === "lleno" ? `<div class="apc-lleno">Lleno · avisado por un compañero ${haceTxt(avisoDe(x).t)}</div>` : ""}
       ${extras.length ? `<div class="apc-extra">${extras.map(e => `<span>${esc(e)}</span>`).join("")}</div>` : ""}
-      <a class="btn apc-ir" href="${esc(urlSegura(mapsIr(x)))}" target="_blank" rel="noopener">${icono("lugar", "p")}Llevarme aquí</a>
+      ${llevarHref(x) ? `<a class="btn sec apc-llevar" href="${esc(llevarHref(x))}">${icono("lugar", "p")}Llevarme aquí</a>` : ""}
     </li>`;
   }
 
   // ---------- Formulario ----------
   function pintaFormulario() {
     const c = AJ.camion;
-    $("apc-desde").value = AJ.desde; $("apc-hasta").value = AJ.hasta;
+    $("apc-desde").value = AJ.desde; $("apc-hasta").value = AJ.hasta; $("apc-desde-cp").value = AJ.cpDesde; $("apc-hasta-cp").value = AJ.cpHasta;
     $("apc-alto").value = c.alto; $("apc-ancho").value = c.ancho; $("apc-largo").value = c.largo; $("apc-peso").value = c.peso; $("apc-adr").checked = !!c.adr;
-    $("apc-voz").checked = !!AJ.voz; $("apc-gratis").checked = !!AJ.gratis;
+    $("apc-voz").checked = !!AJ.voz; $("apc-cerrados").checked = !!AJ.cerrados;
   }
   function leeFormulario() {
-    AJ.desde = $("apc-desde").value.trim(); AJ.hasta = $("apc-hasta").value.trim();
+    AJ.desde = $("apc-desde").value.trim(); AJ.hasta = $("apc-hasta").value.trim(); AJ.cpDesde = $("apc-desde-cp").value.trim(); AJ.cpHasta = $("apc-hasta-cp").value.trim();
     AJ.camion = { alto: $("apc-alto").value.trim(), ancho: $("apc-ancho").value.trim(), largo: $("apc-largo").value.trim(), peso: $("apc-peso").value.trim(), adr: $("apc-adr").checked };
     guarda();
   }
@@ -158,39 +220,334 @@
 
   async function buscaRuta() {
     leeFormulario();
-    if (!AJ.hasta) { estado("Escribe adónde vas.", true); $("apc-hasta").focus(); return; }
+    if (!AJ.hasta && !AJ.cpHasta) { estado("Escribe adónde vas.", true); $("apc-hasta").focus(); return; }
+    $("apc-elegir").innerHTML = "";
     $("apc-buscar").disabled = true; estado("Calculando la ruta para tu camión…");
     try {
-      const desde = AJ.desde || await posicion().then(p => ({ ...p, nombre: "Tu ubicación" }));
-      const { data, error } = await sb.functions.invoke("ruta", { body: { desde, hasta: AJ.hasta, camion: AJ.camion } });
+      const desde = ELEGIDO.desde || ((AJ.desde || AJ.cpDesde) ? AJ.desde : await posicion().then(p => ({ ...p, nombre: "Tu ubicación" })));
+      const { data, error } = await sb.functions.invoke("ruta", { body: { desde, hasta: ELEGIDO.hasta || AJ.hasta, cp_desde: AJ.cpDesde, cp_hasta: AJ.cpHasta, camion: AJ.camion, elegir: true } });
+      if (data?.elegir) { estado(""); pintaElegir(data.elegir); return; }
       if (error || !data || data.error) throw new Error(data?.error || "No se ha podido calcular la ruta. Comprueba que tienes internet.");
-      RUTA = data;
-      estado("Buscando aparcamientos en la ruta…");
-      EN_RUTA = enRuta(await cargaPaises(paisesDe(RUTA.puntos)), RUTA.puntos);
-      estado("");
-      pintaRuta();
+      // La principal y hasta 2 alternativas (lo pidió el padre: «como cualquier navegador»)
+      RUTAS = [data, ...(data.alternativas || []).map(a => ({ ...a, desde: data.desde, hasta: data.hasta, camion: data.camion }))];
+      await eligeRuta(0);
     } catch (e) { estado(e.message || String(e), true); }
     finally { $("apc-buscar").disabled = false; }
+  }
+
+  // Varios pueblos con el mismo nombre (lo pidió el padre: con el código postal sale el exacto; si no, se pregunta)
+  let ELEGIDO = { desde: null, hasta: null };
+  function pintaElegir(e) {
+    const caja = $("apc-elegir"), lados = [["desde", "salida"], ["hasta", "destino"]].filter(([k]) => e[k]?.length);
+    caja.innerHTML = lados.map(([k, txt]) => `<div class="apc-elegir" data-lado="${k}"><h3>Hay varios sitios con ese nombre. ¿Cuál es el de ${txt}?</h3>
+      ${e[k].map((x, i) => `<button type="button" class="btn sec" data-i="${i}"><b>${esc(x.nombre)}</b><small>${esc(x.detalle || "")}</small></button>`).join("")}
+      <p class="apc-nota">Si no está, escribe el código postal arriba.</p></div>`).join("");
+    caja.querySelectorAll(".apc-elegir").forEach(d => d.querySelectorAll("button").forEach(b => b.onclick = () => {
+      const x = e[d.dataset.lado][+b.dataset.i];
+      ELEGIDO[d.dataset.lado] = { lat: x.lat, lon: x.lon, nombre: [x.nombre, x.cp].filter(Boolean).join(" · ") };
+      d.remove();
+      if (!caja.querySelector(".apc-elegir")) buscaRuta();
+    }));
+    caja.querySelector("button")?.focus();
+  }
+
+  let RUTAS = [];
+  async function eligeRuta(i) {
+    RUTA = RUTAS[i] || RUTAS[0];
+    estado("Buscando aparcamientos en la ruta…");
+    const [lista, oficiales] = await Promise.all([cargaPaises(paisesDe(RUTA.puntos)), cargaOficiales(RUTA)]);
+    EN_RUTA = enRuta(juntaOficiales(lista, oficiales), RUTA.puntos, RUTA);
+    CORTES = await cargaCortes(RUTA);
+    // Peajes aproximados de todas las rutas (para compararlas), con el país de cada tramo
+    const tabla = await cargaPeajes(), indice = indicePaises(lista);
+    for (const r of RUTAS) r.costes = calculaPeajes(r, indice, tabla);
+    estado("");
+    pintaRuta();
+  }
+
+  // ---------- Peajes aproximados (lo pidió el padre: «precio aproximado», camión de 5 ejes, 40 t) ----------
+  // Tabla «peajes_paises» (la edita el padre en el panel, «Peajes camión»): por país, qué se paga (solo los tramos de peaje,
+  // todas las autopistas o todas las carreteras) y cuántos € por km. Los km de peaje y de autopista los da la función «ruta».
+  let PEAJES = null;
+  async function cargaPeajes() {
+    if (PEAJES) return PEAJES;
+    try {
+      const { data, error } = await sb.from("peajes_paises").select("pais,nombre,cobra,precio_km,nota,visible").order("orden");
+      if (error) throw error;
+      PEAJES = (data || []).filter(x => x.visible !== false);
+      try { localStorage.setItem("ccoo-peajes", JSON.stringify(PEAJES)); } catch (_) {}
+    } catch (_) { try { PEAJES = JSON.parse(localStorage.getItem("ccoo-peajes") || "[]"); } catch (_) { PEAJES = []; } }
+    return PEAJES;
+  }
+  // País de un punto: si solo cae en la caja de un país, ese; si cae en varias (cerca de una frontera), el del aparcamiento más cercano
+  function indicePaises(lista) {
+    const g = new Map();
+    for (const x of lista) { if (!x.pais) continue; const k = Math.floor(x.lat * 4) + "," + Math.floor(x.lon * 4); if (!g.has(k)) g.set(k, []); g.get(k).push(x); }
+    return g;
+  }
+  function paisDe(la, lo, indice) {
+    const cajas = Object.keys(PAISES).filter(p => { const [a, b, c, d] = PAISES[p]; return la >= a && la <= b && lo >= c && lo <= d; });
+    if (cajas.length === 1) return cajas[0];
+    let mejor = null, dm = 1e9; const ka = Math.floor(la * 4), ko = Math.floor(lo * 4);
+    for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) for (const x of indice.get((ka + i) + "," + (ko + j)) || []) { const d = km(la, lo, x.lat, x.lon); if (d < dm) { dm = d; mejor = x.pais; } }
+    return mejor || cajas[0] || "?";
+  }
+  function calculaPeajes(r, indice, tabla) {
+    const en = (rangos, k) => (rangos || []).some(([a, z]) => k >= a - 0.3 && k <= z + 0.3);
+    const pts = r.puntos, por = new Map();
+    for (let i = 0; i < pts.length - 1; i++) {
+      const d = pts[i + 1][2] - pts[i][2]; if (!(d > 0)) continue;
+      const k = (pts[i][2] + pts[i + 1][2]) / 2, p = paisDe((pts[i][0] + pts[i + 1][0]) / 2, (pts[i][1] + pts[i + 1][1]) / 2, indice);
+      if (!por.has(p)) por.set(p, { km: 0, peaje: 0, autopista: 0 });
+      const o = por.get(p); o.km += d; if (en(r.peajes, k)) o.peaje += d; if (en(r.autopista, k)) o.autopista += d;
+    }
+    let total = 0, faltan = 0;
+    const filas = [...por].map(([pais, o]) => {
+      const t = tabla.find(x => x.pais === pais), precio = Number(t?.precio_km) || 0;
+      const kmPago = !t ? 0 : t.cobra === "peaje" ? o.peaje : t.cobra === "autopista" ? o.autopista : t.cobra === "todo" ? o.km : 0;
+      const sinDato = !t || (t.cobra !== "nada" && !(precio > 0) && kmPago > 0.5);
+      const euros = sinDato ? null : kmPago * precio;
+      if (euros) total += euros; if (sinDato) faltan++;
+      return { pais, nombre: t?.nombre || pais, km: o.km, kmPago, cobra: t?.cobra || "", euros, sinDato, nota: t?.nota || "" };
+    });
+    return { total, faltan, filas, conDatos: r.peajes !== undefined };
+  }
+  const euros = (n) => Math.round(n).toLocaleString("es-ES") + " €";
+  const COBRA_TXT = { peaje: "km de peaje", autopista: "km de autopista", todo: "km (todas las carreteras)", nada: "no se paga por km" };
+  function peajesHTML() {
+    const c = RUTA?.costes; if (!c) return "";
+    if (!c.conDatos) return "";
+    return `<section class="apc-peajes" aria-labelledby="apc-peajes-tit"><h2 id="apc-peajes-tit">Peajes aproximados</h2>
+      <p class="apc-peaje-total"><b>${c.total > 0 ? "≈ " + euros(c.total) : "0 €"}</b><span>camión de 5 ejes, 40 t, Euro 6${c.faltan ? ` · falta el precio de ${c.faltan === 1 ? "1 país" : c.faltan + " países"}` : ""}</span></p>
+      <div class="tabla-scroll"><table class="apc-peajes-tabla"><thead><tr><th scope="col">País</th><th scope="col">Se paga</th><th scope="col">Precio</th></tr></thead><tbody>
+      ${c.filas.map(f => `<tr><th scope="row">${esc(f.nombre)}<small>${Math.round(f.km)} km en total</small></th>
+        <td>${f.cobra === "nada" || !f.cobra ? esc(COBRA_TXT.nada) : `${Math.round(f.kmPago)} ${esc(COBRA_TXT[f.cobra])}`}</td>
+        <td>${f.sinDato ? "Sin precio" : f.euros ? "≈ " + euros(f.euros) : "0 €"}</td></tr>`).join("")}</tbody></table></div>
+      <details class="apc-peajes-notas"><summary>De dónde salen estos precios</summary><ul>${c.filas.filter(f => f.nota).map(f => `<li><b>${esc(f.nombre)}:</b> ${esc(f.nota)}</li>`).join("")}</ul></details>
+      <p class="apc-nota">Es un precio orientativo, no el ticket exacto: cada autopista tiene su tarifa y el total depende de tu camión (ejes, Euro, CO2). No incluye túneles de pago (Fréjus, Mont-Blanc…), ferris ni viñetas.</p></section>`;
+  }
+
+  // Aparcamientos oficiales (Autobahn GmbH): ponen nombre y plazas a los de OpenStreetMap que estén a ≤ 300 m; los que no están, se añaden
+  async function cargaOficiales(ruta) {
+    const c = ruta.puntos.reduce((b, [la, lo]) => [Math.min(b[0], la), Math.max(b[1], la), Math.min(b[2], lo), Math.max(b[3], lo)], [90, -90, 180, -180]);
+    try {
+      const { data, error } = await sb.from("aparcamientos_oficiales").select("id,pais,nombre,via,lat,lon,plazas")
+        .gte("lat", c[0] - 0.05).lte("lat", c[1] + 0.05).gte("lon", c[2] - 0.07).lte("lon", c[3] + 0.07).limit(5000);
+      return error ? [] : data || [];
+    } catch (_) { return []; }
+  }
+  function juntaOficiales(lista, oficiales) {
+    if (!oficiales.length) return lista;
+    const res = lista.map(x => ({ ...x }));
+    for (const o of oficiales) {
+      let mejor = null, d = 0.3;
+      for (const x of res) { if (Math.abs(x.lat - o.lat) > 0.005 || Math.abs(x.lon - o.lon) > 0.007) continue; const k = km(x.lat, x.lon, o.lat, o.lon); if (k < d) { d = k; mejor = x; } }
+      if (mejor) { if (!mejor.nombre && o.nombre) mejor.nombre = o.nombre; if (!mejor.plazas && o.plazas) mejor.plazas = o.plazas; mejor.camion = true; }
+      else res.push({ osm: "of:" + o.id, pais: o.pais, lat: o.lat, lon: o.lon, nombre: o.nombre, horario: null, vigilado: false, duchas: false, aseos: false, plazas: o.plazas, area: true, camion: true, cerca: null });
+    }
+    return res;
+  }
+
+  // ---------- Cortes oficiales en tiempo real (lo pidió el padre: «como Bison Futé») ----------
+  // Tabla «cortes», la llena cada 15 min la función «cortes» con la DGT, el Servei Català de Trànsit y Autobahn GmbH.
+  let CORTES = null; // los de la ruta elegida ({ ...corte, kmRuta, minRuta }); null = no se ha podido consultar
+  const TIPO_CORTE = { cortada: "Carretera cortada", sentido: "Cortada en un sentido", accidente: "Accidente", restriccion: "Restricción de peso",
+    carril: "Carril cortado", obstaculo: "Obstáculo en la vía", retencion: "Retención", obras: "Obras", aviso: "Aviso" };
+  const GRAVE = ["cortada", "sentido", "accidente", "restriccion"];
+  const FUENTE_CORTE = { dgt: "DGT", sct: "Servei Català de Trànsit", autobahn: "Autobahn GmbH (Alemania)" };
+  async function cargaCortes(ruta) {
+    const pts = ruta.puntos, fina = ruta.fina || pts.map(q => [q[0], q[1]]);
+    const c = pts.reduce((b, [la, lo]) => [Math.min(b[0], la), Math.max(b[1], la), Math.min(b[2], lo), Math.max(b[3], lo)], [90, -90, 180, -180]);
+    try {
+      const { data, error } = await sb.from("cortes").select("id,pais,fuente,tipo,via,lat,lon,lat2,lon2,rumbo,texto,inicio,fin")
+        .gte("lat", c[0] - 0.05).lte("lat", c[1] + 0.05).gte("lon", c[2] - 0.07).lte("lon", c[3] + 0.07).limit(5000);
+      if (error) throw error;
+      const res = [];
+      for (const x of data || []) {
+        if (x.fin && Date.parse(x.fin) < Date.now()) continue;
+        // Que esté EN la carretera de la ruta (no en una que la cruza): un punto a ≤ 80 m, o un tramo con los dos extremos a ≤ 150 m
+        const d1 = ladoDe(x, fina).d, d2 = x.lat2 != null ? ladoDe({ lat: x.lat2, lon: x.lon2 }, fina).d : null;
+        if (!(d1 <= 0.08 || (d2 != null && d1 <= 0.15 && d2 <= 0.15))) continue;
+        let mejor = 1e9, idx = 0;
+        for (let i = 0; i < pts.length; i++) { const d = km(x.lat, x.lon, pts[i][0], pts[i][1]); if (d < mejor) { mejor = d; idx = i; } }
+        // Si la fuente dice hacia dónde afecta, que sea nuestro sentido
+        if (x.rumbo != null && idx < pts.length - 1) {
+          const rb = rumbo(pts[idx][0], pts[idx][1], pts[idx + 1][0], pts[idx + 1][1]);
+          if (Math.abs(((x.rumbo - rb + 540) % 360) - 180) > 100) continue;
+        }
+        res.push({ ...x, kmRuta: pts[idx][2], minRuta: pts[idx][3] });
+      }
+      return res.sort((u, v) => u.kmRuta - v.kmRuta);
+    } catch (_) { return null; }
+  }
+  const fechaCorta = (t) => new Date(t).toLocaleString("es-ES", { day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" });
+  function corteHTML(x, faltaKm) {
+    const cuando = [x.inicio && Date.parse(x.inicio) > Date.now() ? "Desde el " + fechaCorta(x.inicio) : "", x.fin ? "Hasta el " + fechaCorta(x.fin) : ""].filter(Boolean).join(" · ");
+    return `<li class="apc-corte${GRAVE.includes(x.tipo) ? " grave" : ""}">
+      <div class="apc-cab"><span class="apc-dist">km ${Math.round(faltaKm)}</span>${x.via ? `<span class="apc-via">${esc(x.via)}</span>` : ""}</div>
+      <b>${esc(TIPO_CORTE[x.tipo] || "Aviso")}</b>
+      ${x.texto ? `<small>${esc(x.texto)}</small>` : ""}
+      <small class="apc-corte-fuente">${cuando ? esc(cuando) + " · " : ""}Fuente: ${esc(FUENTE_CORTE[x.fuente] || x.fuente)}</small></li>`;
+  }
+  function cortesHTML() {
+    const nota = `<p class="apc-nota">Datos oficiales de la DGT, el Servei Català de Trànsit y las autopistas de Alemania, renovados cada 15 minutos. De Francia, Italia y otros países todavía no.</p>`;
+    if (CORTES == null) return `<section class="apc-cortes-sec"><h2>Cortes y avisos en tu ruta</h2><p class="msg err">No se han podido consultar los cortes. Comprueba que tienes internet.</p></section>`;
+    const graves = CORTES.filter(x => GRAVE.includes(x.tipo)), otros = CORTES.filter(x => !GRAVE.includes(x.tipo));
+    return `<section class="apc-cortes-sec" aria-labelledby="apc-cortes-tit"><h2 id="apc-cortes-tit">Cortes y avisos en tu ruta</h2>
+      ${graves.length ? `<ul class="apc-lista apc-cortes">${graves.map(x => corteHTML(x, x.kmRuta)).join("")}</ul>` : `<p class="apc-sin-cortes">Ahora no hay carreteras cortadas ni accidentes en tu ruta.</p>`}
+      ${otros.length ? `<details class="panel apc-cortes-mas"><summary>Carriles cortados, obras y retenciones (${otros.length})</summary><ul class="apc-lista apc-cortes">${otros.map(x => corteHTML(x, x.kmRuta)).join("")}</ul></details>` : ""}
+      ${nota}</section>`;
+  }
+  // Las carreteras principales de una ruta (las de más km, en el orden en que se pasan)
+  const viasDe = (r) => { const v = [...r.tramos].filter(t => t.via).sort((a, b) => b.km - a.km).slice(0, 4).map(t => t.via); return r.tramos.map(t => t.via).filter((x, i, a) => v.includes(x) && a.indexOf(x) === i); };
+  function rutasHTML() {
+    if (RUTAS.length < 2) return "";
+    const mejor = Math.min(...RUTAS.map(r => r.min));
+    return `<section class="apc-rutas" aria-labelledby="apc-rutas-tit"><h2 id="apc-rutas-tit">Elige la ruta</h2>${RUTAS.map((r, i) => `
+      <button type="button" class="apc-ruta-op${r === RUTA ? " activa" : ""}" data-ruta="${i}" aria-pressed="${r === RUTA}">
+        <b>Ruta ${i + 1}${r.min === mejor ? " · la más rápida" : ` · ${durTxt(r.min - mejor)} más`}</b>
+        <span>${r.km} km · ${durTxt(r.min)}${r.costes?.conDatos ? (r.costes.total > 0 ? ` · peajes ≈ ${euros(r.costes.total)}` : " · sin peajes") : r.peaje ? " · con peajes" : " · sin peajes"}${r.ferry ? " · con ferry" : ""}</span>
+        <small>${viasDe(r).map(esc).join(" → ") || "Carreteras locales"}</small></button>`).join("")}</section>`;
   }
 
   function pintaRuta() {
     const caja = $("apc-ruta");
     if (!RUTA) { caja.innerHTML = ""; return; }
-    const p = RUTA.puntos, n = p.length, wp = [0.25, 0.5, 0.75].map(f => p[Math.round(f * (n - 1))]).map(x => x[0] + "," + x[1]).join("|");
-    const maps = `https://www.google.com/maps/dir/?api=1&origin=${p[0][0]},${p[0][1]}&destination=${p[n - 1][0]},${p[n - 1][1]}&waypoints=${encodeURIComponent(wp)}&travelmode=driving`;
-    const abiertos = EN_RUTA.filter(x => estadoA(x, new Date(Date.now() + x.minRuta * 60000)) !== "no");
     caja.innerHTML = `
       <div class="apc-res"><b>${esc(RUTA.desde.nombre)} → ${esc(RUTA.hasta.nombre)}</b><span>${RUTA.km} km · ${durTxt(RUTA.min)} conduciendo${RUTA.peaje ? " · con peajes" : ""}${RUTA.ferry ? " · con ferry" : ""}</span></div>
+      ${rutasHTML()}
+      ${peajesHTML()}
       <p class="apc-camion">Ruta calculada para tu camión: ${esc(AJ.camion.alto)} m de alto, ${esc(AJ.camion.peso)} t${AJ.camion.adr ? ", con ADR" : ""}.</p>
+      ${cortesHTML()}
+      <section class="apc-todos" aria-labelledby="apc-todos-tit">
+        <h2 id="apc-todos-tit">Aparcamientos en tu ruta</h2>
+        <label class="apc-salida">Salgo a las <input type="time" id="apc-salida" value="${esc(SALIDA)}"> <small>(vacío = ahora)</small></label>
+        <div id="apc-todos"></div>
+      </section>
       <details class="panel apc-tramos"><summary>Carreteras de la ruta (${RUTA.tramos.length})</summary>
         <ol class="apc-linea">${RUTA.tramos.map(t => `<li><b>${t.via ? `<span class="apc-via">${esc(t.via)}</span>` : "Carreteras locales"}</b>${t.hacia ? ` hacia ${esc(t.hacia)}` : ""}<small>${t.km} km</small></li>`).join("")}</ol></details>
       <div class="apc-acciones">
         <button type="button" class="btn apc-grande" id="apc-empezar">${icono("lugar")}Empezar viaje</button>
-        <a class="btn sec" href="${esc(urlSegura(maps))}" target="_blank" rel="noopener">Ir guiado con Google Maps</a>
       </div>
-      <p class="apc-nota">El Maps no sabe que vas en camión: te lo paso con puntos de esta ruta para que siga el mismo camino. Si te propone otro, sigue las carreteras de arriba.</p>
-      <p class="apc-nota"><b>${EN_RUTA.length} aparcamientos en la ruta</b>, ${abiertos.length} abiertos si sales ahora. Pulsa «Empezar viaje» y te enseño los que tienes por delante mientras conduces.</p>`;
+      <p class="apc-nota">Con «Empezar viaje» te enseño los que tienes por delante mientras conduces, con tu navegador de siempre.</p>`;
     $("apc-empezar").onclick = empiezaViaje;
+    caja.querySelectorAll("[data-ruta]").forEach(b => b.onclick = () => eligeRuta(+b.dataset.ruta));
+    $("apc-salida").onchange = () => { SALIDA = $("apc-salida").value; pintaTodos(); };
+    pintaTodos();
+  }
+  function ponFiltro(f) { FILTRO = f; pintaTodos(); }
+  // Hora de salida: la que pone el conductor (si ya ha pasado hace rato, la de mañana) o ahora
+  function horaSalida() {
+    if (!SALIDA) return Date.now();
+    const [h, m] = SALIDA.split(":").map(Number), d = new Date(); d.setHours(h, m, 0, 0);
+    if (d.getTime() < Date.now() - 30 * 60000) d.setDate(d.getDate() + 1);
+    return d.getTime();
+  }
+  // Todos los de la ruta, desde la salida: abiertos, cerrados (los que lo estarán cuando pases) o todos
+  function pintaTodos() {
+    const caja = $("apc-todos"); if (!caja) return;
+    const t0 = horaSalida();
+    const lista = EN_RUTA.map(x => ({ x, llega: new Date(t0 + x.minRuta * 60000), e: null })).map(y => ({ ...y, e: estadoA(y.x, y.llega) }));
+    // Cerrados: los que estarán cerrados cuando pases. Abiertos: los que se sabe que estarán abiertos (horario o área de autopista).
+    // Sin horario: no se sabe. Así no se confunde «no sé» con «abierto».
+    const cerrados = lista.filter(y => y.e === "no"), abiertos = lista.filter(y => y.e === "si" || y.e === "siempre"), sinHorario = lista.filter(y => y.e === "nose");
+    const ver = { cerrados, abiertos, nose: sinHorario, todos: lista }[FILTRO] || cerrados;
+    const pl = (n, uno, varios) => n + " " + (n === 1 ? uno : varios);
+    const cifra = (k, cls, n, txt) => `<button type="button" class="apc-cifra ${cls}${FILTRO === k ? " activa" : ""}" data-filtro="${k}" aria-pressed="${FILTRO === k}"><b>${n}</b>${txt}</button>`;
+    caja.innerHTML = `<div class="apc-resumen" role="group" aria-label="Qué aparcamientos ver">
+        ${cifra("cerrados", "cerr", cerrados.length, cerrados.length === 1 ? "cerrado" : "cerrados")}${cifra("abiertos", "abie", abiertos.length, abiertos.length === 1 ? "abierto" : "abiertos")}${cifra("nose", "nose", sinHorario.length, "sin horario")}</div>
+      <button type="button" class="btn sec apc-ver-todos${FILTRO === "todos" ? " activa" : ""}" data-filtro="todos" aria-pressed="${FILTRO === "todos"}">Ver todos (${lista.length}), del primero al último</button>
+      ${vistaHTML()}
+      <p class="apc-cuenta">De los ${pl(lista.length, "aparcamiento", "aparcamientos")} de la ruta, a la hora a la que pasas.${EN_RUTA.contrario ? ` Solo salen los de tu sentido de marcha: ${pl(EN_RUTA.contrario, "área", "áreas")} del otro lado de la autopista no ${EN_RUTA.contrario === 1 ? "sale" : "salen"}.` : ""}${sinHorario.length ? " «Sin horario»: nadie ha apuntado su horario, así que no se sabe si estará abierto." : ""}</p>`
+      + (AJ.vista === "mapa" ? `<div id="apc-mapa" class="apc-mapa" role="region" aria-label="Mapa de la ruta con los aparcamientos"></div>`
+        : ver.length ? listaPorTramos(ver)
+        : `<p class="desc-vacio">${FILTRO === "cerrados" ? "Según los horarios apuntados, ninguno estará cerrado cuando pases." + (sinHorario.length ? ` Mira también «Sin horario» (${sinHorario.length}): de esos no se sabe.` : "") : "No hay ninguno."}</p>`);
+    caja.querySelectorAll("[data-filtro]").forEach(b => b.onclick = () => ponFiltro(b.dataset.filtro));
+    if (AJ.vista === "mapa") pintaMapa("apc-mapa", ver);
+  }
+
+  // ---------- Mapa (lo pidió Lorena: «versión mapa y versión lista») ----------
+  // Leaflet alojado aquí (lib/leaflet.js, sin CDN) y el mapa de OpenStreetMap (tile.openstreetmap.org, está en la CSP).
+  // Se carga solo al tocar «Mapa». El servidor del mapa ve la zona que se mira (lo dice el aviso de privacidad de la vista).
+  const vistaHTML = () => `<div class="apc-vista" role="group" aria-label="Ver como">${[["lista", "Lista"], ["mapa", "Mapa"]].map(([k, t]) =>
+    `<button type="button" class="${AJ.vista === k ? "activa" : ""}" data-apc-vista="${k}" aria-pressed="${AJ.vista === k}">${t}</button>`).join("")}</div>`;
+  let LEAFLET = null;
+  function cargaLeaflet() {
+    if (LEAFLET) return LEAFLET;
+    return (LEAFLET = new Promise((ok, mal) => {
+      const v = typeof VERSION_WEB !== "undefined" ? VERSION_WEB : "";
+      const css = document.createElement("link"); css.rel = "stylesheet"; css.href = "lib/leaflet.css?v=" + v; document.head.appendChild(css);
+      const js = document.createElement("script"); js.src = "lib/leaflet.js?v=" + v;
+      js.onload = () => ok(window.L); js.onerror = () => { LEAFLET = null; js.remove(); mal(new Error("No se ha podido cargar el mapa.")); };
+      document.head.appendChild(js);
+    }));
+  }
+  const MAPAS = {};
+  // Pinta en el div «id» la ruta y los aparcamientos (cada uno con sus plazas para camiones; al tocarlo, su tarjeta)
+  async function pintaMapa(id, items, opc = {}) {
+    let L; try { L = await cargaLeaflet(); } catch (e) { const c = $(id); if (c) c.innerHTML = `<p class="msg err">${esc(e.message)} Comprueba que tienes internet.</p>`; return; }
+    const caja = $(id); if (!caja || caja.hidden) return;
+    let m = MAPAS[id];
+    if (!m || m.div !== caja) {
+      try { m?.mapa.remove(); } catch (_) {}
+      const mapa = L.map(caja, { zoomControl: true });
+      mapa.attributionControl.setPrefix(false);
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(mapa);
+      m = MAPAS[id] = { div: caja, mapa, capa: L.layerGroup().addTo(mapa), ruta: null, rutaDe: null, yo: null, encuadrado: false };
+    }
+    const conRuta = opc.ruta !== false && RUTA, linea = (r) => r.fina || r.puntos.map(q => [q[0], q[1]]);
+    if (conRuta && m.rutaDe !== RUTA) m.encuadrado = false;
+    // Primero se coloca el mapa (Leaflet no deja dibujar líneas en un mapa sin vista)
+    if (!m.encuadrado) {
+      m.encuadrado = true;
+      if (opc.yo) m.mapa.setView(opc.yo, 10);
+      else if (conRuta) m.mapa.fitBounds(L.latLngBounds(linea(RUTA)), { padding: [24, 24] });
+      else if (items.length) m.mapa.fitBounds(items.map(y => [y.x.lat, y.x.lon]), { padding: [24, 24], maxZoom: 12 });
+      else m.mapa.setView([46, 4], 5);
+    }
+    if (!conRuta && m.ruta) { m.ruta.remove(); m.ruta = null; m.rutaDe = null; }
+    // Las otras rutas, en gris y antes que la elegida para que esta quede encima (el mapa se rehace al cambiar de ruta)
+    if (!m.otras && conRuta && RUTAS.length > 1 && !VIAJE) {
+      m.otras = L.layerGroup().addTo(m.mapa);
+      RUTAS.forEach((r, i) => { if (r !== RUTA) L.polyline(linea(r), { color: "#6b7078", weight: 5, opacity: .7, dashArray: "8 8" })
+        .bindTooltip(`Ruta ${i + 1}: ${r.km} km · ${durTxt(r.min)}. Tócala para elegirla.`).on("click", () => eligeRuta(i)).addTo(m.otras); });
+    }
+    if (conRuta && m.rutaDe !== RUTA) {
+      m.ruta?.remove();
+      m.ruta = L.polyline(linea(RUTA), { color: "#AB1012", weight: 5, opacity: .85 }).addTo(m.mapa);
+      m.rutaDe = RUTA;
+    }
+    m.capa.clearLayers();
+    for (const y of items) {
+      const e = estadoA(y.x, y.llega), cls = e === "no" ? "no" : e === "nose" ? "nose" : "si";
+      const icon = L.divIcon({ className: "apc-pin " + cls, html: `<span>${y.x.plazas ? y.x.plazas : "P"}</span>`, iconSize: [36, 36], iconAnchor: [18, 18], popupAnchor: [0, -16] });
+      L.marker([y.x.lat, y.x.lon], { icon, title: nombre(y.x) + (y.x.plazas ? `, ${y.x.plazas} plazas` : "") })
+        .bindPopup(`<ul class="apc-lista apc-popup">${tarjeta(y.x, y.falta ?? y.x.kmRuta, y.llega)}</ul>`, { maxWidth: 290, minWidth: 220 }).addTo(m.capa);
+    }
+    for (const x of (conRuta && CORTES) || []) {
+      if (opc.desdeKm != null && x.kmRuta < opc.desdeKm) continue;
+      const icon = L.divIcon({ className: "apc-pin-corte" + (GRAVE.includes(x.tipo) ? " grave" : ""), html: "<span>!</span>", iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -14] });
+      L.marker([x.lat, x.lon], { icon, title: TIPO_CORTE[x.tipo] || "Aviso", zIndexOffset: GRAVE.includes(x.tipo) ? 500 : 0 })
+        .bindPopup(`<ul class="apc-lista apc-popup">${corteHTML(x, opc.desdeKm != null ? x.kmRuta - opc.desdeKm : x.kmRuta)}</ul>`, { maxWidth: 290, minWidth: 220 }).addTo(m.capa);
+    }
+    if (opc.yo) { if (m.yo) m.yo.setLatLng(opc.yo); else m.yo = L.circleMarker(opc.yo, { radius: 9, color: "#fff", weight: 3, fillColor: "#1E4F9C", fillOpacity: 1 }).addTo(m.mapa); }
+    setTimeout(() => m.mapa.invalidateSize(), 60);
+  }
+  function ponVista(v) {
+    AJ.vista = v; guarda();
+    document.querySelectorAll("#v-aparcar [data-apc-vista]").forEach(b => { b.classList.toggle("activa", b.dataset.apcVista === v); b.setAttribute("aria-pressed", b.dataset.apcVista === v); });
+    if (VIAJE) { VIAJE.firma = ""; repinta(); } else pintaTodos();
+  }
+
+  // Lista larga de toda la ruta, con un rótulo cada 100 km para ubicarse al bajar (lo pidió el padre: verlos todos con sus distancias)
+  function listaPorTramos(ver) {
+    let html = "", tramo = -1;
+    for (const y of ver) {
+      const t = Math.floor(y.x.kmRuta / 100);
+      if (t !== tramo) { html += `${tramo < 0 ? "" : "</ul>"}<h3 class="apc-tramo">Del km ${t * 100} al ${t * 100 + 100}</h3><ul class="apc-lista">`; tramo = t; }
+      html += tarjeta(y.x, y.x.kmRuta, y.llega);
+    }
+    return html + "</ul>";
   }
 
   // ---------- Viaje en marcha ----------
@@ -205,7 +562,9 @@
     ULT_VOZ = ""; ANTES = null;
     $("apc-preparar").hidden = true; $("apc-viaje").hidden = false;
     $("apc-viaje-tit").textContent = VIAJE.sinDestino ? "Delante de ti" : "Por delante en tu ruta";
-    $("apc-proximos").innerHTML = `<p class="apc-nota">Buscando dónde estás…</p>`;
+    $("apc-proximos").innerHTML = `<p class="apc-nota">Buscando dónde estás…</p>`; $("apc-proximos").hidden = false; $("apc-mapa-viaje").hidden = true;
+    if (MAPAS["apc-mapa-viaje"]) MAPAS["apc-mapa-viaje"].encuadrado = false;
+    document.querySelectorAll("#apc-viaje [data-apc-vista]").forEach(b => { b.classList.toggle("activa", b.dataset.apcVista === AJ.vista); b.setAttribute("aria-pressed", b.dataset.apcVista === AJ.vista); });
     pideCandado();
     VIGIA = navigator.geolocation.watchPosition(enMarcha, (e) => { $("apc-proximos").innerHTML = `<p class="msg err">${e.code === 1 ? "Sin permiso de ubicación no puedo saber qué tienes por delante. Dale permiso a la app en los ajustes del móvil." : "No se ha podido saber dónde estás. Comprueba que la ubicación está encendida."}</p>`; },
       { enableHighAccuracy: true, maximumAge: 10000, timeout: 30000 });
@@ -220,6 +579,7 @@
   }
   async function enMarcha(p) {
     if (!VIAJE) return;
+    VIAJE.ultima = p;
     const a = p.coords.latitude, o = p.coords.longitude, ahora = Date.now();
     let lista = [];
     if (!VIAJE.sinDestino && RUTA) {
@@ -229,6 +589,11 @@
       VIAJE.idx = idx;
       const yaKm = pts[idx][2], yaMin = pts[idx][3];
       lista = EN_RUTA.filter(x => x.kmRuta > yaKm + 0.3).map(x => ({ x, falta: x.kmRuta - yaKm, llega: new Date(ahora + (x.minRuta - yaMin) * 60000) }));
+      VIAJE.yaKm = yaKm;
+      // Cortes graves por delante (los 3 primeros) y aviso en voz del siguiente
+      const delante = (CORTES || []).filter(x => GRAVE.includes(x.tipo) && x.kmRuta > yaKm - 0.3);
+      $("apc-cortes-viaje").innerHTML = delante.length ? `<ul class="apc-lista apc-cortes">${delante.slice(0, 3).map(x => corteHTML(x, x.kmRuta - yaKm)).join("")}</ul>` : "";
+      if (delante[0] && delante[0].id !== VIAJE.ultCorte) { VIAJE.ultCorte = delante[0].id; habla(`Atención: ${TIPO_CORTE[delante[0].tipo]}${delante[0].via ? " en la " + delante[0].via : ""}, a ${Math.round(delante[0].kmRuta - yaKm)} kilómetros.`); }
       $("apc-viaje-info").textContent = mejor > 3 ? "Te has salido de la ruta calculada: los kilómetros pueden no cuadrar." : `Quedan ${Math.round(pts[pts.length - 1][2] - yaKm)} km hasta ${RUTA.hasta.nombre}.`;
     } else {
       // Sin destino: los que hay delante en la dirección en la que vas (rumbo del GPS o de los dos últimos puntos)
@@ -239,36 +604,70 @@
       if (r == null) r = ANTES?.r;
       const vel = p.coords.speed > 5 ? p.coords.speed * 3.6 : 75;
       lista = CERCA.map(x => ({ x, falta: km(a, o, x.lat, x.lon) * 1.2, rb: rumbo(a, o, x.lat, x.lon) }))
-        .filter(y => y.falta <= 80 && (r == null || Math.abs(((y.rb - r + 540) % 360) - 180) <= 35))
+        .filter(y => y.falta <= 150 && (r == null || Math.abs(((y.rb - r + 540) % 360) - 180) <= 35))
         .map(y => ({ ...y, llega: new Date(ahora + (y.falta / vel) * 3600000) })).sort((u, v) => u.falta - v.falta);
       $("apc-viaje-info").textContent = r == null ? "Cuando empieces a moverte sabré hacia dónde vas. Mientras, salen los que tienes alrededor." : "Distancias aproximadas, en la dirección en la que vas.";
     }
     const abiertos = lista.filter(y => estadoA(y.x, y.llega) !== "no");
-    const vale = abiertos.filter(y => !AJ.gratis || y.x.pago === 0);
+    const vale = abiertos;
     const cerrados = lista.length - abiertos.length;
-    $("apc-proximos").innerHTML = vale.length
-      ? `<ul class="apc-lista">${vale.slice(0, 6).map(y => tarjeta(y.x, y.falta, y.llega)).join("")}</ul>${cerrados ? `<p class="apc-nota">${cerrados} por delante estarán cerrados cuando llegues: no salen.</p>` : ""}`
-      : `<p class="desc-vacio">${AJ.gratis ? "No hay ninguno gratis y abierto por delante." : "No hay aparcamientos abiertos por delante."}</p>`;
+    // Con «Ver también los cerrados» salen todos, los cerrados en gris y marcados
+    const mostrar = AJ.cerrados ? lista : vale;
+    // Salen todos los que quedan por delante (se baja para ver más). Para no mover la lista mientras se mira,
+    // se repinta como mucho cada 10 s, salvo que cambie el primero.
+    const enMapa = AJ.vista === "mapa";
+    $("apc-proximos").hidden = enMapa; $("apc-mapa-viaje").hidden = !enMapa;
+    if (enMapa) MAPAS["apc-mapa-viaje"]?.yo?.setLatLng([a, o]);
+    const firma = AJ.vista + mostrar.map(y => y.x.osm).join(), ahoraP = Date.now();
+    if (firma === VIAJE.firma && ahoraP - PINTADO < 10000) return;
+    VIAJE.firma = firma; PINTADO = ahoraP;
+    if (enMapa) pintaMapa("apc-mapa-viaje", mostrar, { yo: [a, o], ruta: !VIAJE.sinDestino, desdeKm: VIAJE.sinDestino ? null : VIAJE.yaKm });
+    else $("apc-proximos").innerHTML = mostrar.length
+      ? `<p class="apc-cuenta">${mostrar.length === 1 ? "1 aparcamiento" : mostrar.length + " aparcamientos"} por delante, del más cercano al más lejano. Baja para verlos todos.</p><ul class="apc-lista">${mostrar.map(y => tarjeta(y.x, y.falta, y.llega)).join("")}</ul>${cerrados && !AJ.cerrados ? `<p class="apc-nota">${cerrados} por delante estarán cerrados cuando llegues: no salen. Para verlos, marca «Ver también los cerrados».</p>` : ""}`
+      : `<p class="desc-vacio">No hay aparcamientos abiertos por delante.</p>`;
     const primero = vale[0];
     if (primero && primero.x.osm !== ULT_VOZ) {
       ULT_VOZ = primero.x.osm;
-      habla(`Próximo aparcamiento abierto: ${nombre(primero.x)}, a ${Math.round(primero.falta)} kilómetros. ${primero.x.pago === 0 ? "Gratis." : primero.x.pago === 1 ? "De pago." : ""}`);
+      habla(`Próximo aparcamiento abierto: ${nombre(primero.x)}, a ${Math.round(primero.falta)} kilómetros.${primero.x.plazas ? ` ${primero.x.plazas} plazas para camiones.` : ""}`);
     }
+  }
+
+  // Repinta con lo último (al llegar un aviso nuevo)
+  function repinta() { if (VIAJE?.ultima) enMarcha(VIAJE.ultima); else pintaTodos(); }
+  function buscaEn(osm) { return EN_RUTA.find(x => x.osm === osm) || CERCA.find(x => x.osm === osm); }
+  const YA = {}; // lo que ya ha avisado este móvil (para no repetir por error)
+  async function avisar(osm, tipo) {
+    const x = buscaEn(osm); if (!x) return;
+    const que = { cerrado: "está cerrado", lleno: "está lleno", abierto: "está abierto" }[tipo];
+    if (YA[osm + tipo] && Date.now() - YA[osm + tipo] < 30 * 60000) { estado("Ya lo has avisado hace poco. Gracias."); return; }
+    if (!confirm(`¿Avisar a los compañeros de que «${nombre(x)}» ${que}?`)) return;
+    try {
+      const { data, error } = await sb.rpc("avisar_aparcamiento", { p_osm: osm, p_tipo: tipo });
+      if (error || !["ok", "ya avisado"].includes(data)) throw error || new Error(String(data));
+      YA[osm + tipo] = Date.now();
+      AVISOS[osm] = { tipo, t: Date.now() };
+      estado(`Gracias: tus compañeros verán que ${que} durante ${VALE_H[tipo]} horas.`);
+      repinta();
+    } catch (_) { estado("No se ha podido enviar el aviso. Comprueba que tienes internet.", true); }
   }
 
   function prepara() {
     pintaFormulario();
+    // Durante el viaje, los avisos de los compañeros se refrescan cada 2 minutos
     $("apc-buscar").onclick = buscaRuta;
+    $("v-aparcar").addEventListener("click", (e) => { const b = e.target.closest("[data-apc-vista]"); if (b) ponVista(b.dataset.apcVista); });
+    // Si cambia el sitio o el código postal, lo elegido antes ya no vale
+    [["apc-desde", "desde"], ["apc-desde-cp", "desde"], ["apc-hasta", "hasta"], ["apc-hasta-cp", "hasta"]].forEach(([id, k]) => $(id).addEventListener("input", () => { ELEGIDO[k] = null; $("apc-elegir").innerHTML = ""; }));
     $("apc-form").onsubmit = (e) => { e.preventDefault(); buscaRuta(); };
     $("apc-sin-destino").onclick = () => empiezaViaje(true);
     $("apc-terminar").onclick = terminaViaje;
     $("apc-voz").onchange = () => { AJ.voz = $("apc-voz").checked; guarda(); if (AJ.voz) habla("Te avisaré en voz alta del próximo aparcamiento abierto."); };
-    $("apc-gratis").onchange = () => { AJ.gratis = $("apc-gratis").checked; guarda(); };
+    $("apc-cerrados").onchange = () => { AJ.cerrados = $("apc-cerrados").checked; guarda(); if (VIAJE) { VIAJE.firma = ""; repinta(); } };
     // Al volver a la app con el viaje en marcha, la pantalla vuelve a quedarse encendida
     document.addEventListener("visibilitychange", () => { if (VIAJE && document.visibilityState === "visible") pideCandado(); });
     addEventListener("hashchange", () => { if (location.hash !== "#aparcar" && VIAJE) terminaViaje(); });
   }
   // Para las pruebas
-  window.__aparcar = { abierto, precioTxt, enRuta, enMarcha: (a, o, rumboGps) => enMarcha({ coords: { latitude: a, longitude: o, heading: rumboGps ?? NaN, speed: rumboGps != null ? 20 : null } }) };
+  window.__aparcar = { abierto, precioTxt, enRuta, cargaAvisos, enMarcha: (a, o, rumboGps) => enMarcha({ coords: { latitude: a, longitude: o, heading: rumboGps ?? NaN, speed: rumboGps != null ? 20 : null } }) };
   prepara();
 })();

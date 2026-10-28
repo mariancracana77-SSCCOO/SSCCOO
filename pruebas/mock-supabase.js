@@ -30,13 +30,26 @@
     calc_permisos: [], calc_categorias: [], calc_ajustes: [{ clave: "vac_dias", valor: "23" }],
     // «Aparcamientos en mi ruta»: unos cuantos en la AP-7 / A9 entre Girona y Narbona (datos de prueba)
     aparcamientos: [
-      { osm: "w1", pais: "ES", lat: 42.1600, lon: 2.8650, nombre: "Área de prueba gratis", horario: null, pago: 0, precio: null, vigilado: false, duchas: true, aseos: true, plazas: 40, area: true, camion: true },
+      { osm: "w1", pais: "ES", lat: 42.1600, lon: 2.8650, nombre: "Área de prueba", horario: null, pago: 0, precio: null, vigilado: false, duchas: true, aseos: true, plazas: 40, area: true, camion: true },
       { osm: "w2", pais: "ES", lat: 42.3500, lon: 2.8900, nombre: "Parking vigilado de prueba", horario: "24/7", pago: 1, precio: "2 EUR/hour", vigilado: true, duchas: true, aseos: true, plazas: 80, area: false, camion: true },
       { osm: "w3", pais: "FR", lat: 42.6000, lon: 2.9200, nombre: "Aire de prueba", horario: null, pago: null, precio: null, vigilado: false, duchas: false, aseos: true, plazas: null, area: true, camion: false },
       { osm: "w4", pais: "FR", lat: 42.8000, lon: 2.9500, nombre: "Parking que cierra", horario: "Mo-Fr 08:00-09:00", pago: 0, precio: null, vigilado: false, duchas: false, aseos: false, plazas: 12, area: false, camion: true },
-      { osm: "w5", pais: "FR", lat: 43.0500, lon: 2.9800, nombre: null, horario: null, pago: null, precio: null, vigilado: false, duchas: false, aseos: false, plazas: null, area: false, camion: true },
+      { osm: "w5", pais: "FR", lat: 43.0500, lon: 2.9900, nombre: null, cerca: "Sigean", horario: null, pago: null, precio: null, vigilado: false, duchas: false, aseos: false, plazas: null, area: false, camion: true },
+      { osm: "w7", pais: "ES", lat: 42.2467, lon: 2.8612, nombre: "Área sentido Francia", horario: null, pago: null, precio: null, vigilado: false, duchas: true, aseos: true, plazas: 25, area: true, camion: true },
+      { osm: "w8", pais: "ES", lat: 42.2467, lon: 2.8588, nombre: "Área sentido Barcelona", horario: null, pago: null, precio: null, vigilado: false, duchas: true, aseos: true, plazas: 25, area: true, camion: true },
       { osm: "w6", pais: "FR", lat: 44.9000, lon: 4.8000, nombre: "Lejos de la ruta", horario: null, pago: 0, precio: null, vigilado: false, duchas: false, aseos: false, plazas: null, area: true, camion: true },
     ],
+    // Avisos de compañeros (el «Aire de prueba» avisado cerrado hace un rato)
+    peajes_paises: [
+      { id: 1, pais: "ES", nombre: "España", cobra: "peaje", precio_km: 0.17, nota: "Estimación. Revisar.", orden: 1, visible: true },
+      { id: 2, pais: "FR", nombre: "Francia", cobra: "peaje", precio_km: 0.25, nota: "Estimación clase 4. Revisar.", orden: 2, visible: true },
+      { id: 3, pais: "AT", nombre: "Austria", cobra: "autopista", precio_km: 0.5724, nota: "ASFINAG 2026.", orden: 6, visible: true }],
+    cortes: [
+      { id: "dgt:1", pais: "ES", fuente: "dgt", tipo: "carril", via: "AP-7", lat: 42.34, lon: 2.874, lat2: 42.352, lon2: 2.8758, rumbo: 0, texto: "carril derecho · por obras · km 30–31,5 · Pont de molins", inicio: null, fin: null },
+      { id: "dgt:2", pais: "ES", fuente: "dgt", tipo: "cortada", via: "AP-7", lat: 42.58, lon: 2.91, lat2: null, lon2: null, rumbo: null, texto: "km 1 · La jonquera", inicio: null, fin: new Date(Date.now() + 5 * 3600000).toISOString() },
+      { id: "dgt:3", pais: "ES", fuente: "dgt", tipo: "accidente", via: "AP-7", lat: 42.70, lon: 2.928, lat2: null, lon2: null, rumbo: 180, texto: "sentido contrario: no debe salir", inicio: null, fin: null },
+      { id: "dgt:4", pais: "ES", fuente: "dgt", tipo: "cortada", via: "GI-555", lat: 42.30, lon: 2.95, lat2: null, lon2: null, rumbo: null, texto: "otra carretera: no debe salir", inicio: null, fin: null }],
+    avisos_aparcamiento: [{ id: 1, osm: "w3", tipo: "cerrado", cuando: new Date(Date.now() - 40 * 60000).toISOString() }],
     tarifas_conductor: [
       { id: 1, grupo: "Salario", concepto: "Salario bruto (sin antigüedad)", importe: 1725.28, unidad: "mes", pago: "Mensual", sin_pagar: 0, max_mes: null, nota: "", orden: 10, visible: true },
       { id: 3, grupo: "Dieta completa", concepto: "Dieta completa nacional", importe: 48.6, importe_nuevo: 50.82, desde: "2027-01-01", unidad: "dia", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "", orden: 30, visible: true },
@@ -69,7 +82,9 @@
   // Ruta de prueba Girona → Narbona: un punto cada ~1,5 km por la AP-7/A9 a 75 km/h
   const RUTA_PRUEBA = (() => { const p = [], n = 90; for (let i = 0; i <= n; i++) { const f = i / n; p.push([+(41.98 + f * 1.2).toFixed(5), +(2.82 + f * 0.18).toFixed(5), +(f * 135).toFixed(1), Math.round(f * 108)]); }
     return { desde: { nombre: "Girona", lat: 41.98, lon: 2.82 }, hasta: { nombre: "Narbona, Francia", lat: 43.18, lon: 3.0 }, km: 135, min: 108, peaje: true, ferry: false,
-      tramos: [{ via: "", km: 4, hacia: "" }, { via: "AP-7", km: 70, hacia: "La Jonquera / França" }, { via: "A9", km: 61, hacia: "Narbonne" }], puntos: p }; })();
+      tramos: [{ via: "", km: 4, hacia: "" }, { via: "AP-7", km: 70, hacia: "La Jonquera / França" }, { via: "A9", km: 61, hacia: "Narbonne" }], puntos: p, fina: p.map(x => [x[0], x[1]]), autopista: [[4, 135]], peajes: [[70, 135]],
+    alternativas: [{ km: 142, min: 124, peaje: false, ferry: false, tramos: [{ via: "N-II", km: 60, hacia: "La Jonquera" }, { via: "D900", km: 82, hacia: "Narbonne" }],
+      puntos: p.map(x => [x[0], +(x[1] - 0.06).toFixed(5), +(x[2] * 1.05).toFixed(1), Math.round(x[3] * 1.15)]), fina: p.map(x => [x[0], +(x[1] - 0.06).toFixed(5)]), autopista: [], peajes: [] }] }; })();
   // Con localStorage «prueba-sesion» = 1, el panel entra como administrador de prueba
   const SES = (() => { try { return localStorage.getItem("prueba-sesion") === "1"; } catch (_) { return false; } })()
     ? { access_token: "x", user: { id: "u1", email: "prueba@example.com" } } : null;
@@ -83,8 +98,11 @@
   window.supabase = {
     createClient: () => ({
       from: consulta, auth, channel: () => canal, removeChannel() {},
-      rpc: async () => ({ data: null, error: null }),
-      functions: { invoke: async (n) => ({ data: n === "ruta" ? RUTA_PRUEBA : null, error: null }) },
+      rpc: async (n) => ({ data: n === "avisar_aparcamiento" ? "ok" : null, error: null }),
+      // «Fleuré» sin código postal: hay dos pueblos y la función pregunta cuál (como la de verdad)
+      functions: { invoke: async (n, o) => ({ data: n !== "ruta" ? null : (o?.body?.elegir && typeof o.body.hasta === "string" && /fleur/i.test(o.body.hasta) && !o.body.cp_hasta)
+        ? { elegir: { hasta: [{ nombre: "Fleuré, France", detalle: "61200, Orne, Normandie, France", cp: "61200", lat: 48.69, lon: -0.058 }, { nombre: "Fleuré, France", detalle: "86340, Vienne, Nouvelle-Aquitaine, France", cp: "86340", lat: 46.478, lon: 0.522 }] } }
+        : RUTA_PRUEBA, error: null }) },
       storage: { from: () => ({ upload: async () => ({ error: null }), getPublicUrl: (r) => ({ data: { publicUrl: "https://example.com/documentos/" + r } }), remove: async () => ({}), list: async () => ({ data: [] }) }) },
     }),
   };

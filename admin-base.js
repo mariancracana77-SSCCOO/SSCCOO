@@ -258,6 +258,24 @@ SECCIONES.tarifas = {
   extracto: (x) => x.nota, chips: (x) => [precioUnidad(x), x.desde && Number(x.importe_nuevo) > 0 ? `Desde el ${new Date(x.desde + "T12:00").toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}: ${precioTxt(x.importe_nuevo)}` : null, x.grupo || null, x.pago === "Mensual" ? "Con la nómina" : "Semanal", Number(x.sin_pagar) ? (Number(x.sin_pagar) === 1 ? "La primera de cada día no se paga" : `Las ${x.sin_pagar} primeras de cada día no se pagan`) : null, Number(x.max_mes) ? `Máx. ${x.max_mes} al mes` : null, x.visible === false ? "Oculto" : null], fechas: (x) => [null, x.actualizado],
 };
 
+// Peajes aproximados de «Aparcamientos en mi ruta» (v90, lo pidió el padre). Se editan en la página «Peajes camión».
+// Por país: qué se paga (solo tramos de peaje, todas las autopistas o todas las carreteras) y € por km para un camión de 5 ejes y 40 t.
+const COBRA_PEAJE = [["peaje", "Solo los tramos de peaje (Francia, Italia, España…)"], ["autopista", "Todas las autopistas (Alemania, Austria, Bélgica…)"], ["todo", "Todas las carreteras (Suiza)"], ["nada", "No se paga por kilómetro"]];
+SECCIONES.peajes = {
+  nombre: "Peajes camión", icono: "euro", tabla: "peajes_paises", orden: ["orden", true], uno: "país", nuevo: "Añadir país", lista: "aviso", campoColor: "_", oculta: true, volver: "peajes",
+  intro: "", tituloDe: (x) => x.nombre,
+  campos: [
+    { fila: [{ k: "nombre", l: "País", t: "text", req: true, ph: "Ej: Francia" }, { k: "pais", l: "Código del país (2 letras)", t: "text", req: true, ph: "Ej: FR", ayuda: "ES, FR, IT, PT, DE, AT, CH, BE, NL, LU, GB, AD. Así se sabe por qué país va la ruta." }] },
+    { k: "cobra", l: "Qué se paga", t: "select", ops: COBRA_PEAJE, def: "peaje" },
+    { k: "precio_km", l: "Precio por kilómetro (€)", t: "number", dec: true, paso: "any", ayuda: "Para un camión de 5 ejes, 40 t, Euro 6. Ej: 0,25. Si no lo sabes, deja 0: la web dirá «Sin precio»." },
+    { k: "nota", l: "De dónde sale el precio", t: "text", opc: true, ph: "Ej: Tarifa de Vinci, clase 4, 2026" },
+    { k: "orden", l: "Posición en la lista", t: "number" },
+    { checks: [{ k: "visible", l: "Se usa en la web", def: true }] },
+  ],
+  previa: (x) => `<div class="panel calc"><div class="resultado-calc"><span class="rc-tit">${esc(x.nombre || "País")}</span><span class="rc-num">${x.cobra === "nada" ? "No se paga por km" : esc(precioTxt(x.precio_km)) + " <small>por km</small>"}</span>${x.nota ? `<span class="rc-sub">${esc(x.nota)}</span>` : ""}</div></div>`,
+  extracto: (x) => x.nota, chips: (x) => [x.pais, (COBRA_PEAJE.find(c => c[0] === x.cobra) || [, ""])[1].split(" (")[0], x.cobra !== "nada" ? (Number(x.precio_km) > 0 ? precioTxt(x.precio_km) + " por km" : "Sin precio") : null, x.visible === false ? "No se usa" : null], fechas: (x) => [null, x.actualizado],
+};
+
 // Restricciones para camiones (Zona Conductores de la web). Se editan en la página «Restricciones camiones».
 SECCIONES.restricciones = {
   nombre: "Restricciones para camiones", icono: "lugar", tabla: "restricciones", orden: ["orden", true], uno: "país", nuevo: "Añadir país", lista: "aviso", campoColor: "_", oculta: true, volver: "camiones",
@@ -300,8 +318,8 @@ async function cargarApartados() {
 let PAGINAS = {};
 // Menú agrupado igual que las pestañas de la web (v52): cada apartado principal con lo que va dentro, un poco metido.
 // «cab» pone un título encima; «sub» lo mete dentro del de arriba. Si falta el apartado de arriba, va suelto.
-const DENTRO_PANEL = { actas: "comite", convenio: "convenio-y-leyes", calculadoras: "convenio-y-leyes", camiones: "zona-conductores", ganancias: "zona-conductores" };
-const PAG_FIJAS = { calculadoras: { nombre: "Calculadoras", icono: "reloj" }, camiones: { nombre: "Restricciones camiones", icono: "lugar" }, ganancias: { nombre: "Importes conductores", icono: "euro" },
+const DENTRO_PANEL = { actas: "comite", convenio: "convenio-y-leyes", calculadoras: "convenio-y-leyes", camiones: "zona-conductores", ganancias: "zona-conductores", peajes: "zona-conductores" };
+const PAG_FIJAS = { calculadoras: { nombre: "Calculadoras", icono: "reloj" }, camiones: { nombre: "Restricciones camiones", icono: "lugar" }, ganancias: { nombre: "Importes conductores", icono: "euro" }, peajes: { nombre: "Peajes camión", icono: "euro" },
   buzon: { nombre: "Buzón anónimo", icono: "correo" }, ortografia: { nombre: "Revisar ortografía", icono: "check" }, historial: { nombre: "Historial", icono: "reloj" }, textos: { nombre: "Textos", icono: "texto" }, ajustes: { nombre: "Ajustes", icono: "ajustes" } };
 const padreDe = (a) => a.padre_id ? APARTADOS.find(p => p.id === a.padre_id && !p.padre_id) : null;
 function construirPaginas() {
