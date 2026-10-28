@@ -179,6 +179,14 @@
     if (e === "siempre") return `<span class="apc-abre si">Área de autopista: abierta siempre</span>`;
     return `<small>Horario sin apuntar</small>`;
   }
+  // «Llevarme aquí» (lo pidió el padre): abre SU navegador del móvil (iGO u otro) con el aparcamiento de destino.
+  // Android: enlace geo: (el móvil pregunta con qué aplicación); iPhone: el mapa de Apple. Sin Google. Se monta solo con números y el nombre codificado.
+  const ES_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  function llevarHref(x) {
+    const la = (+x.lat).toFixed(6), lo = (+x.lon).toFixed(6);
+    if (!Number.isFinite(+la) || !Number.isFinite(+lo)) return "";
+    return ES_IOS ? `https://maps.apple.com/?daddr=${la},${lo}&dirflg=d` : `geo:${la},${lo}?q=${la},${lo}(${encodeURIComponent(nombre(x))})`;
+  }
   function tarjeta(x, faltaKm, llegada) {
     const extras = [x.camion ? "Para camiones" : "", x.vigilado ? "Vigilado" : "", x.duchas ? "Duchas" : "", x.aseos ? "Aseos" : "", x.desvio > 0.6 ? `A ${kmTxt(x.desvio)} km de la ruta` : ""].filter(Boolean);
     return `<li class="apc${estadoA(x, llegada) === "no" ? " cerrado" : ""}">
@@ -187,6 +195,7 @@
       <div class="apc-hor">${abreHTML(x, llegada || new Date())}</div>
       ${avisoDe(x)?.tipo === "lleno" ? `<div class="apc-lleno">Lleno · avisado por un compañero ${haceTxt(avisoDe(x).t)}</div>` : ""}
       ${extras.length ? `<div class="apc-extra">${extras.map(e => `<span>${esc(e)}</span>`).join("")}</div>` : ""}
+      ${llevarHref(x) ? `<a class="btn sec apc-llevar" href="${esc(llevarHref(x))}">${icono("lugar", "p")}Llevarme aquí</a>` : ""}
     </li>`;
   }
 
