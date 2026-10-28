@@ -422,6 +422,7 @@
       <section class="apc-todos" aria-labelledby="apc-todos-tit">
         <h2 id="apc-todos-tit">Aparcamientos en tu ruta</h2>
         <label class="apc-salida">Salgo a las <input type="time" id="apc-salida" value="${esc(SALIDA)}"> <small>(vacío = ahora)</small></label>
+        ${filtrosHTML()}
         <div id="apc-todos"></div>
       </section>
       <details class="panel apc-tramos"><summary>Carreteras de la ruta (${RUTA.tramos.length})</summary>
@@ -433,6 +434,7 @@
     $("apc-empezar").onclick = empiezaViaje;
     caja.querySelectorAll("[data-ruta]").forEach(b => b.onclick = () => eligeRuta(+b.dataset.ruta));
     $("apc-salida").onchange = () => { SALIDA = $("apc-salida").value; pintaTodos(); };
+    enlazaFiltros();
     pintaTodos();
   }
   function ponFiltro(f) { FILTRO = f; pintaTodos(); }
@@ -444,10 +446,54 @@
     return d.getTime();
   }
   // Todos los de la ruta, desde la salida: abiertos, cerrados (los que lo estarán cuando pases) o todos
+  // ---------- Buscar y filtrar la lista (y el mapa) (lo pidió Lorena) ----------
+  const FILT_VACIO = () => ({ texto: "", plazas: 0, vigilado: false, duchas: false, aseos: false, area: false, desde: "", hasta: "" });
+  let FILT = FILT_VACIO();
+  const CHIPS_F = [["vigilado", "Vigilado"], ["duchas", "Duchas"], ["aseos", "Aseos"], ["area", "Áreas de autopista"]];
+  const filtrosActivos = () => [FILT.texto.trim(), FILT.plazas, ...CHIPS_F.map(([k]) => FILT[k]), FILT.desde !== "", FILT.hasta !== ""].filter(Boolean).length;
+  function filtrosHTML() {
+    return `<div class="apc-filtros">
+      <label class="apc-f-texto"><span>Buscar en la lista</span><input type="search" id="apc-f-texto" placeholder="Nombre, pueblo o carretera (ej. A9)" autocomplete="off" value="${esc(FILT.texto)}"></label>
+      <details class="apc-f-mas"${filtrosActivos() > (FILT.texto.trim() ? 1 : 0) ? " open" : ""}><summary>Más filtros</summary>
+        <div class="apc-f-chips" role="group" aria-label="Filtros">${CHIPS_F.map(([k, t]) => `<button type="button" class="apc-f-chip${FILT[k] ? " activa" : ""}" data-f="${k}" aria-pressed="${FILT[k]}">${t}</button>`).join("")}</div>
+        <label class="apc-f-plazas">Plazas para camión <select id="apc-f-plazas">${[[0, "Cualquiera"], [1, "Con plazas apuntadas"], [10, "10 o más"], [20, "20 o más"], [50, "50 o más"]].map(([v, t]) => `<option value="${v}"${FILT.plazas === v ? " selected" : ""}>${t}</option>`).join("")}</select></label>
+        <div class="apc-f-km"><label>Del km <input type="number" id="apc-f-desde" inputmode="numeric" min="0" value="${esc(FILT.desde)}"></label><label>al km <input type="number" id="apc-f-hasta" inputmode="numeric" min="0" value="${esc(FILT.hasta)}"></label></div>
+      </details>
+      <p class="apc-f-cuenta" id="apc-f-cuenta" aria-live="polite"></p>
+    </div>`;
+  }
+  function pasaFiltro(x) {
+    if (FILT.texto.trim() && !coincide([nombre(x), x.cerca, viaEnKm(x.kmRuta)].filter(Boolean).join(" "), FILT.texto)) return false;
+    if (FILT.plazas && !(Number(x.plazas) >= FILT.plazas)) return false;
+    if (FILT.vigilado && !x.vigilado) return false;
+    if (FILT.duchas && !x.duchas) return false;
+    if (FILT.aseos && !x.aseos) return false;
+    if (FILT.area && !x.area) return false;
+    if (FILT.desde !== "" && x.kmRuta < Number(FILT.desde)) return false;
+    if (FILT.hasta !== "" && x.kmRuta > Number(FILT.hasta)) return false;
+    return true;
+  }
+  function enlazaFiltros() {
+    const caja = $("apc-ruta"), t = $("apc-f-texto"); if (!t) return;
+    let espera = null;
+    t.oninput = () => { clearTimeout(espera); espera = setTimeout(() => { FILT.texto = t.value; pintaTodos(); }, 250); };
+    caja.querySelectorAll("[data-f]").forEach(b => b.onclick = () => { FILT[b.dataset.f] = !FILT[b.dataset.f]; b.classList.toggle("activa", FILT[b.dataset.f]); b.setAttribute("aria-pressed", FILT[b.dataset.f]); pintaTodos(); });
+    $("apc-f-plazas").onchange = () => { FILT.plazas = Number($("apc-f-plazas").value) || 0; pintaTodos(); };
+    // Mientras se escribe (no al salir del campo: si no, el primer toque en otro botón se perdía al repintar la lista)
+    ["desde", "hasta"].forEach(k => { const c = $("apc-f-" + k); let t2 = null; c.oninput = () => { clearTimeout(t2); t2 = setTimeout(() => { FILT[k] = c.value.trim(); pintaTodos(); }, 400); }; });
+  }
+  function quitaFiltros() {
+    FILT = FILT_VACIO();
+    const f = document.querySelector("#apc-ruta .apc-filtros"); if (f) { f.outerHTML = filtrosHTML(); enlazaFiltros(); }
+    pintaTodos();
+  }
+
   function pintaTodos() {
     const caja = $("apc-todos"); if (!caja) return;
     const t0 = horaSalida();
-    const lista = EN_RUTA.map(x => ({ x, llega: new Date(t0 + x.minRuta * 60000), e: null })).map(y => ({ ...y, e: estadoA(y.x, y.llega) }));
+    const total = EN_RUTA.length, nF = filtrosActivos();
+    const cuenta = $("apc-f-cuenta");
+    const lista = EN_RUTA.filter(pasaFiltro).map(x => ({ x, llega: new Date(t0 + x.minRuta * 60000), e: null })).map(y => ({ ...y, e: estadoA(y.x, y.llega) }));
     // Cerrados: los que estarán cerrados cuando pases. Abiertos: los que se sabe que estarán abiertos (horario o área de autopista).
     // Sin horario: no se sabe. Así no se confunde «no sé» con «abierto».
     const cerrados = lista.filter(y => y.e === "no"), abiertos = lista.filter(y => y.e === "si" || y.e === "siempre"), sinHorario = lista.filter(y => y.e === "nose");
@@ -459,11 +505,17 @@
       <button type="button" class="btn sec apc-ver-todos${FILTRO === "todos" ? " activa" : ""}" data-filtro="todos" aria-pressed="${FILTRO === "todos"}">Ver todos (${lista.length}), del primero al último</button>
       ${vistaHTML()}
       <p class="apc-cuenta">De los ${pl(lista.length, "aparcamiento", "aparcamientos")} de la ruta, a la hora a la que pasas.${EN_RUTA.contrario ? ` Solo salen los de tu sentido de marcha: ${pl(EN_RUTA.contrario, "área", "áreas")} del otro lado de la autopista no ${EN_RUTA.contrario === 1 ? "sale" : "salen"}.` : ""}${sinHorario.length ? " «Sin horario»: nadie ha apuntado su horario, así que no se sabe si estará abierto." : ""}</p>`
-      + (AJ.vista === "mapa" ? `<div id="apc-mapa" class="apc-mapa" role="region" aria-label="Mapa de la ruta con los aparcamientos"></div>`
+      + (AJ.vista === "mapa" ? `${buscaSitioHTML("apc-mapa")}<div id="apc-mapa" class="apc-mapa" role="region" aria-label="Mapa de la ruta con los aparcamientos"></div>`
         : ver.length ? listaPorTramos(ver)
+        : nF && !lista.length ? `<p class="desc-vacio">Ningún aparcamiento cumple los filtros. <button type="button" class="btn-txt" data-quitar-f>Quitar filtros</button></p>`
         : `<p class="desc-vacio">${FILTRO === "cerrados" ? "Según los horarios apuntados, ninguno estará cerrado cuando pases." + (sinHorario.length ? ` Mira también «Sin horario» (${sinHorario.length}): de esos no se sabe.` : "") : "No hay ninguno."}</p>`);
     caja.querySelectorAll("[data-filtro]").forEach(b => b.onclick = () => ponFiltro(b.dataset.filtro));
-    if (AJ.vista === "mapa") pintaMapa("apc-mapa", ver);
+    caja.querySelector("[data-quitar-f]")?.addEventListener("click", quitaFiltros);
+    if (cuenta) {
+      cuenta.innerHTML = nF ? `Salen <b>${lista.length}</b> de ${total} con ${nF === 1 ? "1 filtro" : nF + " filtros"}. <button type="button" class="btn-txt" id="apc-f-quitar">Quitar filtros</button>` : "";
+      $("apc-f-quitar")?.addEventListener("click", quitaFiltros);
+    }
+    if (AJ.vista === "mapa") { pintaMapa("apc-mapa", ver); enlazaBuscaSitio(caja); }
   }
 
   // ---------- Mapa (lo pidió Lorena: «versión mapa y versión lista») ----------
@@ -493,7 +545,15 @@
       const mapa = L.map(caja, { zoomControl: true });
       mapa.attributionControl.setPrefix(false);
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(mapa);
-      m = MAPAS[id] = { div: caja, mapa, capa: L.layerGroup().addTo(mapa), ruta: null, rutaDe: null, yo: null, encuadrado: false };
+      m = MAPAS[id] = { div: caja, mapa, capa: L.layerGroup().addTo(mapa), zona: L.layerGroup().addTo(mapa), ruta: null, rutaDe: null, yo: null, encuadrado: false };
+      // Botón «Dónde estoy» (lo pidió Lorena): centra el mapa en tu posición; en el mapa sin ruta, enseña los aparcamientos de alrededor
+      const Yo = L.Control.extend({ options: { position: "topright" }, onAdd() {
+        const b = L.DomUtil.create("button", "apc-yo-btn"); b.type = "button"; b.title = "Dónde estoy"; b.setAttribute("aria-label", "Dónde estoy");
+        b.innerHTML = icono("lugar") + "<span>Dónde estoy</span>";
+        L.DomEvent.disableClickPropagation(b); L.DomEvent.on(b, "click", () => dondeEstoy(id, b));
+        return b;
+      } });
+      new Yo().addTo(mapa);
     }
     const conRuta = opc.ruta !== false && RUTA, linea = (r) => r.fina || r.puntos.map(q => [q[0], q[1]]);
     if (conRuta && m.rutaDe !== RUTA) m.encuadrado = false;
@@ -533,6 +593,68 @@
     if (opc.yo) { if (m.yo) m.yo.setLatLng(opc.yo); else m.yo = L.circleMarker(opc.yo, { radius: 9, color: "#fff", weight: 3, fillColor: "#1E4F9C", fillOpacity: 1 }).addTo(m.mapa); }
     setTimeout(() => m.mapa.invalidateSize(), 60);
   }
+  // Tu posición en el mapa «id» (no sale del móvil)
+  function dondeEstoy(id, boton) {
+    const m = MAPAS[id]; if (!m) return;
+    if (!("geolocation" in navigator)) { avisoMapa(id, "Este móvil no deja saber dónde estás."); return; }
+    boton?.classList.add("buscando");
+    navigator.geolocation.getCurrentPosition((p) => {
+      boton?.classList.remove("buscando");
+      const yo = [p.coords.latitude, p.coords.longitude];
+      if (m.yo) m.yo.setLatLng(yo); else m.yo = window.L.circleMarker(yo, { radius: 9, color: "#fff", weight: 3, fillColor: "#1E4F9C", fillOpacity: 1 }).bindTooltip("Estás aquí").addTo(m.mapa);
+      m.mapa.setView(yo, Math.max(m.mapa.getZoom() || 0, 11));
+      if (id === "apc-mapa-libre") muestraZona(id, yo[0], yo[1], "Estás aquí");
+    }, (e) => { boton?.classList.remove("buscando"); avisoMapa(id, e.code === 1 ? "No has dado permiso para saber dónde estás. Dale permiso de ubicación a la app o busca un sitio." : "No se ha podido saber dónde estás. Comprueba que la ubicación está encendida."); },
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 });
+  }
+  function avisoMapa(id, t) { const c = document.querySelector(`.apc-busca-res[data-mapa="${id}"]`); if (c) c.innerHTML = `<p class="msg err">${esc(t)}</p>`; }
+  // Aparcamientos a menos de 30 km de un punto (sitio buscado o tu posición), en otra capa del mapa
+  async function muestraZona(id, la, lo, etiqueta) {
+    const m = MAPAS[id]; if (!m) return;
+    const L = window.L, lista = await cargaPaises(paisesDe([[la, lo]]));
+    const cerca = lista.map(x => ({ x, d: km(la, lo, x.lat, x.lon) })).filter(y => y.d <= 30).sort((a, b) => a.d - b.d);
+    m.zona.clearLayers();
+    L.marker([la, lo], { icon: L.divIcon({ className: "apc-pin-sitio", html: "<span></span>", iconSize: [22, 22], iconAnchor: [11, 11] }), title: etiqueta }).bindTooltip(etiqueta).addTo(m.zona);
+    for (const { x, d } of cerca) {
+      const e = estadoA(x, new Date()), cls = e === "no" ? "no" : e === "nose" ? "nose" : "si";
+      L.marker([x.lat, x.lon], { icon: L.divIcon({ className: "apc-pin " + cls, html: `<span>${x.plazas ? x.plazas : "P"}</span>`, iconSize: [36, 36], iconAnchor: [18, 18], popupAnchor: [0, -16] }), title: nombre(x) })
+        .bindPopup(`<ul class="apc-lista apc-popup">${tarjeta(x, d, null)}</ul>`, { maxWidth: 290, minWidth: 220 }).addTo(m.zona);
+    }
+    const c = document.querySelector(`.apc-busca-res[data-mapa="${id}"]`);
+    if (c) c.innerHTML = `<p class="apc-nota">${cerca.length ? `${cerca.length === 1 ? "1 aparcamiento" : cerca.length + " aparcamientos"} a menos de 30 km de ${esc(etiqueta === "Estás aquí" ? "donde estás" : etiqueta)}. Tócalos en el mapa para ver sus datos.` : `No hay aparcamientos de camiones apuntados a menos de 30 km de ${esc(etiqueta === "Estás aquí" ? "donde estás" : etiqueta)}.`}</p>`;
+  }
+  // Buscador de sitios encima del mapa (lo pidió Lorena): pueblo, ciudad o código postal. Pasa por la función «ruta» sin guardarse.
+  const buscaSitioHTML = (id) => `<form class="apc-busca-sitio" data-mapa="${id}" role="search">
+    <input type="search" placeholder="Buscar un sitio: pueblo, ciudad o código postal" autocomplete="off" aria-label="Buscar un sitio en el mapa" enterkeyhint="search">
+    <button type="submit" class="btn sec">Buscar</button></form><div class="apc-busca-res" data-mapa="${id}" aria-live="polite"></div>`;
+  function enlazaBuscaSitio(caja) {
+    caja.querySelectorAll(".apc-busca-sitio").forEach(f => f.onsubmit = async (e) => {
+      e.preventDefault();
+      const id = f.dataset.mapa, q = f.querySelector("input").value.trim(), res = document.querySelector(`.apc-busca-res[data-mapa="${id}"]`);
+      if (q.length < 2) return;
+      res.innerHTML = `<p class="apc-nota">Buscando…</p>`;
+      try {
+        const { data, error } = await sb.functions.invoke("ruta", { body: { buscar: q } });
+        if (error || !data || data.error) throw new Error(data?.error || "error");
+        const l = data.lugares || [];
+        if (!l.length) { res.innerHTML = `<p class="msg err">No encuentro «${esc(q)}». Prueba con el nombre y el país, o con el código postal.</p>`; return; }
+        const ir = (x) => { MAPAS[id]?.mapa.setView([x.lat, x.lon], 11); muestraZona(id, x.lat, x.lon, x.nombre); };
+        if (l.length === 1) { ir(l[0]); return; }
+        res.innerHTML = `<div class="apc-elegir"><h3>¿Cuál es?</h3>${l.map((x, i) => `<button type="button" class="btn sec" data-i="${i}"><b>${esc(x.nombre)}</b><small>${esc(x.detalle || "")}</small></button>`).join("")}</div>`;
+        res.querySelectorAll("[data-i]").forEach(b => b.onclick = () => ir(l[+b.dataset.i]));
+      } catch (_) { res.innerHTML = `<p class="msg err">No se ha podido buscar. Comprueba que tienes internet.</p>`; }
+    });
+  }
+  // Mapa sin ruta (debajo del formulario): busca un sitio o toca «Dónde estoy»
+  function abreMapaLibre() {
+    const c = $("apc-libre"); c.hidden = !c.hidden;
+    $("apc-abre-mapa").setAttribute("aria-expanded", !c.hidden);
+    $("apc-abre-mapa").lastChild.textContent = c.hidden ? "Abrir el mapa" : "Cerrar el mapa";
+    if (c.hidden) return;
+    if (!c.querySelector(".apc-busca-sitio")) { c.insertAdjacentHTML("afterbegin", buscaSitioHTML("apc-mapa-libre")); enlazaBuscaSitio(c); }
+    pintaMapa("apc-mapa-libre", [], { ruta: false });
+  }
+
   function ponVista(v) {
     AJ.vista = v; guarda();
     document.querySelectorAll("#v-aparcar [data-apc-vista]").forEach(b => { b.classList.toggle("activa", b.dataset.apcVista === v); b.setAttribute("aria-pressed", b.dataset.apcVista === v); });
@@ -655,6 +777,7 @@
     pintaFormulario();
     // Durante el viaje, los avisos de los compañeros se refrescan cada 2 minutos
     $("apc-buscar").onclick = buscaRuta;
+    $("apc-abre-mapa").onclick = abreMapaLibre;
     $("v-aparcar").addEventListener("click", (e) => { const b = e.target.closest("[data-apc-vista]"); if (b) ponVista(b.dataset.apcVista); });
     // Si cambia el sitio o el código postal, lo elegido antes ya no vale
     [["apc-desde", "desde"], ["apc-desde-cp", "desde"], ["apc-hasta", "hasta"], ["apc-hasta-cp", "hasta"]].forEach(([id, k]) => $(id).addEventListener("input", () => { ELEGIDO[k] = null; $("apc-elegir").innerHTML = ""; }));

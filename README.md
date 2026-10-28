@@ -75,6 +75,13 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 91: buscar y filtrar aparcamientos, «Dónde estoy» y mapa sin ruta
+
+- **Buscar y filtrar la lista** de aparcamientos de la ruta (lo pidió Lorena): por texto (nombre, pueblo o carretera, perdona faltas) y, en «Más filtros», vigilado, duchas, aseos, solo áreas de autopista, plazas para camión (con plazas, 10, 20 o 50 o más) y tramo «del km … al km …». Se combinan con cerrados / abiertos / sin horario, valen también para el mapa y dice «Salen N de M» con «Quitar filtros».
+- **Botón «Dónde estoy»** en todos los mapas: centra el mapa en tu posición (no sale del móvil).
+- **Buscador de sitios encima del mapa**: pueblo, ciudad o código postal; va allí y enseña los aparcamientos a menos de 30 km. Si hay varios sitios con ese nombre, pregunta cuál.
+- **Mapa de aparcamientos sin ruta**: debajo del formulario, «Abrir el mapa»; con «Dónde estoy» o buscando un sitio salen los aparcamientos de alrededor.
+
 ## Versión 90: aparcamientos de la ruta más claros y sin navegador
 
 - **Sin navegador** (lo pidió el padre: ya usa uno de pago y quiere solo información): fuera los botones de Google Maps («Ir guiado» y «Llevarme aquí»). La ruta sirve solo para saber qué aparcamientos hay en el camino.
