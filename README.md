@@ -80,6 +80,7 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Sin navegador** (lo pidió el padre: ya usa uno de pago y quiere solo información): fuera los botones de Google Maps («Ir guiado» y «Llevarme aquí»). La ruta sirve solo para saber qué aparcamientos hay en el camino.
 - **Al calcular la ruta, lo primero son los aparcamientos en tres cifras grandes: cerrados, abiertos y sin horario** (lo pidió el padre). Se toca una cifra para ver esa lista; «Ver todos» los enseña del primero al último. Se quitaron los avisos de compañeros: el padre prefiere solo información.
 - **Plazas para camiones en grande en cada aparcamiento** y **fuera gratis/de pago** (el padre: los precios de OpenStreetMap fallaban y no le servían). Se buscan hasta a 3 km de la ruta (antes 1,5) y en el viaje salen más por delante.
+- **Se ven todos, bajando:** al calcular la ruta sale la lista entera de la ruta (con un rótulo cada 100 km) y en el viaje todos los que quedan por delante, del más cercano al más lejano (antes solo 5 o 6). Las cifras de cerrados / abiertos / sin horario siguen filtrando.
 - **Solo los de tu sentido de marcha:** en autopista, las áreas del otro lado (a las que solo llegarías dando la vuelta) no salen. La función `ruta` devuelve ahora la ruta fina y los tramos de autopista para saber a qué lado queda cada una.
 
 - **«Aparcamientos en mi ruta» avisa de que está en pruebas**, arriba de la pantalla y en la tarjeta de Zona Conductores.

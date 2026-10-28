@@ -153,7 +153,7 @@
   }
 
   // ---------- Estado del viaje ----------
-  let FILTRO = "cerrados", SALIDA = ""; // lista de toda la ruta: abiertos / cerrados / todos, y hora de salida (vacía = ahora)
+  let FILTRO = "todos", SALIDA = "", PINTADO = 0; // lista de toda la ruta: abiertos / cerrados / todos, y hora de salida (vacía = ahora)
   let RUTA = null, EN_RUTA = [], VIAJE = null, VIGIA = null, CANDADO = null, ULT_VOZ = "", CERCA = [], ANTES = null;
   const estado = (t, err) => { const m = $("apc-estado"); m.textContent = t || ""; m.classList.toggle("err", !!err); };
   const hora = (d) => d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
@@ -265,9 +265,20 @@
         ${cifra("cerrados", "cerr", cerrados.length, cerrados.length === 1 ? "cerrado" : "cerrados")}${cifra("abiertos", "abie", abiertos.length, abiertos.length === 1 ? "abierto" : "abiertos")}${cifra("nose", "nose", sinHorario.length, "sin horario")}</div>
       <button type="button" class="btn sec apc-ver-todos${FILTRO === "todos" ? " activa" : ""}" data-filtro="todos" aria-pressed="${FILTRO === "todos"}">Ver todos (${lista.length}), del primero al último</button>
       <p class="apc-cuenta">De los ${pl(lista.length, "aparcamiento", "aparcamientos")} de la ruta, a la hora a la que pasas.${EN_RUTA.contrario ? ` Solo salen los de tu sentido de marcha: ${pl(EN_RUTA.contrario, "área", "áreas")} del otro lado de la autopista no ${EN_RUTA.contrario === 1 ? "sale" : "salen"}.` : ""}${sinHorario.length ? " «Sin horario»: nadie ha apuntado su horario, así que no se sabe si estará abierto." : ""}</p>`
-      + (ver.length ? `<ul class="apc-lista">${ver.map(y => tarjeta(y.x, y.x.kmRuta, y.llega)).join("")}</ul>`
+      + (ver.length ? listaPorTramos(ver)
         : `<p class="desc-vacio">${FILTRO === "cerrados" ? "Según los horarios apuntados, ninguno estará cerrado cuando pases." + (sinHorario.length ? ` Mira también «Sin horario» (${sinHorario.length}): de esos no se sabe.` : "") : "No hay ninguno."}</p>`);
     caja.querySelectorAll("[data-filtro]").forEach(b => b.onclick = () => ponFiltro(b.dataset.filtro));
+  }
+
+  // Lista larga de toda la ruta, con un rótulo cada 100 km para ubicarse al bajar (lo pidió el padre: verlos todos con sus distancias)
+  function listaPorTramos(ver) {
+    let html = "", tramo = -1;
+    for (const y of ver) {
+      const t = Math.floor(y.x.kmRuta / 100);
+      if (t !== tramo) { html += `${tramo < 0 ? "" : "</ul>"}<h3 class="apc-tramo">Del km ${t * 100} al ${t * 100 + 100}</h3><ul class="apc-lista">`; tramo = t; }
+      html += tarjeta(y.x, y.x.kmRuta, y.llega);
+    }
+    return html + "</ul>";
   }
 
   // ---------- Viaje en marcha ----------
@@ -326,8 +337,13 @@
     const cerrados = lista.length - abiertos.length;
     // Con «Ver también los cerrados» salen todos, los cerrados en gris y marcados
     const mostrar = AJ.cerrados ? lista : vale;
+    // Salen todos los que quedan por delante (se baja para ver más). Para no mover la lista mientras se mira,
+    // se repinta como mucho cada 10 s, salvo que cambie el primero.
+    const firma = mostrar.map(y => y.x.osm).join(), ahoraP = Date.now();
+    if (firma === VIAJE.firma && ahoraP - PINTADO < 10000) return;
+    VIAJE.firma = firma; PINTADO = ahoraP;
     $("apc-proximos").innerHTML = mostrar.length
-      ? `<ul class="apc-lista">${mostrar.slice(0, AJ.cerrados ? 20 : 15).map(y => tarjeta(y.x, y.falta, y.llega)).join("")}</ul>${cerrados && !AJ.cerrados ? `<p class="apc-nota">${cerrados} por delante estarán cerrados cuando llegues: no salen. Para verlos, marca «Ver también los cerrados».</p>` : ""}`
+      ? `<p class="apc-cuenta">${mostrar.length === 1 ? "1 aparcamiento" : mostrar.length + " aparcamientos"} por delante, del más cercano al más lejano. Baja para verlos todos.</p><ul class="apc-lista">${mostrar.map(y => tarjeta(y.x, y.falta, y.llega)).join("")}</ul>${cerrados && !AJ.cerrados ? `<p class="apc-nota">${cerrados} por delante estarán cerrados cuando llegues: no salen. Para verlos, marca «Ver también los cerrados».</p>` : ""}`
       : `<p class="desc-vacio">No hay aparcamientos abiertos por delante.</p>`;
     const primero = vale[0];
     if (primero && primero.x.osm !== ULT_VOZ) {
@@ -363,7 +379,7 @@
     $("apc-sin-destino").onclick = () => empiezaViaje(true);
     $("apc-terminar").onclick = terminaViaje;
     $("apc-voz").onchange = () => { AJ.voz = $("apc-voz").checked; guarda(); if (AJ.voz) habla("Te avisaré en voz alta del próximo aparcamiento abierto."); };
-    $("apc-cerrados").onchange = () => { AJ.cerrados = $("apc-cerrados").checked; guarda(); };
+    $("apc-cerrados").onchange = () => { AJ.cerrados = $("apc-cerrados").checked; guarda(); if (VIAJE) { VIAJE.firma = ""; repinta(); } };
     // Al volver a la app con el viaje en marcha, la pantalla vuelve a quedarse encendida
     document.addEventListener("visibilitychange", () => { if (VIAJE && document.visibilityState === "visible") pideCandado(); });
     addEventListener("hashchange", () => { if (location.hash !== "#aparcar" && VIAJE) terminaViaje(); });
