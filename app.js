@@ -77,7 +77,7 @@ document.querySelector("[data-saltar]").addEventListener("click", (ev) => { ev.p
 // Si falta el apartado de arriba (borrado u oculto), lo de dentro vuelve a salir arriba.
 const DENTRO_DE = { actas: "comite", convenio: "convenio-y-leyes", calcula: "convenio-y-leyes", descansos: "zona-conductores", ganancias: "zona-conductores", aparcar: "zona-conductores", preguntas: "@info" };
 const APARTADO_AFILIATE = "afiliate"; // va el último, al lado de «Nosotros», para animar a afiliarse
-const NOMBRE_FIJO = { inicio: "Inicio", avisos: "Avisos", calendario: "Calendario", actas: "Actas", documentos: "Documentos", convenio: "Convenio", calcula: "Calcula", preguntas: "Dudas", info: "Nosotros", descansos: "Mis descansos", ganancias: "Mis incentivos", aparcar: "Aparcar cerca" };
+const NOMBRE_FIJO = { inicio: "Inicio", avisos: "Avisos", calendario: "Calendario", actas: "Actas", documentos: "Documentos", convenio: "Convenio", calcula: "Calcula", preguntas: "Dudas", info: "Nosotros", descansos: "Mis descansos", ganancias: "Mis incentivos", aparcar: "Aparcamientos en mi ruta" };
 let GRUPOS = [], GRUPO_DE = {};
 const padreValido = (a) => !!a.padre_id && D.apartados.some(p => p.id === a.padre_id && !p.padre_id);
 function montaGrupos() {
@@ -587,7 +587,7 @@ function pintaApartado() {
   $("ap-titulo").textContent = a.titulo;
   if (location.hash === "#ap-" + a.slug) ponTitulo(a.titulo); // al entrar por enlace directo, el nombre llega al cargar
   $("ap-desc").textContent = a.descripcion || "";
-  $("ap-extra").innerHTML = a.slug === APARTADO_CONDUCTORES ? `<a class="panel desc-promo" href="#descansos">${icono("reloj")}<span><b>Mis descansos</b><small>Tu descanso diario y semanal: cuándo te toca, si puede ser reducido y qué tienes que compensar. Con avisos al móvil.</small></span>${icono("der", "p")}</a><a class="panel desc-promo" href="#ganancias">${icono("euro")}<span><b>Mis incentivos</b><small>Lo que ganas cada día, semana y mes: dietas, suplementos, pluses y kilómetros.</small></span>${icono("der", "p")}</a><a class="panel desc-promo" href="#aparcar">${icono("lugar")}<span><b>Aparcar cerca</b><small>Los aparcamientos de camiones más cercanos a donde estás, abiertos, gratis o de pago, y el Maps para llegar.</small></span>${icono("der", "p")}</a>` + restriccionesHTML() : "";
+  $("ap-extra").innerHTML = a.slug === APARTADO_CONDUCTORES ? `<a class="panel desc-promo" href="#descansos">${icono("reloj")}<span><b>Mis descansos</b><small>Tu descanso diario y semanal: cuándo te toca, si puede ser reducido y qué tienes que compensar. Con avisos al móvil.</small></span>${icono("der", "p")}</a><a class="panel desc-promo" href="#ganancias">${icono("euro")}<span><b>Mis incentivos</b><small>Lo que ganas cada día, semana y mes: dietas, suplementos, pluses y kilómetros.</small></span>${icono("der", "p")}</a><a class="panel desc-promo" href="#aparcar">${icono("lugar")}<span><b>Aparcamientos en mi ruta</b><small>Ruta para tu camión y, mientras conduces, los aparcamientos que tienes por delante: abiertos, gratis o de pago.</small></span>${icono("der", "p")}</a>` + restriccionesHTML() : "";
   const todas = D.publicaciones.filter(x => x.apartado_id === a.id);
   pintaFechas("fechas-ap", "ap", todas, x => x.fecha, () => pintaApartado());
   const qr = $("buscar-ap").value.trim(), q = normal(qr);
