@@ -75,10 +75,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
-## Versión 90: aparcamientos cerrados de la ruta, avisos de los compañeros y sin navegador
+## Versión 90: aparcamientos de la ruta más claros y sin navegador
 
 - **Sin navegador** (lo pidió el padre: ya usa uno de pago y quiere solo información): fuera los botones de Google Maps («Ir guiado» y «Llevarme aquí»). La ruta sirve solo para saber qué aparcamientos hay en el camino.
-- **Avisos de los compañeros, en tiempo real:** en cada aparcamiento, «¿Lo ves ahora?» con «Está cerrado», «Está lleno» y, si alguien ya avisó, «Está abierto». A los demás les sale «Cerrado · avisado por un compañero hace 40 min» (dura 12 horas; «lleno», 3 horas). Un aparcamiento avisado como cerrado sale entre los cerrados y no entre los abiertos del viaje. Es anónimo: solo se guarda el aparcamiento, el aviso y la hora.
+- **Al calcular la ruta, lo primero son los aparcamientos en tres cifras grandes: cerrados, abiertos y sin horario** (lo pidió el padre). Se toca una cifra para ver esa lista; «Ver todos» los enseña del primero al último. Se quitaron los avisos de compañeros: el padre prefiere solo información.
+- **Plazas para camiones en grande en cada aparcamiento** y **fuera gratis/de pago** (el padre: los precios de OpenStreetMap fallaban y no le servían). Se buscan hasta a 3 km de la ruta (antes 1,5) y en el viaje salen más por delante.
+- **Solo los de tu sentido de marcha:** en autopista, las áreas del otro lado (a las que solo llegarías dando la vuelta) no salen. La función `ruta` devuelve ahora la ruta fina y los tramos de autopista para saber a qué lado queda cada una.
 
 - **«Aparcamientos en mi ruta» avisa de que está en pruebas**, arriba de la pantalla y en la tarjeta de Zona Conductores.
 - **Todos los aparcamientos de la ruta**, debajo de la ruta calculada, con tres botones: **Abiertos**, **Cerrados** y **Todos** (lo pidió el padre: le interesa sobre todo saber cuáles estarán cerrados). Cuenta cuántos hay abiertos, cuántos cerrados y cuántos no tienen el horario apuntado. Con **«Salgo a las…»** se calcula a qué hora pasas por cada uno (vacío = ahora).

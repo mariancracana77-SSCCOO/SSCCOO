@@ -30,11 +30,13 @@
     calc_permisos: [], calc_categorias: [], calc_ajustes: [{ clave: "vac_dias", valor: "23" }],
     // «Aparcamientos en mi ruta»: unos cuantos en la AP-7 / A9 entre Girona y Narbona (datos de prueba)
     aparcamientos: [
-      { osm: "w1", pais: "ES", lat: 42.1600, lon: 2.8650, nombre: "Área de prueba gratis", horario: null, pago: 0, precio: null, vigilado: false, duchas: true, aseos: true, plazas: 40, area: true, camion: true },
+      { osm: "w1", pais: "ES", lat: 42.1600, lon: 2.8650, nombre: "Área de prueba", horario: null, pago: 0, precio: null, vigilado: false, duchas: true, aseos: true, plazas: 40, area: true, camion: true },
       { osm: "w2", pais: "ES", lat: 42.3500, lon: 2.8900, nombre: "Parking vigilado de prueba", horario: "24/7", pago: 1, precio: "2 EUR/hour", vigilado: true, duchas: true, aseos: true, plazas: 80, area: false, camion: true },
       { osm: "w3", pais: "FR", lat: 42.6000, lon: 2.9200, nombre: "Aire de prueba", horario: null, pago: null, precio: null, vigilado: false, duchas: false, aseos: true, plazas: null, area: true, camion: false },
       { osm: "w4", pais: "FR", lat: 42.8000, lon: 2.9500, nombre: "Parking que cierra", horario: "Mo-Fr 08:00-09:00", pago: 0, precio: null, vigilado: false, duchas: false, aseos: false, plazas: 12, area: false, camion: true },
       { osm: "w5", pais: "FR", lat: 43.0500, lon: 2.9800, nombre: null, horario: null, pago: null, precio: null, vigilado: false, duchas: false, aseos: false, plazas: null, area: false, camion: true },
+      { osm: "w7", pais: "ES", lat: 42.2467, lon: 2.8612, nombre: "Área sentido Francia", horario: null, pago: null, precio: null, vigilado: false, duchas: true, aseos: true, plazas: 25, area: true, camion: true },
+      { osm: "w8", pais: "ES", lat: 42.2467, lon: 2.8588, nombre: "Área sentido Barcelona", horario: null, pago: null, precio: null, vigilado: false, duchas: true, aseos: true, plazas: 25, area: true, camion: true },
       { osm: "w6", pais: "FR", lat: 44.9000, lon: 4.8000, nombre: "Lejos de la ruta", horario: null, pago: 0, precio: null, vigilado: false, duchas: false, aseos: false, plazas: null, area: true, camion: true },
     ],
     // Avisos de compañeros (el «Aire de prueba» avisado cerrado hace un rato)
@@ -71,7 +73,7 @@
   // Ruta de prueba Girona → Narbona: un punto cada ~1,5 km por la AP-7/A9 a 75 km/h
   const RUTA_PRUEBA = (() => { const p = [], n = 90; for (let i = 0; i <= n; i++) { const f = i / n; p.push([+(41.98 + f * 1.2).toFixed(5), +(2.82 + f * 0.18).toFixed(5), +(f * 135).toFixed(1), Math.round(f * 108)]); }
     return { desde: { nombre: "Girona", lat: 41.98, lon: 2.82 }, hasta: { nombre: "Narbona, Francia", lat: 43.18, lon: 3.0 }, km: 135, min: 108, peaje: true, ferry: false,
-      tramos: [{ via: "", km: 4, hacia: "" }, { via: "AP-7", km: 70, hacia: "La Jonquera / França" }, { via: "A9", km: 61, hacia: "Narbonne" }], puntos: p }; })();
+      tramos: [{ via: "", km: 4, hacia: "" }, { via: "AP-7", km: 70, hacia: "La Jonquera / França" }, { via: "A9", km: 61, hacia: "Narbonne" }], puntos: p, fina: p.map(x => [x[0], x[1]]), autopista: [[4, 135]] }; })();
   // Con localStorage «prueba-sesion» = 1, el panel entra como administrador de prueba
   const SES = (() => { try { return localStorage.getItem("prueba-sesion") === "1"; } catch (_) { return false; } })()
     ? { access_token: "x", user: { id: "u1", email: "prueba@example.com" } } : null;

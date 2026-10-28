@@ -1840,15 +1840,13 @@ b.gan-fecha { cursor: default; }
 .apc-interruptores .check { margin-top: 6px; font-size: 1.05rem; }
 .apc-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .apc { background: var(--tarjeta); border: 1px solid var(--linea); border-left: 8px solid var(--apc-gris); border-radius: 12px; padding: 12px 14px; display: grid; gap: 6px; }
-.apc.gratis { border-left-color: var(--apc-verde); }
-.apc.pago { border-left-color: var(--apc-azul); }
 .apc.cerrado { opacity: .7; }
 .apc-cab { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 10px; }
 .apc-dist { font-family: var(--cond); font-weight: 700; font-size: 1.4rem; color: var(--tinta); }
-.apc-precio { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 5px 12px; font-weight: 700; font-size: .95rem; color: #fff; background: var(--apc-gris); }
-.apc-precio.gratis { background: var(--apc-verde); }
-.apc-precio.pago { background: var(--apc-azul); }
-.apc-precio .icono { width: 17px; height: 17px; }
+/* v90: plazas para camiones, lo que más importa al conductor (sin gratis/de pago) */
+.apc-plazas { display: inline-flex; align-items: baseline; gap: 5px; border-radius: 8px; padding: 3px 12px; font-weight: 700; font-size: 1rem; color: var(--tarjeta); background: var(--tinta); }
+.apc-plazas b { font-family: var(--cond); font-size: 1.6rem; line-height: 1.1; }
+.apc-plazas.nose { background: transparent; color: var(--suave); border: 1px dashed var(--linea); font-size: .9rem; padding: 4px 10px; }
 .apc-nom { font-size: 1.15rem; line-height: 1.25; }
 .apc-hor, .apc-hor small { color: var(--suave); font-size: .92rem; }
 .apc-abre { font-weight: 700; }
@@ -1874,6 +1872,16 @@ b.gan-fecha { cursor: default; }
 .apc-c-cerrado { color: var(--tinta); }
 .apc.cerrado { opacity: 1; background: var(--fondo); border-style: dashed; border-left-style: solid; }
 .apc.cerrado .apc-abre.no { color: var(--tinta); background: var(--linea); border-radius: 6px; padding: 1px 8px; }
+/* v90: resumen de la ruta en tres cifras (cerrados / abiertos / sin horario); se pulsan para ver la lista */
+.apc-ver-todos { width: 100%; justify-content: center; min-height: 48px; margin-bottom: 8px; }
+.apc-ver-todos.activa { border-color: var(--tinta); box-shadow: inset 0 -4px 0 var(--tinta); }
+.apc-resumen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 4px 0 8px; }
+.apc-cifra { display: grid; justify-items: center; gap: 2px; padding: 10px 4px; border-radius: 12px; border: 2px solid var(--linea); background: var(--tarjeta); color: var(--tinta); font: inherit; font-weight: 700; cursor: pointer; min-height: 64px; }
+.apc-cifra b { font-family: var(--cond); font-size: 2rem; line-height: 1; }
+.apc-cifra.cerr b { color: var(--tinta); }
+.apc-cifra.abie b { color: var(--apc-verde); }
+.apc-cifra.nose b { color: var(--apc-gris); }
+.apc-cifra.activa { border-color: var(--tinta); box-shadow: inset 0 -4px 0 var(--tinta); }
 /* v90: avisos de los compañeros en cada aparcamiento */
 .apc-avisar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--linea); }
 .apc-avisar > span { color: var(--suave); font-size: .88rem; width: 100%; }

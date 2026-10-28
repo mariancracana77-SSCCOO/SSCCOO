@@ -1,7 +1,10 @@
 // «Aparcamientos en mi ruta» (Zona Conductores, vista #aparcar). Lo pidió el padre para usarlo durante el trayecto:
-// los aparcamientos de camiones que hay POR DELANTE en tu ruta, los abiertos a la hora a la que llegas, gratis en verde,
-// de pago en azul con el precio. Solo información, sin navegador (el padre ya usa uno de pago). El conductor decide dónde para.
-// v90: avisos de los compañeros («Está cerrado», «Está lleno», «Está abierto»), anónimos (tabla avisos_aparcamiento, RPC avisar_aparcamiento).
+// los aparcamientos de camiones que hay POR DELANTE en tu ruta y los abiertos a la hora a la que llegas.
+// Solo información, sin navegador (el padre ya usa uno de pago). El conductor decide dónde para.
+// v90: sin gratis/de pago (los datos de precio de OpenStreetMap fallaban y al padre no le servía); lo que importa son las
+// plazas para camiones. Se buscan hasta a 3 km de la ruta.
+// v90: el padre no quiere avisos de compañeros (nadie los pondría): solo información para consultar. Al calcular la ruta, lo primero son los CERRADOS.
+// (La tabla avisos_aparcamiento y la RPC avisar_aparcamiento quedan en Supabase sin usar.)
 // - Ruta para camión (alto, ancho, largo, peso, ADR): función «ruta» (Valhalla de OpenStreetMap, sin claves; no guarda nada).
 // - Aparcamientos: tabla «aparcamientos» (OpenStreetMap, se renueva sola cada mes). Se baja por países enteros y se busca
 //   en el móvil: la ubicación no sale del móvil mientras conduces. Sin conexión, usa la última lista guardada.
@@ -10,7 +13,7 @@
   const $ = (id) => document.getElementById(id);
   if (!$("v-aparcar")) return;
   const CLAVE = "ccoo-aparcar", CAJA = "ccoo-aparcamientos";
-  const DEF = () => ({ camion: { alto: "4", ancho: "2,55", largo: "16,5", peso: "40", adr: false }, voz: false, gratis: false, cerrados: false, desde: "", hasta: "" });
+  const DEF = () => ({ camion: { alto: "4", ancho: "2,55", largo: "16,5", peso: "40", adr: false }, voz: false, cerrados: false, desde: "", hasta: "" });
   const lee = () => { try { const d = JSON.parse(localStorage.getItem(CLAVE) || "null") || {}; return { ...DEF(), ...d, camion: { ...DEF().camion, ...(d.camion || {}) } }; } catch (_) { return DEF(); } };
   let AJ = lee();
   const guarda = () => { try { localStorage.setItem(CLAVE, JSON.stringify(AJ)); } catch (_) {} };
@@ -96,7 +99,7 @@
     try {
       const l = [];
       for (let i = 0; i < 40000; i += 1000) {
-        const { data, error } = await sb.from("aparcamientos").select("osm,lat,lon,nombre,horario,pago,precio,vigilado,duchas,aseos,plazas,area,camion").eq("pais", p).order("osm").range(i, i + 999);
+        const { data, error } = await sb.from("aparcamientos").select("osm,lat,lon,nombre,horario,vigilado,duchas,aseos,plazas,area,camion").eq("pais", p).order("osm").range(i, i + 999);
         if (error) throw error;
         l.push(...(data || []));
         if (!data || data.length < 1000) break;
@@ -105,27 +108,52 @@
       return (MEM[p] = l.length ? l : guardado?.l || []);
     } catch (_) { return (MEM[p] = guardado?.l || []); }
   }
-  async function cargaPaises(ps) { const ls = await Promise.all(ps.map(delPais)); const vistos = new Set(); return ls.flat().filter(x => !vistos.has(x.osm) && vistos.add(x.osm)); }
+  async function cargaPaises(ps) { const ls = await Promise.all(ps.map(delPais)); const vistos = new Set(); return ls.flatMap((l, i) => l.map(x => ({ ...x, pais: ps[i] }))).filter(x => !vistos.has(x.osm) && vistos.add(x.osm)); }
 
   // ---------- Geometría ----------
   const R = Math.PI / 180;
   const km = (a1, o1, a2, o2) => { const x = Math.sin((a2 - a1) * R / 2) ** 2 + Math.cos(a1 * R) * Math.cos(a2 * R) * Math.sin((o2 - o1) * R / 2) ** 2; return 12742 * Math.asin(Math.sqrt(x)); };
   const rumbo = (a1, o1, a2, o2) => { const y = Math.sin((o2 - o1) * R) * Math.cos(a2 * R), x = Math.cos(a1 * R) * Math.sin(a2 * R) - Math.sin(a1 * R) * Math.cos(a2 * R) * Math.cos((o2 - o1) * R); return (Math.atan2(y, x) / R + 360) % 360; };
-  // Para cada aparcamiento, el punto de la ruta más cercano (los puntos van cada ~1,5 km)
-  function enRuta(lista, puntos) {
-    const res = [];
+  // Para cada aparcamiento, el punto de la ruta más cercano (los puntos van cada ~1,5 km). Hasta 3 km de la ruta (lo pidió el padre: más distancia)
+  const ANCHO_RUTA = 3;
+  // Lado de la ruta: el tramo más cercano de «fina» (la ruta a ~8 m) y a qué lado queda el aparcamiento (producto vectorial)
+  function ladoDe(x, fina) {
+    const k = Math.cos(x.lat * R) * 111.32, m = 110.54; let mejor = 1e9, cruz = 0;
+    for (let i = 0; i < fina.length - 1; i++) {
+      const [a1, o1] = fina[i], [a2, o2] = fina[i + 1];
+      if (Math.min(a1, a2) > x.lat + 0.02 || Math.max(a1, a2) < x.lat - 0.02 || Math.min(o1, o2) > x.lon + 0.03 || Math.max(o1, o2) < x.lon - 0.03) continue;
+      const dx = (o2 - o1) * k, dy = (a2 - a1) * m, px = (x.lon - o1) * k, py = (x.lat - a1) * m, l2 = dx * dx + dy * dy;
+      const t = l2 ? Math.max(0, Math.min(1, (px * dx + py * dy) / l2)) : 0, d = Math.hypot(px - t * dx, py - t * dy);
+      if (d < mejor) { mejor = d; cruz = dx * py - dy * px; }
+    }
+    return { d: mejor, izq: cruz > 0 };
+  }
+  // ¿Está en el otro sentido de la autopista? (lo pidió el padre: «no me sirve uno al que solo llego dando la vuelta»)
+  // Solo en autopista y si está pegado a ella (≤ 350 m): más lejos se llega por una salida desde los dos sentidos.
+  // Si está casi encima (< 25 m, p. ej. un área que da a los dos lados) se deja. En Reino Unido e Irlanda se conduce por la izquierda.
+  function otroSentido(x, ruta, kmR) {
+    if (!ruta.fina || !ruta.autopista?.some(([a, z]) => kmR >= a - 0.5 && kmR <= z + 0.5)) return false;
+    const l = ladoDe(x, ruta.fina);
+    if (l.d > 0.35 || l.d < 0.025) return false;
+    return l.izq !== (x.pais === "GB" || x.pais === "IE");
+  }
+  function enRuta(lista, puntos, ruta) {
+    const res = []; let contrario = 0;
     const caja = puntos.reduce((b, [la, lo]) => [Math.min(b[0], la), Math.max(b[1], la), Math.min(b[2], lo), Math.max(b[3], lo)], [90, -90, 180, -180]);
     for (const x of lista) {
       if (x.lat < caja[0] - 0.05 || x.lat > caja[1] + 0.05 || x.lon < caja[2] - 0.07 || x.lon > caja[3] + 0.07) continue;
       let mejor = 1e9, idx = -1;
       for (let i = 0; i < puntos.length; i++) { const d = km(x.lat, x.lon, puntos[i][0], puntos[i][1]); if (d < mejor) { mejor = d; idx = i; } }
-      if (mejor <= 1.5) res.push({ ...x, desvio: mejor, kmRuta: puntos[idx][2], minRuta: puntos[idx][3] });
+      if (mejor > ANCHO_RUTA) continue;
+      if (ruta && otroSentido(x, ruta, puntos[idx][2])) { contrario++; continue; }
+      res.push({ ...x, desvio: mejor, kmRuta: puntos[idx][2], minRuta: puntos[idx][3] });
     }
+    res.contrario = contrario;
     return res.sort((a, b) => a.kmRuta - b.kmRuta);
   }
 
   // ---------- Estado del viaje ----------
-  let FILTRO = "abiertos", SALIDA = ""; // lista de toda la ruta: abiertos / cerrados / todos, y hora de salida (vacía = ahora)
+  let FILTRO = "cerrados", SALIDA = ""; // lista de toda la ruta: abiertos / cerrados / todos, y hora de salida (vacía = ahora)
   let RUTA = null, EN_RUTA = [], VIAJE = null, VIGIA = null, CANDADO = null, ULT_VOZ = "", CERCA = [], ANTES = null;
   const estado = (t, err) => { const m = $("apc-estado"); m.textContent = t || ""; m.classList.toggle("err", !!err); };
   const hora = (d) => d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
@@ -133,11 +161,8 @@
   const durTxt = (m) => { const h = Math.floor(m / 60), mm = Math.round(m % 60); return h ? `${h} h${mm ? " " + mm + " min" : ""}` : `${mm} min`; };
   const nombre = (x) => x.nombre || (x.area ? "Área de servicio" : "Aparcamiento de camiones");
 
-  function precioHTML(x) {
-    if (x.pago === 0) return `<span class="apc-precio gratis">Gratis</span>`;
-    if (x.pago === 1) return `<span class="apc-precio pago">${icono("euro", "p")}De pago${x.precio ? " · " + esc(precioTxt(x.precio)) : ""}</span>`;
-    return `<span class="apc-precio nose">Precio sin apuntar</span>`;
-  }
+  // Plazas para camiones: lo más importante para el padre (capacity:hgv de OpenStreetMap)
+  const plazasHTML = (x) => x.plazas ? `<span class="apc-plazas"><b>${x.plazas}</b> ${x.plazas === 1 ? "plaza" : "plazas"} camión</span>` : `<span class="apc-plazas nose">Plazas sin apuntar</span>`;
   function abreHTML(x, cuando) {
     const av = avisoDe(x);
     if (av?.tipo === "cerrado") return `<span class="apc-abre no">Cerrado</span> <span class="apc-aviso-comp">avisado por un compañero ${haceTxt(av.t)}</span>`;
@@ -149,18 +174,13 @@
     return `<small>Horario sin apuntar</small>`;
   }
   function tarjeta(x, faltaKm, llegada) {
-    const extras = [x.camion ? "Para camiones" : "", x.vigilado ? "Vigilado" : "", x.duchas ? "Duchas" : "", x.aseos ? "Aseos" : "", x.plazas ? x.plazas + " plazas" : "", x.desvio > 0.6 ? `A ${kmTxt(x.desvio)} km de la ruta` : ""].filter(Boolean);
-    const cls = x.pago === 0 ? "gratis" : x.pago === 1 ? "pago" : "nose";
-    return `<li class="apc ${cls}${estadoA(x, llegada) === "no" ? " cerrado" : ""}">
-      <div class="apc-cab"><span class="apc-dist">a ${kmTxt(faltaKm)} km${llegada ? ` · llegas ${hora(llegada)}` : ""}</span>${precioHTML(x)}</div>
+    const extras = [x.camion ? "Para camiones" : "", x.vigilado ? "Vigilado" : "", x.duchas ? "Duchas" : "", x.aseos ? "Aseos" : "", x.desvio > 0.6 ? `A ${kmTxt(x.desvio)} km de la ruta` : ""].filter(Boolean);
+    return `<li class="apc${estadoA(x, llegada) === "no" ? " cerrado" : ""}">
+      <div class="apc-cab"><span class="apc-dist">a ${kmTxt(faltaKm)} km${llegada ? ` · llegas ${hora(llegada)}` : ""}</span>${plazasHTML(x)}</div>
       <b class="apc-nom">${esc(nombre(x))}</b>
       <div class="apc-hor">${abreHTML(x, llegada || new Date())}</div>
       ${avisoDe(x)?.tipo === "lleno" ? `<div class="apc-lleno">Lleno · avisado por un compañero ${haceTxt(avisoDe(x).t)}</div>` : ""}
       ${extras.length ? `<div class="apc-extra">${extras.map(e => `<span>${esc(e)}</span>`).join("")}</div>` : ""}
-      <div class="apc-avisar" role="group" aria-label="Avisar a los compañeros"><span>¿Lo ves ahora?</span>
-        <button type="button" class="btn sec" data-avisar="cerrado" data-osm="${esc(x.osm)}">Está cerrado</button>
-        <button type="button" class="btn sec" data-avisar="lleno" data-osm="${esc(x.osm)}">Está lleno</button>
-        ${avisoDe(x) && avisoDe(x).tipo !== "abierto" ? `<button type="button" class="btn sec" data-avisar="abierto" data-osm="${esc(x.osm)}">Está abierto</button>` : ""}</div>
     </li>`;
   }
 
@@ -169,7 +189,7 @@
     const c = AJ.camion;
     $("apc-desde").value = AJ.desde; $("apc-hasta").value = AJ.hasta;
     $("apc-alto").value = c.alto; $("apc-ancho").value = c.ancho; $("apc-largo").value = c.largo; $("apc-peso").value = c.peso; $("apc-adr").checked = !!c.adr;
-    $("apc-voz").checked = !!AJ.voz; $("apc-gratis").checked = !!AJ.gratis; $("apc-cerrados").checked = !!AJ.cerrados;
+    $("apc-voz").checked = !!AJ.voz; $("apc-cerrados").checked = !!AJ.cerrados;
   }
   function leeFormulario() {
     AJ.desde = $("apc-desde").value.trim(); AJ.hasta = $("apc-hasta").value.trim();
@@ -193,8 +213,8 @@
       if (error || !data || data.error) throw new Error(data?.error || "No se ha podido calcular la ruta. Comprueba que tienes internet.");
       RUTA = data;
       estado("Buscando aparcamientos en la ruta…");
-      const [lista] = await Promise.all([cargaPaises(paisesDe(RUTA.puntos)), cargaAvisos()]);
-      EN_RUTA = enRuta(lista, RUTA.puntos);
+      const lista = await cargaPaises(paisesDe(RUTA.puntos));
+      EN_RUTA = enRuta(lista, RUTA.puntos, RUTA);
       estado("");
       pintaRuta();
     } catch (e) { estado(e.message || String(e), true); }
@@ -207,23 +227,22 @@
     caja.innerHTML = `
       <div class="apc-res"><b>${esc(RUTA.desde.nombre)} → ${esc(RUTA.hasta.nombre)}</b><span>${RUTA.km} km · ${durTxt(RUTA.min)} conduciendo${RUTA.peaje ? " · con peajes" : ""}${RUTA.ferry ? " · con ferry" : ""}</span></div>
       <p class="apc-camion">Ruta calculada para tu camión: ${esc(AJ.camion.alto)} m de alto, ${esc(AJ.camion.peso)} t${AJ.camion.adr ? ", con ADR" : ""}.</p>
+      <section class="apc-todos" aria-labelledby="apc-todos-tit">
+        <h2 id="apc-todos-tit">Aparcamientos en tu ruta</h2>
+        <label class="apc-salida">Salgo a las <input type="time" id="apc-salida" value="${esc(SALIDA)}"> <small>(vacío = ahora)</small></label>
+        <div id="apc-todos"></div>
+      </section>
       <details class="panel apc-tramos"><summary>Carreteras de la ruta (${RUTA.tramos.length})</summary>
         <ol class="apc-linea">${RUTA.tramos.map(t => `<li><b>${t.via ? `<span class="apc-via">${esc(t.via)}</span>` : "Carreteras locales"}</b>${t.hacia ? ` hacia ${esc(t.hacia)}` : ""}<small>${t.km} km</small></li>`).join("")}</ol></details>
       <div class="apc-acciones">
         <button type="button" class="btn apc-grande" id="apc-empezar">${icono("lugar")}Empezar viaje</button>
       </div>
-      <p class="apc-nota">Pulsa «Empezar viaje» y te enseño los que tienes por delante mientras conduces, con tu navegador de siempre.</p>
-      <section class="apc-todos" aria-labelledby="apc-todos-tit">
-        <h2 id="apc-todos-tit">Todos los aparcamientos de la ruta</h2>
-        <label class="apc-salida">Salgo a las <input type="time" id="apc-salida" value="${esc(SALIDA)}"> <small>(vacío = ahora)</small></label>
-        <div class="apc-filtro" role="group" aria-label="Qué aparcamientos ver">${[["abiertos", "Abiertos"], ["cerrados", "Cerrados"], ["todos", "Todos"]].map(([k, t]) => `<button type="button" class="filtro ${FILTRO === k ? "activo" : ""}" data-filtro="${k}" aria-pressed="${FILTRO === k}">${t}</button>`).join("")}</div>
-        <div id="apc-todos"></div>
-      </section>`;
+      <p class="apc-nota">Con «Empezar viaje» te enseño los que tienes por delante mientras conduces, con tu navegador de siempre.</p>`;
     $("apc-empezar").onclick = empiezaViaje;
-    caja.querySelectorAll("[data-filtro]").forEach(b => b.onclick = () => { FILTRO = b.dataset.filtro; caja.querySelectorAll("[data-filtro]").forEach(x => { x.classList.toggle("activo", x === b); x.setAttribute("aria-pressed", x === b); }); pintaTodos(); });
     $("apc-salida").onchange = () => { SALIDA = $("apc-salida").value; pintaTodos(); };
     pintaTodos();
   }
+  function ponFiltro(f) { FILTRO = f; pintaTodos(); }
   // Hora de salida: la que pone el conductor (si ya ha pasado hace rato, la de mañana) o ahora
   function horaSalida() {
     if (!SALIDA) return Date.now();
@@ -236,12 +255,19 @@
     const caja = $("apc-todos"); if (!caja) return;
     const t0 = horaSalida();
     const lista = EN_RUTA.map(x => ({ x, llega: new Date(t0 + x.minRuta * 60000), e: null })).map(y => ({ ...y, e: estadoA(y.x, y.llega) }));
-    const cerrados = lista.filter(y => y.e === "no"), abiertos = lista.filter(y => y.e !== "no"), sinHorario = lista.filter(y => y.e === "nose").length;
-    const ver = FILTRO === "cerrados" ? cerrados : FILTRO === "abiertos" ? abiertos : lista;
+    // Cerrados: los que estarán cerrados cuando pases. Abiertos: los que se sabe que estarán abiertos (horario o área de autopista).
+    // Sin horario: no se sabe. Así no se confunde «no sé» con «abierto».
+    const cerrados = lista.filter(y => y.e === "no"), abiertos = lista.filter(y => y.e === "si" || y.e === "siempre"), sinHorario = lista.filter(y => y.e === "nose");
+    const ver = { cerrados, abiertos, nose: sinHorario, todos: lista }[FILTRO] || cerrados;
     const pl = (n, uno, varios) => n + " " + (n === 1 ? uno : varios);
-    caja.innerHTML = `<p class="apc-cuenta"><b>${lista.length}</b> en la ruta: <b class="apc-c-abierto">${pl(abiertos.length, "abierto", "abiertos")}</b> y <b class="apc-c-cerrado">${pl(cerrados.length, "cerrado", "cerrados")}</b> cuando pases. ${sinHorario ? `${sinHorario === 1 ? "1 no tiene" : sinHorario + " no tienen"} el horario apuntado: ${sinHorario === 1 ? "sale como abierto" : "salen como abiertos"}, pero no se sabe seguro.` : ""}</p>`
+    const cifra = (k, cls, n, txt) => `<button type="button" class="apc-cifra ${cls}${FILTRO === k ? " activa" : ""}" data-filtro="${k}" aria-pressed="${FILTRO === k}"><b>${n}</b>${txt}</button>`;
+    caja.innerHTML = `<div class="apc-resumen" role="group" aria-label="Qué aparcamientos ver">
+        ${cifra("cerrados", "cerr", cerrados.length, cerrados.length === 1 ? "cerrado" : "cerrados")}${cifra("abiertos", "abie", abiertos.length, abiertos.length === 1 ? "abierto" : "abiertos")}${cifra("nose", "nose", sinHorario.length, "sin horario")}</div>
+      <button type="button" class="btn sec apc-ver-todos${FILTRO === "todos" ? " activa" : ""}" data-filtro="todos" aria-pressed="${FILTRO === "todos"}">Ver todos (${lista.length}), del primero al último</button>
+      <p class="apc-cuenta">De los ${pl(lista.length, "aparcamiento", "aparcamientos")} de la ruta, a la hora a la que pasas.${EN_RUTA.contrario ? ` Solo salen los de tu sentido de marcha: ${pl(EN_RUTA.contrario, "área", "áreas")} del otro lado de la autopista no ${EN_RUTA.contrario === 1 ? "sale" : "salen"}.` : ""}${sinHorario.length ? " «Sin horario»: nadie ha apuntado su horario, así que no se sabe si estará abierto." : ""}</p>`
       + (ver.length ? `<ul class="apc-lista">${ver.map(y => tarjeta(y.x, y.x.kmRuta, y.llega)).join("")}</ul>`
-        : `<p class="desc-vacio">${FILTRO === "cerrados" ? "Ninguno estará cerrado cuando pases, según los horarios apuntados." : "No hay ninguno."}</p>`);
+        : `<p class="desc-vacio">${FILTRO === "cerrados" ? "Según los horarios apuntados, ninguno estará cerrado cuando pases." + (sinHorario.length ? ` Mira también «Sin horario» (${sinHorario.length}): de esos no se sabe.` : "") : "No hay ninguno."}</p>`);
+    caja.querySelectorAll("[data-filtro]").forEach(b => b.onclick = () => ponFiltro(b.dataset.filtro));
   }
 
   // ---------- Viaje en marcha ----------
@@ -284,29 +310,29 @@
       $("apc-viaje-info").textContent = mejor > 3 ? "Te has salido de la ruta calculada: los kilómetros pueden no cuadrar." : `Quedan ${Math.round(pts[pts.length - 1][2] - yaKm)} km hasta ${RUTA.hasta.nombre}.`;
     } else {
       // Sin destino: los que hay delante en la dirección en la que vas (rumbo del GPS o de los dos últimos puntos)
-      if (!CERCA.length) [CERCA] = await Promise.all([cargaPaises(paisesDe([[a, o]])), cargaAvisos()]);
+      if (!CERCA.length) CERCA = await cargaPaises(paisesDe([[a, o]]));
       let r = Number.isFinite(p.coords.heading) && p.coords.speed > 2 ? p.coords.heading : null;
       if (r == null && ANTES && km(ANTES.a, ANTES.o, a, o) > 0.05) r = rumbo(ANTES.a, ANTES.o, a, o);
       if (!ANTES || km(ANTES.a, ANTES.o, a, o) > 0.05) ANTES = { a, o, r };
       if (r == null) r = ANTES?.r;
       const vel = p.coords.speed > 5 ? p.coords.speed * 3.6 : 75;
       lista = CERCA.map(x => ({ x, falta: km(a, o, x.lat, x.lon) * 1.2, rb: rumbo(a, o, x.lat, x.lon) }))
-        .filter(y => y.falta <= 80 && (r == null || Math.abs(((y.rb - r + 540) % 360) - 180) <= 35))
+        .filter(y => y.falta <= 150 && (r == null || Math.abs(((y.rb - r + 540) % 360) - 180) <= 35))
         .map(y => ({ ...y, llega: new Date(ahora + (y.falta / vel) * 3600000) })).sort((u, v) => u.falta - v.falta);
       $("apc-viaje-info").textContent = r == null ? "Cuando empieces a moverte sabré hacia dónde vas. Mientras, salen los que tienes alrededor." : "Distancias aproximadas, en la dirección en la que vas.";
     }
     const abiertos = lista.filter(y => estadoA(y.x, y.llega) !== "no");
-    const vale = abiertos.filter(y => !AJ.gratis || y.x.pago === 0);
+    const vale = abiertos;
     const cerrados = lista.length - abiertos.length;
     // Con «Ver también los cerrados» salen todos, los cerrados en gris y marcados
-    const mostrar = AJ.cerrados ? lista.filter(y => !AJ.gratis || y.x.pago === 0) : vale;
+    const mostrar = AJ.cerrados ? lista : vale;
     $("apc-proximos").innerHTML = mostrar.length
-      ? `<ul class="apc-lista">${mostrar.slice(0, AJ.cerrados ? 10 : 6).map(y => tarjeta(y.x, y.falta, y.llega)).join("")}</ul>${cerrados && !AJ.cerrados ? `<p class="apc-nota">${cerrados} por delante estarán cerrados cuando llegues: no salen. Para verlos, marca «Ver también los cerrados».</p>` : ""}`
-      : `<p class="desc-vacio">${AJ.gratis ? "No hay ninguno gratis y abierto por delante." : "No hay aparcamientos abiertos por delante."}</p>`;
+      ? `<ul class="apc-lista">${mostrar.slice(0, AJ.cerrados ? 20 : 15).map(y => tarjeta(y.x, y.falta, y.llega)).join("")}</ul>${cerrados && !AJ.cerrados ? `<p class="apc-nota">${cerrados} por delante estarán cerrados cuando llegues: no salen. Para verlos, marca «Ver también los cerrados».</p>` : ""}`
+      : `<p class="desc-vacio">No hay aparcamientos abiertos por delante.</p>`;
     const primero = vale[0];
     if (primero && primero.x.osm !== ULT_VOZ) {
       ULT_VOZ = primero.x.osm;
-      habla(`Próximo aparcamiento abierto: ${nombre(primero.x)}, a ${Math.round(primero.falta)} kilómetros. ${primero.x.pago === 0 ? "Gratis." : primero.x.pago === 1 ? "De pago." : ""}`);
+      habla(`Próximo aparcamiento abierto: ${nombre(primero.x)}, a ${Math.round(primero.falta)} kilómetros.${primero.x.plazas ? ` ${primero.x.plazas} plazas para camiones.` : ""}`);
     }
   }
 
@@ -331,15 +357,12 @@
 
   function prepara() {
     pintaFormulario();
-    $("v-aparcar").addEventListener("click", (e) => { const b = e.target.closest("[data-avisar]"); if (b) avisar(b.dataset.osm, b.dataset.avisar); });
     // Durante el viaje, los avisos de los compañeros se refrescan cada 2 minutos
-    setInterval(() => { if (VIAJE && document.visibilityState === "visible") cargaAvisos().then(repinta); }, 120000);
     $("apc-buscar").onclick = buscaRuta;
     $("apc-form").onsubmit = (e) => { e.preventDefault(); buscaRuta(); };
     $("apc-sin-destino").onclick = () => empiezaViaje(true);
     $("apc-terminar").onclick = terminaViaje;
     $("apc-voz").onchange = () => { AJ.voz = $("apc-voz").checked; guarda(); if (AJ.voz) habla("Te avisaré en voz alta del próximo aparcamiento abierto."); };
-    $("apc-gratis").onchange = () => { AJ.gratis = $("apc-gratis").checked; guarda(); };
     $("apc-cerrados").onchange = () => { AJ.cerrados = $("apc-cerrados").checked; guarda(); };
     // Al volver a la app con el viaje en marcha, la pantalla vuelve a quedarse encendida
     document.addEventListener("visibilitychange", () => { if (VIAJE && document.visibilityState === "visible") pideCandado(); });
