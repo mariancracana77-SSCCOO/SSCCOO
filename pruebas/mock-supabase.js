@@ -40,6 +40,11 @@
       { osm: "w6", pais: "FR", lat: 44.9000, lon: 4.8000, nombre: "Lejos de la ruta", horario: null, pago: 0, precio: null, vigilado: false, duchas: false, aseos: false, plazas: null, area: true, camion: true },
     ],
     // Avisos de compañeros (el «Aire de prueba» avisado cerrado hace un rato)
+    cortes: [
+      { id: "dgt:1", pais: "ES", fuente: "dgt", tipo: "carril", via: "AP-7", lat: 42.34, lon: 2.874, lat2: 42.352, lon2: 2.8758, rumbo: 0, texto: "carril derecho · por obras · km 30–31,5 · Pont de molins", inicio: null, fin: null },
+      { id: "dgt:2", pais: "ES", fuente: "dgt", tipo: "cortada", via: "AP-7", lat: 42.58, lon: 2.91, lat2: null, lon2: null, rumbo: null, texto: "km 1 · La jonquera", inicio: null, fin: new Date(Date.now() + 5 * 3600000).toISOString() },
+      { id: "dgt:3", pais: "ES", fuente: "dgt", tipo: "accidente", via: "AP-7", lat: 42.70, lon: 2.928, lat2: null, lon2: null, rumbo: 180, texto: "sentido contrario: no debe salir", inicio: null, fin: null },
+      { id: "dgt:4", pais: "ES", fuente: "dgt", tipo: "cortada", via: "GI-555", lat: 42.30, lon: 2.95, lat2: null, lon2: null, rumbo: null, texto: "otra carretera: no debe salir", inicio: null, fin: null }],
     avisos_aparcamiento: [{ id: 1, osm: "w3", tipo: "cerrado", cuando: new Date(Date.now() - 40 * 60000).toISOString() }],
     tarifas_conductor: [
       { id: 1, grupo: "Salario", concepto: "Salario bruto (sin antigüedad)", importe: 1725.28, unidad: "mes", pago: "Mensual", sin_pagar: 0, max_mes: null, nota: "", orden: 10, visible: true },

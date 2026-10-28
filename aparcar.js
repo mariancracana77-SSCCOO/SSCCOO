@@ -242,8 +242,60 @@
     estado("Buscando aparcamientos en la ruta…");
     const lista = await cargaPaises(paisesDe(RUTA.puntos));
     EN_RUTA = enRuta(lista, RUTA.puntos, RUTA);
+    CORTES = await cargaCortes(RUTA);
     estado("");
     pintaRuta();
+  }
+
+  // ---------- Cortes oficiales en tiempo real (lo pidió el padre: «como Bison Futé») ----------
+  // Tabla «cortes», la llena cada 15 min la función «cortes» con la DGT, el Servei Català de Trànsit y Autobahn GmbH.
+  let CORTES = null; // los de la ruta elegida ({ ...corte, kmRuta, minRuta }); null = no se ha podido consultar
+  const TIPO_CORTE = { cortada: "Carretera cortada", sentido: "Cortada en un sentido", accidente: "Accidente", restriccion: "Restricción de peso",
+    carril: "Carril cortado", obstaculo: "Obstáculo en la vía", retencion: "Retención", obras: "Obras", aviso: "Aviso" };
+  const GRAVE = ["cortada", "sentido", "accidente", "restriccion"];
+  const FUENTE_CORTE = { dgt: "DGT", sct: "Servei Català de Trànsit", autobahn: "Autobahn GmbH (Alemania)" };
+  async function cargaCortes(ruta) {
+    const pts = ruta.puntos, fina = ruta.fina || pts.map(q => [q[0], q[1]]);
+    const c = pts.reduce((b, [la, lo]) => [Math.min(b[0], la), Math.max(b[1], la), Math.min(b[2], lo), Math.max(b[3], lo)], [90, -90, 180, -180]);
+    try {
+      const { data, error } = await sb.from("cortes").select("id,pais,fuente,tipo,via,lat,lon,lat2,lon2,rumbo,texto,inicio,fin")
+        .gte("lat", c[0] - 0.05).lte("lat", c[1] + 0.05).gte("lon", c[2] - 0.07).lte("lon", c[3] + 0.07).limit(5000);
+      if (error) throw error;
+      const res = [];
+      for (const x of data || []) {
+        if (x.fin && Date.parse(x.fin) < Date.now()) continue;
+        // Que esté EN la carretera de la ruta (no en una que la cruza): un punto a ≤ 80 m, o un tramo con los dos extremos a ≤ 150 m
+        const d1 = ladoDe(x, fina).d, d2 = x.lat2 != null ? ladoDe({ lat: x.lat2, lon: x.lon2 }, fina).d : null;
+        if (!(d1 <= 0.08 || (d2 != null && d1 <= 0.15 && d2 <= 0.15))) continue;
+        let mejor = 1e9, idx = 0;
+        for (let i = 0; i < pts.length; i++) { const d = km(x.lat, x.lon, pts[i][0], pts[i][1]); if (d < mejor) { mejor = d; idx = i; } }
+        // Si la fuente dice hacia dónde afecta, que sea nuestro sentido
+        if (x.rumbo != null && idx < pts.length - 1) {
+          const rb = rumbo(pts[idx][0], pts[idx][1], pts[idx + 1][0], pts[idx + 1][1]);
+          if (Math.abs(((x.rumbo - rb + 540) % 360) - 180) > 100) continue;
+        }
+        res.push({ ...x, kmRuta: pts[idx][2], minRuta: pts[idx][3] });
+      }
+      return res.sort((u, v) => u.kmRuta - v.kmRuta);
+    } catch (_) { return null; }
+  }
+  const fechaCorta = (t) => new Date(t).toLocaleString("es-ES", { day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" });
+  function corteHTML(x, faltaKm) {
+    const cuando = [x.inicio && Date.parse(x.inicio) > Date.now() ? "Desde el " + fechaCorta(x.inicio) : "", x.fin ? "Hasta el " + fechaCorta(x.fin) : ""].filter(Boolean).join(" · ");
+    return `<li class="apc-corte${GRAVE.includes(x.tipo) ? " grave" : ""}">
+      <div class="apc-cab"><span class="apc-dist">km ${Math.round(faltaKm)}</span>${x.via ? `<span class="apc-via">${esc(x.via)}</span>` : ""}</div>
+      <b>${esc(TIPO_CORTE[x.tipo] || "Aviso")}</b>
+      ${x.texto ? `<small>${esc(x.texto)}</small>` : ""}
+      <small class="apc-corte-fuente">${cuando ? esc(cuando) + " · " : ""}Fuente: ${esc(FUENTE_CORTE[x.fuente] || x.fuente)}</small></li>`;
+  }
+  function cortesHTML() {
+    const nota = `<p class="apc-nota">Datos oficiales de la DGT, el Servei Català de Trànsit y las autopistas de Alemania, renovados cada 15 minutos. De Francia, Italia y otros países todavía no.</p>`;
+    if (CORTES == null) return `<section class="apc-cortes-sec"><h2>Cortes y avisos en tu ruta</h2><p class="msg err">No se han podido consultar los cortes. Comprueba que tienes internet.</p></section>`;
+    const graves = CORTES.filter(x => GRAVE.includes(x.tipo)), otros = CORTES.filter(x => !GRAVE.includes(x.tipo));
+    return `<section class="apc-cortes-sec" aria-labelledby="apc-cortes-tit"><h2 id="apc-cortes-tit">Cortes y avisos en tu ruta</h2>
+      ${graves.length ? `<ul class="apc-lista apc-cortes">${graves.map(x => corteHTML(x, x.kmRuta)).join("")}</ul>` : `<p class="apc-sin-cortes">Ahora no hay carreteras cortadas ni accidentes en tu ruta.</p>`}
+      ${otros.length ? `<details class="panel apc-cortes-mas"><summary>Carriles cortados, obras y retenciones (${otros.length})</summary><ul class="apc-lista apc-cortes">${otros.map(x => corteHTML(x, x.kmRuta)).join("")}</ul></details>` : ""}
+      ${nota}</section>`;
   }
   // Las carreteras principales de una ruta (las de más km, en el orden en que se pasan)
   const viasDe = (r) => { const v = [...r.tramos].filter(t => t.via).sort((a, b) => b.km - a.km).slice(0, 4).map(t => t.via); return r.tramos.map(t => t.via).filter((x, i, a) => v.includes(x) && a.indexOf(x) === i); };
@@ -264,6 +316,7 @@
       <div class="apc-res"><b>${esc(RUTA.desde.nombre)} → ${esc(RUTA.hasta.nombre)}</b><span>${RUTA.km} km · ${durTxt(RUTA.min)} conduciendo${RUTA.peaje ? " · con peajes" : ""}${RUTA.ferry ? " · con ferry" : ""}</span></div>
       ${rutasHTML()}
       <p class="apc-camion">Ruta calculada para tu camión: ${esc(AJ.camion.alto)} m de alto, ${esc(AJ.camion.peso)} t${AJ.camion.adr ? ", con ADR" : ""}.</p>
+      ${cortesHTML()}
       <section class="apc-todos" aria-labelledby="apc-todos-tit">
         <h2 id="apc-todos-tit">Aparcamientos en tu ruta</h2>
         <label class="apc-salida">Salgo a las <input type="time" id="apc-salida" value="${esc(SALIDA)}"> <small>(vacío = ahora)</small></label>
@@ -369,6 +422,12 @@
       L.marker([y.x.lat, y.x.lon], { icon, title: nombre(y.x) + (y.x.plazas ? `, ${y.x.plazas} plazas` : "") })
         .bindPopup(`<ul class="apc-lista apc-popup">${tarjeta(y.x, y.falta ?? y.x.kmRuta, y.llega)}</ul>`, { maxWidth: 290, minWidth: 220 }).addTo(m.capa);
     }
+    for (const x of (conRuta && CORTES) || []) {
+      if (opc.desdeKm != null && x.kmRuta < opc.desdeKm) continue;
+      const icon = L.divIcon({ className: "apc-pin-corte" + (GRAVE.includes(x.tipo) ? " grave" : ""), html: "<span>!</span>", iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -14] });
+      L.marker([x.lat, x.lon], { icon, title: TIPO_CORTE[x.tipo] || "Aviso", zIndexOffset: GRAVE.includes(x.tipo) ? 500 : 0 })
+        .bindPopup(`<ul class="apc-lista apc-popup">${corteHTML(x, opc.desdeKm != null ? x.kmRuta - opc.desdeKm : x.kmRuta)}</ul>`, { maxWidth: 290, minWidth: 220 }).addTo(m.capa);
+    }
     if (opc.yo) { if (m.yo) m.yo.setLatLng(opc.yo); else m.yo = L.circleMarker(opc.yo, { radius: 9, color: "#fff", weight: 3, fillColor: "#1E4F9C", fillOpacity: 1 }).addTo(m.mapa); }
     setTimeout(() => m.mapa.invalidateSize(), 60);
   }
@@ -428,6 +487,11 @@
       VIAJE.idx = idx;
       const yaKm = pts[idx][2], yaMin = pts[idx][3];
       lista = EN_RUTA.filter(x => x.kmRuta > yaKm + 0.3).map(x => ({ x, falta: x.kmRuta - yaKm, llega: new Date(ahora + (x.minRuta - yaMin) * 60000) }));
+      VIAJE.yaKm = yaKm;
+      // Cortes graves por delante (los 3 primeros) y aviso en voz del siguiente
+      const delante = (CORTES || []).filter(x => GRAVE.includes(x.tipo) && x.kmRuta > yaKm - 0.3);
+      $("apc-cortes-viaje").innerHTML = delante.length ? `<ul class="apc-lista apc-cortes">${delante.slice(0, 3).map(x => corteHTML(x, x.kmRuta - yaKm)).join("")}</ul>` : "";
+      if (delante[0] && delante[0].id !== VIAJE.ultCorte) { VIAJE.ultCorte = delante[0].id; habla(`Atención: ${TIPO_CORTE[delante[0].tipo]}${delante[0].via ? " en la " + delante[0].via : ""}, a ${Math.round(delante[0].kmRuta - yaKm)} kilómetros.`); }
       $("apc-viaje-info").textContent = mejor > 3 ? "Te has salido de la ruta calculada: los kilómetros pueden no cuadrar." : `Quedan ${Math.round(pts[pts.length - 1][2] - yaKm)} km hasta ${RUTA.hasta.nombre}.`;
     } else {
       // Sin destino: los que hay delante en la dirección en la que vas (rumbo del GPS o de los dos últimos puntos)
@@ -455,7 +519,7 @@
     const firma = AJ.vista + mostrar.map(y => y.x.osm).join(), ahoraP = Date.now();
     if (firma === VIAJE.firma && ahoraP - PINTADO < 10000) return;
     VIAJE.firma = firma; PINTADO = ahoraP;
-    if (enMapa) pintaMapa("apc-mapa-viaje", mostrar, { yo: [a, o], ruta: !VIAJE.sinDestino });
+    if (enMapa) pintaMapa("apc-mapa-viaje", mostrar, { yo: [a, o], ruta: !VIAJE.sinDestino, desdeKm: VIAJE.sinDestino ? null : VIAJE.yaKm });
     else $("apc-proximos").innerHTML = mostrar.length
       ? `<p class="apc-cuenta">${mostrar.length === 1 ? "1 aparcamiento" : mostrar.length + " aparcamientos"} por delante, del más cercano al más lejano. Baja para verlos todos.</p><ul class="apc-lista">${mostrar.map(y => tarjeta(y.x, y.falta, y.llega)).join("")}</ul>${cerrados && !AJ.cerrados ? `<p class="apc-nota">${cerrados} por delante estarán cerrados cuando llegues: no salen. Para verlos, marca «Ver también los cerrados».</p>` : ""}`
       : `<p class="desc-vacio">No hay aparcamientos abiertos por delante.</p>`;

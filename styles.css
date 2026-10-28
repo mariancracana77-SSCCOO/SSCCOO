@@ -1922,3 +1922,18 @@ b.gan-fecha { cursor: default; }
 .apc-ruta-op { display: grid; gap: 2px; text-align: left; padding: 10px 14px; border: 2px solid var(--linea); border-radius: 12px; background: var(--tarjeta); color: var(--tinta); font: inherit; cursor: pointer; min-height: 52px; }
 .apc-ruta-op.activa { border-color: var(--rojo); box-shadow: inset 6px 0 0 var(--rojo); }
 .apc-ruta-op small { color: var(--suave); }
+/* v90: cortes y avisos oficiales en la ruta */
+.apc-cortes-sec { display: grid; gap: 8px; margin: 12px 0; }
+.apc-cortes-sec h2 { font-family: var(--cond); text-transform: uppercase; font-size: 1.3rem; margin: 0; }
+.apc-corte { background: var(--tarjeta); border: 1px solid var(--linea); border-left: 8px solid var(--suave); border-radius: 12px; padding: 10px 14px; display: grid; gap: 4px; }
+.apc-corte.grave { border-color: var(--rojo); border-left-color: var(--rojo); }
+.apc-corte b { font-size: 1.1rem; }
+.apc-corte.grave b { color: var(--rojo-ic); }
+.apc-corte small { color: var(--suave); }
+.apc-sin-cortes { margin: 0; font-weight: 700; }
+.apc-cortes-mas summary { cursor: pointer; font-weight: 700; }
+.apc-cortes-mas .apc-cortes { margin-top: 10px; }
+#apc-cortes-viaje:not(:empty) { margin-bottom: 12px; }
+.apc-pin-corte { display: grid; place-items: center; }
+.apc-pin-corte span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 6px; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.45); background: #6b7078; color: #fff; font: 700 1rem/1 sans-serif; }
+.apc-pin-corte.grave span { background: #AB1012; }
