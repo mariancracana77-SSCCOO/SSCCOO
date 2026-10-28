@@ -3,6 +3,7 @@
 // - España: DGT (DATEX2 v3.7, toda España menos Cataluña y País Vasco) y Servei Català de Trànsit (DATEX II), por el punto de acceso nacional.
 // - Alemania: Autobahn GmbH (verkehr.autobahn.de), cortes y avisos de cada autopista.
 // (Francia: las autopistas de peaje necesitan registro en Bison Futé; pendiente.)
+// Además, una vez al día, los aparcamientos de camiones de las autopistas alemanas (nombre y plazas) en «aparcamientos_oficiales».
 // La llama la tarea programada «cortes» con su secreto (como «notificar»). Guarda en la tabla «cortes» (lectura pública).
 const URL_SB = Deno.env.get("SUPABASE_URL")!, CLAVE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const UA = "CCOO-Calsina-Carre-web/1.0 (seccion sindical; cortes para camioneros)";
@@ -114,6 +115,24 @@ Deno.serve(async (req) => {
       })), 8);
       if (partes.filter(p => p === null).length > partes.length / 2) throw new Error("autobahn: fallan demasiadas vías");
       hecho.autobahn = await guarda("autobahn", partes.flatMap(p => p || []), ahora);
+      // Aparcamientos de camiones (nombre y plazas), una vez al día
+      const ult = await rest("aparcamientos_oficiales?select=actualizado&fuente=eq.autobahn&order=actualizado.desc&limit=1").then(r => r.json()).catch(() => []);
+      if (!ult?.[0] || Date.now() - Date.parse(ult[0].actualizado) > 20 * 3600000) {
+        const pk = await conLimite(vias.map(v => async () => {
+          try { const r = await trae(`https://verkehr.autobahn.de/o/autobahn/${encodeURIComponent(v.trim())}/services/parking_lorry`); return r.ok ? ((await r.json()).parking_lorry || []) : null; } catch { return null; }
+        }), 8);
+        if (pk.filter(p => p === null).length <= pk.length / 2) {
+          const filas = pk.flatMap(p => p || []).map((x: any) => {
+            const lat = +x?.coordinate?.lat, lon = +x?.coordinate?.long, pl = String((x.description || []).join(" ")).match(/LKW[- ]Stellpl[äa]tze:\s*(\d+)/);
+            return { id: "de:" + x.identifier, pais: "DE", fuente: "autobahn", nombre: String(x.subtitle || "").trim().slice(0, 80) || null, via: String(x.title || "").split("|")[0].trim() || null,
+              lat, lon, plazas: pl ? +pl[1] : null, actualizado: ahora };
+          }).filter(f => Number.isFinite(f.lat) && Number.isFinite(f.lon) && f.id !== "de:undefined");
+          const unicas = [...new Map(filas.map(f => [f.id, f])).values()];
+          for (let i = 0; i < unicas.length; i += 500) await rest("aparcamientos_oficiales", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(unicas.slice(i, i + 500)) });
+          await rest(`aparcamientos_oficiales?fuente=eq.autobahn&actualizado=lt.${encodeURIComponent(ahora)}`, { method: "DELETE" });
+          hecho.aparcamientos_de = unicas.length;
+        }
+      }
     } catch (e) { hecho.autobahn = String(e).slice(0, 200); } })(),
   ]);
   return json({ ok: true, ...hecho });

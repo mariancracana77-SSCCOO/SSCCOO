@@ -93,13 +93,13 @@
   async function delPais(p) {
     if (MEM[p]) return MEM[p];
     let caja = null; try { caja = await caches.open(CAJA); } catch (_) {}
-    const clave = location.origin + "/__aparcamientos/" + p;
+    const clave = location.origin + "/__aparcamientos2/" + p; // «2»: desde la v90 trae «cerca»
     const guardado = caja ? await caja.match(clave).then(r => r && r.json()).catch(() => null) : null;
     if (guardado && Date.now() - guardado.t < 7 * 864e5 && Array.isArray(guardado.l)) return (MEM[p] = guardado.l);
     try {
       const l = [];
       for (let i = 0; i < 40000; i += 1000) {
-        const { data, error } = await sb.from("aparcamientos").select("osm,lat,lon,nombre,horario,vigilado,duchas,aseos,plazas,area,camion").eq("pais", p).order("osm").range(i, i + 999);
+        const { data, error } = await sb.from("aparcamientos").select("osm,lat,lon,nombre,horario,vigilado,duchas,aseos,plazas,area,camion,cerca").eq("pais", p).order("osm").range(i, i + 999);
         if (error) throw error;
         l.push(...(data || []));
         if (!data || data.length < 1000) break;
@@ -159,7 +159,13 @@
   const hora = (d) => d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
   const kmTxt = (n) => n < 10 ? n.toFixed(1).replace(".", ",") : String(Math.round(n));
   const durTxt = (m) => { const h = Math.floor(m / 60), mm = Math.round(m % 60); return h ? `${h} h${mm ? " " + mm + " min" : ""}` : `${mm} min`; };
-  const nombre = (x) => x.nombre || (x.area ? "Área de servicio" : "Aparcamiento de camiones");
+  // Nombre: el de OpenStreetMap; si no tiene, el oficial (Alemania); si tampoco, «Área en la AP-7, cerca de La Jonquera» (lo pidió el padre)
+  const viaEnKm = (k) => { if (!RUTA?.tramos || k == null) return ""; let ac = 0; for (const t of RUTA.tramos) { ac += t.km; if (k <= ac + 0.5) return t.via || ""; } return ""; };
+  const nombre = (x) => {
+    if (x.nombre) return x.nombre;
+    const via = x.kmRuta != null ? viaEnKm(x.kmRuta) : "";
+    return (x.area ? "Área" : "Aparcamiento de camiones") + (via ? " en la " + via : "") + (x.cerca ? ", cerca de " + x.cerca : "");
+  };
 
   // Plazas para camiones: lo más importante para el padre (capacity:hgv de OpenStreetMap)
   const plazasHTML = (x) => x.plazas ? `<span class="apc-plazas"><b>${x.plazas}</b> ${x.plazas === 1 ? "plaza" : "plazas"} camión</span>` : `<span class="apc-plazas nose">Plazas sin apuntar</span>`;
@@ -240,11 +246,32 @@
   async function eligeRuta(i) {
     RUTA = RUTAS[i] || RUTAS[0];
     estado("Buscando aparcamientos en la ruta…");
-    const lista = await cargaPaises(paisesDe(RUTA.puntos));
-    EN_RUTA = enRuta(lista, RUTA.puntos, RUTA);
+    const [lista, oficiales] = await Promise.all([cargaPaises(paisesDe(RUTA.puntos)), cargaOficiales(RUTA)]);
+    EN_RUTA = enRuta(juntaOficiales(lista, oficiales), RUTA.puntos, RUTA);
     CORTES = await cargaCortes(RUTA);
     estado("");
     pintaRuta();
+  }
+
+  // Aparcamientos oficiales (Autobahn GmbH): ponen nombre y plazas a los de OpenStreetMap que estén a ≤ 300 m; los que no están, se añaden
+  async function cargaOficiales(ruta) {
+    const c = ruta.puntos.reduce((b, [la, lo]) => [Math.min(b[0], la), Math.max(b[1], la), Math.min(b[2], lo), Math.max(b[3], lo)], [90, -90, 180, -180]);
+    try {
+      const { data, error } = await sb.from("aparcamientos_oficiales").select("id,pais,nombre,via,lat,lon,plazas")
+        .gte("lat", c[0] - 0.05).lte("lat", c[1] + 0.05).gte("lon", c[2] - 0.07).lte("lon", c[3] + 0.07).limit(5000);
+      return error ? [] : data || [];
+    } catch (_) { return []; }
+  }
+  function juntaOficiales(lista, oficiales) {
+    if (!oficiales.length) return lista;
+    const res = lista.map(x => ({ ...x }));
+    for (const o of oficiales) {
+      let mejor = null, d = 0.3;
+      for (const x of res) { if (Math.abs(x.lat - o.lat) > 0.005 || Math.abs(x.lon - o.lon) > 0.007) continue; const k = km(x.lat, x.lon, o.lat, o.lon); if (k < d) { d = k; mejor = x; } }
+      if (mejor) { if (!mejor.nombre && o.nombre) mejor.nombre = o.nombre; if (!mejor.plazas && o.plazas) mejor.plazas = o.plazas; mejor.camion = true; }
+      else res.push({ osm: "of:" + o.id, pais: o.pais, lat: o.lat, lon: o.lon, nombre: o.nombre, horario: null, vigilado: false, duchas: false, aseos: false, plazas: o.plazas, area: true, camion: true, cerca: null });
+    }
+    return res;
   }
 
   // ---------- Cortes oficiales en tiempo real (lo pidió el padre: «como Bison Futé») ----------
