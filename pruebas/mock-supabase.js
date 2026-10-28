@@ -28,11 +28,20 @@
     publicaciones: [{ id: 1, apartado_id: 2, titulo: "Normas de descanso", contenido: "Contenido de prueba.", fecha: dia(-2), publicado: true, adjuntos: [] },
       { id: 2, apartado_id: 5, titulo: "Reunión de seguridad y salud", contenido: "Se revisa la evaluación de riesgos.", fecha: dia(-3), publicado: true, adjuntos: [] }],
     calc_permisos: [], calc_categorias: [], calc_ajustes: [{ clave: "vac_dias", valor: "23" }],
+    // «Aparcamientos en mi ruta»: unos cuantos en la AP-7 / A9 entre Girona y Narbona (datos de prueba)
+    aparcamientos: [
+      { osm: "w1", pais: "ES", lat: 42.1600, lon: 2.8650, nombre: "Área de prueba gratis", horario: null, pago: 0, precio: null, vigilado: false, duchas: true, aseos: true, plazas: 40, area: true, camion: true },
+      { osm: "w2", pais: "ES", lat: 42.3500, lon: 2.8900, nombre: "Parking vigilado de prueba", horario: "24/7", pago: 1, precio: "2 EUR/hour", vigilado: true, duchas: true, aseos: true, plazas: 80, area: false, camion: true },
+      { osm: "w3", pais: "FR", lat: 42.6000, lon: 2.9200, nombre: "Aire de prueba", horario: null, pago: null, precio: null, vigilado: false, duchas: false, aseos: true, plazas: null, area: true, camion: false },
+      { osm: "w4", pais: "FR", lat: 42.8000, lon: 2.9500, nombre: "Parking que cierra", horario: "Mo-Fr 08:00-09:00", pago: 0, precio: null, vigilado: false, duchas: false, aseos: false, plazas: 12, area: false, camion: true },
+      { osm: "w5", pais: "FR", lat: 43.0500, lon: 2.9800, nombre: null, horario: null, pago: null, precio: null, vigilado: false, duchas: false, aseos: false, plazas: null, area: false, camion: true },
+      { osm: "w6", pais: "FR", lat: 44.9000, lon: 4.8000, nombre: "Lejos de la ruta", horario: null, pago: 0, precio: null, vigilado: false, duchas: false, aseos: false, plazas: null, area: true, camion: true },
+    ],
     tarifas_conductor: [
       { id: 1, grupo: "Salario", concepto: "Salario bruto (sin antigüedad)", importe: 1725.28, unidad: "mes", pago: "Mensual", sin_pagar: 0, max_mes: null, nota: "", orden: 10, visible: true },
-      { id: 3, grupo: "Dieta completa", concepto: "Dieta completa nacional", importe: 48.6, unidad: "dia", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "", orden: 30, visible: true },
+      { id: 3, grupo: "Dieta completa", concepto: "Dieta completa nacional", importe: 48.6, importe_nuevo: 50.82, desde: "2027-01-01", unidad: "dia", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "", orden: 30, visible: true },
       { id: 5, grupo: "Suplementos", concepto: "Fin de semana fuera (domingo)", importe: 100, unidad: "finde", pago: "Semanal", sin_pagar: 0, max_mes: 2, nota: "Como mucho 2 al mes.", orden: 50, visible: true },
-      { id: 7, grupo: "Dieta fraccionada nacional", concepto: "Desayuno", importe: 5.72, unidad: "vez", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "", orden: 70, visible: true },
+      { id: 7, grupo: "Dieta fraccionada nacional", concepto: "Desayuno", importe: 5.72, importe_nuevo: 5.92, desde: "2027-01-01", unidad: "vez", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "", orden: 70, visible: true },
       { id: 20, grupo: "Otros pluses", concepto: "ADR (por minuto)", importe: 0.00812196, unidad: "minuto", pago: "Mensual", sin_pagar: 0, max_mes: null, nota: "Promedio: depende de la antigüedad.", orden: 200, visible: true },
       { id: 21, grupo: "Otros pluses", concepto: "ADR (fijo al mes)", importe: 70, unidad: "mes", pago: "Mensual", sin_pagar: 0, max_mes: null, nota: "Solo si haces ADR.", orden: 210, visible: true },
       { id: 22, grupo: "Otros pluses", concepto: "Carga o descarga internacional (de la 2.ª en adelante)", importe: 6, unidad: "vez", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "La primera no se paga. Apunta solo las que hagas a partir de la segunda: 6 € cada una.", orden: 220, visible: true },
@@ -57,6 +66,10 @@
     return q;
   }
   const canal = { on() { return canal; }, subscribe() { return canal; }, unsubscribe() {} };
+  // Ruta de prueba Girona → Narbona: un punto cada ~1,5 km por la AP-7/A9 a 75 km/h
+  const RUTA_PRUEBA = (() => { const p = [], n = 90; for (let i = 0; i <= n; i++) { const f = i / n; p.push([+(41.98 + f * 1.2).toFixed(5), +(2.82 + f * 0.18).toFixed(5), +(f * 135).toFixed(1), Math.round(f * 108)]); }
+    return { desde: { nombre: "Girona", lat: 41.98, lon: 2.82 }, hasta: { nombre: "Narbona, Francia", lat: 43.18, lon: 3.0 }, km: 135, min: 108, peaje: true, ferry: false,
+      tramos: [{ via: "", km: 4, hacia: "" }, { via: "AP-7", km: 70, hacia: "La Jonquera / França" }, { via: "A9", km: 61, hacia: "Narbonne" }], puntos: p }; })();
   // Con localStorage «prueba-sesion» = 1, el panel entra como administrador de prueba
   const SES = (() => { try { return localStorage.getItem("prueba-sesion") === "1"; } catch (_) { return false; } })()
     ? { access_token: "x", user: { id: "u1", email: "prueba@example.com" } } : null;
@@ -71,7 +84,7 @@
     createClient: () => ({
       from: consulta, auth, channel: () => canal, removeChannel() {},
       rpc: async () => ({ data: null, error: null }),
-      functions: { invoke: async () => ({ data: null, error: null }) },
+      functions: { invoke: async (n) => ({ data: n === "ruta" ? RUTA_PRUEBA : null, error: null }) },
       storage: { from: () => ({ upload: async () => ({ error: null }), getPublicUrl: (r) => ({ data: { publicUrl: "https://example.com/documentos/" + r } }), remove: async () => ({}), list: async () => ({ data: [] }) }) },
     }),
   };

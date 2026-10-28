@@ -75,6 +75,16 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 89: importes de 2027 desde el 1 de enero y «Aparcamientos en mi ruta»
+
+- **«Aparcamientos en mi ruta»** (nuevo en Zona Conductores, lo pidió el padre para usarlo durante el trayecto): pones adónde vas (vacío el origen = donde estás) y los datos del camión (alto, ancho, largo, peso, ADR, se guardan en el móvil). Calcula una ruta para camión (gratis, sin claves) y enseña las carreteras, los km y las horas, con «Ir guiado con Google Maps». Con «Empezar viaje», una pantalla con los aparcamientos que tienes **por delante** en la ruta, a cuántos km y a qué hora llegas, solo los **abiertos cuando llegues**; **verde** los gratis, **azul con moneda y precio** los de pago, gris si no se sabe; «Llevarme aquí» abre el Maps. Opciones: «Avisarme en voz alta» y «Solo gratis». Modo «Sin destino»: los que tienes delante en la dirección en la que vas. La pantalla se queda encendida durante el viaje.
+- Los aparcamientos salen de OpenStreetMap (el mapa libre) y se renuevan solos cada mes, país por país (España, Francia, Italia, Portugal, Andorra, Alemania, Suiza, Bélgica, Países Bajos, Luxemburgo, Austria y Reino Unido). Mientras conduces, la ubicación no sale del móvil.
+
+- **Precios con fecha en «Mis incentivos»**: cada concepto puede tener un «Importe nuevo» y «A partir del día». La calculadora usa el precio de cada día: los días de 2026 con el de ahora y desde el 1 de enero de 2027 con el nuevo, también en una semana que cruza el año (la 53) y en los PDF.
+- **Tabla de dietas 2027 ya cargada**: nacional (desayuno 5,92 €, comer 16,46 €, cenar 14,22 €, dormir 14,22 €, completa 50,82 €), internacional / Unión Europea (7,34 €, 20,83 € ×3, completa 69,83 €) y GB-CG-MA / resto de países, Reino Unido y Suiza (8,29 €, 23,68 € ×3, completa 79,33 €).
+- **En la app**, antes del cambio cada concepto avisa: «Desde el 1 de enero de 2027: 50,82 €».
+- **En el panel** (Importes de «Mis incentivos»), dos campos nuevos en cada concepto y una etiqueta «Desde el 1 ene 2027: 50,82 €» en la lista. El año que viene: pasar el importe nuevo a «Importe» y poner el siguiente con su fecha.
+
 ## Versión 88: PDF con logo, encabezado y colores; mes entero; enviar por WhatsApp; horas sindicales en el cobro semanal
 
 - **PDF de «Mis incentivos»**: el logo arriba a la izquierda, banda roja de encabezado («Mis incentivos · Sección Sindical CCOO Calsina Carré»), el título en grande («Semana 44 de 2026» u «Octubre de 2026») y debajo las fechas. Cada semana lleva su banda oscura con el número, el año y las fechas («Semana 44 de 2026 · del lunes, 26 de octubre al domingo, 1 de noviembre»), los días, un **resumen por conceptos** (cuántas dietas, cargas, kilómetros… y lo que suman, para comparar con lo que paga la empresa) y tres líneas de color: **azul** el cobro semanal, gris oscuro lo de la nómina y **verde** el total (lo que ganas; en rojo parecía que se perdía dinero). Una línea gris explica los colores. El logo sale también en la copia en PDF de «Mis descansos».

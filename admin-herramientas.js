@@ -310,7 +310,7 @@ async function pintaCamiones() {
 
 // ---------- Importes de «Mis incentivos» (Zona Conductores, v81) ----------
 async function pintaImportes() {
-  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Importes de «Mis incentivos»</h1><p>Los importes que usa la calculadora de los conductores (Zona Conductores > Mis incentivos): salario, dietas, suplementos y pluses. Cuando cambien las tablas de la empresa, cámbialos aquí y la web los usa al momento. Lo que apunta cada conductor se queda en su móvil: aquí no se ve.</p></div><button class="btn" data-nuevo="tarifas">${icono("mas", "p")}Añadir concepto</button></div>
+  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Importes de «Mis incentivos»</h1><p>Los importes que usa la calculadora de los conductores (Zona Conductores > Mis incentivos): salario, dietas, suplementos y pluses. Cuando llegue la tabla de la empresa del año siguiente, pon en cada concepto el «Importe nuevo» y desde qué día vale: la web lo usa desde ese día y los días de antes siguen con el precio de ahora. Lo que apunta cada conductor se queda en su móvil: aquí no se ve.</p></div><button class="btn" data-nuevo="tarifas">${icono("mas", "p")}Añadir concepto</button></div>
     <div class="lista-adm" id="lista-tarifas"><p class="fecha-txt">Cargando…</p></div>
     ${SECCIONES[Object.keys(SECCIONES).find(k => SECCIONES[k].slug === "zona-conductores")] ? "" : `<p class="msg err">No hay ningún apartado «Zona Conductores» en la web, así que la calculadora sale suelta en las pestañas.</p>`}`;
   $("zona").querySelector("[data-nuevo]").onclick = () => abrirEditor("tarifas");

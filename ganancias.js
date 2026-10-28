@@ -77,7 +77,7 @@
     try {
       const { data, error } = await sb.from("tarifas_conductor").select("*").order("orden").order("id");
       if (error || !Array.isArray(data)) return;
-      TARIFAS = data.filter(t => t.visible !== false).map(t => ({ id: t.id, grupo: t.grupo || "", concepto: t.concepto, importe: +t.importe || 0, unidad: t.unidad, pago: t.pago, sin_pagar: +t.sin_pagar || 0, max_mes: +t.max_mes > 0 ? +t.max_mes : null, /* 0 o vacío = sin tope */ nota: t.nota || "" }));
+      TARIFAS = data.filter(t => t.visible !== false).map(t => ({ id: t.id, grupo: t.grupo || "", concepto: t.concepto, importe: +t.importe || 0, unidad: t.unidad, pago: t.pago, sin_pagar: +t.sin_pagar || 0, max_mes: +t.max_mes > 0 ? +t.max_mes : null, /* 0 o vacío = sin tope */ nota: t.nota || "", nuevo: +t.importe_nuevo > 0 ? +t.importe_nuevo : null, desde: /^\d{4}-\d\d-\d\d$/.test(t.desde || "") ? t.desde : null }));
       try { localStorage.setItem(CACHE_TARIFAS, JSON.stringify(TARIFAS)); } catch (_) {}
     } catch (_) { /* sin conexión: los de la última vez */ }
   }
@@ -90,8 +90,11 @@
   // ¿Cobra este fijo al mes? El primero (salario) sí por defecto; los demás (p. ej. plus ADR) solo si lo marca
   const cobraFijo = (t) => DATOS.fijo[t.id] ?? (t === fijosMes()[0]);
   // Importe de cada uno: el suyo si lo ha puesto en Ajustes; si no, el de la tabla (el salario antiguo de la v81 también vale)
-  const imp = (t) => { const p = DATOS.precio[t.id]; if (typeof p === "number" && p >= 0) return p; if (t === fijosMes()[0] && salarioPropio()) return salarioPropio(); return t.importe; };
-  const esPropio = (t) => imp(t) !== t.importe;
+  // v89: el precio de la tabla depende del día: desde «desde» vale el importe nuevo (la tabla de 2027 a partir del 1 de enero, por ejemplo);
+  // los días de antes siguen con el de siempre. Sin día, el de hoy.
+  const base = (t, f) => t.nuevo != null && t.desde && (f || hoy()) >= t.desde ? t.nuevo : t.importe;
+  const imp = (t, f) => { const p = DATOS.precio[t.id]; if (typeof p === "number" && p >= 0) return p; if (t === fijosMes()[0] && salarioPropio()) return salarioPropio(); return base(t, f); };
+  const esPropio = (t, f) => imp(t, f) !== base(t, f);
   const usa = (t) => !DATOS.oculto[t.id];
 
   // ---------- Fechas (días como «aaaa-mm-dd», hora local) ----------
@@ -122,7 +125,7 @@
         const n = num(dia[t.id]); if (!n) return;
         let pagadas = Math.max(0, n - t.sin_pagar), tope = false;
         if (t.max_mes != null) { const k = mes + "|" + t.id, ya = usados[k] || 0, cabe = Math.max(0, t.max_mes - ya); if (pagadas > cabe) { pagadas = cabe; tope = true; } usados[k] = ya + pagadas; }
-        const im = pagadas * imp(t);
+        const im = pagadas * imp(t, f);
         lineas.push({ t, n, pagadas, imp: im, tope }); total += im;
         if (t.pago === "Mensual") mensual += im; else semanal += im;
       });
@@ -141,7 +144,7 @@
   function cuentasMes(c, m) {
     const [a, mm] = m.split("-").map(Number), n = new Date(a, mm, 0).getDate();
     const dias = Array.from({ length: n }, (_, i) => `${m}-${String(i + 1).padStart(2, "0")}`), r = resumen(c, dias);
-    const fijos = fijosMes().filter(cobraFijo).map(t => ({ t, imp: imp(t) })), totalFijo = fijos.reduce((s, x) => s + x.imp, 0);
+    const fijos = fijosMes().filter(cobraFijo).map(t => ({ t, imp: imp(t, m + "-01") })), totalFijo = fijos.reduce((s, x) => s + x.imp, 0);
     return { r, fijos, totalFijo, nomina: totalFijo + r.mensual, semanal: r.semanal, total: totalFijo + r.total };
   }
   const cantidadTxt = (t, n) => CASILLA.includes(t.unidad) ? (n === 1 ? "" : "× " + n) : t.unidad === "vez" ? "× " + n : n.toLocaleString(LOC, { maximumFractionDigits: 2 }) + " " + QUE()[t.unidad];
@@ -189,9 +192,11 @@
       if (t.unidad === "vez") return `<span class="gan-paso"><button type="button" class="btn-ic" data-menos="${t.id}" aria-label="${esc(T("Quitar una"))}">−</button><b id="${id}" aria-live="polite">${n}</b><button type="button" class="btn-ic" data-mas="${t.id}" aria-label="${esc(T("Añadir una"))}">+</button></span>`;
       return `<input id="${id}" class="gan-num" data-c="${t.id}" inputmode="decimal" value="${n ? esc(String(n).replace(".", ",")) : ""}" placeholder="0" aria-label="${esc(QUE()[t.unidad])}"><small>${esc(QUE()[t.unidad])}</small>`;
     };
-    const fila = (t) => { const l = linea(t), nota = [t.nota && TD(t.nota), t.sin_pagar ? (t.sin_pagar === 1 ? T("La primera de cada día no se paga.") : T("Las primeras {n} de cada día no se pagan.", { n: t.sin_pagar })) : "", t.max_mes != null ? T("Como mucho {n} al mes.", { n: t.max_mes }) : ""].filter(Boolean);
+    const fila = (t) => { const l = linea(t), nota = [t.nota && TD(t.nota),
+        // v89: si el precio va a cambiar después de este día, se avisa («Desde el 1 de enero de 2027: 50,82 €»)
+        t.nuevo != null && t.desde && f < t.desde && !esPropio(t, t.desde) ? T("Desde el {d}: {p}", { d: deIso(t.desde).toLocaleDateString(LOC, { day: "numeric", month: "long", year: "numeric" }), p: precio(t.nuevo) }) : "", t.sin_pagar ? (t.sin_pagar === 1 ? T("La primera de cada día no se paga.") : T("Las primeras {n} de cada día no se pagan.", { n: t.sin_pagar })) : "", t.max_mes != null ? T("Como mucho {n} al mes.", { n: t.max_mes }) : ""].filter(Boolean);
       const unicos = [...new Set(nota)];
-      return `<li class="gan-fila ${l ? "con" : ""}"><label for="gan-c${t.id}"><b>${esc(TD(t.concepto))}</b><small>${imp(t) ? `${esc(precio(imp(t)))} ${esc(UNIDAD()[t.unidad])}${t.unidad === "minuto" ? " (" + esc(T("unos {x} por hora", { x: eur(imp(t) * 60) })) + ")" : ""}${esPropio(t) ? " · " + esc(T("el tuyo")) : ""}` : `<span class="gan-tope">${esc(T("Pon tu precio en «Ajustes»"))}</span>`}${t.pago === "Mensual" ? " · " + esc(T("en la nómina")) : " · " + esc(T("cobro semanal"))}</small>${unicos.map(x => `<small class="gan-nota">${esc(x)}</small>`).join("")}${l?.tope ? `<small class="gan-tope">${esc(T("Ya llevas el máximo de este mes: este no suma."))}</small>` : ""}</label>
+      return `<li class="gan-fila ${l ? "con" : ""}"><label for="gan-c${t.id}"><b>${esc(TD(t.concepto))}</b><small>${imp(t, f) ? `${esc(precio(imp(t, f)))} ${esc(UNIDAD()[t.unidad])}${t.unidad === "minuto" ? " (" + esc(T("unos {x} por hora", { x: eur(imp(t, f) * 60) })) + ")" : ""}${esPropio(t, f) ? " · " + esc(T("el tuyo")) : ""}` : `<span class="gan-tope">${esc(T("Pon tu precio en «Ajustes»"))}</span>`}${t.pago === "Mensual" ? " · " + esc(T("en la nómina")) : " · " + esc(T("cobro semanal"))}</small>${unicos.map(x => `<small class="gan-nota">${esc(x)}</small>`).join("")}${l?.tope ? `<small class="gan-tope">${esc(T("Ya llevas el máximo de este mes: este no suma."))}</small>` : ""}</label>
         <div class="gan-ctrl">${control(t)}</div><span class="gan-imp">${l ? esc(eur(l.imp)) : ""}</span></li>`; };
     // ¿Dieta completa y partes el mismo día? Normalmente es una u otra
     const lleva = (p) => r.lineas.some(l => /dieta/i.test(l.t.grupo + " " + l.t.concepto) && p(l.t));
@@ -293,7 +298,7 @@
       <details class="gan-checks gan-precios" open><summary>${esc(T("Lo que cobras tú"))}</summary>
         <p class="ayuda">${esc(T("Cada persona cobra distinto (antigüedad, horas sindicales…). Pon tu importe donde no te cuadre la tabla; si lo dejas vacío, se usa el de la tabla."))}</p>
         ${grupos.map(g => `<div class="gan-precios-grupo">${g.n ? `<h4>${esc(TD(g.n))}</h4>` : ""}${g.ts.map(t => `<label class="gan-precio"><span>${esc(TD(t.concepto))}<small>${esc(UNIDAD()[t.unidad])}${t === base ? " · " + esc(T("con antigüedad")) : ""}</small></span>
-          <input inputmode="decimal" data-precio="${t.id}" value="${esc(valor(t))}" placeholder="${esc(t.importe ? precio(t.importe) : T("tu precio"))}" aria-label="${esc(TD(t.concepto) + " · " + UNIDAD()[t.unidad])}"></label>`).join("")}</div>`).join("")}
+          <input inputmode="decimal" data-precio="${t.id}" value="${esc(valor(t))}" placeholder="${esc(base(t) ? precio(base(t)) : T("tu precio"))}" aria-label="${esc(TD(t.concepto) + " · " + UNIDAD()[t.unidad])}"></label>`).join("")}</div>`).join("")}
       </details>
       ${fm.length ? `<fieldset class="gan-checks"><legend>${esc(T("Lo que cobro fijo cada mes"))}</legend>${fm.map(t => `<label class="check"><input type="checkbox" data-fijo="${t.id}" ${cobraFijo(t) ? "checked" : ""}><span>${esc(TD(t.concepto))} · ${esc(precio(imp(t)))}</span></label>`).join("")}</fieldset>` : ""}
       <fieldset class="gan-checks gan-inicio"><legend>${esc(T("Al abrir «Mis incentivos», enséñame"))}</legend><div class="gan-cal-rapido">${[["", T("Lo último que miré")], ["dia", T("Día")], ["semana", T("Semana")], ["mes", T("Mes")]].map(([k, n]) => `<label class="filtro ${(DATOS.inicio || "") === k ? "activo" : ""}"><input type="radio" name="gan-inicio" value="${k}" ${(DATOS.inicio || "") === k ? "checked" : ""}>${esc(n)}</label>`).join("")}</div></fieldset>
