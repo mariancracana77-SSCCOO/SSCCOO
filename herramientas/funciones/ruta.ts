@@ -5,6 +5,7 @@
 // y «autopista» (tramos [km inicio, km fin] por autopista: ahí no se puede cruzar al otro sentido).
 // v6: código postal opcional y, si hay varios pueblos con el mismo nombre, devuelve «elegir» con las opciones (el móvil
 // vuelve a pedir con las coordenadas de la elegida). Con la web nueva («elegir: true»), hasta 2 rutas alternativas en «alternativas».
+// v9: «peajes» (tramos de peaje en km) para el precio aproximado de los peajes.
 const UA = "CCOO-Calsina-Carre-web/1.0 (seccion sindical; rutas para camion)";
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...cors, "Content-Type": "application/json" } });
@@ -113,13 +114,17 @@ function prepara(trip: any) {
   const puntos: number[][] = []; let ult = -99;
   pts.forEach((p, i) => { if (acumKm[i] - ult >= 1.5 || i === pts.length - 1) { puntos.push([+p[0].toFixed(5), +p[1].toFixed(5), +acumKm[i].toFixed(1), Math.round(acumMin[i])]); ult = acumKm[i]; } });
   const fina = simplifica(pts, 8).map(([la, lo]) => [+la.toFixed(5), +lo.toFixed(5)]);
-  // Tramos por autopista (maniobras con «highway» de Valhalla), juntando los seguidos
-  const autopista: number[][] = [];
-  for (const m of leg.maneuvers) {
-    if (!m.highway) continue;
-    const a = acumKm[m.begin_shape_index], z = acumKm[Math.max(m.begin_shape_index, m.end_shape_index)], u = autopista[autopista.length - 1];
-    if (u && a - u[1] < 0.5) u[1] = +z.toFixed(1); else autopista.push([+a.toFixed(1), +z.toFixed(1)]);
-  }
+  // Tramos por autopista («highway» de Valhalla) y de peaje («toll»), en km [inicio, fin], juntando los seguidos
+  const tramosDe = (campo: string) => {
+    const r: number[][] = [];
+    for (const m of leg.maneuvers) {
+      if (!m[campo]) continue;
+      const a = acumKm[m.begin_shape_index], z = acumKm[Math.max(m.begin_shape_index, m.end_shape_index)], u = r[r.length - 1];
+      if (u && a - u[1] < 0.5) u[1] = +z.toFixed(1); else r.push([+a.toFixed(1), +z.toFixed(1)]);
+    }
+    return r;
+  };
+  const autopista = tramosDe("highway"), peajes = tramosDe("toll");
   // Lista de carreteras: tramos seguidos por la misma vía, con hacia dónde
   const tramos: { via: string; km: number; hacia: string }[] = [];
   for (const m of leg.maneuvers) {
@@ -131,7 +136,7 @@ function prepara(trip: any) {
   }
   const limpios = tramos.filter(x => x.via || x.km >= 3).map(x => ({ ...x, km: Math.round(x.km) }));
   const s = trip.summary;
-  return { km: Math.round(s.length), min: Math.round(s.time / 60), peaje: !!s.has_toll, ferry: !!s.has_ferry, tramos: limpios, puntos, fina, autopista };
+  return { km: Math.round(s.length), min: Math.round(s.time / 60), peaje: !!s.has_toll, ferry: !!s.has_ferry, tramos: limpios, puntos, fina, autopista, peajes };
 }
 
 Deno.serve(async (req) => {

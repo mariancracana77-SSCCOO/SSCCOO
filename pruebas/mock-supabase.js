@@ -40,6 +40,10 @@
       { osm: "w6", pais: "FR", lat: 44.9000, lon: 4.8000, nombre: "Lejos de la ruta", horario: null, pago: 0, precio: null, vigilado: false, duchas: false, aseos: false, plazas: null, area: true, camion: true },
     ],
     // Avisos de compañeros (el «Aire de prueba» avisado cerrado hace un rato)
+    peajes_paises: [
+      { id: 1, pais: "ES", nombre: "España", cobra: "peaje", precio_km: 0.17, nota: "Estimación. Revisar.", orden: 1, visible: true },
+      { id: 2, pais: "FR", nombre: "Francia", cobra: "peaje", precio_km: 0.25, nota: "Estimación clase 4. Revisar.", orden: 2, visible: true },
+      { id: 3, pais: "AT", nombre: "Austria", cobra: "autopista", precio_km: 0.5724, nota: "ASFINAG 2026.", orden: 6, visible: true }],
     cortes: [
       { id: "dgt:1", pais: "ES", fuente: "dgt", tipo: "carril", via: "AP-7", lat: 42.34, lon: 2.874, lat2: 42.352, lon2: 2.8758, rumbo: 0, texto: "carril derecho · por obras · km 30–31,5 · Pont de molins", inicio: null, fin: null },
       { id: "dgt:2", pais: "ES", fuente: "dgt", tipo: "cortada", via: "AP-7", lat: 42.58, lon: 2.91, lat2: null, lon2: null, rumbo: null, texto: "km 1 · La jonquera", inicio: null, fin: new Date(Date.now() + 5 * 3600000).toISOString() },
@@ -78,9 +82,9 @@
   // Ruta de prueba Girona → Narbona: un punto cada ~1,5 km por la AP-7/A9 a 75 km/h
   const RUTA_PRUEBA = (() => { const p = [], n = 90; for (let i = 0; i <= n; i++) { const f = i / n; p.push([+(41.98 + f * 1.2).toFixed(5), +(2.82 + f * 0.18).toFixed(5), +(f * 135).toFixed(1), Math.round(f * 108)]); }
     return { desde: { nombre: "Girona", lat: 41.98, lon: 2.82 }, hasta: { nombre: "Narbona, Francia", lat: 43.18, lon: 3.0 }, km: 135, min: 108, peaje: true, ferry: false,
-      tramos: [{ via: "", km: 4, hacia: "" }, { via: "AP-7", km: 70, hacia: "La Jonquera / França" }, { via: "A9", km: 61, hacia: "Narbonne" }], puntos: p, fina: p.map(x => [x[0], x[1]]), autopista: [[4, 135]],
+      tramos: [{ via: "", km: 4, hacia: "" }, { via: "AP-7", km: 70, hacia: "La Jonquera / França" }, { via: "A9", km: 61, hacia: "Narbonne" }], puntos: p, fina: p.map(x => [x[0], x[1]]), autopista: [[4, 135]], peajes: [[70, 135]],
     alternativas: [{ km: 142, min: 124, peaje: false, ferry: false, tramos: [{ via: "N-II", km: 60, hacia: "La Jonquera" }, { via: "D900", km: 82, hacia: "Narbonne" }],
-      puntos: p.map(x => [x[0], +(x[1] - 0.06).toFixed(5), +(x[2] * 1.05).toFixed(1), Math.round(x[3] * 1.15)]), fina: p.map(x => [x[0], +(x[1] - 0.06).toFixed(5)]), autopista: [] }] }; })();
+      puntos: p.map(x => [x[0], +(x[1] - 0.06).toFixed(5), +(x[2] * 1.05).toFixed(1), Math.round(x[3] * 1.15)]), fina: p.map(x => [x[0], +(x[1] - 0.06).toFixed(5)]), autopista: [], peajes: [] }] }; })();
   // Con localStorage «prueba-sesion» = 1, el panel entra como administrador de prueba
   const SES = (() => { try { return localStorage.getItem("prueba-sesion") === "1"; } catch (_) { return false; } })()
     ? { access_token: "x", user: { id: "u1", email: "prueba@example.com" } } : null;

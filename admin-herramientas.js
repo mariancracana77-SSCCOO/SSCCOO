@@ -6,7 +6,7 @@
 const NOMBRE_TABLA = { comunicados: "el aviso", eventos: "la fecha", convenio_secciones: "el apartado del convenio", actas: "el acta", documentos: "el documento",
   preguntas: "la pregunta frecuente", plantillas: "la plantilla", delegados: "el delegado", enlaces: "el enlace", apartados: "el apartado de la web",
   publicaciones: "la publicación", opciones: "la opción de lista", calc_permisos: "el permiso de la calculadora", calc_categorias: "el precio de horas extra",
-  avisos_recurrentes: "el aviso que se repite", buzon: "el mensaje del buzón", paginas: "el texto", calc_ajustes: "el ajuste de la calculadora", admins: "el administrador", restricciones: "el país de restricciones para camiones", tarifas_conductor: "el importe de «Mis incentivos»" };
+  avisos_recurrentes: "el aviso que se repite", buzon: "el mensaje del buzón", paginas: "el texto", calc_ajustes: "el ajuste de la calculadora", admins: "el administrador", restricciones: "el país de restricciones para camiones", tarifas_conductor: "el importe de «Mis incentivos»", peajes_paises: "el precio de peaje de un país" };
 const VERBO = { crear: "creó", cambiar: "cambió", borrar: "borró" };
 const BOTON_DESHACER = { borrar: "Recuperar", cambiar: "Volver a como estaba", crear: "Deshacer (quitarlo)" };
 const CAMPOS_NOMBRE = { titulo: "Título", contenido: "Texto", categoria: "Categoría", urgente: "Urgente", fijado: "Fijado", adjuntos: "Archivos", fecha: "Fecha", hora: "Hora", hora_fin: "Hora de fin",
@@ -319,6 +319,18 @@ async function pintaImportes() {
   $("lista-tarifas").innerHTML = l.length ? l.map(x => filaOrden("tarifas", x)).join("") : `<div class="panel vacio">${icono("euro")}No hay ningún importe. Pulsa «Añadir concepto».</div>`;
   enlazarItems($("lista-tarifas"));
   if (l.length > 1) hacerOrdenable($("lista-tarifas"), "tarifas");
+}
+
+// ---------- Peajes de camión de «Aparcamientos en mi ruta» (v90) ----------
+async function pintaPeajes() {
+  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Peajes camión</h1><p>Precio aproximado por kilómetro que usa «Aparcamientos en mi ruta» para calcular los peajes de la ruta (camión de 5 ejes, 40 t, Euro 6). En cada país pon qué se paga (solo los tramos de peaje, todas las autopistas o todas las carreteras) y cuántos euros por km. Es orientativo: cada autopista tiene su tarifa.</p></div><button class="btn" data-nuevo="peajes">${icono("mas", "p")}Añadir país</button></div>
+    <div class="lista-adm" id="lista-peajes"><p class="fecha-txt">Cargando…</p></div>`;
+  $("zona").querySelector("[data-nuevo]").onclick = () => abrirEditor("peajes");
+  try { await cargarDatos("peajes"); } catch (e) { $("lista-peajes").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
+  const l = datos.peajes;
+  $("lista-peajes").innerHTML = l.length ? l.map(x => filaOrden("peajes", x)).join("") : `<div class="panel vacio">${icono("euro")}No hay ningún país. Pulsa «Añadir país».</div>`;
+  enlazarItems($("lista-peajes"));
+  if (l.length > 1) hacerOrdenable($("lista-peajes"), "peajes");
 }
 
 // ---------- Buzón anónimo ----------

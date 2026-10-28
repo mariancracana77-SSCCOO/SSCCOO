@@ -258,8 +258,73 @@
     const [lista, oficiales] = await Promise.all([cargaPaises(paisesDe(RUTA.puntos)), cargaOficiales(RUTA)]);
     EN_RUTA = enRuta(juntaOficiales(lista, oficiales), RUTA.puntos, RUTA);
     CORTES = await cargaCortes(RUTA);
+    // Peajes aproximados de todas las rutas (para compararlas), con el país de cada tramo
+    const tabla = await cargaPeajes(), indice = indicePaises(lista);
+    for (const r of RUTAS) r.costes = calculaPeajes(r, indice, tabla);
     estado("");
     pintaRuta();
+  }
+
+  // ---------- Peajes aproximados (lo pidió el padre: «precio aproximado», camión de 5 ejes, 40 t) ----------
+  // Tabla «peajes_paises» (la edita el padre en el panel, «Peajes camión»): por país, qué se paga (solo los tramos de peaje,
+  // todas las autopistas o todas las carreteras) y cuántos € por km. Los km de peaje y de autopista los da la función «ruta».
+  let PEAJES = null;
+  async function cargaPeajes() {
+    if (PEAJES) return PEAJES;
+    try {
+      const { data, error } = await sb.from("peajes_paises").select("pais,nombre,cobra,precio_km,nota,visible").order("orden");
+      if (error) throw error;
+      PEAJES = (data || []).filter(x => x.visible !== false);
+      try { localStorage.setItem("ccoo-peajes", JSON.stringify(PEAJES)); } catch (_) {}
+    } catch (_) { try { PEAJES = JSON.parse(localStorage.getItem("ccoo-peajes") || "[]"); } catch (_) { PEAJES = []; } }
+    return PEAJES;
+  }
+  // País de un punto: si solo cae en la caja de un país, ese; si cae en varias (cerca de una frontera), el del aparcamiento más cercano
+  function indicePaises(lista) {
+    const g = new Map();
+    for (const x of lista) { if (!x.pais) continue; const k = Math.floor(x.lat * 4) + "," + Math.floor(x.lon * 4); if (!g.has(k)) g.set(k, []); g.get(k).push(x); }
+    return g;
+  }
+  function paisDe(la, lo, indice) {
+    const cajas = Object.keys(PAISES).filter(p => { const [a, b, c, d] = PAISES[p]; return la >= a && la <= b && lo >= c && lo <= d; });
+    if (cajas.length === 1) return cajas[0];
+    let mejor = null, dm = 1e9; const ka = Math.floor(la * 4), ko = Math.floor(lo * 4);
+    for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) for (const x of indice.get((ka + i) + "," + (ko + j)) || []) { const d = km(la, lo, x.lat, x.lon); if (d < dm) { dm = d; mejor = x.pais; } }
+    return mejor || cajas[0] || "?";
+  }
+  function calculaPeajes(r, indice, tabla) {
+    const en = (rangos, k) => (rangos || []).some(([a, z]) => k >= a - 0.3 && k <= z + 0.3);
+    const pts = r.puntos, por = new Map();
+    for (let i = 0; i < pts.length - 1; i++) {
+      const d = pts[i + 1][2] - pts[i][2]; if (!(d > 0)) continue;
+      const k = (pts[i][2] + pts[i + 1][2]) / 2, p = paisDe((pts[i][0] + pts[i + 1][0]) / 2, (pts[i][1] + pts[i + 1][1]) / 2, indice);
+      if (!por.has(p)) por.set(p, { km: 0, peaje: 0, autopista: 0 });
+      const o = por.get(p); o.km += d; if (en(r.peajes, k)) o.peaje += d; if (en(r.autopista, k)) o.autopista += d;
+    }
+    let total = 0, faltan = 0;
+    const filas = [...por].map(([pais, o]) => {
+      const t = tabla.find(x => x.pais === pais), precio = Number(t?.precio_km) || 0;
+      const kmPago = !t ? 0 : t.cobra === "peaje" ? o.peaje : t.cobra === "autopista" ? o.autopista : t.cobra === "todo" ? o.km : 0;
+      const sinDato = !t || (t.cobra !== "nada" && !(precio > 0) && kmPago > 0.5);
+      const euros = sinDato ? null : kmPago * precio;
+      if (euros) total += euros; if (sinDato) faltan++;
+      return { pais, nombre: t?.nombre || pais, km: o.km, kmPago, cobra: t?.cobra || "", euros, sinDato, nota: t?.nota || "" };
+    });
+    return { total, faltan, filas, conDatos: r.peajes !== undefined };
+  }
+  const euros = (n) => Math.round(n).toLocaleString("es-ES") + " €";
+  const COBRA_TXT = { peaje: "km de peaje", autopista: "km de autopista", todo: "km (todas las carreteras)", nada: "no se paga por km" };
+  function peajesHTML() {
+    const c = RUTA?.costes; if (!c) return "";
+    if (!c.conDatos) return "";
+    return `<section class="apc-peajes" aria-labelledby="apc-peajes-tit"><h2 id="apc-peajes-tit">Peajes aproximados</h2>
+      <p class="apc-peaje-total"><b>${c.total > 0 ? "≈ " + euros(c.total) : "0 €"}</b><span>camión de 5 ejes, 40 t, Euro 6${c.faltan ? ` · falta el precio de ${c.faltan === 1 ? "1 país" : c.faltan + " países"}` : ""}</span></p>
+      <div class="tabla-scroll"><table class="apc-peajes-tabla"><thead><tr><th scope="col">País</th><th scope="col">Se paga</th><th scope="col">Precio</th></tr></thead><tbody>
+      ${c.filas.map(f => `<tr><th scope="row">${esc(f.nombre)}<small>${Math.round(f.km)} km en total</small></th>
+        <td>${f.cobra === "nada" || !f.cobra ? esc(COBRA_TXT.nada) : `${Math.round(f.kmPago)} ${esc(COBRA_TXT[f.cobra])}`}</td>
+        <td>${f.sinDato ? "Sin precio" : f.euros ? "≈ " + euros(f.euros) : "0 €"}</td></tr>`).join("")}</tbody></table></div>
+      <details class="apc-peajes-notas"><summary>De dónde salen estos precios</summary><ul>${c.filas.filter(f => f.nota).map(f => `<li><b>${esc(f.nombre)}:</b> ${esc(f.nota)}</li>`).join("")}</ul></details>
+      <p class="apc-nota">Es un precio orientativo, no el ticket exacto: cada autopista tiene su tarifa y el total depende de tu camión (ejes, Euro, CO2). No incluye túneles de pago (Fréjus, Mont-Blanc…), ferris ni viñetas.</p></section>`;
   }
 
   // Aparcamientos oficiales (Autobahn GmbH): ponen nombre y plazas a los de OpenStreetMap que estén a ≤ 300 m; los que no están, se añaden
@@ -341,7 +406,7 @@
     return `<section class="apc-rutas" aria-labelledby="apc-rutas-tit"><h2 id="apc-rutas-tit">Elige la ruta</h2>${RUTAS.map((r, i) => `
       <button type="button" class="apc-ruta-op${r === RUTA ? " activa" : ""}" data-ruta="${i}" aria-pressed="${r === RUTA}">
         <b>Ruta ${i + 1}${r.min === mejor ? " · la más rápida" : ` · ${durTxt(r.min - mejor)} más`}</b>
-        <span>${r.km} km · ${durTxt(r.min)}${r.peaje ? " · con peajes" : " · sin peajes"}${r.ferry ? " · con ferry" : ""}</span>
+        <span>${r.km} km · ${durTxt(r.min)}${r.costes?.conDatos ? (r.costes.total > 0 ? ` · peajes ≈ ${euros(r.costes.total)}` : " · sin peajes") : r.peaje ? " · con peajes" : " · sin peajes"}${r.ferry ? " · con ferry" : ""}</span>
         <small>${viasDe(r).map(esc).join(" → ") || "Carreteras locales"}</small></button>`).join("")}</section>`;
   }
 
@@ -351,6 +416,7 @@
     caja.innerHTML = `
       <div class="apc-res"><b>${esc(RUTA.desde.nombre)} → ${esc(RUTA.hasta.nombre)}</b><span>${RUTA.km} km · ${durTxt(RUTA.min)} conduciendo${RUTA.peaje ? " · con peajes" : ""}${RUTA.ferry ? " · con ferry" : ""}</span></div>
       ${rutasHTML()}
+      ${peajesHTML()}
       <p class="apc-camion">Ruta calculada para tu camión: ${esc(AJ.camion.alto)} m de alto, ${esc(AJ.camion.peso)} t${AJ.camion.adr ? ", con ADR" : ""}.</p>
       ${cortesHTML()}
       <section class="apc-todos" aria-labelledby="apc-todos-tit">
