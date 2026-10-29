@@ -2003,3 +2003,21 @@ html.mapa-completo, html.mapa-completo body { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) { .apc-dos-dedos { transition: none; } }
 .apc-mapa.completa .apc-grande-btn { background: #AB1012; color: #fff; border-color: #fff; font-size: 1.1rem; min-height: 52px; padding: 8px 18px; }
 .apc-mapa.completa .leaflet-top { top: env(safe-area-inset-top, 0px); }
+/* v93: comodidad para todos (lo pidió Lorena: hay compañeros mayores). Ninguna letra por debajo de ~13,5 px en el móvil
+   y botones y enlaces sueltos con al menos 44 px para el dedo. */
+.etq, .rot-tipo, .grupo-tablon, .gan-sem-n, .gan-ctrl small, .tablero-cab span { font-size: .875rem; }
+.t-tipo { font-size: .85rem; }
+.ca-bloque small { font-size: .9rem; }
+.gan-tira button { font-size: .875rem; }
+.gan-tira button small { font-size: .85rem; opacity: 1; }
+.gan-fecha small, .gan-fecha .gan-sem-n { font-size: .875rem; }
+.desc-tabs button span { font-size: .9rem; }
+.tit-seccion a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; margin: -6px 0; }
+.pie a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; font-size: .9rem; }
+.pie, #version-web, .pie-largo { font-size: .9rem; }
+.filtro-cal { min-height: 44px; font-size: .9rem; }
+.enlace-btn { min-height: 44px; }
+.mapa-tit, .mapa-grupo li a { min-height: 44px; }
+.mapa-grupo li a { display: inline-flex; align-items: center; }
+.gan-ctrl input[type="checkbox"] { width: 32px; height: 32px; }
+#buzon-acepto { width: 28px; height: 28px; flex: none; }

@@ -660,3 +660,7 @@ label.sin-guardar::after { content: " · sin guardar"; color: var(--rojo-ic); fo
 .plegable-est[open] > summary::before { content: "−"; }
 .plegable-est > summary .titulo-bloque { margin: 0; }
 .plegable-est[open] > summary .fecha-txt { display: none; }
+/* v93: comodidad (lo pidió Lorena): letras del menú de abajo del móvil más grandes y plegables con 44 px para el dedo */
+@media (max-width: 999px) { #nav-admin button { font-size: clamp(.75rem, 3.5vw, .875rem); } }
+.plegable-est > summary { min-height: 44px; align-items: center; }
+.formato-mas summary { display: flex; align-items: center; min-height: 44px; }

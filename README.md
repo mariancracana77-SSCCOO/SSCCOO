@@ -75,6 +75,13 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 93: letra y botones más cómodos en toda la web y el panel
+
+- **Arreglado: en «Mis incentivos» la pestaña Ajustes salía vacía** (sin «Lo que cobras tú» ni el calendario para descargar por días o semanas; lo avisó el padre). Venía de la v89: una variable de Ajustes se llamaba igual que la función nueva de los importes con fecha y daba error al pintar la pestaña.
+- Revisión de comodidad en un móvil pequeño con letra normal y muy grande (lo pidió Lorena: hay compañeros mayores). Ningún texto por debajo de unos 13,5 px: etiquetas de los avisos, actas y documentos, rótulo de «Urgente», cuenta atrás, «Esta semana / Este mes», tira de «Mis incentivos», pestañas de «Mis descansos» y «Mis incentivos», tipos de «Próximas fechas», pie de página.
+- Botones y enlaces sueltos con al menos 44 px para el dedo: «Ver todas», enlaces del pie, filtros del calendario, «Ver todos los documentos», mapa de la web en Buscar; casillas de «Mis incentivos» y del buzón más grandes.
+- Panel: letras del menú de abajo del móvil más grandes (caben en 320 px) y plegables («Visitas y estadísticas», «Más formato») más fáciles de tocar.
+
 ## Versión 92: más fácil de usar (sin deslizar para cambiar de sección y aparcamientos más cómodos)
 
 - **«Aparcamientos en mi ruta» más fácil** (lo pidió Lorena: hay compañeros mayores): al calcular la ruta, el formulario se recoge (botón «Cambiar ruta») y la página baja sola al resultado; «Empezar viaje» sale arriba; botones grandes para saltar a Aparcamientos, Cortes (en rojo si hay alguno), Peajes y Otras rutas; los aparcamientos van primero, luego cortes, peajes y otras rutas; los peajes por país, plegados. Textos más cortos.

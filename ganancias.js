@@ -291,13 +291,13 @@
     caja.innerHTML = `<b>${esc(T("Así queda {mes}", { mes: fMes(m) }))}</b><span>${esc(T("En la nómina"))}: <b>${esc(eur(k.nomina))}</b></span><span>${esc(T("Cobro semanal"))}: <b>${esc(eur(k.semanal))}</b></span><span>${esc(T("Total"))}: <b>${esc(eur(k.total))}</b></span>`;
   }
   function pintaAjustes() {
-    const fm = fijosMes(), vs = variables(), base = fm[0];
-    const valor = (t) => { const p = DATOS.precio[t.id]; if (typeof p === "number") return String(p).replace(".", ","); return t === base && DATOS.salario ? String(DATOS.salario).replace(".", ",") : ""; };
+    const fm = fijosMes(), vs = variables(), sal = fm[0];
+    const valor = (t) => { const p = DATOS.precio[t.id]; if (typeof p === "number") return String(p).replace(".", ","); return t === sal && DATOS.salario ? String(DATOS.salario).replace(".", ",") : ""; };
     const grupos = []; TARIFAS.forEach(t => { let g = grupos.find(x => x.n === t.grupo); if (!g) grupos.push(g = { n: t.grupo, ts: [] }); g.ts.push(t); });
     $("gan-ajustes").innerHTML = `<div class="gan-aj-resumen" id="gan-aj-resumen" aria-live="polite"></div>
       <details class="gan-checks gan-precios" open><summary>${esc(T("Lo que cobras tú"))}</summary>
         <p class="ayuda">${esc(T("Cada persona cobra distinto (antigüedad, horas sindicales…). Pon tu importe donde no te cuadre la tabla; si lo dejas vacío, se usa el de la tabla."))}</p>
-        ${grupos.map(g => `<div class="gan-precios-grupo">${g.n ? `<h4>${esc(TD(g.n))}</h4>` : ""}${g.ts.map(t => `<label class="gan-precio"><span>${esc(TD(t.concepto))}<small>${esc(UNIDAD()[t.unidad])}${t === base ? " · " + esc(T("con antigüedad")) : ""}</small></span>
+        ${grupos.map(g => `<div class="gan-precios-grupo">${g.n ? `<h4>${esc(TD(g.n))}</h4>` : ""}${g.ts.map(t => `<label class="gan-precio"><span>${esc(TD(t.concepto))}<small>${esc(UNIDAD()[t.unidad])}${t === sal ? " · " + esc(T("con antigüedad")) : ""}</small></span>
           <input inputmode="decimal" data-precio="${t.id}" value="${esc(valor(t))}" placeholder="${esc(base(t) ? precio(base(t)) : T("tu precio"))}" aria-label="${esc(TD(t.concepto) + " · " + UNIDAD()[t.unidad])}"></label>`).join("")}</div>`).join("")}
       </details>
       ${fm.length ? `<fieldset class="gan-checks"><legend>${esc(T("Lo que cobro fijo cada mes"))}</legend>${fm.map(t => `<label class="check"><input type="checkbox" data-fijo="${t.id}" ${cobraFijo(t) ? "checked" : ""}><span>${esc(TD(t.concepto))} · ${esc(precio(imp(t)))}</span></label>`).join("")}</fieldset>` : ""}
@@ -307,7 +307,7 @@
     v.querySelectorAll("[data-precio]").forEach(i => i.onchange = () => {
       const id = i.dataset.precio, txt = String(i.value).trim(), n = parseFloat(txt.replace(",", "."));
       if (!txt) delete DATOS.precio[id]; else if (Number.isFinite(n) && n >= 0 && n < 100000) DATOS.precio[id] = Math.round(n * 1e8) / 1e8; else { i.value = valor(TARIFAS.find(t => String(t.id) === id)); return msg(T("Escribe solo el número, por ejemplo 12,50."), true); }
-      if (base && id === String(base.id)) DATOS.salario = ""; // el salario va ya con los demás importes
+      if (sal && id === String(sal.id)) DATOS.salario = ""; // el salario va ya con los demás importes
       guarda(); msg(T("Guardado.")); pintaResumenAj();
       v.querySelectorAll("[data-fijo]").forEach(c => { const t = TARIFAS.find(x => String(x.id) === c.dataset.fijo); c.nextElementSibling.textContent = TD(t.concepto) + " · " + precio(imp(t)); });
     });
