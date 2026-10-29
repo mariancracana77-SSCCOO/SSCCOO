@@ -75,8 +75,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
-## Versión 92: sin deslizar para cambiar de sección
+## Versión 92: más fácil de usar (sin deslizar para cambiar de sección y aparcamientos más cómodos)
 
+- **«Aparcamientos en mi ruta» más fácil** (lo pidió Lorena: hay compañeros mayores): al calcular la ruta, el formulario se recoge (botón «Cambiar ruta») y la página baja sola al resultado; «Empezar viaje» sale arriba; botones grandes para saltar a Aparcamientos, Cortes (en rojo si hay alguno), Peajes y Otras rutas; los aparcamientos van primero, luego cortes, peajes y otras rutas; los peajes por país, plegados. Textos más cortos.
+- **Mapa más cómodo en el móvil**: más bajito; con un dedo se baja por la página y el mapa se mueve con dos dedos (sale un aviso si se intenta con uno); botón **«Pantalla completa»** para manejarlo con un dedo y «Cerrar mapa» (en rojo) para volver.
 - **Se quita el gesto de deslizar a izquierda o derecha para cambiar de sección** (lo pidió el padre: al mover el mapa con el dedo te cambiaba de apartado). Ahora solo se cambia de sección tocando las pestañas de arriba. «Desliza hacia abajo para actualizar» tampoco se activa sobre un mapa.
 
 ## Versión 91: buscar y filtrar aparcamientos, «Dónde estoy» y mapa sin ruta

@@ -231,6 +231,7 @@
       // La principal y hasta 2 alternativas (lo pidió el padre: «como cualquier navegador»)
       RUTAS = [data, ...(data.alternativas || []).map(a => ({ ...a, desde: data.desde, hasta: data.hasta, camion: data.camion }))];
       await eligeRuta(0);
+      $("apc-ruta").scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (e) { estado(e.message || String(e), true); }
     finally { $("apc-buscar").disabled = false; }
   }
@@ -317,12 +318,12 @@
   function peajesHTML() {
     const c = RUTA?.costes; if (!c) return "";
     if (!c.conDatos) return "";
-    return `<section class="apc-peajes" aria-labelledby="apc-peajes-tit"><h2 id="apc-peajes-tit">Peajes aproximados</h2>
+    return `<section class="apc-peajes apc-sec" id="apc-sec-peajes" aria-labelledby="apc-peajes-tit"><h2 id="apc-peajes-tit">Peajes aproximados</h2>
       <p class="apc-peaje-total"><b>${c.total > 0 ? "≈ " + euros(c.total) : "0 €"}</b><span>camión de 5 ejes, 40 t, Euro 6${c.faltan ? ` · falta el precio de ${c.faltan === 1 ? "1 país" : c.faltan + " países"}` : ""}</span></p>
-      <div class="tabla-scroll"><table class="apc-peajes-tabla"><thead><tr><th scope="col">País</th><th scope="col">Se paga</th><th scope="col">Precio</th></tr></thead><tbody>
+      <details class="apc-peajes-paises"><summary>Ver por países</summary><div class="tabla-scroll"><table class="apc-peajes-tabla"><thead><tr><th scope="col">País</th><th scope="col">Se paga</th><th scope="col">Precio</th></tr></thead><tbody>
       ${c.filas.map(f => `<tr><th scope="row">${esc(f.nombre)}<small>${Math.round(f.km)} km en total</small></th>
         <td>${f.cobra === "nada" || !f.cobra ? esc(COBRA_TXT.nada) : `${Math.round(f.kmPago)} ${esc(COBRA_TXT[f.cobra])}`}</td>
-        <td>${f.sinDato ? "Sin precio" : f.euros ? "≈ " + euros(f.euros) : "0 €"}</td></tr>`).join("")}</tbody></table></div>
+        <td>${f.sinDato ? "Sin precio" : f.euros ? "≈ " + euros(f.euros) : "0 €"}</td></tr>`).join("")}</tbody></table></div></details>
       <details class="apc-peajes-notas"><summary>De dónde salen estos precios</summary><ul>${c.filas.filter(f => f.nota).map(f => `<li><b>${esc(f.nombre)}:</b> ${esc(f.nota)}</li>`).join("")}</ul></details>
       <p class="apc-nota">Es un precio orientativo, no el ticket exacto: cada autopista tiene su tarifa y el total depende de tu camión (ejes, Euro, CO2). No incluye túneles de pago (Fréjus, Mont-Blanc…), ferris ni viñetas.</p></section>`;
   }
@@ -391,9 +392,9 @@
   }
   function cortesHTML() {
     const nota = `<p class="apc-nota">Datos oficiales de la DGT, el Servei Català de Trànsit y las autopistas de Alemania, renovados cada 15 minutos. De Francia, Italia y otros países todavía no.</p>`;
-    if (CORTES == null) return `<section class="apc-cortes-sec"><h2>Cortes y avisos en tu ruta</h2><p class="msg err">No se han podido consultar los cortes. Comprueba que tienes internet.</p></section>`;
+    if (CORTES == null) return `<section class="apc-cortes-sec apc-sec" id="apc-sec-cortes"><h2>Cortes y avisos en tu ruta</h2><p class="msg err">No se han podido consultar los cortes. Comprueba que tienes internet.</p></section>`;
     const graves = CORTES.filter(x => GRAVE.includes(x.tipo)), otros = CORTES.filter(x => !GRAVE.includes(x.tipo));
-    return `<section class="apc-cortes-sec" aria-labelledby="apc-cortes-tit"><h2 id="apc-cortes-tit">Cortes y avisos en tu ruta</h2>
+    return `<section class="apc-cortes-sec apc-sec" id="apc-sec-cortes" aria-labelledby="apc-cortes-tit"><h2 id="apc-cortes-tit">Cortes y avisos en tu ruta</h2>
       ${graves.length ? `<ul class="apc-lista apc-cortes">${graves.map(x => corteHTML(x, x.kmRuta)).join("")}</ul>` : `<p class="apc-sin-cortes">Ahora no hay carreteras cortadas ni accidentes en tu ruta.</p>`}
       ${otros.length ? `<details class="panel apc-cortes-mas"><summary>Carriles cortados, obras y retenciones (${otros.length})</summary><ul class="apc-lista apc-cortes">${otros.map(x => corteHTML(x, x.kmRuta)).join("")}</ul></details>` : ""}
       ${nota}</section>`;
@@ -403,35 +404,48 @@
   function rutasHTML() {
     if (RUTAS.length < 2) return "";
     const mejor = Math.min(...RUTAS.map(r => r.min));
-    return `<section class="apc-rutas" aria-labelledby="apc-rutas-tit"><h2 id="apc-rutas-tit">Elige la ruta</h2>${RUTAS.map((r, i) => `
+    return `<section class="apc-rutas apc-sec" id="apc-sec-rutas" aria-labelledby="apc-rutas-tit"><h2 id="apc-rutas-tit">Otras rutas</h2><p class="apc-nota">Toca una para verla. La marcada es la que estás viendo.</p>${RUTAS.map((r, i) => `
       <button type="button" class="apc-ruta-op${r === RUTA ? " activa" : ""}" data-ruta="${i}" aria-pressed="${r === RUTA}">
         <b>Ruta ${i + 1}${r.min === mejor ? " · la más rápida" : ` · ${durTxt(r.min - mejor)} más`}</b>
         <span>${r.km} km · ${durTxt(r.min)}${r.costes?.conDatos ? (r.costes.total > 0 ? ` · peajes ≈ ${euros(r.costes.total)}` : " · sin peajes") : r.peaje ? " · con peajes" : " · sin peajes"}${r.ferry ? " · con ferry" : ""}</span>
         <small>${viasDe(r).map(esc).join(" → ") || "Carreteras locales"}</small></button>`).join("")}</section>`;
   }
 
+  // v92 (lo pidió Lorena: «que sea todo fácil», hay compañeros mayores): lo importante arriba. Resumen y «Empezar viaje»,
+  // botones grandes para saltar a cada parte, y en este orden: aparcamientos, cortes, peajes y otras rutas.
+  // Al calcular, el formulario se recoge («Cambiar ruta» lo vuelve a abrir) y la página baja sola al resultado.
   function pintaRuta() {
     const caja = $("apc-ruta");
+    $("apc-preparar").classList.toggle("con-ruta", !!RUTA);
     if (!RUTA) { caja.innerHTML = ""; return; }
+    const graves = (CORTES || []).filter(x => GRAVE.includes(x.tipo)).length, c = RUTA.costes;
+    const salto = (id, txt, cls = "") => `<button type="button" class="apc-salto${cls}" data-salto="${id}">${txt}</button>`;
     caja.innerHTML = `
-      <div class="apc-res"><b>${esc(RUTA.desde.nombre)} → ${esc(RUTA.hasta.nombre)}</b><span>${RUTA.km} km · ${durTxt(RUTA.min)} conduciendo${RUTA.peaje ? " · con peajes" : ""}${RUTA.ferry ? " · con ferry" : ""}</span></div>
-      ${rutasHTML()}
-      ${peajesHTML()}
-      <p class="apc-camion">Ruta calculada para tu camión: ${esc(AJ.camion.alto)} m de alto, ${esc(AJ.camion.peso)} t${AJ.camion.adr ? ", con ADR" : ""}.</p>
-      ${cortesHTML()}
-      <section class="apc-todos" aria-labelledby="apc-todos-tit">
+      <div class="apc-res"><b>${esc(RUTA.desde.nombre)} → ${esc(RUTA.hasta.nombre)}</b><span>${RUTA.km} km · ${durTxt(RUTA.min)} conduciendo${RUTA.ferry ? " · con ferry" : ""}</span>
+        <button type="button" class="apc-cambiar" id="apc-cambiar">Cambiar ruta</button></div>
+      <button type="button" class="btn apc-grande" id="apc-empezar">${icono("lugar")}Empezar viaje</button>
+      <p class="apc-nota">Con «Empezar viaje» te enseño los aparcamientos que tienes por delante mientras conduces.</p>
+      <nav class="apc-saltos" aria-label="Ir a una parte">
+        ${salto("apc-sec-aparc", `Aparcamientos <b>${EN_RUTA.length}</b>`)}
+        ${CORTES == null ? "" : salto("apc-sec-cortes", graves ? `Cortes <b>${graves}</b>` : "Cortes: ninguno", graves ? " alerta" : "")}
+        ${c?.conDatos ? salto("apc-sec-peajes", c.total > 0 ? `Peajes <b>≈ ${euros(c.total)}</b>` : "Peajes: 0 €") : ""}
+        ${RUTAS.length > 1 ? salto("apc-sec-rutas", `Otras rutas <b>${RUTAS.length - 1}</b>`) : ""}
+      </nav>
+      <section class="apc-todos apc-sec" id="apc-sec-aparc" aria-labelledby="apc-todos-tit">
         <h2 id="apc-todos-tit">Aparcamientos en tu ruta</h2>
         <label class="apc-salida">Salgo a las <input type="time" id="apc-salida" value="${esc(SALIDA)}"> <small>(vacío = ahora)</small></label>
         ${filtrosHTML()}
         <div id="apc-todos"></div>
       </section>
+      ${cortesHTML()}
+      ${peajesHTML()}
+      ${rutasHTML()}
+      <p class="apc-camion">Ruta calculada para tu camión: ${esc(AJ.camion.alto)} m de alto, ${esc(AJ.camion.peso)} t${AJ.camion.adr ? ", con ADR" : ""}.</p>
       <details class="panel apc-tramos"><summary>Carreteras de la ruta (${RUTA.tramos.length})</summary>
-        <ol class="apc-linea">${RUTA.tramos.map(t => `<li><b>${t.via ? `<span class="apc-via">${esc(t.via)}</span>` : "Carreteras locales"}</b>${t.hacia ? ` hacia ${esc(t.hacia)}` : ""}<small>${t.km} km</small></li>`).join("")}</ol></details>
-      <div class="apc-acciones">
-        <button type="button" class="btn apc-grande" id="apc-empezar">${icono("lugar")}Empezar viaje</button>
-      </div>
-      <p class="apc-nota">Con «Empezar viaje» te enseño los que tienes por delante mientras conduces, con tu navegador de siempre.</p>`;
+        <ol class="apc-linea">${RUTA.tramos.map(t => `<li><b>${t.via ? `<span class="apc-via">${esc(t.via)}</span>` : "Carreteras locales"}</b>${t.hacia ? ` hacia ${esc(t.hacia)}` : ""}<small>${t.km} km</small></li>`).join("")}</ol></details>`;
     $("apc-empezar").onclick = empiezaViaje;
+    $("apc-cambiar").onclick = () => { $("apc-preparar").classList.remove("con-ruta"); $("apc-form").scrollIntoView({ behavior: "smooth", block: "start" }); $("apc-hasta").focus({ preventScroll: true }); };
+    caja.querySelectorAll("[data-salto]").forEach(b => b.onclick = () => { const d = $(b.dataset.salto); if (!d) return; if (d.tagName === "DETAILS") d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" }); });
     caja.querySelectorAll("[data-ruta]").forEach(b => b.onclick = () => eligeRuta(+b.dataset.ruta));
     $("apc-salida").onchange = () => { SALIDA = $("apc-salida").value; pintaTodos(); };
     enlazaFiltros();
@@ -498,13 +512,12 @@
     // Sin horario: no se sabe. Así no se confunde «no sé» con «abierto».
     const cerrados = lista.filter(y => y.e === "no"), abiertos = lista.filter(y => y.e === "si" || y.e === "siempre"), sinHorario = lista.filter(y => y.e === "nose");
     const ver = { cerrados, abiertos, nose: sinHorario, todos: lista }[FILTRO] || cerrados;
-    const pl = (n, uno, varios) => n + " " + (n === 1 ? uno : varios);
     const cifra = (k, cls, n, txt) => `<button type="button" class="apc-cifra ${cls}${FILTRO === k ? " activa" : ""}" data-filtro="${k}" aria-pressed="${FILTRO === k}"><b>${n}</b>${txt}</button>`;
     caja.innerHTML = `<div class="apc-resumen" role="group" aria-label="Qué aparcamientos ver">
         ${cifra("cerrados", "cerr", cerrados.length, cerrados.length === 1 ? "cerrado" : "cerrados")}${cifra("abiertos", "abie", abiertos.length, abiertos.length === 1 ? "abierto" : "abiertos")}${cifra("nose", "nose", sinHorario.length, "sin horario")}</div>
       <button type="button" class="btn sec apc-ver-todos${FILTRO === "todos" ? " activa" : ""}" data-filtro="todos" aria-pressed="${FILTRO === "todos"}">Ver todos (${lista.length}), del primero al último</button>
       ${vistaHTML()}
-      <p class="apc-cuenta">De los ${pl(lista.length, "aparcamiento", "aparcamientos")} de la ruta, a la hora a la que pasas.${EN_RUTA.contrario ? ` Solo salen los de tu sentido de marcha: ${pl(EN_RUTA.contrario, "área", "áreas")} del otro lado de la autopista no ${EN_RUTA.contrario === 1 ? "sale" : "salen"}.` : ""}${sinHorario.length ? " «Sin horario»: nadie ha apuntado su horario, así que no se sabe si estará abierto." : ""}</p>`
+      <p class="apc-cuenta">Abierto o cerrado a la hora a la que pasas. Solo salen los de tu lado de la autopista.${sinHorario.length ? " «Sin horario»: no se sabe si estará abierto." : ""}</p>`
       + (AJ.vista === "mapa" ? `${buscaSitioHTML("apc-mapa")}<div id="apc-mapa" class="apc-mapa" role="region" aria-label="Mapa de la ruta con los aparcamientos"></div>`
         : ver.length ? listaPorTramos(ver)
         : nF && !lista.length ? `<p class="desc-vacio">Ningún aparcamiento cumple los filtros. <button type="button" class="btn-txt" data-quitar-f>Quitar filtros</button></p>`
@@ -542,7 +555,9 @@
     let m = MAPAS[id];
     if (!m || m.div !== caja) {
       try { m?.mapa.remove(); } catch (_) {}
-      const mapa = L.map(caja, { zoomControl: true });
+      // En el móvil (v92): con un dedo se baja por la página y el mapa se mueve con dos dedos (o en pantalla completa con uno)
+      const tactil = L.Browser.mobile || "ontouchstart" in window;
+      const mapa = L.map(caja, { zoomControl: true, dragging: !tactil });
       mapa.attributionControl.setPrefix(false);
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(mapa);
       m = MAPAS[id] = { div: caja, mapa, capa: L.layerGroup().addTo(mapa), zona: L.layerGroup().addTo(mapa), ruta: null, rutaDe: null, yo: null, encuadrado: false };
@@ -554,6 +569,31 @@
         return b;
       } });
       new Yo().addTo(mapa);
+      // «Pantalla completa»: el mapa ocupa toda la pantalla y se maneja con un dedo; «Cerrar mapa» vuelve
+      const Grande = L.Control.extend({ options: { position: "topright" }, onAdd() {
+        const b = L.DomUtil.create("button", "apc-yo-btn apc-grande-btn"); b.type = "button";
+        const pinta = () => { const g = caja.classList.contains("completa"); b.innerHTML = g ? "<span>Cerrar mapa</span>" : "<span>Pantalla completa</span>"; b.setAttribute("aria-pressed", g); };
+        pinta();
+        L.DomEvent.disableClickPropagation(b);
+        L.DomEvent.on(b, "click", () => {
+          const g = !caja.classList.contains("completa");
+          caja.classList.toggle("completa", g); document.documentElement.classList.toggle("mapa-completo", g);
+          if (tactil) g ? mapa.dragging.enable() : mapa.dragging.disable();
+          pinta(); setTimeout(() => mapa.invalidateSize(), 80);
+          if (!g) caja.scrollIntoView({ block: "center" });
+        });
+        caja._cierraGrande = () => { if (caja.classList.contains("completa")) b.click(); };
+        return b;
+      } });
+      new Grande().addTo(mapa);
+      if (tactil) {
+        const aviso = L.DomUtil.create("div", "apc-dos-dedos", caja); aviso.textContent = "Usa dos dedos para mover el mapa, o toca «Pantalla completa»";
+        let t = null;
+        caja.addEventListener("touchmove", (e) => {
+          if (e.touches.length !== 1 || caja.classList.contains("completa")) return;
+          aviso.classList.add("ver"); clearTimeout(t); t = setTimeout(() => aviso.classList.remove("ver"), 1600);
+        }, { passive: true });
+      }
     }
     const conRuta = opc.ruta !== false && RUTA, linea = (r) => r.fina || r.puntos.map(q => [q[0], q[1]]);
     if (conRuta && m.rutaDe !== RUTA) m.encuadrado = false;
@@ -654,6 +694,9 @@
     if (!c.querySelector(".apc-busca-sitio")) { c.insertAdjacentHTML("afterbegin", buscaSitioHTML("apc-mapa-libre")); enlazaBuscaSitio(c); }
     pintaMapa("apc-mapa-libre", [], { ruta: false });
   }
+
+  addEventListener("keydown", (e) => { if (e.key === "Escape") document.querySelector(".apc-mapa.completa")?._cierraGrande?.(); });
+  addEventListener("hashchange", () => document.querySelector(".apc-mapa.completa")?._cierraGrande?.());
 
   function ponVista(v) {
     AJ.vista = v; guarda();

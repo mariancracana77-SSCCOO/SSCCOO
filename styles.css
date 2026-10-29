@@ -1983,3 +1983,23 @@ b.gan-fecha { cursor: default; }
 .apc-mapa-libre .apc-nota { margin: 0; }
 #apc-libre { display: grid; gap: 8px; }
 #apc-libre[hidden] { display: none; }
+/* v92: comodidad (lo pidió Lorena: hay compañeros mayores; todo fácil). Aparcamientos: formulario recogido tras calcular,
+   «Empezar viaje» arriba, botones grandes para saltar a cada parte; mapa más bajito, con dos dedos y «Pantalla completa». */
+#apc-preparar.con-ruta > .intro-vista, #apc-preparar.con-ruta > #apc-form, #apc-preparar.con-ruta > #apc-sin-destino, #apc-preparar.con-ruta > .apc-mapa-libre { display: none; }
+.apc-res { align-items: center; }
+.apc-cambiar { margin-left: auto; min-height: 44px; padding: 6px 14px; border-radius: 999px; border: 2px solid #fff; background: transparent; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.apc-saltos { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5em, 1fr)); gap: 8px; margin: 12px 0 4px; }
+.apc-salto { min-height: 56px; padding: 8px 12px; border-radius: 12px; border: 2px solid var(--linea); background: var(--tarjeta); color: var(--tinta); font: inherit; font-weight: 700; font-size: 1.05rem; cursor: pointer; text-align: center; }
+.apc-salto b { display: block; font-family: var(--cond); font-size: 1.35rem; }
+.apc-salto.alerta { border-color: var(--rojo); background: var(--rojo); color: #fff; }
+.apc-sec { scroll-margin-top: 150px; }
+.apc-peajes-paises summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
+.apc-mapa { height: min(55vh, 460px); min-height: 300px; position: relative; }
+.apc-mapa.completa { position: fixed; inset: 0; z-index: 2000; height: 100vh; height: 100dvh; min-height: 0; border-radius: 0; border: 0; }
+html.mapa-completo, html.mapa-completo body { overflow: hidden; }
+.apc-grande-btn { margin-top: 8px !important; }
+.apc-dos-dedos { position: absolute; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 24px; text-align: center; background: rgba(21,25,30,.6); color: #fff; font-weight: 700; font-size: 1.15rem; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.apc-dos-dedos.ver { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .apc-dos-dedos { transition: none; } }
+.apc-mapa.completa .apc-grande-btn { background: #AB1012; color: #fff; border-color: #fff; font-size: 1.1rem; min-height: 52px; padding: 8px 18px; }
+.apc-mapa.completa .leaflet-top { top: env(safe-area-inset-top, 0px); }
