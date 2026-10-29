@@ -963,7 +963,7 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden && Da
   let y0 = null, x0 = 0, dy = 0, ocupado = false;
   const quitar = () => { ind.classList.remove("ver", "listo", "cargando"); ind.style.removeProperty("--tirar"); };
   addEventListener("touchstart", (e) => {
-    y0 = (scrollY <= 0 && e.touches.length === 1 && !ocupado && !document.querySelector(".modal-velo")) ? e.touches[0].clientY : null;
+    y0 = (scrollY <= 0 && e.touches.length === 1 && !ocupado && !document.querySelector(".modal-velo") && !e.target.closest?.(".leaflet-container")) ? e.touches[0].clientY : null;
     x0 = e.touches[0].clientX; dy = 0;
   }, { passive: true });
   addEventListener("touchmove", (e) => {
@@ -991,7 +991,8 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden && Da
   const seDesliza = (el) => { for (; el && el !== document.body; el = el.parentElement) { const cs = getComputedStyle(el); if (/(auto|scroll)/.test(cs.overflowX) && el.scrollWidth > el.clientWidth + 2) return true; } return false; };
   addEventListener("touchstart", (e) => {
     const t = e.target;
-    x0 = (e.touches.length === 1 && !document.querySelector(".modal-velo") && !t.closest("input, textarea, select, .barra-acciones, .bienvenida") && !seDesliza(t)) ? e.touches[0].clientX : null;
+    // v92: tampoco en un mapa (al moverlo con el dedo cambiaba de pestaña y paraba el viaje)
+    x0 = (e.touches.length === 1 && !document.querySelector(".modal-velo") && !t.closest("input, textarea, select, .barra-acciones, .bienvenida, .leaflet-container") && !seDesliza(t)) ? e.touches[0].clientX : null;
     y0 = e.touches[0].clientY; t0 = Date.now();
   }, { passive: true });
   addEventListener("touchend", (e) => {
