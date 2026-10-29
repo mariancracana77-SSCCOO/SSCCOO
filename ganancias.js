@@ -6,7 +6,7 @@
 // Lo apuntado se guarda SOLO en este móvil (localStorage «ccoo-ganancias»): no va a ningún servidor.
 // v83: cada conductor puede poner su propio importe de cualquier concepto (DATOS.precio, «Lo que cobras tú»): cada uno cobra
 // distinto (antigüedad, horas sindicales…). Los conceptos que quita en Ajustes no cuentan. La nómina del mes suma el salario,
-// los fijos y lo que se paga «Mensual» (festivo, nocturnidad, ADR; las horas sindicales son semanales desde la v88). Descargar en PDF por semanas o días
+// los fijos y lo que se paga «Mensual» (nocturnidad, ADR; festivo y las horas sindicales son semanales desde la v88). Descargar en PDF por semanas o días
 // elegidos en un calendario.
 (function () {
   const CLAVE = "ccoo-ganancias", CACHE_TARIFAS = "ccoo-tarifas";
@@ -40,9 +40,10 @@
   const GUIA = () => [
     [T("Cada día"), T("En «Día», marca lo que has hecho: dieta completa o partes (dormir, desayuno, comida, cena), noche fuera, cargas, kilómetros… El total sale arriba y se guarda solo.")],
     [T("Otro día"), T("Cambia de día con las flechas o tocando la fecha. «Copiar el día anterior» rellena lo mismo que el último día apuntado.")],
-    [T("Cobro semanal y nómina"), T("Lo que la empresa paga por semanas (dietas, suplementos, cargas, kilómetros, horas sindicales) sale como «Cobro semanal». Lo que va con el salario a fin de mes (festivo, nocturnidad, ADR) sale como «En la nómina». Es la columna «Periodicidad pago» de la tabla de la empresa.")],
+    [T("Cobro semanal y nómina"), T("Lo que la empresa paga por semanas (dietas, suplementos, cargas, kilómetros, horas sindicales) sale como «Cobro semanal». Lo que va con el salario a fin de mes (nocturnidad, ADR) sale como «En la nómina». Es la columna «Periodicidad pago» de la tabla de la empresa.")],
     [T("La semana y el mes"), T("Arriba del todo ves siempre lo de hoy, lo de esta semana y lo del mes: toca una cifra para ir a esa vista. En «Semana» va cada día con la semana del año (la 44, la 45…) y puedes ir a una escribiendo su número. En «Mes», el total con el salario y lo que se cobra con la nómina, semana por semana.")],
     [T("Lo que cobras tú"), T("En «Ajustes», pon tu salario y lo que cobras tú de cada cosa (por ejemplo, el precio de tus horas sindicales). Si lo dejas vacío, se usa el de la tabla.")],
+    [T("La hoja de trabajo"), T("En «Semana», abajo, haz una foto a la hoja de papel de esa semana (o elígela de la galería). Se guarda en este móvil y la puedes bajar en PDF A4 para imprimirla. Cada semana tiene la suya.")],
     [T("Descargar y enviar"), T("En «Semana» y en «Mes» hay un botón para descargar el PDF y otro para enviarlo por WhatsApp a un delegado si algo no cuadra. En «Ajustes», elige en el calendario las semanas o los días que quieras.")],
   ];
   function pintaFijos() {
@@ -147,7 +148,9 @@
     const fijos = fijosMes().filter(cobraFijo).map(t => ({ t, imp: imp(t, m + "-01") })), totalFijo = fijos.reduce((s, x) => s + x.imp, 0);
     return { r, fijos, totalFijo, nomina: totalFijo + r.mensual, semanal: r.semanal, total: totalFijo + r.total };
   }
-  const cantidadTxt = (t, n) => CASILLA.includes(t.unidad) ? (n === 1 ? "" : "× " + n) : t.unidad === "vez" ? "× " + n : n.toLocaleString(LOC, { maximumFractionDigits: 2 }) + " " + QUE()[t.unidad];
+  const hm = (n) => ({ h: Math.floor(n / 60), m: Math.round((n - Math.floor(n / 60) * 60) * 100) / 100 });
+  const horasMin = (n) => { const { h, m } = hm(n); return h && m ? T("{h} h {m} min", { h, m: m.toLocaleString(LOC) }) : h ? T("{h} h", { h }) : T("{m} min", { m: m.toLocaleString(LOC) }); };
+  const cantidadTxt = (t, n) => CASILLA.includes(t.unidad) ? (n === 1 ? "" : "× " + n) : t.unidad === "vez" ? "× " + n : t.unidad === "minuto" ? horasMin(n) : n.toLocaleString(LOC, { maximumFractionDigits: 2 }) + " " + QUE()[t.unidad];
   const desglose = (r) => r.por.length ? `<ul class="gan-desglose">${r.por.map(p => `<li><span>${esc(TD(p.t.concepto))}${p.t.grupo && !p.t.concepto.includes(p.t.grupo) ? ` <small>· ${esc(TD(p.t.grupo))}</small>` : ""}${p.n && cantidadTxt(p.t, p.n) ? ` <small>${esc(cantidadTxt(p.t, p.n))}</small>` : ""}${p.tope ? ` <small class="gan-tope">${esc(p.n ? T("con tope al mes") : T("no suma: ya estaba el máximo del mes"))}</small>` : ""}</span><b>${esc(eur(p.imp))}</b></li>`).join("")}</ul>` : "";
   const reparto = (r) => r.semanal && r.mensual ? `<p class="gan-reparto"><span>${esc(T("Cobro semanal"))}: <b>${esc(eur(r.semanal))}</b></span><span>${esc(T("En la nómina de fin de mes"))}: <b>${esc(eur(r.mensual))}</b></span></p>` : "";
 
@@ -190,6 +193,8 @@
       const n = num(dia[t.id]), id = "gan-c" + t.id;
       if (CASILLA.includes(t.unidad)) return `<input type="checkbox" id="${id}" data-c="${t.id}" ${n ? "checked" : ""}>`;
       if (t.unidad === "vez") return `<span class="gan-paso"><button type="button" class="btn-ic" data-menos="${t.id}" aria-label="${esc(T("Quitar una"))}">−</button><b id="${id}" aria-live="polite">${n}</b><button type="button" class="btn-ic" data-mas="${t.id}" aria-label="${esc(T("Añadir una"))}">+</button></span>`;
+      if (t.unidad === "minuto") { const { h, m } = hm(n), val = (x) => x ? esc(String(x).replace(".", ",")) : ""; // v94: horas arriba y minutos abajo (se guardan como minutos)
+        return `<span class="gan-hm"><label><input id="${id}" class="gan-hm-i" data-hm="${t.id}" data-parte="h" inputmode="numeric" value="${val(h)}" placeholder="0" aria-label="${esc(T("horas"))}"><small>${esc(T("horas"))}</small></label><label><input class="gan-hm-i" data-hm="${t.id}" data-parte="m" inputmode="decimal" value="${val(m)}" placeholder="0" aria-label="${esc(T("minutos"))}"><small>${esc(T("minutos"))}</small></label></span>`; }
       return `<input id="${id}" class="gan-num" data-c="${t.id}" inputmode="decimal" value="${n ? esc(String(n).replace(".", ",")) : ""}" placeholder="0" aria-label="${esc(QUE()[t.unidad])}"><small>${esc(QUE()[t.unidad])}</small>`;
     };
     const fila = (t) => { const l = linea(t), nota = [t.nota && TD(t.nota),
@@ -220,9 +225,89 @@
     $("gan-fecha").onchange = () => { if (/^\d{4}-\d\d-\d\d$/.test($("gan-fecha").value)) { DATOS.dia = $("gan-fecha").value; guarda(); pinta(); } };
     v.querySelectorAll("input[type=checkbox][data-c]").forEach(i => i.onchange = () => { pon(i.dataset.c, i.checked ? 1 : 0); pinta(); });
     v.querySelectorAll("[data-mas],[data-menos]").forEach(b => b.onclick = () => { const id = b.dataset.mas || b.dataset.menos; pon(id, Math.max(0, num(dia[id]) + (b.dataset.mas ? 1 : -1))); pinta(); $(`gan-c${id}`)?.parentElement.querySelector(b.dataset.mas ? "[data-mas]" : "[data-menos]")?.focus(); });
+    v.querySelectorAll(".gan-hm-i").forEach(i => i.onchange = () => { const q = (p) => v.querySelector(`[data-hm="${i.dataset.hm}"][data-parte="${p}"]`).value; pon(i.dataset.hm, Math.min(Math.floor(num(q("h"))) * 60 + num(q("m")), 100000)); pinta(); });
     v.querySelectorAll(".gan-num").forEach(i => i.onchange = () => { pon(i.dataset.c, Math.min(num(i.value), 100000)); pinta(); });
     if ($("gan-copiar")) $("gan-copiar").onclick = () => { DATOS.dias[f] = { ...DATOS.dias[anterior] }; guarda(); pinta(); };
     if ($("gan-vaciar")) $("gan-vaciar").onclick = () => { if (!confirm(T("¿Vaciar lo apuntado este día?"))) return; delete DATOS.dias[f]; guarda(); pinta(); };
+  }
+
+  // ---------- Hoja de trabajo de la semana (v94): fotos guardadas SOLO en este móvil (IndexedDB) y pasadas a PDF A4 ----------
+  const HOJAS_MAX = 6;
+  const hojaBD = () => new Promise((ok, no) => { try { const r = indexedDB.open("ccoo-ganancias-hojas", 1); r.onupgradeneeded = () => r.result.createObjectStore("hojas"); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); } catch (e) { no(e); } });
+  const hojaOp = async (modo, f) => { const db = await hojaBD(); return new Promise((ok, no) => { const t = db.transaction("hojas", modo), r = f(t.objectStore("hojas")); t.oncomplete = () => { db.close(); ok(r.result); }; t.onerror = t.onabort = () => { db.close(); no(t.error); }; }); };
+  const hojaClave = (w) => w.a + "-" + String(w.n).padStart(2, "0");
+  const hojaLee = (w) => hojaOp("readonly", st => st.get(hojaClave(w))).then(x => Array.isArray(x) ? x : []).catch(() => []);
+  const hojaGuarda = (w, paginas) => hojaOp("readwrite", st => paginas.length ? st.put(paginas, hojaClave(w)) : st.delete(hojaClave(w)));
+  // La foto se endereza (EXIF), se reduce a 2000 px y pasa a JPEG: pesa poco y cabe bien en una hoja A4
+  async function fotoAJpeg(file) {
+    const bm = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const k = Math.min(1, 2000 / Math.max(bm.width, bm.height)), c = document.createElement("canvas");
+    c.width = Math.round(bm.width * k); c.height = Math.round(bm.height * k);
+    const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(bm, 0, 0, c.width, c.height); bm.close && bm.close();
+    const blob = await new Promise(res => c.toBlob(res, "image/jpeg", .85));
+    if (!blob) throw 0;
+    return { w: c.width, h: c.height, blob };
+  }
+  // PDF con una foto por página (A4, vertical u horizontal según la foto), hecho a mano como los demás
+  async function pdfHoja(paginas, titulo) {
+    const enc = (t) => Uint8Array.from(t, ch => ch.charCodeAt(0) & 255), trozos = [], pos = [];
+    let largo = 0; const pon = (x) => { const u = typeof x === "string" ? enc(x) : x; trozos.push(u); largo += u.length; };
+    const obj = (n, cabeza, datos) => { pos[n] = largo; pon(`${n} 0 obj\n${cabeza}\n`); if (datos) { pon("stream\n"); pon(datos); pon("\nendstream\n"); } pon("endobj\n"); };
+    pon("%PDF-1.4\n");
+    const kids = paginas.map((_, i) => 4 + i * 3);
+    obj(1, "<< /Type /Catalog /Pages 2 0 R >>");
+    obj(2, `<< /Type /Pages /Count ${paginas.length} /Kids [${kids.map(k => k + " 0 R").join(" ")}] >>`);
+    obj(3, "<< /Title (" + titulo.replace(/[^\x20-\x7e]/g, "").replace(/[()\\]/g, "") + ") >>");
+    for (let i = 0; i < paginas.length; i++) {
+      const p = paginas[i], n = 4 + i * 3, ap = p.w > p.h, W = ap ? 842 : 595, H = ap ? 595 : 842, M = 18;
+      const k = Math.min((W - 2 * M) / p.w, (H - 2 * M) / p.h), w = p.w * k, h = p.h * k, x = (W - w) / 2, y = (H - h) / 2;
+      const cont = `q ${w.toFixed(2)} 0 0 ${h.toFixed(2)} ${x.toFixed(2)} ${y.toFixed(2)} cm /Im0 Do Q`;
+      obj(n, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /Im0 ${n + 2} 0 R >> >> /Contents ${n + 1} 0 R >>`);
+      obj(n + 1, `<< /Length ${cont.length} >>`, enc(cont));
+      const bytes = new Uint8Array(await p.blob.arrayBuffer());
+      obj(n + 2, `<< /Type /XObject /Subtype /Image /Width ${p.w} /Height ${p.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bytes.length} >>`, bytes);
+    }
+    const ini = largo, total = 4 + paginas.length * 3;
+    pon(`xref\n0 ${total}\n0000000000 65535 f \n`);
+    for (let n = 1; n < total; n++) pon(String(pos[n]).padStart(10, "0") + " 00000 n \n");
+    pon(`trailer\n<< /Size ${total} /Root 1 0 R /Info 3 0 R >>\nstartxref\n${ini}\n%%EOF\n`);
+    return new Blob(trozos, { type: "application/pdf" });
+  }
+  async function hojaPDF(w, accion) {
+    const paginas = await hojaLee(w); if (!paginas.length) return;
+    const nombre = `hoja-de-trabajo-semana-${w.n}-${w.a}.pdf`, pdf = await pdfHoja(paginas, "Hoja de trabajo semana " + w.n + " de " + w.a);
+    if (accion === "enviar") { try { await navigator.share({ files: [new File([pdf], nombre, { type: "application/pdf" })], title: nombre }); return; } catch (e) { if (e && e.name === "AbortError") return; } }
+    const a = document.createElement("a"); a.href = URL.createObjectURL(pdf); a.download = nombre;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }
+  async function pintaHoja(w) {
+    const caja = $("gan-hoja"); if (!caja) return;
+    const pag = await hojaLee(w); if (!$("gan-hoja") || $("gan-hoja") !== caja) return;
+    const urls = pag.map(p => URL.createObjectURL(p.blob)), llena = pag.length >= HOJAS_MAX;
+    caja.innerHTML = `<h3 class="gan-sub">${esc(T("Hoja de trabajo de la semana {n}", { n: w.n }))}</h3>
+      <p class="ayuda">${esc(T("Haz una foto a la hoja de la semana: se guarda aquí y la puedes bajar en PDF para imprimirla. Se queda solo en este móvil."))}</p>
+      ${pag.length ? `<ul class="gan-hoja-lista">${pag.map((p, i) => `<li><img src="${urls[i]}" alt="${esc(T("Página {n} de la hoja", { n: i + 1 }))}" loading="lazy"><button type="button" class="btn sec" data-hoja-quita="${i}">${esc(T("Quitar"))}</button></li>`).join("")}</ul>` : ""}
+      <div class="botones">
+        <label class="btn ${pag.length ? "sec" : ""} ${llena ? "desact" : ""}" for="gan-hoja-cam">${icono("camara", "p")}${esc(pag.length ? T("Otra foto") : T("Hacer foto a la hoja"))}</label>
+        <label class="btn sec ${llena ? "desact" : ""}" for="gan-hoja-gal">${icono("subir", "p")}${esc(T("Elegir de la galería"))}</label>
+        <input type="file" id="gan-hoja-cam" accept="image/*" capture="environment" hidden><input type="file" id="gan-hoja-gal" accept="image/*" multiple hidden>
+      </div>
+      ${pag.length ? `<div class="botones"><button class="btn" id="gan-hoja-pdf">${icono("descargar", "p")}${esc(T("Descargar la hoja en PDF"))}</button>${puedeCompartir() ? `<button class="btn sec" id="gan-hoja-env">${icono("compartir", "p")}${esc(T("Enviar"))}</button>` : ""}</div>` : ""}
+      <p class="msg" id="gan-hoja-msg" role="status"></p>`;
+    const m = (t, mal) => { const e = $("gan-hoja-msg"); if (e) { e.textContent = t; e.className = "msg " + (mal ? "err" : "ok"); } };
+    const anade = async (ficheros) => {
+      const lista = [...ficheros].filter(f => /^image\//.test(f.type)).slice(0, HOJAS_MAX - pag.length);
+      if (!lista.length) return m(llena ? T("Ya hay {n} páginas: quita alguna para añadir otra.", { n: HOJAS_MAX }) : T("Elige una foto."), true);
+      m(T("Guardando…"));
+      try { const nuevas = []; for (const f of lista) nuevas.push(await fotoAJpeg(f)); await hojaGuarda(w, [...pag, ...nuevas]); if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); }
+      catch (_) { return m(T("No he podido guardar la foto. Prueba con otra."), true); }
+      urls.forEach(u => URL.revokeObjectURL(u)); pintaHoja(w);
+    };
+    $("gan-hoja-cam").onchange = (e) => { const f = [...e.target.files]; e.target.value = ""; anade(f); };
+    $("gan-hoja-gal").onchange = (e) => { const f = [...e.target.files]; e.target.value = ""; anade(f); };
+    caja.querySelectorAll("[data-hoja-quita]").forEach(b => b.onclick = async () => { if (!confirm(T("¿Quitar esta página de la hoja?"))) return; await hojaGuarda(w, pag.filter((_, i) => i !== +b.dataset.hojaQuita)).catch(() => {}); urls.forEach(u => URL.revokeObjectURL(u)); pintaHoja(w); });
+    if ($("gan-hoja-pdf")) $("gan-hoja-pdf").onclick = () => hojaPDF(w, "descarga").catch(() => m(T("No he podido hacer el PDF."), true));
+    if ($("gan-hoja-env")) $("gan-hoja-env").onclick = () => hojaPDF(w, "enviar").catch(() => m(T("No he podido hacer el PDF."), true));
   }
 
   function pintaSemana(c) {
@@ -239,9 +324,10 @@
         <button class="btn sec">${esc(T("Ir"))}</button>${l !== esta ? `<button type="button" class="btn sec" data-sem="hoy">${esc(T("Esta semana"))}</button>` : ""}</form></details>
       ${pasada.apuntados ? `<p class="gan-compara">${esc(T("La semana pasada (semana {n}): {total}", { n: wp.n, total: eur(pasada.total) }))}${r.apuntados ? ` · <b class="${r.total >= pasada.total ? "mas" : "menos"}">${r.total >= pasada.total ? "+" : "−"}${esc(eur(Math.abs(r.total - pasada.total)))}</b>` : ""}</p>` : ""}
       ${r.por.length ? `<h3 class="gan-sub">${esc(T("Por conceptos"))}</h3>${desglose(r)}` : `<p class="desc-vacio">${esc(T("Esta semana todavía no has apuntado ningún día. Toca un día para apuntar."))}</p>`}
-      <p class="ayuda">${esc(T("Cobro semanal: dietas, suplementos, cargas, kilómetros y horas sindicales (te los pagan por semanas). En la nómina: festivo, nocturnidad y ADR (van con el salario a fin de mes, en «Mes»)."))}</p>
+      <p class="ayuda">${esc(T("Cobro semanal: dietas, suplementos, cargas, kilómetros, festivos y horas sindicales (te los pagan por semanas). En la nómina: nocturnidad y ADR (van con el salario a fin de mes, en «Mes»)."))}</p>
+      <div class="gan-hoja" id="gan-hoja"></div>
       <div class="botones"><button class="btn sec" id="gan-pdf-semana">${icono("descargar", "p")}${esc(T("Descargar esta semana (PDF)"))}</button>${botonEnviar("gan-env-semana")}</div>`;
-    const v = $("gan-semana");
+    const v = $("gan-semana"); pintaHoja(w);
     $("gan-pdf-semana").onclick = () => descarga(dias, nombreSem(l));
     if ($("gan-env-semana")) $("gan-env-semana").onclick = () => comparte(dias, nombreSem(l));
     v.querySelectorAll("[data-sem]").forEach(b => b.onclick = () => { DATOS.semana = b.dataset.sem === "hoy" ? esta : suma(l, +b.dataset.sem); guarda(); pinta(); });
@@ -263,8 +349,8 @@
         <button type="button" class="btn-ic" data-mes="1" aria-label="${esc(T("Mes siguiente"))}">${icono("der")}</button></div>
       <div class="gan-total"><span>${esc(T("Total del mes (bruto)"))}</span><b>${esc(eur(k.total))}</b></div>
       <div class="desc-cifras gan-cifras">
-        <div><b>${esc(eur(k.nomina))}</b><span>${esc(T("En la nómina de fin de mes: salario y lo que se paga con la nómina (festivos, nocturnidad, ADR)"))}</span></div>
-        <div><b>${esc(eur(k.semanal))}</b><span>${esc(T("Cobro semanal: dietas, suplementos, cargas, kilómetros y horas sindicales de {n} días apuntados (te los pagan por semanas)", { n: r.apuntados }))}</span></div>
+        <div><b>${esc(eur(k.nomina))}</b><span>${esc(T("En la nómina de fin de mes: salario y lo que se paga con la nómina (nocturnidad, ADR)"))}</span></div>
+        <div><b>${esc(eur(k.semanal))}</b><span>${esc(T("Cobro semanal: dietas, suplementos, cargas, kilómetros, festivos y horas sindicales de {n} días apuntados (te los pagan por semanas)", { n: r.apuntados }))}</span></div>
       </div>
       ${(() => { const ult = `${m}-${String(new Date(a, mm, 0).getDate()).padStart(2, "0")}`, sems = []; for (let l = lunesDe(m + "-01"); l <= ult; l = suma(l, 7)) sems.push(l);
         const filas = sems.map(l => { const todos = diasDe(l), ds = todos.filter(f => f.slice(0, 7) === m), x = resumen(c, ds), w = semDe(l); return { l, ds, x, w, parte: ds.length < 7 }; }).filter(f => f.x.apuntados);
@@ -395,7 +481,7 @@
         const k = cuentasMes(c, op.mes);
         L.push(["Cuentas del mes", 15, true], ["Cobro semanal del mes: " + eur(k.semanal), 11, true, 6, C_SEM]);
         k.fijos.forEach(x => L.push([x.t.concepto + ": " + eur(x.imp), 9, false, 14, C_NOM]));
-        L.push(["Lo que va con la nómina de estos días (festivos, nocturnidad, ADR…): " + eur(k.r.mensual), 9, false, 14, C_NOM], ["En la nómina de fin de mes: " + eur(k.nomina), 11, true, 6, C_NOM], ["Total del mes (bruto): " + eur(k.total), 15, true, 6, C_TOT], [""]);
+        L.push(["Lo que va con la nómina de estos días (nocturnidad, ADR…): " + eur(k.r.mensual), 9, false, 14, C_NOM], ["En la nómina de fin de mes: " + eur(k.nomina), 11, true, 6, C_NOM], ["Total del mes (bruto): " + eur(k.total), 15, true, 6, C_TOT], [""]);
       }
       if (semanas.length > 1 && !op.mes) { const r = resumen(c, dias); L.push(["Cobro semanal de estos días: " + eur(r.semanal), 11, true, 0, C_SEM], ["En la nómina: " + eur(r.mensual), 11, true, 0, C_NOM], ["Total de estos días: " + eur(r.total), 15, true, 0, C_TOT], [""]); }
       L.push([(op.mes ? "" : "Sin el salario ni los fijos del mes. ") + "Orientativo y en bruto (antes de impuestos y descuentos): manda tu nómina.", 8], ["Para volver a cargar estos días en la app: Zona Conductores > Mis incentivos > Ajustes > Recuperar una copia, y elige este PDF.", 8]);
