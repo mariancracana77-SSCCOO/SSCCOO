@@ -37,19 +37,24 @@
     ayudacopia: T("Guarda una copia de vez en cuando (y antes de cambiar de móvil): si se borran los datos del navegador, se pierde lo apuntado."),
     oficial: T("Orientativo y en bruto (antes de impuestos y descuentos). Los importes los pone la sección sindical según la tabla de la empresa. Manda tu nómina: si no cuadra, pregunta a un delegado."),
   });
+  // v95: cada paso lleva su botón «Ir» (pestaña y sitio al que lleva)
   const GUIA = () => [
-    [T("Cada día"), T("En «Día», marca lo que has hecho: dieta completa o partes (dormir, desayuno, comida, cena), noche fuera, cargas, kilómetros… El total sale arriba y se guarda solo.")],
-    [T("Otro día"), T("Cambia de día con las flechas o tocando la fecha. «Copiar el día anterior» rellena lo mismo que el último día apuntado.")],
-    [T("Cobro semanal y nómina"), T("Lo que la empresa paga por semanas (dietas, suplementos, cargas, kilómetros, festivos, ADR por minuto, horas sindicales) sale como «Cobro semanal». Lo que va con el salario a fin de mes (nocturnidad, ADR fijo) sale como «En la nómina». Es la columna «Periodicidad pago» de la tabla de la empresa.")],
-    [T("La semana y el mes"), T("Arriba del todo ves siempre lo de hoy, lo de esta semana y lo del mes: toca una cifra para ir a esa vista. En «Semana» va cada día con la semana del año (la 44, la 45…) y puedes ir a una escribiendo su número. En «Mes», el total con el salario y lo que se cobra con la nómina, semana por semana.")],
-    [T("Lo que cobras tú"), T("En «Ajustes», pon tu salario y lo que cobras tú de cada cosa (por ejemplo, el precio de tus horas sindicales). Si lo dejas vacío, se usa el de la tabla.")],
-    [T("La hoja de trabajo"), T("En «Semana», abajo, haz una foto a la hoja de papel de esa semana (o elígela de la galería). Se guarda en este móvil y la puedes bajar en PDF A4 para imprimirla. Cada semana tiene la suya.")],
-    [T("Descargar y enviar"), T("En «Semana» y en «Mes» hay un botón para descargar el PDF y otro para enviarlo por WhatsApp a un delegado si algo no cuadra. En «Ajustes», elige en el calendario las semanas o los días que quieras.")],
+    [T("Cada día"), T("En «Día», marca lo que has hecho: dieta completa o partes (dormir, desayuno, comida, cena), noche fuera, cargas, kilómetros… El total sale arriba y se guarda solo."), { tab: "dia", sel: "#gan-dia .gan-total" }],
+    [T("Otro día"), T("Cambia de día con las flechas o tocando la fecha. «Copiar el día anterior» rellena lo mismo que el último día apuntado."), { tab: "dia", sel: "#gan-dia .gan-nav" }],
+    [T("El ADR"), T("En «Día», el ADR se apunta en horas y minutos: las horas arriba y los minutos abajo. Ves el precio por hora y por minuto, y va en el cobro semanal."), { tab: "dia", sel: () => document.querySelector("#gan-dia [data-hm]")?.closest(".gan-fila") }],
+    [T("Cobro semanal y nómina"), T("Lo que la empresa paga por semanas (dietas, suplementos, cargas, kilómetros, festivos, ADR por minuto, horas sindicales) sale como «Cobro semanal». Lo que va con el salario a fin de mes (nocturnidad, ADR fijo) sale como «En la nómina». Es la columna «Periodicidad pago» de la tabla de la empresa."), { tab: "mes", sel: "#gan-mes .gan-cifras" }],
+    [T("La semana y el mes"), T("Arriba del todo ves siempre lo de hoy, lo de esta semana y lo del mes: toca una cifra para ir a esa vista. En «Semana» va cada día con la semana del año (la 44, la 45…) y puedes ir a una escribiendo su número. En «Mes», el total con el salario y lo que se cobra con la nómina, semana por semana."), { sel: "#gan-tira" }],
+    [T("La hoja de trabajo"), T("En «Semana», abajo, haz una foto a la hoja de papel de esa semana (o elígela de la galería). Se guarda en este móvil con esa semana y la puedes bajar en PDF A4 para imprimirla. Cada semana tiene la suya."), { tab: "semana", sel: "#gan-hoja .botones" }],
+    [T("Lo que cobras tú"), T("En «Ajustes», pon tu salario y lo que cobras tú de cada cosa (por ejemplo, el precio de tus horas sindicales). Si lo dejas vacío, se usa el de la tabla."), { tab: "ajustes", sel: "#gan-ajustes .gan-precios" }],
+    [T("Descargar y enviar"), T("En «Semana» y en «Mes» hay un botón para descargar el PDF y otro para enviarlo por WhatsApp a un delegado si algo no cuadra. En «Ajustes», elige en el calendario las semanas o los días que quieras."), { tab: "ajustes", sel: "#gan-descarga" }],
+    [T("Copia de seguridad"), T("Lo apuntado se guarda solo en este móvil. En «Ajustes», «Copia de todo (PDF)» lo guarda y «Recuperar una copia» lo vuelve a poner (por ejemplo, en un móvil nuevo). Las fotos de la hoja no van en la copia: descárgalas en PDF."), { tab: "ajustes", sel: "#gan-copia" }],
   ];
   function pintaFijos() {
     const f = FIJOS(), v = $("v-ganancias"), idi = miIdioma();
     v.querySelectorAll("[data-gt]").forEach(el => { const t = f[el.dataset.gt]; if (t) el.textContent = t; });
-    $("gan-guia-cuerpo").innerHTML = `<ol class="desc-guia-pasos">${GUIA().map(([t, d]) => `<li><b>${esc(t)}</b><span>${esc(d)}</span></li>`).join("")}</ol>`;
+    const pasos = GUIA(), guia = $("gan-guia-cuerpo");
+    guia.innerHTML = guiaPasosHTML(pasos, T);
+    guia.querySelectorAll("[data-guia-ir]").forEach(b => b.onclick = () => { const d = pasos[+b.dataset.guiaIr][2]; if (d.tab) { DATOS.tab = d.tab; guarda(); pinta(); } irAGuia(d.sel); });
     v.setAttribute("dir", idi === "ar" ? "rtl" : "ltr"); v.setAttribute("lang", idi || "es");
     const sel = $("gan-idioma");
     if (!sel.options.length) sel.innerHTML = `<option value="">Español</option>` + Object.entries(IDIOMAS).map(([k, n]) => `<option value="${k}">${esc(n)}</option>`).join("");

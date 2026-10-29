@@ -816,8 +816,26 @@
     } catch (_) { estado("No se ha podido enviar el aviso. Comprueba que tienes internet.", true); }
   }
 
+  // v95: guía rápida con un botón «Ir» en cada paso (si aún no hay ruta, lleva al formulario)
+  const visible = (...sels) => () => sels.map(x => document.querySelector(x)).find(e => e && e.offsetParent);
+  const GUIA_APC = [
+    ["Calcular la ruta", "Escribe adónde vas (y desde dónde, si no es donde estás) y pulsa «Buscar ruta para camión». Pon las medidas de tu camión para que la ruta le sirva.", visible("#apc-hasta", "#apc-cambiar")],
+    ["Pueblos con el mismo nombre", "Si hay varios sitios que se llaman igual, pon el código postal o elige el bueno de la lista que te sale.", visible("#apc-hasta-cp", "#apc-cambiar")],
+    ["Los aparcamientos de la ruta", "Con la ruta hecha ves todos los aparcamientos que tienes por delante, con las plazas para camiones y si estarán abiertos. Con los filtros buscas por pueblo, duchas, vigilado…", visible("#apc-sec-aparc", "#apc-buscar")],
+    ["Lista o mapa", "Cambia entre la lista y el mapa. En el móvil, el mapa se mueve con dos dedos; con «Pantalla completa» se maneja con uno.", visible("[data-apc-vista]", "#apc-abre-mapa")],
+    ["Cortes y peajes", "Debajo salen los cortes oficiales de la carretera (los graves, en rojo) y el precio aproximado de los peajes.", visible("#apc-sec-cortes", "#apc-buscar")],
+    ["Durante el viaje", "Pulsa «Empezar viaje»: la pantalla no se apaga y te enseño los aparcamientos que tienes delante. Si quieres, te los digo en voz alta.", visible("#apc-empezar", "#apc-voz", "#apc-buscar")],
+    ["Llevarme aquí", "En cada aparcamiento, «Llevarme aquí» lo abre en el navegador que uses en el móvil (iGO, Google Maps…).", visible(".apc-llevar", "#apc-buscar")],
+    ["Mapa sin ruta", "Para mirar una zona sin calcular ruta, abre el mapa y toca «Dónde estoy» o busca un sitio.", visible("#apc-abre-mapa", "#apc-cambiar")],
+  ];
+  function pintaGuiaApc() {
+    const caja = $("apc-guia-cuerpo"); if (!caja) return;
+    caja.innerHTML = guiaPasosHTML(GUIA_APC, (t, v) => t.replace(/\{(\w+)\}/g, (_, k) => v[k]));
+    caja.querySelectorAll("[data-guia-ir]").forEach(b => b.onclick = () => irAGuia(GUIA_APC[+b.dataset.guiaIr][2]));
+  }
   function prepara() {
     pintaFormulario();
+    pintaGuiaApc();
     // Durante el viaje, los avisos de los compañeros se refrescan cada 2 minutos
     $("apc-buscar").onclick = buscaRuta;
     $("apc-abre-mapa").onclick = abreMapaLibre;

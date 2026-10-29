@@ -2032,3 +2032,10 @@ html.mapa-completo, html.mapa-completo body { overflow: hidden; }
 .gan-hoja-lista li { display: flex; flex-direction: column; gap: 6px; }
 .gan-hoja-lista img { width: 100%; max-height: 220px; object-fit: contain; background: #fff; border: 1px solid var(--linea); border-radius: 8px; }
 .gan-hoja .btn.desact { opacity: .5; pointer-events: none; }
+
+/* v95: botón «Ir» en las guías rápidas y resaltado del sitio al que lleva */
+.desc-guia-pasos .guia-ir { justify-self: start; display: inline-flex; align-items: center; gap: 4px; min-height: 40px; margin-top: 4px; padding: 4px 14px; border: 2px solid var(--rojo); border-radius: 999px; background: transparent; color: var(--rojo-ic); font: inherit; font-size: .9rem; font-weight: 700; cursor: pointer; }
+.desc-guia-pasos .guia-ir:hover, .desc-guia-pasos .guia-ir:focus-visible { background: var(--rojo); color: #fff; }
+.guia-destaca { outline: 3px solid var(--rojo); outline-offset: 4px; border-radius: 8px; animation: guia-latido 1.2s ease-in-out 2; }
+@keyframes guia-latido { 50% { outline-offset: 8px; } }
+@media (prefers-reduced-motion: reduce) { .guia-destaca { animation: none; } }
