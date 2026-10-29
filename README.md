@@ -75,6 +75,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 92: sin deslizar para cambiar de sección
+
+- **Se quita el gesto de deslizar a izquierda o derecha para cambiar de sección** (lo pidió el padre: al mover el mapa con el dedo te cambiaba de apartado). Ahora solo se cambia de sección tocando las pestañas de arriba. «Desliza hacia abajo para actualizar» tampoco se activa sobre un mapa.
+
 ## Versión 91: buscar y filtrar aparcamientos, «Dónde estoy» y mapa sin ruta
 
 - **Buscar y filtrar la lista** de aparcamientos de la ruta (lo pidió Lorena): por texto (nombre, pueblo o carretera, perdona faltas) y, en «Más filtros», vigilado, duchas, aseos, solo áreas de autopista, plazas para camión (con plazas, 10, 20 o 50 o más) y tramo «del km … al km …». Se combinan con cerrados / abiertos / sin horario, valen también para el mapa y dice «Salen N de M» con «Quitar filtros».

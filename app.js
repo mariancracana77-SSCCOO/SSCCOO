@@ -983,27 +983,8 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden && Da
   });
 })();
 
-// ---------- Deslizar a los lados para pasar de pestaña (móvil) ----------
-// No salta si el dedo empieza en algo que ya se desliza a los lados (pestañas, filtros, galerías…), en un campo de texto o con una ventana abierta.
-(function () {
-  if (!("ontouchstart" in window)) return;
-  let x0 = null, y0 = 0, t0 = 0;
-  const seDesliza = (el) => { for (; el && el !== document.body; el = el.parentElement) { const cs = getComputedStyle(el); if (/(auto|scroll)/.test(cs.overflowX) && el.scrollWidth > el.clientWidth + 2) return true; } return false; };
-  addEventListener("touchstart", (e) => {
-    const t = e.target;
-    // v92: tampoco en un mapa (al moverlo con el dedo cambiaba de pestaña y paraba el viaje)
-    x0 = (e.touches.length === 1 && !document.querySelector(".modal-velo") && !t.closest("input, textarea, select, .barra-acciones, .bienvenida, .leaflet-container") && !seDesliza(t)) ? e.touches[0].clientX : null;
-    y0 = e.touches[0].clientY; t0 = Date.now();
-  }, { passive: true });
-  addEventListener("touchend", (e) => {
-    if (x0 == null) return;
-    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
-    if (Math.abs(dx) < 80 || Math.abs(dx) < Math.abs(dy) * 2 || Date.now() - t0 > 700) return;
-    const orden = ordenVistas(), i = orden.indexOf(irA.antes);
-    const sig = orden[i + (dx < 0 ? 1 : -1)];
-    if (i >= 0 && sig) location.hash = sig;
-  }, { passive: true });
-})();
+// Deslizar a los lados para pasar de pestaña: QUITADO en la v92 (lo pidió el padre: al mover el mapa con el dedo
+// cambiaba de sección). Se cambia de sección solo tocando las pestañas de arriba. No volver a ponerlo.
 
 // ---------- Volver arriba (en listas largas): botón con un aro que marca lo que se ha bajado ----------
 (function () {
