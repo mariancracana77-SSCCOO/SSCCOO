@@ -2021,3 +2021,14 @@ html.mapa-completo, html.mapa-completo body { overflow: hidden; }
 .mapa-grupo li a { display: inline-flex; align-items: center; }
 .gan-ctrl input[type="checkbox"] { width: 32px; height: 32px; }
 #buzon-acepto { width: 28px; height: 28px; flex: none; }
+
+/* v94: horas y minutos en los conceptos por minuto (ADR) */
+.gan-hm { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.gan-hm label { display: flex; align-items: center; gap: 6px; }
+.gan-hm .gan-hm-i { width: 4.5em; min-height: 44px; padding: 6px 8px; text-align: right; font: inherit; font-weight: 700; }
+.gan-hm small { min-width: 4.2em; font-size: .875rem; }
+.gan-hoja { margin-block: 14px; }
+.gan-hoja-lista { list-style: none; margin: 10px 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.gan-hoja-lista li { display: flex; flex-direction: column; gap: 6px; }
+.gan-hoja-lista img { width: 100%; max-height: 220px; object-fit: contain; background: #fff; border: 1px solid var(--linea); border-radius: 8px; }
+.gan-hoja .btn.desact { opacity: .5; pointer-events: none; }

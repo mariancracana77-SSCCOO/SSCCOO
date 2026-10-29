@@ -75,6 +75,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 94: ADR en horas y minutos, hoja de trabajo de cada semana y festivo en el cobro semanal
+
+- **«Mis incentivos»: los conceptos por minuto (ADR) se apuntan en horas y minutos** (lo pidió el padre): dos casillas, horas arriba y minutos abajo. La fila enseña el precio por hora y por minuto (0,49 € la hora · 0,0081 € el minuto) y el cálculo es el mismo: 2 h 30 min = 1,22 €. En el resumen y el PDF sale «2 h 30 min».
+- **Hoja de trabajo de cada semana**: en «Semana», abajo, se hace una foto a la hoja de papel (o se elige de la galería) y queda guardada en esa semana (hasta 6 páginas). «Descargar la hoja en PDF» la pasa a PDF en A4 (una foto por página, vertical u horizontal) para imprimirla, y «Enviar» la comparte por WhatsApp. Las fotos se quedan solo en el móvil (IndexedDB `ccoo-ganancias-hojas`, no van a ningún servidor ni a la «Copia de todo»).
+- **El festivo (50 €) pasa al cobro semanal** (datos en Supabase, tarifa id 19) y los textos de ayuda ya no lo ponen en la nómina.
+
 ## Versión 93: letra y botones más cómodos en toda la web y el panel
 
 - **Arreglado: en «Mis incentivos» la pestaña Ajustes salía vacía** (sin «Lo que cobras tú» ni el calendario para descargar por días o semanas; lo avisó el padre). Venía de la v89: una variable de Ajustes se llamaba igual que la función nueva de los importes con fecha y daba error al pintar la pestaña.
