@@ -161,9 +161,9 @@
   const zonaTxt = (x) => /GB-CG-MA/i.test(x) ? "gb" : /internacional/i.test(x) ? "int" : /\bnacional/i.test(x) ? "nac" : "";
   // La zona sale del grupo («Dieta fraccionada internacional») o, en las dietas de un grupo sin zona («Dieta completa»), del nombre
   const zona = (t) => zonaTxt(t.grupo) || (/dieta/i.test(t.grupo + " " + t.concepto) ? zonaTxt(t.concepto) : "");
-  const ZONA_TXT = () => ({ nac: T("Nacional"), int: T("Internacional"), gb: T("GB-CG-MA") });
+  const ZONA_TXT = () => ({ nac: T("Nacional"), int: T("Internacional"), gb: T("Reino Unido, Suiza y Marruecos") });
   // Etiqueta en cada fila, salvo si el grupo ya pinta la zona y el nombre también la dice («Dieta completa GB-CG-MA»)
-  const zonaHTML = (t) => { const z = zona(t); return z && !(zonaTxt(t.grupo) && zonaTxt(t.concepto) === z) ? `<span class="gan-zona z-${z}">${esc(ZONA_TXT()[z])}</span>` : ""; };
+  const zonaHTML = (t) => { const z = zona(t); return z && !(zonaTxt(t.grupo) && zonaTxt(t.concepto) === z) ? `<span class="gan-zona z-${z}">${z === "gb" ? `<span class="sr-only">${esc(ZONA_TXT()[z])}</span>` : esc(ZONA_TXT()[z])}</span>` : ""; }; // GB-CG-MA: solo las tres banderas (el texto no cabe)
   const nombreC = (t) => { const z = zona(t); return t.concepto + (z && zonaTxt(t.concepto) !== z ? " (" + { nac: "nacional", int: "internacional", gb: "GB-CG-MA" }[z] + ")" : ""); };
   const desglose = (r) => r.por.length ? `<ul class="gan-desglose">${r.por.map(p => `<li><span>${esc(TD(p.t.concepto))}${p.t.grupo && !p.t.concepto.includes(p.t.grupo) ? ` <small>· ${esc(TD(p.t.grupo))}</small>` : ""}${p.n && cantidadTxt(p.t, p.n) ? ` <small>${esc(cantidadTxt(p.t, p.n))}</small>` : ""}${p.tope ? ` <small class="gan-tope">${esc(p.n ? T("con tope al mes") : T("no suma: ya estaba el máximo del mes"))}</small>` : ""}</span><b>${esc(eur(p.imp))}</b></li>`).join("")}</ul>` : "";
   const reparto = (r) => r.semanal && r.mensual ? `<p class="gan-reparto"><span>${esc(T("Cobro semanal"))}: <b>${esc(eur(r.semanal))}</b></span><span>${esc(T("En la nómina de fin de mes"))}: <b>${esc(eur(r.mensual))}</b></span></p>` : "";

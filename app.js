@@ -939,7 +939,7 @@ async function verNovedades() {
   irAHash(x.t === "actas" ? "actas" : "documentos");
 }
 // Cambios que no se ven en la web (p. ej. el servidor marca «notificado» tras mandar el aviso): no hace falta recargar
-const SIN_EFECTO = ["notificado", "notificar", "actualizado", "ultima_publicacion"];
+const SIN_EFECTO = ["notificado", "notificar", "actualizado", "ultima_publicacion", "destacado_avisado"];
 const LISTA_DE = { comunicados: "avisos", actas: "actas", documentos: "docs", eventos: "eventos", publicaciones: "publicaciones" };
 function soloInterno(t, pl) {
   if (pl.eventType !== "UPDATE" || !pl.new || pl.new.id == null) return false;

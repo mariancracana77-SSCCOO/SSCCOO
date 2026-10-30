@@ -312,7 +312,10 @@ $("ed-guardar").onclick = async () => {
   const s = SECCIONES[ED.k], btn = $("ed-guardar"), fila = leerFormulario();
   // v102: «Destacar en Inicio el día» se guarda como destacar_desde/hasta (ese día entero) y lo pone urgente
   if ("destacar_dia" in fila) { const d = fila.destacar_dia; delete fila.destacar_dia;
-    Object.assign(fila, d ? { destacar_desde: new Date(d + "T00:00:00").toISOString(), destacar_hasta: new Date(d + "T23:59:59").toISOString(), urgente: true } : { destacar_desde: null, destacar_hasta: null }); }
+    Object.assign(fila, d ? { destacar_desde: new Date(d + "T00:00:00").toISOString(), destacar_hasta: new Date(d + "T23:59:59").toISOString(), urgente: true } : { destacar_desde: null, destacar_hasta: null });
+    // Ese día se avisa a los móviles («DESTACADO HOY», tarea de la función notificar). Si cambia el día, se vuelve a avisar;
+    // si es un aviso nuevo para hoy que ya avisa al publicarse, no se manda dos veces.
+    if (d && (!ED.orig || isoLocal(new Date(ED.orig.destacar_desde || 0)) !== d)) fila.destacado_avisado = !ED.orig && d === isoLocal(new Date()) && fila.notificar !== false; }
   for (const c of camposPlanos(s)) {
     if (c.req && c.t !== "archivo" && c.t !== "archivos" && !fila[c.k]) return marcaFalta("f-" + c.k, "Falta: " + c.l.toLowerCase() + ".");
   }
@@ -397,7 +400,7 @@ $("ed-guardar").onclick = async () => {
   }
 };
 // Con dos administradores (o el panel abierto en dos sitios), comprueba que nadie ha cambiado esto mientras se editaba
-const NO_CUENTA = ["notificado", "actualizado", "ultima_publicacion", "orden"];
+const NO_CUENTA = ["notificado", "actualizado", "ultima_publicacion", "orden", "destacado_avisado"];
 async function sinCambiosDeOtro(s) {
   const { data: ahora, error } = await sb.from(s.tabla).select("*").eq("id", ED.orig.id).maybeSingle();
   if (error) return true; // si no se puede comprobar, se guarda como siempre
