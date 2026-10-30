@@ -2090,3 +2090,5 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 
 /* v99: kilómetros del mes y de cada semana en «Mes» (lo pidió el padre) */
 .gan-semanas small.gan-km { display: block; color: var(--tinta); font-weight: 700; }
+.gan-km-arriba { margin-top: 10px; }
+.gan-dias button small.gan-km-dia { display: block; margin-top: 2px; color: var(--tinta); font-weight: 700; font-size: .875rem; }
