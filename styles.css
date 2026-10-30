@@ -2039,3 +2039,24 @@ html.mapa-completo, html.mapa-completo body { overflow: hidden; }
 .guia-destaca { outline: 3px solid var(--rojo); outline-offset: 4px; border-radius: 8px; animation: guia-latido 1.2s ease-in-out 2; }
 @keyframes guia-latido { 50% { outline-offset: 8px; } }
 @media (prefers-reduced-motion: reduce) { .guia-destaca { animation: none; } }
+
+/* v96: nacional, internacional y GB-CG-MA bien separados en «Mis incentivos» (lo pidió el padre) */
+.gan-zona { display: inline-block; align-self: start; margin-bottom: 3px; padding: 1px 8px; border-radius: 4px; font-size: .85rem; font-weight: 700; line-height: 1.4; white-space: nowrap; }
+.gan-zona.z-nac { border: 2px solid var(--rojo); color: var(--rojo-ic); }
+.gan-zona.z-int { background: var(--rojo); color: #fff; border: 2px solid var(--rojo); }
+.gan-zona.z-gb { background: #15191E; color: #fff; border: 2px solid #15191E; }
+html[data-theme="dark"] .gan-zona.z-gb { border-color: #fff; }
+@media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .gan-zona.z-gb { border-color: #fff; } }
+.gan-grupo.z-nac, .gan-grupo.z-int, .gan-grupo.z-gb { border: 2px solid var(--linea); border-radius: 10px; padding: 0 12px 6px; margin-block: 14px; overflow: hidden; }
+.gan-grupo.z-nac h3, .gan-grupo.z-int h3, .gan-grupo.z-gb h3 { margin: 0 -12px 6px; padding: 8px 12px; font-size: 1.25rem; }
+.gan-grupo.z-nac { border-color: var(--rojo); }
+.gan-grupo.z-nac h3 { background: transparent; border-bottom: 2px solid var(--rojo); }
+.gan-grupo.z-int { border-color: var(--rojo); }
+.gan-grupo.z-int h3 { background: var(--rojo); color: #fff; }
+.gan-grupo.z-gb { border-color: #15191E; }
+.gan-grupo.z-gb h3 { background: #15191E; color: #fff; }
+html[data-theme="dark"] .gan-grupo.z-gb { border-color: #8a96a6; }
+@media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .gan-grupo.z-gb { border-color: #8a96a6; } }
+.gan-precio > span .gan-zona { margin-right: 6px; }
+.gan-fila.con-zona { grid-template-areas: "zona zona" "txt ctrl" "txt imp"; }
+.gan-fila > .gan-zona { grid-area: zona; justify-self: start; }
