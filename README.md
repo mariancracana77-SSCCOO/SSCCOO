@@ -75,6 +75,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 97: bandera de España en lo nacional
+
+- **«Mis incentivos»: lo nacional lleva la bandera de España** (lo pidió el padre, como lo internacional lleva la de la Unión Europea): franja clara con la bandera a la derecha y una línea roja debajo en «Dieta fraccionada nacional» (sobre fondo rojo la bandera no se veía), etiqueta «Nacional» blanca con borde rojo y la banderita y, en «Dieta completa nacional», la raya de la izquierda con los colores de la bandera.
+
 ## Versión 96: las guías rápidas se traducen
 
 - **«Aparcamientos en mi ruta»: la guía rápida se traduce** (lo pidió Lorena). Dentro de «Cómo se usa (guía rápida)» hay un selector «Idioma de la guía · Language» con los mismos idiomas que el resto (rumano, árabe, inglés, francés…). Es el mismo idioma que en «Mis descansos» y «Mis incentivos»: si se elige en uno, sale en los demás.
