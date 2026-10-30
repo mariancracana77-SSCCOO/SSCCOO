@@ -75,6 +75,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 99: kilómetros en «Mes» de «Mis incentivos»
+
+- **Kilómetros del mes** (lo pidió el padre): en «Mes» sale una cifra con el total de kilómetros apuntados (la suma de todas las semanas) y, en «Por semanas», los kilómetros de cada semana. El PDF del mes lo dice también en «Cuentas del mes».
+
 ## Versión 98: Ajustes de «Mis incentivos» como «Día»
 
 - En «Ajustes» > «Lo que cobras tú», las etiquetas «Nacional», «Internacional» y «GB-CG-MA» salían estiradas a todo el ancho y con la bandera encima del texto (lo vio Lorena). Ahora son pequeñas, en una línea, y los grupos de dietas van en su caja con la franja y la bandera, igual que en «Día».
