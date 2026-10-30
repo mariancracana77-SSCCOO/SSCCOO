@@ -75,6 +75,13 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 96: las guías rápidas se traducen
+
+- **«Aparcamientos en mi ruta»: la guía rápida se traduce** (lo pidió Lorena). Dentro de «Cómo se usa (guía rápida)» hay un selector «Idioma de la guía · Language» con los mismos idiomas que el resto (rumano, árabe, inglés, francés…). Es el mismo idioma que en «Mis descansos» y «Mis incentivos»: si se elige en uno, sale en los demás.
+- **«Mis incentivos»: colores nuevos por zona** (lo pidió el padre): nacional con franja y etiqueta rojas; internacional en el azul de la bandera de la Unión Europea con su círculo de 12 estrellas amarillas (en la franja y en la etiqueta); GB-CG-MA, oscuro. «Dieta completa internacional» y «Dieta completa nacional», que van en el mismo grupo, llevan también su etiqueta y una raya de su color a la izquierda.
+- **El botón «Ir» de las guías también se traduce** en las tres secciones (antes salía siempre «Ir»).
+- Función `traducir` (Supabase): grupo nuevo «aparcar», que solo traduce los textos escritos como `T("…")` en `aparcar.js` (copia del código en `herramientas/funciones/traducir.ts`).
+
 ## Versión 95: botón «Ir» en las guías rápidas y guía en «Aparcamientos en mi ruta»
 
 - **Botón «Ir» en cada paso de las guías rápidas** (lo pidió Lorena: «por si alguien no sabe»): en «Mis incentivos», «Mis descansos» y «Aparcamientos en mi ruta», cada paso de «Cómo se usa (guía rápida)» lleva un botón «Ir» que abre la pestaña que toca, baja hasta el sitio y lo marca en rojo un momento.

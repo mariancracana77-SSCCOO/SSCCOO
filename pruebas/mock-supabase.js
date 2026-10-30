@@ -52,6 +52,7 @@
     avisos_aparcamiento: [{ id: 1, osm: "w3", tipo: "cerrado", cuando: new Date(Date.now() - 40 * 60000).toISOString() }],
     tarifas_conductor: [
       { id: 1, grupo: "Salario", concepto: "Salario bruto (sin antigüedad)", importe: 1725.28, unidad: "mes", pago: "Mensual", sin_pagar: 0, max_mes: null, nota: "", orden: 10, visible: true },
+      { id: 2, grupo: "Dieta completa", concepto: "Dieta completa internacional", importe: 67.48, importe_nuevo: 69.83, desde: "2027-01-01", unidad: "dia", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "", orden: 20, visible: true },
       { id: 3, grupo: "Dieta completa", concepto: "Dieta completa nacional", importe: 48.6, importe_nuevo: 50.82, desde: "2027-01-01", unidad: "dia", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "", orden: 30, visible: true },
       { id: 5, grupo: "Suplementos", concepto: "Fin de semana fuera (domingo)", importe: 100, unidad: "finde", pago: "Semanal", sin_pagar: 0, max_mes: 2, nota: "Como mucho 2 al mes.", orden: 50, visible: true },
       { id: 7, grupo: "Dieta fraccionada nacional", concepto: "Desayuno", importe: 5.72, importe_nuevo: 5.92, desde: "2027-01-01", unidad: "vez", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "", orden: 70, visible: true },
@@ -104,7 +105,7 @@
       from: consulta, auth, channel: () => canal, removeChannel() {},
       rpc: async (n) => ({ data: n === "avisar_aparcamiento" ? "ok" : null, error: null }),
       // «Fleuré» sin código postal: hay dos pueblos y la función pregunta cuál (como la de verdad)
-      functions: { invoke: async (n, o) => ({ data: n !== "ruta" ? null : typeof o?.body?.buscar === "string" ? { lugares: /fleur/i.test(o.body.buscar)
+      functions: { invoke: async (n, o) => ({ data: n === "traducir" && o?.body?.modo === "textos" ? { textos: { "Ir": "Mergi", "Ir a: {t}": "Mergi la: {t}", "Calcular la ruta": "Calculează ruta", "Cada día": "În fiecare zi", "Al empezar a trabajar": "Când începi lucrul" } } : n !== "ruta" ? null : typeof o?.body?.buscar === "string" ? { lugares: /fleur/i.test(o.body.buscar)
           ? [{ nombre: "Fleuré, France", detalle: "61200, Orne, Normandie, France", lat: 48.69, lon: -0.058 }, { nombre: "Fleuré, France", detalle: "86340, Vienne, Nouvelle-Aquitaine, France", lat: 46.478, lon: 0.522 }]
           : [{ nombre: "Figueres, España", detalle: "17600, Girona, Catalunya, España", lat: 42.266, lon: 2.96 }] } : (o?.body?.elegir && typeof o.body.hasta === "string" && /fleur/i.test(o.body.hasta) && !o.body.cp_hasta)
         ? { elegir: { hasta: [{ nombre: "Fleuré, France", detalle: "61200, Orne, Normandie, France", cp: "61200", lat: 48.69, lon: -0.058 }, { nombre: "Fleuré, France", detalle: "86340, Vienne, Nouvelle-Aquitaine, France", cp: "86340", lat: 46.478, lon: 0.522 }] } }

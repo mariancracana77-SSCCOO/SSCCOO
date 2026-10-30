@@ -53,7 +53,7 @@
     const f = FIJOS(), v = $("v-ganancias"), idi = miIdioma();
     v.querySelectorAll("[data-gt]").forEach(el => { const t = f[el.dataset.gt]; if (t) el.textContent = t; });
     const pasos = GUIA(), guia = $("gan-guia-cuerpo");
-    guia.innerHTML = guiaPasosHTML(pasos, T);
+    guia.innerHTML = guiaPasosHTML(pasos, { ir: T("Ir"), irA: (t) => T("Ir a: {t}", { t }) });
     guia.querySelectorAll("[data-guia-ir]").forEach(b => b.onclick = () => { const d = pasos[+b.dataset.guiaIr][2]; if (d.tab) { DATOS.tab = d.tab; guarda(); pinta(); } irAGuia(d.sel); });
     v.setAttribute("dir", idi === "ar" ? "rtl" : "ltr"); v.setAttribute("lang", idi || "es");
     const sel = $("gan-idioma");
@@ -157,10 +157,13 @@
   const horasMin = (n) => { const { h, m } = hm(n); return h && m ? T("{h} h {m} min", { h, m: m.toLocaleString(LOC) }) : h ? T("{h} h", { h }) : T("{m} min", { m: m.toLocaleString(LOC) }); };
   const cantidadTxt = (t, n) => CASILLA.includes(t.unidad) ? (n === 1 ? "" : "× " + n) : t.unidad === "vez" ? "× " + n : t.unidad === "minuto" ? horasMin(n) : n.toLocaleString(LOC, { maximumFractionDigits: 2 }) + " " + QUE()[t.unidad];
   // v96: nacional, internacional y GB-CG-MA tienen conceptos que se llaman igual (Dormir, Desayuno…): cada fila lleva su etiqueta (lo pidió el padre)
-  const zona = (t) => /GB-CG-MA/i.test(t.grupo) ? "gb" : /internacional/i.test(t.grupo) ? "int" : /nacional/i.test(t.grupo) ? "nac" : "";
+  const zonaTxt = (x) => /GB-CG-MA/i.test(x) ? "gb" : /internacional/i.test(x) ? "int" : /\bnacional/i.test(x) ? "nac" : "";
+  // La zona sale del grupo («Dieta fraccionada internacional») o, en las dietas de un grupo sin zona («Dieta completa»), del nombre
+  const zona = (t) => zonaTxt(t.grupo) || (/dieta/i.test(t.grupo + " " + t.concepto) ? zonaTxt(t.concepto) : "");
   const ZONA_TXT = () => ({ nac: T("Nacional"), int: T("Internacional"), gb: T("GB-CG-MA") });
-  const zonaHTML = (t) => { const z = zona(t); return z && !new RegExp(z === "gb" ? "GB-CG-MA" : z === "int" ? "internacional" : "\\bnacional", "i").test(t.concepto) ? `<span class="gan-zona z-${z}">${esc(ZONA_TXT()[z])}</span>` : ""; };
-  const nombreC = (t) => { const z = zona(t); return t.concepto + (zonaHTML(t) ? " (" + { nac: "nacional", int: "internacional", gb: "GB-CG-MA" }[z] + ")" : ""); };
+  // Etiqueta en cada fila, salvo si el grupo ya pinta la zona y el nombre también la dice («Dieta completa GB-CG-MA»)
+  const zonaHTML = (t) => { const z = zona(t); return z && !(zonaTxt(t.grupo) && zonaTxt(t.concepto) === z) ? `<span class="gan-zona z-${z}">${esc(ZONA_TXT()[z])}</span>` : ""; };
+  const nombreC = (t) => { const z = zona(t); return t.concepto + (z && zonaTxt(t.concepto) !== z ? " (" + { nac: "nacional", int: "internacional", gb: "GB-CG-MA" }[z] + ")" : ""); };
   const desglose = (r) => r.por.length ? `<ul class="gan-desglose">${r.por.map(p => `<li><span>${esc(TD(p.t.concepto))}${p.t.grupo && !p.t.concepto.includes(p.t.grupo) ? ` <small>· ${esc(TD(p.t.grupo))}</small>` : ""}${p.n && cantidadTxt(p.t, p.n) ? ` <small>${esc(cantidadTxt(p.t, p.n))}</small>` : ""}${p.tope ? ` <small class="gan-tope">${esc(p.n ? T("con tope al mes") : T("no suma: ya estaba el máximo del mes"))}</small>` : ""}</span><b>${esc(eur(p.imp))}</b></li>`).join("")}</ul>` : "";
   const reparto = (r) => r.semanal && r.mensual ? `<p class="gan-reparto"><span>${esc(T("Cobro semanal"))}: <b>${esc(eur(r.semanal))}</b></span><span>${esc(T("En la nómina de fin de mes"))}: <b>${esc(eur(r.mensual))}</b></span></p>` : "";
 
@@ -211,7 +214,7 @@
         // v89: si el precio va a cambiar después de este día, se avisa («Desde el 1 de enero de 2027: 50,82 €»)
         t.nuevo != null && t.desde && f < t.desde && !esPropio(t, t.desde) ? T("Desde el {d}: {p}", { d: deIso(t.desde).toLocaleDateString(LOC, { day: "numeric", month: "long", year: "numeric" }), p: precio(t.nuevo) }) : "", t.sin_pagar ? (t.sin_pagar === 1 ? T("La primera de cada día no se paga.") : T("Las primeras {n} de cada día no se pagan.", { n: t.sin_pagar })) : "", t.max_mes != null ? T("Como mucho {n} al mes.", { n: t.max_mes }) : ""].filter(Boolean);
       const unicos = [...new Set(nota)];
-      return `<li class="gan-fila ${l ? "con" : ""} ${zonaHTML(t) ? "con-zona" : ""}">${zonaHTML(t)}<label for="gan-c${t.id}"><b>${esc(TD(t.concepto))}</b><small>${imp(t, f) ? `${t.unidad === "minuto" ? esc(T("{h} por hora · {m} por minuto", { h: eur(imp(t, f) * 60), m: precio(imp(t, f)) })) : `${esc(precio(imp(t, f)))} ${esc(UNIDAD()[t.unidad])}`}${esPropio(t, f) ? " · " + esc(T("el tuyo")) : ""}` : `<span class="gan-tope">${esc(T("Pon tu precio en «Ajustes»"))}</span>`}${t.pago === "Mensual" ? " · " + esc(T("en la nómina")) : " · " + esc(T("cobro semanal"))}</small>${unicos.map(x => `<small class="gan-nota">${esc(x)}</small>`).join("")}${l?.tope ? `<small class="gan-tope">${esc(T("Ya llevas el máximo de este mes: este no suma."))}</small>` : ""}</label>
+      return `<li class="gan-fila ${l ? "con" : ""} ${zonaHTML(t) ? "con-zona" : ""} ${zona(t) && !zonaTxt(t.grupo) ? "fila-z-" + zona(t) : ""}">${zonaHTML(t)}<label for="gan-c${t.id}"><b>${esc(TD(t.concepto))}</b><small>${imp(t, f) ? `${t.unidad === "minuto" ? esc(T("{h} por hora · {m} por minuto", { h: eur(imp(t, f) * 60), m: precio(imp(t, f)) })) : `${esc(precio(imp(t, f)))} ${esc(UNIDAD()[t.unidad])}`}${esPropio(t, f) ? " · " + esc(T("el tuyo")) : ""}` : `<span class="gan-tope">${esc(T("Pon tu precio en «Ajustes»"))}</span>`}${t.pago === "Mensual" ? " · " + esc(T("en la nómina")) : " · " + esc(T("cobro semanal"))}</small>${unicos.map(x => `<small class="gan-nota">${esc(x)}</small>`).join("")}${l?.tope ? `<small class="gan-tope">${esc(T("Ya llevas el máximo de este mes: este no suma."))}</small>` : ""}</label>
         <div class="gan-ctrl">${control(t)}</div><span class="gan-imp">${l ? esc(eur(l.imp)) : ""}</span></li>`; };
     // ¿Dieta completa y partes el mismo día? Normalmente es una u otra
     const lleva = (p) => r.lineas.some(l => /dieta/i.test(l.t.grupo + " " + l.t.concepto) && p(l.t));
@@ -224,7 +227,7 @@
       <div class="gan-total"><span>${esc(T("Este día"))}</span><b>${esc(eur(r.total))}</b></div>
       ${(() => { const k = cuentasMes(c, f.slice(0, 7)); return `<button type="button" class="gan-mini-mes" data-ir-mes><span>${esc(T("Nómina de {mes}", { mes: fMes(f.slice(0, 7)) }))} <b>${esc(eur(k.nomina))}</b></span> <span>${esc(T("Cobro semanal del mes"))} <b>${esc(eur(k.semanal))}</b></span>${icono("der", "p")}</button>`; })()}
       ${doble ? `<p class="desc-alerta">${icono("alerta", "p")}<span>${esc(T("Has marcado la dieta completa y también partes de la dieta. Normalmente se cobra una cosa o la otra: revísalo."))}</span></p>` : ""}
-      ${grupos.map(g => `<section class="gan-grupo ${g.ts[0] && zona(g.ts[0]) ? "z-" + zona(g.ts[0]) : ""}">${g.n ? `<h3>${esc(TD(g.n))}</h3>` : ""}<ul>${g.ts.map(fila).join("")}</ul></section>`).join("")}
+      ${grupos.map(g => `<section class="gan-grupo ${zonaTxt(g.n) ? "z-" + zonaTxt(g.n) : ""}">${g.n ? `<h3>${esc(TD(g.n))}</h3>` : ""}<ul>${g.ts.map(fila).join("")}</ul></section>`).join("")}
       ${lista.length < variables().length ? `<p class="ayuda">${esc(T("Hay conceptos escondidos. Los vuelves a sacar en «Ajustes»."))}</p>` : ""}
       <div class="botones">${anterior && !Object.keys(dia).length ? `<button class="btn sec" id="gan-copiar">${icono("copia", "p")}${esc(T("Copiar el día anterior ({fecha})", { fecha: fDia(anterior) }))}</button>` : ""}
         ${Object.keys(dia).length ? `<button class="btn sec" id="gan-vaciar">${icono("borrar", "p")}${esc(T("Vaciar este día"))}</button>` : ""}</div>`;

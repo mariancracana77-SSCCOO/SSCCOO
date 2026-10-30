@@ -818,24 +818,50 @@
 
   // v95: guía rápida con un botón «Ir» en cada paso (si aún no hay ruta, lleva al formulario)
   const visible = (...sels) => () => sels.map(x => document.querySelector(x)).find(e => e && e.offsetParent);
-  const GUIA_APC = [
-    ["Calcular la ruta", "Escribe adónde vas (y desde dónde, si no es donde estás) y pulsa «Buscar ruta para camión». Pon las medidas de tu camión para que la ruta le sirva.", visible("#apc-hasta", "#apc-cambiar")],
-    ["Pueblos con el mismo nombre", "Si hay varios sitios que se llaman igual, pon el código postal o elige el bueno de la lista que te sale.", visible("#apc-hasta-cp", "#apc-cambiar")],
-    ["Los aparcamientos de la ruta", "Con la ruta hecha ves todos los aparcamientos que tienes por delante, con las plazas para camiones y si estarán abiertos. Con los filtros buscas por pueblo, duchas, vigilado…", visible("#apc-sec-aparc", "#apc-buscar")],
-    ["Lista o mapa", "Cambia entre la lista y el mapa. En el móvil, el mapa se mueve con dos dedos; con «Pantalla completa» se maneja con uno.", visible("[data-apc-vista]", "#apc-abre-mapa")],
-    ["Cortes y peajes", "Debajo salen los cortes oficiales de la carretera (los graves, en rojo) y el precio aproximado de los peajes.", visible("#apc-sec-cortes", "#apc-buscar")],
-    ["Durante el viaje", "Pulsa «Empezar viaje»: la pantalla no se apaga y te enseño los aparcamientos que tienes delante. Si quieres, te los digo en voz alta.", visible("#apc-empezar", "#apc-voz", "#apc-buscar")],
-    ["Llevarme aquí", "En cada aparcamiento, «Llevarme aquí» lo abre en el navegador que uses en el móvil (iGO, Google Maps…).", visible(".apc-llevar", "#apc-buscar")],
-    ["Mapa sin ruta", "Para mirar una zona sin calcular ruta, abre el mapa y toca «Dónde estoy» o busca un sitio.", visible("#apc-abre-mapa", "#apc-cambiar")],
+  const GUIA_APC = () => [
+    [T("Calcular la ruta"), T("Escribe adónde vas (y desde dónde, si no es donde estás) y pulsa «Buscar ruta para camión». Pon las medidas de tu camión para que la ruta le sirva."), visible("#apc-hasta", "#apc-cambiar")],
+    [T("Pueblos con el mismo nombre"), T("Si hay varios sitios que se llaman igual, pon el código postal o elige el bueno de la lista que te sale."), visible("#apc-hasta-cp", "#apc-cambiar")],
+    [T("Los aparcamientos de la ruta"), T("Con la ruta hecha ves todos los aparcamientos que tienes por delante, con las plazas para camiones y si estarán abiertos. Con los filtros buscas por pueblo, duchas, vigilado…"), visible("#apc-sec-aparc", "#apc-buscar")],
+    [T("Lista o mapa"), T("Cambia entre la lista y el mapa. En el móvil, el mapa se mueve con dos dedos; con «Pantalla completa» se maneja con uno."), visible("[data-apc-vista]", "#apc-abre-mapa")],
+    [T("Cortes y peajes"), T("Debajo salen los cortes oficiales de la carretera (los graves, en rojo) y el precio aproximado de los peajes."), visible("#apc-sec-cortes", "#apc-buscar")],
+    [T("Durante el viaje"), T("Pulsa «Empezar viaje»: la pantalla no se apaga y te enseño los aparcamientos que tienes delante. Si quieres, te los digo en voz alta."), visible("#apc-empezar", "#apc-voz", "#apc-buscar")],
+    [T("Llevarme aquí"), T("En cada aparcamiento, «Llevarme aquí» lo abre en el navegador que uses en el móvil (iGO, Google Maps…)."), visible(".apc-llevar", "#apc-buscar")],
+    [T("Mapa sin ruta"), T("Para mirar una zona sin calcular ruta, abre el mapa y toca «Dónde estoy» o busca un sitio."), visible("#apc-abre-mapa", "#apc-cambiar")],
   ];
+  // La guía se traduce como «Mis descansos» (función traducir, modo textos, grupo «aparcar»: solo los T("…") de este archivo)
+  let MAPA_APC = {};
+  const T = (s, v) => (MAPA_APC[s] || s).replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m);
+  async function cargaIdiomaApc() {
+    const idi = miIdioma(), m = $("apc-guia-msg");
+    if (m) { m.textContent = ""; m.className = "msg"; }
+    if (!idi) { MAPA_APC = {}; return; }
+    const CACHE = "ccoo-textos-aparcar";
+    try { const c = JSON.parse(localStorage.getItem(CACHE) || "null"); if (c && c.idioma === idi && c.v === VERSION_WEB && Date.now() - c.t < 86400000) { MAPA_APC = c.mapa; return; } } catch (_) {}
+    if (m) m.textContent = "…";
+    try {
+      const { data, error } = await sb.functions.invoke("traducir", { body: { modo: "textos", grupo: "aparcar", idioma: idi } });
+      if (error || !data?.textos) throw 0;
+      if (miIdioma() !== idi) return;
+      MAPA_APC = data.textos; if (m) m.textContent = "";
+      try { localStorage.setItem(CACHE, JSON.stringify({ idioma: idi, v: VERSION_WEB, t: Date.now(), mapa: MAPA_APC })); } catch (_) {}
+    } catch (_) { MAPA_APC = {}; if (m) { m.textContent = "La traducción no está disponible ahora mismo. Prueba más tarde."; m.className = "msg err"; } }
+  }
   function pintaGuiaApc() {
     const caja = $("apc-guia-cuerpo"); if (!caja) return;
-    caja.innerHTML = guiaPasosHTML(GUIA_APC, (t, v) => t.replace(/\{(\w+)\}/g, (_, k) => v[k]));
-    caja.querySelectorAll("[data-guia-ir]").forEach(b => b.onclick = () => irAGuia(GUIA_APC[+b.dataset.guiaIr][2]));
+    const pasos = GUIA_APC(), sel = $("apc-guia-idioma");
+    if (sel && !sel.options.length) sel.innerHTML = `<option value="">Español</option>` + Object.entries(IDIOMAS).map(([k, n]) => `<option value="${k}">${esc(n)}</option>`).join("");
+    if (sel) sel.value = miIdioma();
+    caja.setAttribute("lang", miIdioma() || "es"); caja.setAttribute("dir", miIdioma() === "ar" ? "rtl" : "ltr");
+    caja.innerHTML = guiaPasosHTML(pasos, { ir: T("Ir"), irA: (t) => T("Ir a: {t}", { t }) });
+    caja.querySelectorAll("[data-guia-ir]").forEach(b => b.onclick = () => irAGuia(pasos[+b.dataset.guiaIr][2]));
   }
+
   function prepara() {
     pintaFormulario();
     pintaGuiaApc();
+    if ($("apc-guia-idioma")) $("apc-guia-idioma").onchange = () => ponMiIdioma($("apc-guia-idioma").value);
+    addEventListener("mi-idioma", async () => { await cargaIdiomaApc(); pintaGuiaApc(); });
+    cargaIdiomaApc().then(pintaGuiaApc);
     // Durante el viaje, los avisos de los compañeros se refrescan cada 2 minutos
     $("apc-buscar").onclick = buscaRuta;
     $("apc-abre-mapa").onclick = abreMapaLibre;

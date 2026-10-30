@@ -62,7 +62,7 @@
     [T("Avisos y copia"), T("En «Ajustes» eliges cuándo te avisa el móvil. Guarda de vez en cuando la copia en PDF (en «Lo apuntado», abajo del todo) para no perder nada."), { tab: "ajustes", sel: () => [document.querySelector("#desc-avisar-caja"), document.querySelector("[data-panel=ajustes] .desc-opciones")].find(e => e && e.offsetParent) }],
   ];
   function pintaGuia() {
-    const pasos = GUIA(); $("desc-guia-cuerpo").innerHTML = `${guiaPasosHTML(pasos, T)}
+    const pasos = GUIA(); $("desc-guia-cuerpo").innerHTML = `${guiaPasosHTML(pasos, { ir: T("Ir"), irA: (t) => T("Ir a: {t}", { t }) })}
       <p class="ayuda">${esc(T("Los descansos: diario de 11 h (o 9 h reducido, como mucho 3 veces entre dos semanales); semanal de 45 h (o 24 h reducido, devolviendo lo que falta antes de que acabe la tercera semana siguiente). Empieza el semanal antes de que pasen 6 días (144 h) desde el anterior."))}</p>`;
     $("desc-guia-cuerpo").querySelectorAll("[data-guia-ir]").forEach(b => b.onclick = () => { const d = pasos[+b.dataset.guiaIr][2]; DATOS.tab = d.tab; if (d.apunte) DATOS.apunte = d.apunte; guarda(); pinta(); irAGuia(d.sel); });
   }
