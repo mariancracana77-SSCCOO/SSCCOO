@@ -78,6 +78,7 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 ## Versión 96: las guías rápidas se traducen
 
 - **«Aparcamientos en mi ruta»: la guía rápida se traduce** (lo pidió Lorena). Dentro de «Cómo se usa (guía rápida)» hay un selector «Idioma de la guía · Language» con los mismos idiomas que el resto (rumano, árabe, inglés, francés…). Es el mismo idioma que en «Mis descansos» y «Mis incentivos»: si se elige en uno, sale en los demás.
+- **«Mis incentivos»: colores nuevos por zona** (lo pidió el padre): nacional con franja y etiqueta rojas; internacional en el azul de la bandera de la Unión Europea con su círculo de 12 estrellas amarillas (en la franja y en la etiqueta); GB-CG-MA, oscuro.
 - **El botón «Ir» de las guías también se traduce** en las tres secciones (antes salía siempre «Ir»).
 - Función `traducir` (Supabase): grupo nuevo «aparcar», que solo traduce los textos escritos como `T("…")` en `aparcar.js` (copia del código en `herramientas/funciones/traducir.ts`).
 
