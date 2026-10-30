@@ -813,8 +813,8 @@ async function cargar(idNuevo) {
   // (el servidor a un administrador le da todo: avisos programados, publicaciones y apartados ocultos)
   const ahoraMs = Date.now();
   D.avisos = (a.data || []).filter(x => !x.publicar_en || new Date(x.publicar_en).getTime() <= ahoraMs);
-  // v101: «Destacar desde / hasta» (lo pidió el padre): fuera de esas fechas el aviso se ve, pero sin urgente ni fijado
-  D.avisos.forEach(x => { if ((x.urgente || x.fijado) && ((x.destacar_desde && new Date(x.destacar_desde).getTime() > ahoraMs) || (x.destacar_hasta && new Date(x.destacar_hasta).getTime() <= ahoraMs))) { x.urgente = false; x.fijado = false; } }); D.eventos = e.data || []; D.convenio = (c.data || []).filter(x => x.visible !== false); D.docs = d.data || []; D.actas = ac.data || [];
+  // v101–v102: «Destacar en Inicio el día» (lo pidió el padre): fuera de ese día el aviso se ve, pero sin urgente
+  D.avisos.forEach(x => { if (x.urgente && ((x.destacar_desde && new Date(x.destacar_desde).getTime() > ahoraMs) || (x.destacar_hasta && new Date(x.destacar_hasta).getTime() <= ahoraMs))) x.urgente = false; }); D.eventos = e.data || []; D.convenio = (c.data || []).filter(x => x.visible !== false); D.docs = d.data || []; D.actas = ac.data || [];
   D.paginas = Object.fromEntries((p.data || []).map(x => [x.slug, x.contenido]));
   pintaTextosPrivacidad();
   D.preguntas = pr.data || []; D.delegados = dl.data || []; D.enlaces = en.data || [];

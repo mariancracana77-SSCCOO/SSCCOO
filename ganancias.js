@@ -10,8 +10,8 @@
 // elegidos en un calendario.
 (function () {
   const CLAVE = "ccoo-ganancias", CACHE_TARIFAS = "ccoo-tarifas";
-  const DEF = () => ({ dias: {}, salario: "", precio: {}, oculto: {}, fijo: {}, tab: "dia", dia: "", semana: "", mes: "", inicio: "" });
-  const lee = () => { try { const d = JSON.parse(localStorage.getItem(CLAVE) || "null"); if (d && typeof d.dias === "object") { const x = { ...DEF(), ...d }; if (!x.precio || typeof x.precio !== "object") x.precio = {}; return x; } } catch (_) {} return DEF(); };
+  const DEF = () => ({ dias: {}, libres: {}, salario: "", precio: {}, oculto: {}, fijo: {}, tab: "dia", dia: "", semana: "", mes: "", inicio: "" });
+  const lee = () => { try { const d = JSON.parse(localStorage.getItem(CLAVE) || "null"); if (d && typeof d.dias === "object") { const x = { ...DEF(), ...d }; if (!x.precio || typeof x.precio !== "object") x.precio = {}; if (!x.libres || typeof x.libres !== "object") x.libres = {}; return x; } } catch (_) {} return DEF(); };
   let DATOS = lee();
   const guarda = () => {
     try { localStorage.setItem(CLAVE, JSON.stringify(DATOS)); } catch (_) { msg(T("No se ha podido guardar en este móvil (¿modo incógnito?). Haz una copia."), true); }
@@ -40,6 +40,7 @@
   // v95: cada paso lleva su botón «Ir» (pestaña y sitio al que lleva)
   const GUIA = () => [
     [T("Cada día"), T("En «Día», marca lo que has hecho: dieta completa o partes (dormir, desayuno, comida, cena), noche fuera, cargas, kilómetros… El total sale arriba y se guarda solo."), { tab: "dia", sel: "#gan-dia .gan-total" }],
+    [T("Día libre"), T("Si un día no has trabajado, en «Día» pulsa «Marcar este día como libre». En «Semana» saldrá «Libre» en vez de «Sin apuntar», y en el PDF de la semana."), { tab: "dia", sel: "#gan-libre" }],
     [T("Otro día"), T("Cambia de día con las flechas o tocando la fecha. «Copiar el día anterior» rellena lo mismo que el último día apuntado."), { tab: "dia", sel: "#gan-dia .gan-nav" }],
     [T("El ADR"), T("En «Día», el ADR se apunta en horas y minutos: las horas arriba y los minutos abajo. Ves el precio por hora y por minuto, y va en el cobro semanal."), { tab: "dia", sel: () => document.querySelector("#gan-dia [data-hm]")?.closest(".gan-fila") }],
     [T("Cobro semanal y nómina"), T("Lo que la empresa paga por semanas (dietas, suplementos, cargas, kilómetros, festivos, ADR por minuto, horas sindicales) sale como «Cobro semanal». Lo que va con el salario a fin de mes (nocturnidad, ADR fijo) sale como «En la nómina». Es la columna «Periodicidad pago» de la tabla de la empresa."), { tab: "mes", sel: "#gan-mes .gan-cifras" }],
@@ -226,6 +227,8 @@
         <button type="button" class="btn-ic" data-dia="1" aria-label="${esc(T("Día siguiente"))}">${icono("der")}</button></div>
       <div class="gan-total"><span>${esc(T("Este día"))}</span><b>${esc(eur(r.total))}</b></div>
       ${(() => { const k = cuentasMes(c, f.slice(0, 7)); return `<button type="button" class="gan-mini-mes" data-ir-mes><span>${esc(T("Nómina de {mes}", { mes: fMes(f.slice(0, 7)) }))} <b>${esc(eur(k.nomina))}</b></span> <span>${esc(T("Cobro semanal del mes"))} <b>${esc(eur(k.semanal))}</b></span>${icono("der", "p")}</button>`; })()}
+      ${DATOS.libres[f] ? `<div class="gan-libre-aviso">${icono("check", "p")}<span>${esc(T("Día libre: este día no has trabajado."))}</span><button type="button" class="btn sec" id="gan-libre">${esc(T("Quitar «libre»"))}</button></div>`
+        : `<button type="button" class="btn sec gan-libre-btn" id="gan-libre">${icono("calendario", "p")}${esc(T("Marcar este día como libre (no he trabajado)"))}</button>`}
       ${doble ? `<p class="desc-alerta">${icono("alerta", "p")}<span>${esc(T("Has marcado la dieta completa y también partes de la dieta. Normalmente se cobra una cosa o la otra: revísalo."))}</span></p>` : ""}
       ${grupos.map(g => `<section class="gan-grupo ${zonaTxt(g.n) ? "z-" + zonaTxt(g.n) : ""}">${g.n ? `<h3>${esc(TD(g.n))}</h3>` : ""}<ul>${g.ts.map(fila).join("")}</ul></section>`).join("")}
       ${lista.length < variables().length ? `<p class="ayuda">${esc(T("Hay conceptos escondidos. Los vuelves a sacar en «Ajustes»."))}</p>` : ""}
@@ -235,6 +238,7 @@
     const v = $("gan-dia"), pon = (id, n) => { const d = { ...(DATOS.dias[f] || {}) }; if (n > 0) d[id] = Math.round(n * 100) / 100; else delete d[id]; if (Object.keys(d).length) DATOS.dias[f] = d; else delete DATOS.dias[f]; guarda(); };
     v.querySelectorAll("[data-dia]").forEach(b => b.onclick = () => { DATOS.dia = suma(f, +b.dataset.dia); guarda(); pinta(); });
     v.querySelector("[data-ir-mes]").onclick = () => { DATOS.mes = f.slice(0, 7); DATOS.tab = "mes"; guarda(); pinta(); };
+    $("gan-libre").onclick = () => { if (DATOS.libres[f]) delete DATOS.libres[f]; else DATOS.libres[f] = true; guarda(); pinta(); }; // v102: día libre (lo pidió el padre)
     $("gan-fecha").onchange = () => { if (/^\d{4}-\d\d-\d\d$/.test($("gan-fecha").value)) { DATOS.dia = $("gan-fecha").value; guarda(); pinta(); } };
     v.querySelectorAll("input[type=checkbox][data-c]").forEach(i => i.onchange = () => { pon(i.dataset.c, i.checked ? 1 : 0); pinta(); });
     v.querySelectorAll("[data-mas],[data-menos]").forEach(b => b.onclick = () => { const id = b.dataset.mas || b.dataset.menos; pon(id, Math.max(0, num(dia[id]) + (b.dataset.mas ? 1 : -1))); pinta(); $(`gan-c${id}`)?.parentElement.querySelector(b.dataset.mas ? "[data-mas]" : "[data-menos]")?.focus(); });
@@ -330,8 +334,8 @@
         <b class="gan-fecha"><span>${esc(T("Semana {n}", { n: w.n }))}${l === esta ? ` · ${esc(T("esta semana"))}` : ""}</span><small>${esc(T("Del {a} al {b}", { a: fDia(dias[0]), b: fDia(dias[6]) }))}${w.a !== +l.slice(0, 4) ? " · " + w.a : ""}</small></b>
         <button type="button" class="btn-ic" data-sem="7" aria-label="${esc(T("Semana siguiente"))}">${icono("der")}</button></div>
       <div class="gan-total"><span>${esc(T("Esta semana"))}</span><b>${esc(eur(r.total))}</b></div>${(() => { const km = kmDe(dias); return km ? `<div class="desc-cifras gan-cifras gan-km-arriba"><div class="gan-km-mes"><b>${esc(kmTxt(km))}</b><span>${esc(T("Kilómetros de esta semana"))}</span></div></div>` : ""; })()}${reparto(r)}
-      <ul class="gan-dias">${(() => { let llevas = 0; return dias.map(f => { const x = c[f], km = kmDe([f]); llevas += km; // v99: km del día y los que lleva acumulados la semana (lo pidió el padre)
-        return `<li><button type="button" data-ir-dia="${f}" class="${f === hoy() ? "hoy" : ""}"><span>${esc(fDia(f))}${km ? `<small class="gan-km-dia">${esc(T("{km} · llevas {total} esta semana", { km: kmTxt(km), total: kmTxt(Math.round(llevas * 100) / 100) }))}</small>` : ""}</span><b>${x && x.lineas.length ? esc(eur(x.total)) : `<small>${esc(T("Sin apuntar"))}</small>`}</b>${icono("der", "p")}</button></li>`; }).join(""); })()}</ul>
+      <ul class="gan-dias">${(() => dias.map(f => { const x = c[f]; // v102: sin los km de cada día (cargaba mucho la lista); el total de la semana va arriba
+        return `<li><button type="button" data-ir-dia="${f}" class="${f === hoy() ? "hoy" : ""}"><span>${esc(fDia(f))}</span><b>${x && x.lineas.length ? esc(eur(x.total)) : `${DATOS.libres[f] ? `<small class="gan-libre-etq">${esc(T("Libre"))}</small>` : `<small>${esc(T("Sin apuntar"))}</small>`}`}</b>${icono("der", "p")}</button></li>`; }).join(""))()}</ul>
       <details class="gan-ir-caja"><summary>${icono("calendario", "p")}<span>${esc(T("Ir a otra semana"))}</span></summary>
         <form class="gan-ir-sem" id="gan-ir-sem"><label><span>${esc(T("Semana número"))}</span><input type="number" id="gan-sem-n" min="1" max="53" inputmode="numeric" value="${w.n}" aria-label="${esc(T("Número de semana"))}"></label>
         <label><span>${esc(T("del año"))}</span><input type="number" id="gan-sem-a" min="2020" max="2100" inputmode="numeric" value="${w.a}" aria-label="${esc(T("Año"))}"></label>
@@ -491,6 +495,7 @@
         // Cada semana con su banda oscura (lo pidió Lorena: que la semana se vea bien, es lo que busca la gente)
         L.push({ banda: "Semana " + semDe(l).n + " de " + semDe(l).a + " · del " + fDia(l, true) + " al " + fDia(suma(l, 6), true), color: [0.082, 0.098, 0.118], tam: 12 }, ["", 3]);
         ds.forEach(f => { const x = c[f]; L.push([fDia(f, true) + ": " + eur(x.total), 10, true, 6]); L.push([x.lineas.map(li => nombreC(li.t) + (cantidadTxt(li.t, li.n) ? " " + cantidadTxt(li.t, li.n) : "") + " " + eur(li.imp)).join(" · "), 9, false, 14]); });
+        { const lib = diasDe(l).filter(f => DATOS.libres[f] && (!elegidos || elegidos.includes(f)) && !(c[f] && c[f].lineas.length)); if (lib.length) L.push(["Días libres: " + lib.map(f => fDia(f)).join(", "), 10, false, 6, GRIS]); }
         // Resumen por conceptos de la semana (v88): para comparar con lo que paga la empresa
         if (r.por.length) { L.push(["Por conceptos:", 10, true, 6, GRIS]); r.por.forEach(p => L.push([nombreC(p.t) + (p.n && cantidadTxt(p.t, p.n) ? " " + cantidadTxt(p.t, p.n) : "") + ": " + eur(p.imp) + (p.tope ? (p.n ? " (con tope al mes)" : " (no suma: ya estaba el máximo del mes)") : ""), 9, false, 14, p.t.pago === "Mensual" ? C_NOM : C_SEM])); }
         L.push(["Cobro semanal: " + eur(r.semanal), 11, true, 6, C_SEM], ["En la nómina: " + eur(r.mensual), 11, true, 6, C_NOM], ["Total de la semana: " + eur(r.total), 13, true, 6, C_TOT], [""]);
@@ -504,7 +509,7 @@
       }
       if (semanas.length > 1 && !op.mes) { const r = resumen(c, dias); L.push(["Cobro semanal de estos días: " + eur(r.semanal), 11, true, 0, C_SEM], ["En la nómina: " + eur(r.mensual), 11, true, 0, C_NOM], ["Total de estos días: " + eur(r.total), 15, true, 0, C_TOT], [""]); }
       L.push([(op.mes ? "" : "Sin el salario ni los fijos del mes. ") + "Orientativo y en bruto (antes de impuestos y descuentos): manda tu nómina.", 8], ["Para volver a cargar estos días en la app: Zona Conductores > Mis incentivos > Ajustes > Recuperar una copia, y elige este PDF.", 8]);
-      const datos = { app: "ccoo-ganancias", dias: Object.fromEntries((elegidos ? dias : Object.keys(DATOS.dias)).map(f => [f, DATOS.dias[f]])), salario: DATOS.salario, precio: DATOS.precio, oculto: DATOS.oculto, fijo: DATOS.fijo };
+      const datos = { app: "ccoo-ganancias", dias: Object.fromEntries((elegidos ? dias : Object.keys(DATOS.dias)).map(f => [f, DATOS.dias[f]])), libres: Object.fromEntries(Object.keys(DATOS.libres).filter(f => !elegidos || elegidos.includes(f)).map(f => [f, true])), salario: DATOS.salario, precio: DATOS.precio, oculto: DATOS.oculto, fijo: DATOS.fijo };
       return pdfSencillo(L, MARCA + btoa(unescape(encodeURIComponent(JSON.stringify(datos)))), { logo: LOGO });
     } finally { LOC = locAntes; MAPA = mapaAntes; }
   }
@@ -538,7 +543,8 @@
         if (!confirm(T("La copia tiene {n} días apuntados. Se añaden a lo que tienes en este móvil (si un día ya está, se cambia por el de la copia). ¿Seguir?", { n: Object.keys(dias).length }))) return;
         const limpio = (o) => Object.fromEntries(Object.entries(o && typeof o === "object" ? o : {}).filter(([k]) => /^\d+$/.test(k)).map(([k, v]) => [k, !!v]));
         const precios = Object.fromEntries(Object.entries(d.precio && typeof d.precio === "object" ? d.precio : {}).filter(([k, v]) => /^\d+$/.test(k) && Number.isFinite(+v) && +v >= 0 && +v < 100000).map(([k, v]) => [k, +v]));
-        DATOS = { ...DATOS, dias: { ...DATOS.dias, ...dias }, salario: num(d.salario) ? String(num(d.salario)) : DATOS.salario, precio: { ...DATOS.precio, ...precios }, oculto: { ...DATOS.oculto, ...limpio(d.oculto) }, fijo: { ...DATOS.fijo, ...limpio(d.fijo) }, tab: "ajustes" };
+        const libres = Object.fromEntries(Object.keys(d.libres && typeof d.libres === "object" ? d.libres : {}).filter(k => /^\d{4}-\d\d-\d\d$/.test(k)).map(k => [k, true]));
+        DATOS = { ...DATOS, dias: { ...DATOS.dias, ...dias }, libres: { ...DATOS.libres, ...libres }, salario: num(d.salario) ? String(num(d.salario)) : DATOS.salario, precio: { ...DATOS.precio, ...precios }, oculto: { ...DATOS.oculto, ...limpio(d.oculto) }, fijo: { ...DATOS.fijo, ...limpio(d.fijo) }, tab: "ajustes" };
         guarda(); pinta(); msg(T("Copia recuperada."));
       } catch (_) { msg(T("Ese archivo no es una copia de «Mis incentivos». Elige el PDF que guardaste con «Guardar una copia»."), true); }
     };

@@ -92,6 +92,7 @@ function abrirEditor(k, orig = null, preset = {}) {
     el.addEventListener("input", () => { ED.sucio = true; actualizarPrevia(); });
     el.addEventListener("change", () => { ED.sucio = true; actualizarPrevia(); });
   });
+  if (orig?.destacar_desde && $("f-destacar_dia")) $("f-destacar_dia").value = isoLocal(new Date(orig.destacar_desde)); // v102
   ofrecerBorrador();
   $("ed-form").querySelectorAll("textarea.crece").forEach(t => { if (t.style.minHeight) t.classList.add("corta"); requestAnimationFrame(() => creceTexto(t)); });
   if (s.asistente && !orig) prepararAsistente();
@@ -309,6 +310,9 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape" && ED) cerr
 
 $("ed-guardar").onclick = async () => {
   const s = SECCIONES[ED.k], btn = $("ed-guardar"), fila = leerFormulario();
+  // v102: «Destacar en Inicio el día» se guarda como destacar_desde/hasta (ese día entero) y lo pone urgente
+  if ("destacar_dia" in fila) { const d = fila.destacar_dia; delete fila.destacar_dia;
+    Object.assign(fila, d ? { destacar_desde: new Date(d + "T00:00:00").toISOString(), destacar_hasta: new Date(d + "T23:59:59").toISOString(), urgente: true } : { destacar_desde: null, destacar_hasta: null }); }
   for (const c of camposPlanos(s)) {
     if (c.req && c.t !== "archivo" && c.t !== "archivos" && !fila[c.k]) return marcaFalta("f-" + c.k, "Falta: " + c.l.toLowerCase() + ".");
   }
@@ -350,8 +354,7 @@ $("ed-guardar").onclick = async () => {
     else if (s.campos.some(c => c.t === "archivos")) fila.adjuntos = adj;
     // v101: un aviso que ya se ve en la web y al que se le pone fecha de publicación futura desaparece hasta ese día: preguntar
     if (ED.k === "avisos" && ED.orig && fila.publicar_en && new Date(fila.publicar_en) > new Date() && !(ED.orig.publicar_en && new Date(ED.orig.publicar_en) > new Date())
-      && !confirm("Este aviso ya se ve en la web. Con «Programar la publicación» desaparecerá de la web hasta ese día.\n\nSi solo quieres que salga urgente o fijado ese día, pulsa «Cancelar», borra la fecha de «Programar» y usa «Destacar desde».\n\n¿Esconderlo hasta ese día?")) { btn.disabled = false; return msg("ed-msg", ""); }
-    if (fila.destacar_desde && fila.destacar_hasta && new Date(fila.destacar_hasta) <= new Date(fila.destacar_desde)) { btn.disabled = false; return msg("ed-msg", "«Destacar hasta» tiene que ser después de «Destacar desde».", false); }
+      && !confirm("Este aviso ya se ve en la web. Con «Programar la publicación» desaparecerá de la web hasta ese día.\n\nSi solo quieres que salga destacado en Inicio ese día, pulsa «Cancelar», borra la fecha de «Programar» y usa «Destacar en Inicio el día».\n\n¿Esconderlo hasta ese día?")) { btn.disabled = false; return msg("ed-msg", ""); }
     if (fila.publicar_en && new Date(fila.publicar_en) < new Date(Date.now() - 60000)) { if (!confirm("La fecha programada ya ha pasado. ¿Publicar ahora?")) { btn.disabled = false; return msg("ed-msg", ""); } fila.publicar_en = null; }
     const reavisar = !!(ED.orig && $("f-reavisar")?.checked);
     if (reavisar) Object.assign(fila, { notificar: true, notificado: false });
@@ -592,6 +595,7 @@ function aplicarCondiciones() {
 const DIAS_SEMANA = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
 const horaCorta = (h) => String(h || "09:00").slice(0, 5);
 function frecTxt(x) {
+  if (x.frecuencia === "diaria") return `Cada día a las ${horaCorta(x.hora)}` + (x.hasta ? `, hasta el ${fechaLarga(x.hasta + "T12:00:00")}` : "");
   if (x.frecuencia === "semanal") return `Cada ${DIAS_SEMANA[(x.dia_semana || 1) - 1]} a las ${horaCorta(x.hora)}`;
   if (x.frecuencia === "anual") return `Cada ${x.dia_mes || 1} de ${MESES[(x.mes || 1) - 1]} a las ${horaCorta(x.hora)}`;
   return `El día ${x.dia_mes || 1} de cada mes a las ${horaCorta(x.hora)}`;
@@ -602,7 +606,8 @@ function proximaVez(x) {
   const ahora = new Date(), [hh, mm] = horaCorta(x.hora).split(":").map(Number), hoyIso = isoLocal(ahora);
   for (let i = 0; i < 400; i++) {
     const d = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + i), ultimo = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-    const toca = x.frecuencia === "semanal" ? ((d.getDay() + 6) % 7) + 1 === Number(x.dia_semana || 1)
+    if (x.hasta && isoLocal(d) > x.hasta) return "ya no se publicará más (terminó el " + fechaLarga(x.hasta + "T12:00:00") + ")"; // v102
+    const toca = x.frecuencia === "diaria" ? true : x.frecuencia === "semanal" ? ((d.getDay() + 6) % 7) + 1 === Number(x.dia_semana || 1)
       : x.frecuencia === "anual" ? d.getMonth() + 1 === Number(x.mes || 1) && d.getDate() === Math.min(Number(x.dia_mes || 1), ultimo)
       : d.getDate() === Math.min(Number(x.dia_mes || 1), ultimo);
     if (!toca) continue;
@@ -613,22 +618,23 @@ function proximaVez(x) {
 }
 SECCIONES.recurrentes = {
   nombre: "Avisos que se repiten", icono: "reloj2", tabla: "avisos_recurrentes", orden: ["id", false], uno: "aviso que se repite", nuevo: "Nuevo aviso que se repite", lista: "aviso", campoColor: "categoria",
-  intro: "Avisos que se publican solos cada semana, cada mes o cada año, a la hora que elijas. Por ejemplo: «Recuerda entregar la hoja de horas», el día 25 de cada mes.",
+  intro: "Avisos que se publican solos cada día, cada semana, cada mes o cada año, a la hora que elijas, hasta el día que quieras. Por ejemplo: «Recuerda entregar la hoja de horas», el día 25 de cada mes.",
   campos: [
     { k: "titulo", l: "Título", t: "text", req: true, ph: "Ej: Recuerda entregar la hoja de horas" },
     { k: "categoria", l: "Categoría", t: "select", lista: "aviso" },
     { k: "contenido", l: "Texto del aviso", t: "textarea", formato: true },
-    { k: "frecuencia", l: "Cada cuánto se publica", t: "select", ops: [["mensual", "Cada mes"], ["semanal", "Cada semana"], ["anual", "Cada año"]], def: "mensual" },
+    { k: "frecuencia", l: "Cada cuánto se publica", t: "select", ops: [["mensual", "Cada mes"], ["semanal", "Cada semana"], ["diaria", "Cada día"], ["anual", "Cada año"]], def: "mensual" },
     { fila: [
       { k: "dia_mes", l: "Día del mes", t: "select", num: true, ops: Array.from({ length: 31 }, (_, i) => [i + 1, String(i + 1)]), def: 1, si: "frecuencia:mensual,anual" },
       { k: "mes", l: "Mes", t: "select", num: true, ops: MESES.map((m, i) => [i + 1, m.charAt(0).toUpperCase() + m.slice(1)]), def: 1, si: "frecuencia:anual" },
       { k: "dia_semana", l: "Día de la semana", t: "select", num: true, ops: DIAS_SEMANA.map((d, i) => [i + 1, d.charAt(0).toUpperCase() + d.slice(1)]), def: 1, si: "frecuencia:semanal" },
       { k: "hora", l: "Hora", t: "time", def: "09:00" },
     ] },
+    { k: "hasta", l: "Repetir hasta", t: "date", opc: true, ayuda: "El último día en que se publica. Déjalo vacío para que se repita siempre." },
     { checks: [{ k: "activo", l: "Activo (desmárcalo para pausarlo sin borrarlo)", def: true }, { k: "urgente", l: "Urgente: sale en rojo y arriba del todo" }, { k: "notificar", l: "Avisar en los móviles y en Telegram cada vez", def: true }] },
   ],
   ayuda: "Si eliges el día 31 y el mes tiene menos días, se publica el último día del mes.",
   previa: (x) => `<p class="proxima-vez">${icono("reloj2", "p")}<span>${esc(frecTxt(x))}.<br><b>Próxima vez: ${esc(proximaVez(x))}</b></span></p>` + previaCanales({ ...x, fecha: new Date().toISOString(), id: 0 }),
-  extracto: (x) => x.contenido, chips: (x) => [frecTxt(x), x.activo === false ? "Pausado" : "Activo", x.ultima_publicacion && "Última vez: " + fechaLarga(x.ultima_publicacion + "T12:00:00")], fechas: (x) => [x.creado, x.actualizado],
+  extracto: (x) => x.contenido, chips: (x) => [frecTxt(x), x.activo === false ? "Pausado" : x.hasta && x.hasta < isoLocal(new Date()) ? "Terminado" : "Activo", x.ultima_publicacion && "Última vez: " + fechaLarga(x.ultima_publicacion + "T12:00:00")], fechas: (x) => [x.creado, x.actualizado],
 };
 

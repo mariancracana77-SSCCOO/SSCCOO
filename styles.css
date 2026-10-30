@@ -2091,4 +2091,10 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 /* v99: kilómetros del mes y de cada semana en «Mes» (lo pidió el padre) */
 .gan-semanas small.gan-km { display: block; color: var(--tinta); font-weight: 700; }
 .gan-km-arriba { margin-top: 10px; }
-.gan-dias button small.gan-km-dia { display: block; margin-top: 2px; color: var(--tinta); font-weight: 700; font-size: .875rem; }
+
+/* v102: día libre en «Mis incentivos» (lo pidió el padre) */
+.gan-libre-btn { margin: 10px 0 4px; width: 100%; justify-content: center; }
+.gan-libre-aviso { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 10px 0 4px; padding: 10px 12px; border-radius: 10px; background: var(--fondo); border: 2px solid var(--linea); font-weight: 700; }
+.gan-libre-aviso .icono { color: var(--rojo-ic); }
+.gan-libre-aviso span { flex: 1 1 12em; }
+.gan-dias button small.gan-libre-etq { display: inline-block; padding: 1px 10px; border-radius: 999px; border: 1.5px solid var(--linea); color: var(--tinta); font-weight: 700; }
