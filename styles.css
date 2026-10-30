@@ -2064,7 +2064,19 @@ html[data-theme="dark"] .gan-zona.z-gb, html[data-theme="dark"] .gan-zona.z-int 
 html[data-theme="dark"] .gan-grupo.z-gb { border-color: #8a96a6; }
 html[data-theme="dark"] .gan-grupo.z-int { border-color: #5B7FD6; }
 @media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .gan-grupo.z-gb { border-color: #8a96a6; } html:not([data-theme="light"]) .gan-grupo.z-int { border-color: #5B7FD6; } }
-.gan-precio > span .gan-zona { margin-right: 6px; }
+/* En Ajustes («Lo que cobras tú»): la etiqueta no se estira (`.gan-precio span` es una rejilla) y los grupos con zona van en su caja, como en «Día» */
+.gan-precio > span > .gan-zona { display: inline-flex; justify-self: start; gap: 5px; margin-bottom: 2px; }
+.gan-precios-grupo.z-nac, .gan-precios-grupo.z-int, .gan-precios-grupo.z-gb { border: 2px solid var(--linea); border-radius: 10px; padding: 0 12px 10px; margin-block: 8px; overflow: hidden; }
+.gan-precios-grupo.z-nac h4, .gan-precios-grupo.z-int h4, .gan-precios-grupo.z-gb h4 { margin: 0 -12px 4px; padding: 8px 12px; font-family: var(--cond); font-size: 1.15rem; color: #fff; }
+.gan-precios-grupo.z-nac { border-color: var(--rojo); }
+.gan-precios-grupo.z-nac h4 { background: var(--fondo) var(--es-bandera) right 10px center / 2.2em auto no-repeat; color: var(--tinta); border-bottom: 2px solid var(--rojo); padding-right: calc(2.2em + 20px); }
+.gan-precios-grupo.z-int { border-color: var(--ue-azul); }
+.gan-precios-grupo.z-int h4 { background: var(--ue-azul) var(--ue-estrellas) right 10px center / 1.9em no-repeat; padding-right: calc(1.9em + 20px); }
+.gan-precios-grupo.z-gb { border-color: #15191E; }
+.gan-precios-grupo.z-gb h4 { background: #15191E; }
+html[data-theme="dark"] .gan-precios-grupo.z-int { border-color: #5B7FD6; }
+html[data-theme="dark"] .gan-precios-grupo.z-gb { border-color: #8a96a6; }
+@media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .gan-precios-grupo.z-int { border-color: #5B7FD6; } html:not([data-theme="light"]) .gan-precios-grupo.z-gb { border-color: #8a96a6; } }
 /* Filas con zona dentro de un grupo sin zona («Dieta completa internacional / nacional»): raya de su color a la izquierda */
 .gan-fila.fila-z-nac, .gan-fila.fila-z-int, .gan-fila.fila-z-gb { box-shadow: inset 4px 0 0 var(--zc); padding-left: 14px; border-radius: 4px; }
 .gan-fila.fila-z-nac { --zc: var(--rojo); }
