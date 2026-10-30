@@ -396,7 +396,7 @@
     $("gan-ajustes").innerHTML = `<div class="gan-aj-resumen" id="gan-aj-resumen" aria-live="polite"></div>
       <details class="gan-checks gan-precios" open><summary>${esc(T("Lo que cobras tú"))}</summary>
         <p class="ayuda">${esc(T("Cada persona cobra distinto (antigüedad, horas sindicales…). Pon tu importe donde no te cuadre la tabla; si lo dejas vacío, se usa el de la tabla."))}</p>
-        ${grupos.map(g => `<div class="gan-precios-grupo">${g.n ? `<h4>${esc(TD(g.n))}</h4>` : ""}${g.ts.map(t => `<label class="gan-precio"><span>${zonaHTML(t)}${esc(TD(t.concepto))}<small>${esc(UNIDAD()[t.unidad])}${t === sal ? " · " + esc(T("con antigüedad")) : ""}</small></span>
+        ${grupos.map(g => `<div class="gan-precios-grupo ${zonaTxt(g.n) ? "z-" + zonaTxt(g.n) : ""}">${g.n ? `<h4>${esc(TD(g.n))}</h4>` : ""}${g.ts.map(t => `<label class="gan-precio"><span>${zonaHTML(t)}${esc(TD(t.concepto))}<small>${esc(UNIDAD()[t.unidad])}${t === sal ? " · " + esc(T("con antigüedad")) : ""}</small></span>
           <input inputmode="decimal" data-precio="${t.id}" value="${esc(valor(t))}" placeholder="${esc(base(t) ? precio(base(t)) : T("tu precio"))}" aria-label="${esc(TD(t.concepto) + " · " + UNIDAD()[t.unidad])}"></label>`).join("")}</div>`).join("")}
       </details>
       ${fm.length ? `<fieldset class="gan-checks"><legend>${esc(T("Lo que cobro fijo cada mes"))}</legend>${fm.map(t => `<label class="check"><input type="checkbox" data-fijo="${t.id}" ${cobraFijo(t) ? "checked" : ""}><span>${esc(TD(t.concepto))} · ${esc(precio(imp(t)))}</span></label>`).join("")}</fieldset>` : ""}
