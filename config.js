@@ -3,7 +3,7 @@
 window.SUPABASE_URL = "https://kdfedwcskymaitvpryvg.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_RLt0HuAMskXkKl2hxhUF2w_sCexGznp";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "95"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "96"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/SSCCOO/";
 // Clave pública de las notificaciones (la privada solo está en el servidor)
 window.VAPID_PUBLICA = "BMMdZjehtNipsScHJ__kzOIn9XCgIpya3UDDRlexxOAWJU-J6ZICDlf72ItPOebzl-SfzoU234pd82Chp87Vm1w";
@@ -316,4 +316,5 @@ window.irAGuia = (sel) => {
   };
   setTimeout(busca, 60);
 };
-window.guiaPasosHTML = (pasos, T) => `<ol class="desc-guia-pasos">${pasos.map(([t, d, ir], i) => `<li><b>${esc(t)}</b><span>${esc(d)}</span>${ir ? `<button type="button" class="guia-ir" data-guia-ir="${i}" aria-label="${esc(T("Ir a: {t}", { t }))}">${esc(T("Ir"))}<svg class="icono p" aria-hidden="true"><use href="#i-der"/></svg></button>` : ""}</li>`).join("")}</ol>`;
+// tx = { ir, irA(t) }: los textos del botón, ya traducidos por cada sección (tienen que estar escritos como T("…") en su archivo para que se traduzcan)
+window.guiaPasosHTML = (pasos, tx) => `<ol class="desc-guia-pasos">${pasos.map(([t, d, ir], i) => `<li><b>${esc(t)}</b><span>${esc(d)}</span>${ir ? `<button type="button" class="guia-ir" data-guia-ir="${i}" aria-label="${esc(tx.irA(t))}">${esc(tx.ir)}<svg class="icono p" aria-hidden="true"><use href="#i-der"/></svg></button>` : ""}</li>`).join("")}</ol>`;

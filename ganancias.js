@@ -53,7 +53,7 @@
     const f = FIJOS(), v = $("v-ganancias"), idi = miIdioma();
     v.querySelectorAll("[data-gt]").forEach(el => { const t = f[el.dataset.gt]; if (t) el.textContent = t; });
     const pasos = GUIA(), guia = $("gan-guia-cuerpo");
-    guia.innerHTML = guiaPasosHTML(pasos, T);
+    guia.innerHTML = guiaPasosHTML(pasos, { ir: T("Ir"), irA: (t) => T("Ir a: {t}", { t }) });
     guia.querySelectorAll("[data-guia-ir]").forEach(b => b.onclick = () => { const d = pasos[+b.dataset.guiaIr][2]; if (d.tab) { DATOS.tab = d.tab; guarda(); pinta(); } irAGuia(d.sel); });
     v.setAttribute("dir", idi === "ar" ? "rtl" : "ltr"); v.setAttribute("lang", idi || "es");
     const sel = $("gan-idioma");
