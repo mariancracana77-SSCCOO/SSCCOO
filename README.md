@@ -75,6 +75,11 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 100: kilómetros en «Semana» de «Mis incentivos»
+
+- **Kilómetros de la semana arriba del todo** (lo pidió el padre), justo debajo de «Esta semana … €», como en el mes.
+- **Cada día lleva sus kilómetros y los acumulados de la semana**: «589 km · llevas 1232 km esta semana».
+
 ## Versión 99: kilómetros en «Mes» de «Mis incentivos»
 
 - **Kilómetros del mes** (lo pidió el padre): en «Mes» sale una cifra con el total de kilómetros apuntados (la suma de todas las semanas) y, en «Por semanas», los kilómetros de cada semana. El PDF del mes lo dice también en «Cuentas del mes».
