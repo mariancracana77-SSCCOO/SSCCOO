@@ -2087,3 +2087,6 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 @media (prefers-color-scheme: dark) { html:not([data-theme="light"]) .gan-fila.fila-z-int { --zc: #5B7FD6; } }
 .gan-fila.con-zona { grid-template-areas: "zona zona" "txt ctrl" "txt imp"; }
 .gan-fila > .gan-zona { grid-area: zona; justify-self: start; }
+
+/* v99: kilómetros del mes y de cada semana en «Mes» (lo pidió el padre) */
+.gan-semanas small.gan-km { display: block; color: var(--tinta); font-weight: 700; }

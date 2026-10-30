@@ -353,6 +353,9 @@
     v.querySelectorAll("[data-ir-dia]").forEach(b => b.onclick = () => { DATOS.dia = b.dataset.irDia; DATOS.tab = "dia"; guarda(); pinta(); });
   }
 
+  // v99: kilómetros apuntados en esos días (conceptos «por km» que se usan), para «Mes» y su PDF (lo pidió el padre)
+  const kmDe = (ds) => { const ids = TARIFAS.filter(t => t.unidad === "km" && !DATOS.oculto[t.id]).map(t => t.id); return Math.round(ds.reduce((s, f) => s + ids.reduce((x, id) => x + num((DATOS.dias[f] || {})[id]), 0), 0) * 100) / 100; };
+  const kmTxt = (n) => n.toLocaleString(LOC, { maximumFractionDigits: 1 }) + " km";
   function pintaMes(c) {
     const m = DATOS.mes || (DATOS.dia || hoy()).slice(0, 7), [a, mm] = m.split("-").map(Number), k = cuentasMes(c, m), r = k.r;
     const otroMes = (x) => iso(new Date(a, mm - 1 + x, 1)).slice(0, 7);
@@ -364,10 +367,11 @@
       <div class="desc-cifras gan-cifras">
         <div><b>${esc(eur(k.nomina))}</b><span>${esc(T("En la nómina de fin de mes: salario y lo que se paga con la nómina (nocturnidad, ADR fijo)"))}</span></div>
         <div><b>${esc(eur(k.semanal))}</b><span>${esc(T("Cobro semanal: dietas, suplementos, cargas, kilómetros, festivos, ADR por minuto y horas sindicales de {n} días apuntados (te los pagan por semanas)", { n: r.apuntados }))}</span></div>
+        ${(() => { const km = kmDe(Array.from({ length: new Date(a, mm, 0).getDate() }, (_, i) => `${m}-${String(i + 1).padStart(2, "0")}`)); return km ? `<div class="gan-km-mes"><b>${esc(kmTxt(km))}</b><span>${esc(T("Kilómetros del mes: la suma de todas las semanas"))}</span></div>` : ""; })()}
       </div>
       ${(() => { const ult = `${m}-${String(new Date(a, mm, 0).getDate()).padStart(2, "0")}`, sems = []; for (let l = lunesDe(m + "-01"); l <= ult; l = suma(l, 7)) sems.push(l);
-        const filas = sems.map(l => { const todos = diasDe(l), ds = todos.filter(f => f.slice(0, 7) === m), x = resumen(c, ds), w = semDe(l); return { l, ds, x, w, parte: ds.length < 7 }; }).filter(f => f.x.apuntados);
-        return filas.length ? `<h3 class="gan-sub">${esc(T("Por semanas"))}</h3><ul class="gan-dias gan-semanas">${filas.map(f => `<li><button type="button" data-ir-sem="${f.l}"><span>${esc(T("Semana {n}", { n: f.w.n }))}<small>${esc(T("Del {a} al {b}", { a: fDia(f.ds[0]), b: fDia(f.ds[f.ds.length - 1]) }))}${f.parte ? " · " + esc(T("solo los días de este mes")) : ""}</small></span><b>${esc(eur(f.x.total))}</b>${icono("der", "p")}</button></li>`).join("")}</ul>` : ""; })()}
+        const filas = sems.map(l => { const todos = diasDe(l), ds = todos.filter(f => f.slice(0, 7) === m), x = resumen(c, ds), w = semDe(l); return { l, ds, x, w, km: kmDe(ds), parte: ds.length < 7 }; }).filter(f => f.x.apuntados);
+        return filas.length ? `<h3 class="gan-sub">${esc(T("Por semanas"))}</h3><ul class="gan-dias gan-semanas">${filas.map(f => `<li><button type="button" data-ir-sem="${f.l}"><span>${esc(T("Semana {n}", { n: f.w.n }))}<small>${esc(T("Del {a} al {b}", { a: fDia(f.ds[0]), b: fDia(f.ds[f.ds.length - 1]) }))}${f.parte ? " · " + esc(T("solo los días de este mes")) : ""}</small>${f.km ? `<small class="gan-km">${esc(kmTxt(f.km))}</small>` : ""}</span><b>${esc(eur(f.x.total))}</b>${icono("der", "p")}</button></li>`).join("")}</ul>` : ""; })()}
       <h3 class="gan-sub">${esc(T("En la nómina"))}</h3>
       <ul class="gan-desglose">${k.fijos.map(x => `<li><span>${esc(TD(x.t.concepto))}${esPropio(x.t) ? ` <small>${esc(T("el tuyo, de «Ajustes»"))}</small>` : ""}</span><b>${esc(eur(x.imp))}</b></li>`).join("")}</ul>
       ${desglose({ por: enNomina })}
@@ -493,6 +497,7 @@
       if (op.mes) { // v88: el mes entero con la nómina (salario y fijos) y lo semanal
         const k = cuentasMes(c, op.mes);
         L.push(["Cuentas del mes", 15, true], ["Cobro semanal del mes: " + eur(k.semanal), 11, true, 6, C_SEM]);
+        { const kmM = kmDe(Object.keys(DATOS.dias).filter(f => f.slice(0, 7) === op.mes)); if (kmM) L.push(["Kilómetros del mes: " + kmM.toLocaleString("es-ES", { maximumFractionDigits: 1 }) + " km", 11, true, 6]); }
         k.fijos.forEach(x => L.push([x.t.concepto + ": " + eur(x.imp), 9, false, 14, C_NOM]));
         L.push(["Lo que va con la nómina de estos días (nocturnidad, ADR fijo…): " + eur(k.r.mensual), 9, false, 14, C_NOM], ["En la nómina de fin de mes: " + eur(k.nomina), 11, true, 6, C_NOM], ["Total del mes (bruto): " + eur(k.total), 15, true, 6, C_TOT], [""]);
       }
