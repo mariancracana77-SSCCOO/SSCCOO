@@ -2055,8 +2055,8 @@ html[data-theme="dark"] .gan-zona.z-gb, html[data-theme="dark"] .gan-zona.z-int 
 .gan-grupo.z-nac, .gan-grupo.z-int, .gan-grupo.z-gb { border: 2px solid var(--linea); border-radius: 10px; padding: 0 12px 6px; margin-block: 14px; overflow: hidden; }
 .gan-grupo.z-nac h3, .gan-grupo.z-int h3, .gan-grupo.z-gb h3 { margin: 0 -12px 6px; padding: 8px 12px; font-size: 1.25rem; color: #fff; }
 .gan-grupo.z-nac { border-color: var(--rojo); }
-/* v97: sobre el rojo no se veía la bandera: franja clara (la del fondo de la web) con línea amarilla debajo */
-.gan-grupo.z-nac h3 { background: var(--fondo) var(--es-bandera) right 10px center / 2.4em auto no-repeat; color: var(--tinta); border-bottom: 3px solid #F1BF00; padding-right: calc(2.4em + 20px); }
+/* v97: sobre el rojo no se veía la bandera: franja clara (la del fondo de la web) con línea roja debajo (la amarilla no gustó) */
+.gan-grupo.z-nac h3 { background: var(--fondo) var(--es-bandera) right 10px center / 2.4em auto no-repeat; color: var(--tinta); border-bottom: 2px solid var(--rojo); padding-right: calc(2.4em + 20px); }
 .gan-grupo.z-int { border-color: var(--ue-azul); }
 .gan-grupo.z-int h3 { background: var(--ue-azul) var(--ue-estrellas) right 10px center / 2.1em no-repeat; padding-right: calc(2.1em + 20px); }
 .gan-grupo.z-gb { border-color: #15191E; }

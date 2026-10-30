@@ -77,7 +77,7 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 
 ## Versión 97: bandera de España en lo nacional
 
-- **«Mis incentivos»: lo nacional lleva la bandera de España** (lo pidió el padre, como lo internacional lleva la de la Unión Europea): franja clara con la bandera a la derecha y una línea amarilla debajo en «Dieta fraccionada nacional» (sobre fondo rojo la bandera no se veía), etiqueta «Nacional» blanca con borde rojo y la banderita y, en «Dieta completa nacional», la raya de la izquierda con los colores de la bandera.
+- **«Mis incentivos»: lo nacional lleva la bandera de España** (lo pidió el padre, como lo internacional lleva la de la Unión Europea): franja clara con la bandera a la derecha y una línea roja debajo en «Dieta fraccionada nacional» (sobre fondo rojo la bandera no se veía), etiqueta «Nacional» blanca con borde rojo y la banderita y, en «Dieta completa nacional», la raya de la izquierda con los colores de la bandera.
 
 ## Versión 96: las guías rápidas se traducen
 
