@@ -3,7 +3,7 @@
 window.SUPABASE_URL = "https://kdfedwcskymaitvpryvg.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_RLt0HuAMskXkKl2hxhUF2w_sCexGznp";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "94"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "95"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/SSCCOO/";
 // Clave pública de las notificaciones (la privada solo está en el servidor)
 window.VAPID_PUBLICA = "BMMdZjehtNipsScHJ__kzOIn9XCgIpya3UDDRlexxOAWJU-J6ZICDlf72ItPOebzl-SfzoU234pd82Chp87Vm1w";
@@ -302,3 +302,18 @@ window.coincide = (texto, q) => {
     document.body.appendChild(b);
   });
 })();
+
+// v95: botón «Ir» de las guías rápidas: baja hasta el sitio y lo resalta un momento (espera a que se pinte si tarda)
+window.irAGuia = (sel) => {
+  let n = 0;
+  document.querySelectorAll(".guia-destaca").forEach(x => x.classList.remove("guia-destaca"));
+  const busca = () => {
+    const el = typeof sel === "function" ? sel() : document.querySelector(sel);
+    if (!el || !el.offsetParent) { if (n++ < 20) setTimeout(busca, 100); return; }
+    el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+    document.querySelectorAll(".guia-destaca").forEach(x => x.classList.remove("guia-destaca")); void el.offsetWidth; el.classList.add("guia-destaca");
+    clearTimeout(irAGuia.t); irAGuia.t = setTimeout(() => el.classList.remove("guia-destaca"), 2600);
+  };
+  setTimeout(busca, 60);
+};
+window.guiaPasosHTML = (pasos, T) => `<ol class="desc-guia-pasos">${pasos.map(([t, d, ir], i) => `<li><b>${esc(t)}</b><span>${esc(d)}</span>${ir ? `<button type="button" class="guia-ir" data-guia-ir="${i}" aria-label="${esc(T("Ir a: {t}", { t }))}">${esc(T("Ir"))}<svg class="icono p" aria-hidden="true"><use href="#i-der"/></svg></button>` : ""}</li>`).join("")}</ol>`;

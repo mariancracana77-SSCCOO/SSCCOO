@@ -52,18 +52,19 @@
   });
   // Guía rápida (plegable, traducible)
   const GUIA = () => [
-    [T("Al empezar a trabajar"), T("En «Hoy», pulsa «Empiezo la jornada» (si empezaste antes, pon antes la hora real). Te digo hasta qué hora puedes estar antes de parar para el descanso diario (11 h, 9 h reducido o partido 3 h + 9 h).")],
-    [T("Si empezaste antes"), T("Si ya son las 10 y empezaste a las 8, pon las 8 en el campo de la hora antes de pulsar «Empiezo la jornada». Con la jornada en marcha, también puedes cambiarla en «Cambiar la hora de inicio». Esas horas cuentan igual.")],
-    [T("Al parar"), T("Pulsa «Termino la jornada»: se apunta sola y empieza a contar tu descanso diario.")],
-    [T("El descanso semanal"), T("Cuando lo termines, ve a «Apuntar» > «Un descanso semanal» y pon cuándo empezó y acabó. Te calculo cuándo te toca el siguiente y si tienes horas que compensar.")],
-    [T("Si se te olvidó"), T("En «Apuntar» puedes poner a mano cualquier jornada o descanso de días pasados.")],
-    [T("Revisar"), T("En «Lo apuntado» ves todo, con filtros (semanales, en fin de semana, entre semana o jornadas). Lo que no cumple sale marcado en rojo.")],
-    [T("Corregir lo apuntado"), T("En «Lo apuntado», pulsa el lápiz de una jornada o de un descanso semanal para cambiar la hora de inicio o de fin.")],
-    [T("Avisos y copia"), T("En «Ajustes» eliges cuándo te avisa el móvil. Guarda de vez en cuando la copia en PDF para no perder nada.")],
+    [T("Al empezar a trabajar"), T("En «Hoy», pulsa «Empiezo la jornada» (si empezaste antes, pon antes la hora real). Te digo hasta qué hora puedes estar antes de parar para el descanso diario (11 h, 9 h reducido o partido 3 h + 9 h)."), { tab: "hoy", sel: () => document.querySelector("#desc-empieza") || document.querySelector("#desc-termina") }],
+    [T("Si empezaste antes"), T("Si ya son las 10 y empezaste a las 8, pon las 8 en el campo de la hora antes de pulsar «Empiezo la jornada». Con la jornada en marcha, también puedes cambiarla en «Cambiar la hora de inicio». Esas horas cuentan igual."), { tab: "hoy", sel: () => document.querySelector("#desc-hoy-hora") || document.querySelector("#desc-hoy-cambia") }],
+    [T("Al parar"), T("Pulsa «Termino la jornada»: se apunta sola y empieza a contar tu descanso diario."), { tab: "hoy", sel: () => document.querySelector("#desc-termina") || document.querySelector("#desc-empieza") }],
+    [T("El descanso semanal"), T("Cuando lo termines, ve a «Apuntar» > «Un descanso semanal» y pon cuándo empezó y acabó. Te calculo cuándo te toca el siguiente y si tienes horas que compensar."), { tab: "apuntar", apunte: "semanal", sel: '[data-form="semanal"]' }],
+    [T("Si se te olvidó"), T("En «Apuntar» puedes poner a mano cualquier jornada o descanso de días pasados."), { tab: "apuntar", sel: "[data-panel=apuntar] [data-apunte]" }],
+    [T("Revisar"), T("En «Lo apuntado» ves todo, con filtros (semanales, en fin de semana, entre semana o jornadas). Lo que no cumple sale marcado en rojo."), { tab: "lista", sel: "#desc-filtro" }],
+    [T("Corregir lo apuntado"), T("En «Lo apuntado», pulsa el lápiz de una jornada o de un descanso semanal para cambiar la hora de inicio o de fin."), { tab: "lista", sel: () => document.querySelector("#desc-lista [data-edita]") || document.querySelector("#desc-lista") }],
+    [T("Avisos y copia"), T("En «Ajustes» eliges cuándo te avisa el móvil. Guarda de vez en cuando la copia en PDF (en «Lo apuntado», abajo del todo) para no perder nada."), { tab: "ajustes", sel: () => [document.querySelector("#desc-avisar-caja"), document.querySelector("[data-panel=ajustes] .desc-opciones")].find(e => e && e.offsetParent) }],
   ];
   function pintaGuia() {
-    $("desc-guia-cuerpo").innerHTML = `<ol class="desc-guia-pasos">${GUIA().map(([t, d]) => `<li><b>${esc(t)}</b><span>${esc(d)}</span></li>`).join("")}</ol>
+    const pasos = GUIA(); $("desc-guia-cuerpo").innerHTML = `${guiaPasosHTML(pasos, T)}
       <p class="ayuda">${esc(T("Los descansos: diario de 11 h (o 9 h reducido, como mucho 3 veces entre dos semanales); semanal de 45 h (o 24 h reducido, devolviendo lo que falta antes de que acabe la tercera semana siguiente). Empieza el semanal antes de que pasen 6 días (144 h) desde el anterior."))}</p>`;
+    $("desc-guia-cuerpo").querySelectorAll("[data-guia-ir]").forEach(b => b.onclick = () => { const d = pasos[+b.dataset.guiaIr][2]; DATOS.tab = d.tab; if (d.apunte) DATOS.apunte = d.apunte; guarda(); pinta(); irAGuia(d.sel); });
   }
   function pintaFijos() {
     const f = FIJOS(), v = $("v-descansos"), idi = miIdioma();

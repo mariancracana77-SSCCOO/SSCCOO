@@ -75,6 +75,15 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 95: botón «Ir» en las guías rápidas y guía en «Aparcamientos en mi ruta»
+
+- **Botón «Ir» en cada paso de las guías rápidas** (lo pidió Lorena: «por si alguien no sabe»): en «Mis incentivos», «Mis descansos» y «Aparcamientos en mi ruta», cada paso de «Cómo se usa (guía rápida)» lleva un botón «Ir» que abre la pestaña que toca, baja hasta el sitio y lo marca en rojo un momento.
+- **Guía de «Mis incentivos» al día**: pasos nuevos «El ADR» (horas y minutos, cobro semanal) y «Copia de seguridad»; la hoja de trabajo ya estaba.
+- **Guía nueva en «Aparcamientos en mi ruta»**: calcular la ruta, pueblos con el mismo nombre, los aparcamientos y sus filtros, lista o mapa, cortes y peajes, el viaje, «Llevarme aquí» y el mapa sin ruta. Si aún no hay ruta, el «Ir» lleva al formulario.
+- «Mis descansos»: la guía decía que la copia estaba en «Ajustes»; está en «Lo apuntado».
+- **«Mis incentivos»: nacional, internacional y GB-CG-MA ya no se confunden** (lo pidió el padre: «Dormir», «Desayuno»… se llaman igual en los tres). Cada grupo va en su propia caja (nacional con borde rojo, internacional con franja roja, GB-CG-MA con franja oscura) y cada fila lleva su etiqueta «Nacional», «Internacional» o «GB-CG-MA». En el PDF sale «Dormir (nacional)». Los nombres del panel no cambian.
+- **Guía del panel** (para el padre) al día con «Importes de Mis incentivos», «Peajes camión» y lo nuevo para los conductores.
+
 ## Versión 94: ADR en horas y minutos, hoja de trabajo de cada semana y festivo en el cobro semanal
 
 - **«Mis incentivos»: los conceptos por minuto (ADR) se apuntan en horas y minutos** (lo pidió el padre): dos casillas, horas arriba y minutos abajo. La fila enseña el precio por hora y por minuto (0,49 € la hora · 0,0081 € el minuto) y el cálculo es el mismo: 2 h 30 min = 1,22 €. En el resumen y el PDF sale «2 h 30 min».
