@@ -44,7 +44,7 @@ document.addEventListener("click", (e) => {
   el.value = d ? new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16) : "";
   el.dispatchEvent(new Event("input", { bubbles: true })); el.dispatchEvent(new Event("change", { bubbles: true }));
 });
-const camposPlanos = (s) => s.campos.flatMap(c => c.fila || c.checks?.map(x => ({ ...x, t: "check" })) || [c]);
+const camposPlanos = (s) => s.campos.flatMap(c => c.nota ? [] : c.fila || c.checks?.map(x => ({ ...x, t: "check" })) || [c]);
 
 function abrirEditor(k, orig = null, preset = {}) {
   const s = SECCIONES[k];
@@ -73,6 +73,7 @@ function abrirEditor(k, orig = null, preset = {}) {
     (s.asistente && !orig ? asistenteHTML() : "") +
     (s.asistente && !orig ? `<div class="separador">Revisa el acta y publícala</div>` : "") +
     s.campos.map(c => {
+      if (c.nota) return `<p class="ayuda">${esc(c.nota)}</p>`; // v101: texto de ayuda suelto entre campos
       if (c.fila) return `<div class="fila">${c.fila.map(f => `<div${f.si ? ` data-si="${f.si}"` : ""}>${campoHTML(f, x[f.k] ?? def[f.k] ?? f.def)}</div>`).join("")}</div>`;
       if (c.checks) {
         const v = c.checks.filter(ch => !(ch.soloNuevo && orig));
@@ -347,6 +348,10 @@ $("ed-guardar").onclick = async () => {
     const adj = [...ED.existentes, ...subidos];
     if (ED.k === "documentos") { const a = adj[0]; Object.assign(fila, { url: a.url, nombre_archivo: a.nombre, tipo_archivo: a.tipo, tamano: a.tamano || null }); }
     else if (s.campos.some(c => c.t === "archivos")) fila.adjuntos = adj;
+    // v101: un aviso que ya se ve en la web y al que se le pone fecha de publicación futura desaparece hasta ese día: preguntar
+    if (ED.k === "avisos" && ED.orig && fila.publicar_en && new Date(fila.publicar_en) > new Date() && !(ED.orig.publicar_en && new Date(ED.orig.publicar_en) > new Date())
+      && !confirm("Este aviso ya se ve en la web. Con «Programar la publicación» desaparecerá de la web hasta ese día.\n\nSi solo quieres que salga urgente o fijado ese día, pulsa «Cancelar», borra la fecha de «Programar» y usa «Destacar desde».\n\n¿Esconderlo hasta ese día?")) { btn.disabled = false; return msg("ed-msg", ""); }
+    if (fila.destacar_desde && fila.destacar_hasta && new Date(fila.destacar_hasta) <= new Date(fila.destacar_desde)) { btn.disabled = false; return msg("ed-msg", "«Destacar hasta» tiene que ser después de «Destacar desde».", false); }
     if (fila.publicar_en && new Date(fila.publicar_en) < new Date(Date.now() - 60000)) { if (!confirm("La fecha programada ya ha pasado. ¿Publicar ahora?")) { btn.disabled = false; return msg("ed-msg", ""); } fila.publicar_en = null; }
     const reavisar = !!(ED.orig && $("f-reavisar")?.checked);
     if (reavisar) Object.assign(fila, { notificar: true, notificado: false });

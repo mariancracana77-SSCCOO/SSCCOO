@@ -103,7 +103,7 @@
   window.supabase = {
     createClient: () => ({
       from: consulta, auth, channel: () => canal, removeChannel() {},
-      rpc: async (n) => ({ data: n === "avisar_aparcamiento" ? "ok" : null, error: null }),
+      rpc: async (n) => ({ data: n === "avisar_aparcamiento" ? "ok" : n === "is_admin" ? true : null, error: null }),
       // «Fleuré» sin código postal: hay dos pueblos y la función pregunta cuál (como la de verdad)
       functions: { invoke: async (n, o) => ({ data: n === "traducir" && o?.body?.modo === "textos" ? { textos: { "Ir": "Mergi", "Ir a: {t}": "Mergi la: {t}", "Calcular la ruta": "Calculează ruta", "Cada día": "În fiecare zi", "Al empezar a trabajar": "Când începi lucrul" } } : n !== "ruta" ? null : typeof o?.body?.buscar === "string" ? { lugares: /fleur/i.test(o.body.buscar)
           ? [{ nombre: "Fleuré, France", detalle: "61200, Orne, Normandie, France", lat: 48.69, lon: -0.058 }, { nombre: "Fleuré, France", detalle: "86340, Vienne, Nouvelle-Aquitaine, France", lat: 46.478, lon: 0.522 }]

@@ -75,6 +75,13 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 101: destacar un aviso unos días sin que desaparezca
+
+- **«Destacar desde / hasta» en los avisos** (lo pidió el padre: al programar un aviso para destacarlo la semana que viene, desaparecía de la web hasta ese día). Ahora, en el editor de avisos, debajo de «Urgente» y «Fijar», hay dos fechas: el aviso se ve siempre en la web y solo sale urgente (en rojo, arriba) o fijado entre esas fechas. «Programar la publicación» sigue sirviendo para esconderlo hasta un día, y su ayuda lo explica.
+- Si se pone fecha en «Programar la publicación» a un aviso que ya se ve en la web, el panel pregunta antes de esconderlo y recuerda que existe «Destacar desde».
+- En la lista del panel, el aviso lleva la etiqueta «Destacado desde el … hasta el …».
+- Supabase: columnas `destacar_desde` y `destacar_hasta` en `comunicados` (migración `comunicados_destacar_fechas`).
+
 ## Versión 100: kilómetros en «Semana» de «Mis incentivos»
 
 - **Kilómetros de la semana arriba del todo** (lo pidió el padre), justo debajo de «Esta semana … €», como en el mes.
