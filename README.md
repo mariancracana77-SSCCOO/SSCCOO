@@ -75,6 +75,11 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 103: quitar el destacado de un aviso
+
+- **Botón «Quitar el destacado»** en el editor de avisos, junto a «Destacar en Inicio el día» (lo pidió el padre: no lo podía quitar). Borra el día y desmarca «Urgente» de una vez; luego se guarda.
+- Si se borra el día a mano y no se toca la casilla «Urgente», al guardar el aviso deja de ser urgente (antes se quedaba urgente para siempre, porque el día destacado lo había marcado).
+
 ## Versión 102: destacar un aviso un día, avisos que se repiten hasta una fecha y días libres
 
 - **Avisos: «Destacar en Inicio el día»** (lo pidió el padre). Sustituye a «Destacar desde / hasta» de la v101: el aviso se ve en la web como siempre y solo ese día (de 0:00 a 23:59) sale destacado en rojo arriba del todo en Inicio. Al guardar con ese día, el aviso se marca como urgente; el resto de días sale como un aviso normal. «Fijar» ya no depende de la fecha.
