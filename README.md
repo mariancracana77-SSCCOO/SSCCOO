@@ -78,6 +78,7 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 ## Versión 103: quitar el destacado de un aviso
 
 - **Botón «Quitar el destacado»** en el editor de avisos, junto a «Destacar en Inicio el día» (lo pidió el padre: no lo podía quitar). Borra el día y desmarca «Urgente» de una vez; luego se guarda.
+- **El aviso destacado ya no desaparece de «Lo último»** (lo pidió el padre: que no se quite nada): sale arriba en Inicio y también en su sitio.
 - Si se borra el día a mano y no se toca la casilla «Urgente», al guardar el aviso deja de ser urgente (antes se quedaba urgente para siempre, porque el día destacado lo había marcado).
 
 ## Versión 102: destacar un aviso un día, avisos que se repiten hasta una fecha y días libres
