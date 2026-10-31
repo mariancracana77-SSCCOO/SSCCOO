@@ -664,3 +664,6 @@ label.sin-guardar::after { content: " · sin guardar"; color: var(--rojo-ic); fo
 @media (max-width: 999px) { #nav-admin button { font-size: clamp(.75rem, 3.5vw, .875rem); } }
 .plegable-est > summary { min-height: 44px; align-items: center; }
 .formato-mas summary { display: flex; align-items: center; min-height: 44px; }
+
+/* v103: botón para quitar el día destacado de un aviso */
+.quitar-destacar { margin-top: 8px; min-height: 44px; }

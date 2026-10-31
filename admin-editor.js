@@ -93,6 +93,13 @@ function abrirEditor(k, orig = null, preset = {}) {
     el.addEventListener("change", () => { ED.sucio = true; actualizarPrevia(); });
   });
   if (orig?.destacar_desde && $("f-destacar_dia")) $("f-destacar_dia").value = isoLocal(new Date(orig.destacar_desde)); // v102
+  // v103: botón para quitar el día destacado (en el móvil cuesta vaciar una fecha): borra el día y desmarca «Urgente»
+  if ($("f-destacar_dia")) {
+    $("f-destacar_dia").insertAdjacentHTML("afterend", `<button type="button" class="btn sec quitar-destacar" id="b-quitar-destacar">${icono("borrar", "p")}Quitar el destacado</button>`);
+    const qd = $("b-quitar-destacar"), ver = () => qd.classList.toggle("oculto", !$("f-destacar_dia").value);
+    ver(); $("f-destacar_dia").addEventListener("input", ver); $("f-destacar_dia").addEventListener("change", ver);
+    qd.onclick = () => { $("f-destacar_dia").value = ""; if ($("f-urgente")) $("f-urgente").checked = false; ver(); ED.sucio = true; actualizarPrevia(); msg("ed-msg", "Quitado el destacado. Pulsa el botón de guardar para que se aplique.", true); };
+  }
   ofrecerBorrador();
   $("ed-form").querySelectorAll("textarea.crece").forEach(t => { if (t.style.minHeight) t.classList.add("corta"); requestAnimationFrame(() => creceTexto(t)); });
   if (s.asistente && !orig) prepararAsistente();
@@ -313,6 +320,8 @@ $("ed-guardar").onclick = async () => {
   // v102: «Destacar en Inicio el día» se guarda como destacar_desde/hasta (ese día entero) y lo pone urgente
   if ("destacar_dia" in fila) { const d = fila.destacar_dia; delete fila.destacar_dia;
     Object.assign(fila, d ? { destacar_desde: new Date(d + "T00:00:00").toISOString(), destacar_hasta: new Date(d + "T23:59:59").toISOString(), urgente: true } : { destacar_desde: null, destacar_hasta: null });
+    // v103: si se quita el día y la casilla «Urgente» no se ha tocado, deja de ser urgente (lo puso el día destacado)
+    if (!d && ED.orig?.destacar_desde && fila.urgente === !!ED.orig.urgente) fila.urgente = false;
     // Ese día se avisa a los móviles («DESTACADO HOY», tarea de la función notificar). Si cambia el día, se vuelve a avisar;
     // si es un aviso nuevo para hoy que ya avisa al publicarse, no se manda dos veces.
     if (d && (!ED.orig || isoLocal(new Date(ED.orig.destacar_desde || 0)) !== d)) fila.destacado_avisado = !ED.orig && d === isoLocal(new Date()) && fila.notificar !== false; }

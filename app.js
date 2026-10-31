@@ -290,7 +290,8 @@ function pintaInicio() {
   // Todo lo publicado, por fecha
   const ICONOS = { aviso: ["avisos", "c-verde"], fecha: ["calendario", "c-azul"], acta: ["actas", "c-ambar"], doc: ["carpeta", "c-rojo"], conv: ["convenio", "c-morado"], preg: ["pregunta", "c-gris"], pub: ["carpeta", "c-turquesa"] };
   const items = [
-    ...D.avisos.filter(a => a !== urg).map(a => ({ reg: "comunicados:" + a.id, cs: "contenido", rs: 90, f: a.fecha, k: "aviso", que: "Aviso" + (a.fijado ? " · fijado" : ""), t: a.titulo, s: resumenPlano(a.contenido, 90), h: "#aviso-" + a.id, adj: (a.adjuntos || []).length, foto: (a.adjuntos || []).find(esImagen) })),
+    ...D.avisos.map(a => // v103 (lo pidió el padre): el destacado de arriba sigue también en «Lo último», no desaparece de su sitio
+       ({ reg: "comunicados:" + a.id, cs: "contenido", rs: 90, f: a.fecha, k: "aviso", que: "Aviso" + (a.fijado ? " · fijado" : ""), t: a.titulo, s: resumenPlano(a.contenido, 90), h: "#aviso-" + a.id, adj: (a.adjuntos || []).length, foto: (a.adjuntos || []).find(esImagen) })),
     ...D.eventos.filter(e => e.fecha >= hoy && !esFestivo(e)).map(e => ({ reg: "eventos:" + e.id, cs: "lugar", f: e.creado, k: "fecha", que: "Fecha · " + cuandoEvento(e), t: e.titulo, s: e.lugar || "", h: "#calendario", dia: e.fecha })),
     ...D.actas.map(a => ({ reg: "actas:" + a.id, cs: a.acuerdos ? "" : "resumen", rs: 90, f: a.creado, k: "acta", que: "Acta" + (a.fecha ? " · " + fechaDia(a.fecha).toLocaleDateString("es-ES", { day: "numeric", month: "long" }) : ""), t: a.titulo, s: a.acuerdos ? (a.acuerdos.split("\n").filter(l => l.trim()).length + " acuerdo(s)") : resumenPlano(a.resumen, 90), h: "#actas" })),
     ...D.docs.map(d => ({ reg: "documentos:" + d.id, cs: "descripcion", f: d.fecha, k: "doc", que: "Documento · " + tipoArchivo(d.tipo_archivo, d.nombre_archivo).txt, t: d.titulo, s: d.descripcion || "", url: d.url, id: d.id })),
