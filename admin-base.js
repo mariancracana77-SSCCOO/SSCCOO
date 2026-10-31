@@ -47,10 +47,12 @@ const SECCIONES = {
       { k: "contenido", l: "Texto del aviso", t: "textarea", formato: true },
       { k: "adjuntos", l: "Archivos adjuntos", t: "archivos", opc: true, ayuda: "Si añades una foto o un cartel, la primera foto sale en grande en el aviso y en «Lo último»." },
       { checks: [{ k: "urgente", l: "Urgente: sale en rojo y arriba del todo en Inicio" }, { k: "fijado", l: "Fijar arriba de la lista de avisos" }, { k: "notificar", l: "Avisar en los móviles y en el canal de Telegram", def: true, soloNuevo: true }] },
-      { k: "publicar_en", l: "Programar la publicación", t: "datetime-local", opc: true, atajos: true, ayuda: "Déjalo vacío para publicar ahora. Si pones día y hora, se publicará y avisará solo en ese momento." },
+      // v101–v102 (lo pidió el padre): el aviso se ve siempre y solo ese día sale destacado arriba en Inicio; «Programar» lo esconde hasta ese día
+      { k: "destacar_dia", l: "Destacar en Inicio el día", t: "date", opc: true, ayuda: "El aviso se ve en la web como siempre y ese día (de 0:00 a 23:59) sale destacado en rojo arriba del todo en Inicio, y llega una notificación a todos los móviles y a Telegram. Déjalo vacío si no quieres destacarlo un día concreto." },
+      { k: "publicar_en", l: "Programar la publicación", t: "datetime-local", opc: true, atajos: true, ayuda: "Déjalo vacío para publicar ahora. Si pones día y hora, el aviso NO se ve en la web hasta ese momento, y entonces se publica y avisa. Para que se vea ya y solo se destaque un día, usa «Destacar en Inicio el día» y deja esto vacío. Para que se repita, usa «Avisos que se repiten»." },
     ],
     previa: (x) => previaCanales(x),
-    extracto: (x) => x.contenido, chips: (x) => [x.publicar_en && new Date(x.publicar_en) > new Date() ? "Programado: " + new Date(x.publicar_en).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : null, x.categoria, x.urgente && "Urgente", x.fijado && "Fijado"], fechas: (x) => [x.fecha, x.actualizado],
+    extracto: (x) => x.contenido, chips: (x) => [x.publicar_en && new Date(x.publicar_en) > new Date() ? "Programado: " + new Date(x.publicar_en).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : null, x.categoria, x.destacar_desde && "Destacado el " + new Date(x.destacar_desde).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }), x.urgente && !x.destacar_desde && "Urgente", x.fijado && "Fijado"], fechas: (x) => [x.fecha, x.actualizado],
   },
   calendario: {
     nombre: "Calendario", icono: "calendario", tabla: "eventos", orden: ["fecha", false], uno: "fecha", nuevo: "Nueva fecha", lista: "evento", campoColor: "tipo",

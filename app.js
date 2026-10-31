@@ -261,7 +261,7 @@ function pintaContadores() {
 function pintaInicio() {
   $("txt-inicio").textContent = D.paginas.inicio || "";
   const hoy = hoyISO(), ahora = Date.now(), DIA = 86400000;
-  const urg = ordenAvisos(D.avisos).find(a => a.urgente && ahora - new Date(a.fecha) < 14 * DIA);
+  const urg = ordenAvisos(D.avisos).find(a => a.urgente && ahora - new Date(a.destacar_desde || a.fecha) < 14 * DIA);
   const prox = D.eventos.filter(e => e.fecha >= hoy).sort((a, b) => (a.fecha + (a.hora || "")).localeCompare(b.fecha + (b.hora || "")));
   // Rótulo: lo urgente; si no hay, la próxima cita; si no, «todo en orden»
   let rot;
@@ -812,7 +812,9 @@ async function cargar(idNuevo) {
   // La web enseña solo lo publicado, también si en este móvil está abierta la sesión del panel
   // (el servidor a un administrador le da todo: avisos programados, publicaciones y apartados ocultos)
   const ahoraMs = Date.now();
-  D.avisos = (a.data || []).filter(x => !x.publicar_en || new Date(x.publicar_en).getTime() <= ahoraMs); D.eventos = e.data || []; D.convenio = (c.data || []).filter(x => x.visible !== false); D.docs = d.data || []; D.actas = ac.data || [];
+  D.avisos = (a.data || []).filter(x => !x.publicar_en || new Date(x.publicar_en).getTime() <= ahoraMs);
+  // v101–v102: «Destacar en Inicio el día» (lo pidió el padre): fuera de ese día el aviso se ve, pero sin urgente
+  D.avisos.forEach(x => { if (x.urgente && ((x.destacar_desde && new Date(x.destacar_desde).getTime() > ahoraMs) || (x.destacar_hasta && new Date(x.destacar_hasta).getTime() <= ahoraMs))) x.urgente = false; }); D.eventos = e.data || []; D.convenio = (c.data || []).filter(x => x.visible !== false); D.docs = d.data || []; D.actas = ac.data || [];
   D.paginas = Object.fromEntries((p.data || []).map(x => [x.slug, x.contenido]));
   pintaTextosPrivacidad();
   D.preguntas = pr.data || []; D.delegados = dl.data || []; D.enlaces = en.data || [];
@@ -937,7 +939,7 @@ async function verNovedades() {
   irAHash(x.t === "actas" ? "actas" : "documentos");
 }
 // Cambios que no se ven en la web (p. ej. el servidor marca «notificado» tras mandar el aviso): no hace falta recargar
-const SIN_EFECTO = ["notificado", "notificar", "actualizado", "ultima_publicacion"];
+const SIN_EFECTO = ["notificado", "notificar", "actualizado", "ultima_publicacion", "destacado_avisado"];
 const LISTA_DE = { comunicados: "avisos", actas: "actas", documentos: "docs", eventos: "eventos", publicaciones: "publicaciones" };
 function soloInterno(t, pl) {
   if (pl.eventType !== "UPDATE" || !pl.new || pl.new.id == null) return false;

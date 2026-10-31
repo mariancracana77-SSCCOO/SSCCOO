@@ -75,6 +75,23 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 102: destacar un aviso un día, avisos que se repiten hasta una fecha y días libres
+
+- **Avisos: «Destacar en Inicio el día»** (lo pidió el padre). Sustituye a «Destacar desde / hasta» de la v101: el aviso se ve en la web como siempre y solo ese día (de 0:00 a 23:59) sale destacado en rojo arriba del todo en Inicio. Al guardar con ese día, el aviso se marca como urgente; el resto de días sale como un aviso normal. «Fijar» ya no depende de la fecha.
+- **Avisos que se repiten: «Repetir hasta» y «Cada día»** (lo pidió el padre): se elige el último día en que se publica (vacío = siempre) y hay una frecuencia nueva, cada día. La vista previa dice cuándo sale la próxima vez o que ya terminó; en la lista sale «Terminado».
+- **«Mis incentivos»: día libre** (lo pidió el padre): en «Día», «Marcar este día como libre (no he trabajado)»; en «Semana» sale «Libre» en vez de «Sin apuntar», y en el PDF de la semana «Días libres: …». Va también en la copia y en la guía rápida.
+- **Aviso a todos los móviles el día que un aviso sale destacado** (lo pidió el padre): ese día llega «DESTACADO HOY: …» a todos los móviles y a Telegram, una sola vez, aunque el aviso sea antiguo. Si se cambia el día, se vuelve a avisar ese nuevo día. Función `notificar` v7 (copia en `herramientas/funciones/notificar.ts`) y columna `comunicados.destacado_avisado` (el historial no la apunta).
+- **«Mis incentivos»: banderas en «GB-CG-MA»** (lo pidió el padre: es más fácil de entender): Reino Unido, Suiza y Marruecos en la franja del grupo y en cada fila (en las filas solo las banderas, porque el texto no cabe).
+- **«Semana»: sin los kilómetros de cada día** (cargaba mucho la lista); el total de la semana sigue arriba.
+- Supabase: `avisos_recurrentes.hasta` (date), frecuencia `diaria` (nueva regla `avisos_recurrentes_frecuencia_v102`) y `publicar_recurrentes()` con las dos cosas.
+
+## Versión 101: destacar un aviso unos días sin que desaparezca
+
+- **«Destacar desde / hasta» en los avisos** (lo pidió el padre: al programar un aviso para destacarlo la semana que viene, desaparecía de la web hasta ese día). Ahora, en el editor de avisos, debajo de «Urgente» y «Fijar», hay dos fechas: el aviso se ve siempre en la web y solo sale urgente (en rojo, arriba) o fijado entre esas fechas. «Programar la publicación» sigue sirviendo para esconderlo hasta un día, y su ayuda lo explica.
+- Si se pone fecha en «Programar la publicación» a un aviso que ya se ve en la web, el panel pregunta antes de esconderlo y recuerda que existe «Destacar desde».
+- En la lista del panel, el aviso lleva la etiqueta «Destacado desde el … hasta el …».
+- Supabase: columnas `destacar_desde` y `destacar_hasta` en `comunicados` (migración `comunicados_destacar_fechas`).
+
 ## Versión 100: kilómetros en «Semana» de «Mis incentivos»
 
 - **Kilómetros de la semana arriba del todo** (lo pidió el padre), justo debajo de «Esta semana … €», como en el mes.
