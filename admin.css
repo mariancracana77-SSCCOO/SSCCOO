@@ -667,3 +667,6 @@ label.sin-guardar::after { content: " · sin guardar"; color: var(--rojo-ic); fo
 
 /* v103: botón para quitar el día destacado de un aviso */
 .quitar-destacar { margin-top: 8px; min-height: 44px; }
+
+/* v104: el calendario del panel no lleva columna de semana (la web sí, desde la v84): 7 columnas */
+.semana.cal-7, .dias.cal-7 { grid-template-columns: repeat(7, 1fr); }

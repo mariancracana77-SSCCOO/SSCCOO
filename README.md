@@ -75,6 +75,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 104: el calendario del panel, en su día
+
+- **Arreglo**: en el calendario del panel los días salían corridos una columna (el lunes 23 de noviembre aparecía debajo de la V). Pasaba desde la v84, cuando el calendario de la web ganó la columna con el número de semana: el del panel usaba los mismos estilos sin esa columna. Ahora el panel tiene sus 7 columnas (`.cal-7` en `admin.css`). Lo avisó el padre.
+
 ## Versión 103: quitar el destacado de un aviso
 
 - **Botón «Quitar el destacado»** en el editor de avisos, junto a «Destacar en Inicio el día» (lo pidió el padre: no lo podía quitar). Borra el día y desmarca «Urgente» de una vez; luego se guarda.

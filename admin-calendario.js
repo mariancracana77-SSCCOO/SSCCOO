@@ -33,8 +33,8 @@ async function pintaCalAdm() {
             <button class="btn-ic" id="cala-sig" aria-label="Mes siguiente">${icono("der", "p")}</button>
           </div>
         </div>
-        <div class="semana"><div>L</div><div>M</div><div>X</div><div>J</div><div>V</div><div>S</div><div>D</div></div>
-        <div class="dias" id="cala-dias"><p class="fecha-txt">Cargando…</p></div>
+        <div class="semana cal-7"><div>L</div><div>M</div><div>X</div><div>J</div><div>V</div><div>S</div><div>D</div></div>
+        <div class="dias cal-7" id="cala-dias"><p class="fecha-txt">Cargando…</p></div>
         <div class="leyenda" id="cala-leyenda"></div>
       </div>
       <div class="panel dia-detalle" id="cala-detalle"></div>
