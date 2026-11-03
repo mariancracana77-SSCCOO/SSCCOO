@@ -42,7 +42,7 @@
     [T("Cada día"), T("En «Día», marca lo que has hecho: dieta completa o partes (dormir, desayuno, comida, cena), noche fuera, cargas, kilómetros… El total sale arriba y se guarda solo."), { tab: "dia", sel: "#gan-dia .gan-total" }],
     [T("Día libre"), T("Si un día no has trabajado, en «Día» pulsa «Marcar este día como libre». En «Semana» saldrá «Libre» en vez de «Sin apuntar», y en el PDF de la semana."), { tab: "dia", sel: "#gan-libre" }],
     [T("Otro día"), T("Cambia de día con las flechas o tocando la fecha. «Copiar el día anterior» rellena lo mismo que el último día apuntado."), { tab: "dia", sel: "#gan-dia .gan-nav" }],
-    [T("El ADR"), T("En «Día», el ADR se apunta en horas y minutos: las horas arriba y los minutos abajo. Ves el precio por hora y por minuto, y va en el cobro semanal."), { tab: "dia", sel: () => document.querySelector("#gan-dia [data-hm]")?.closest(".gan-fila") }],
+    [T("El ADR"), T("En «Día», el ADR se apunta en horas y minutos: las horas arriba y los minutos abajo. Ves el precio por hora y por minuto, y va en el cobro semanal. La nocturnidad también se apunta en horas y minutos."), { tab: "dia", sel: () => document.querySelector("#gan-dia [data-en=minuto]")?.closest(".gan-fila") }],
     [T("Cobro semanal y nómina"), T("Lo que la empresa paga por semanas (dietas, suplementos, cargas, kilómetros, festivos, ADR por minuto, horas sindicales) sale como «Cobro semanal». Lo que va con el salario a fin de mes (nocturnidad, ADR fijo) sale como «En la nómina». Es la columna «Periodicidad pago» de la tabla de la empresa."), { tab: "mes", sel: "#gan-mes .gan-cifras" }],
     [T("La semana y el mes"), T("Arriba del todo ves siempre lo de hoy, lo de esta semana y lo del mes: toca una cifra para ir a esa vista. En «Semana» va cada día con la semana del año (la 44, la 45…) y puedes ir a una escribiendo su número. En «Mes», el total con el salario y lo que se cobra con la nómina, semana por semana."), { sel: "#gan-tira" }],
     [T("La hoja de trabajo"), T("En «Semana», abajo, haz una foto a la hoja de papel de esa semana (o elígela de la galería). Se guarda en este móvil con esa semana y la puedes bajar en PDF A4 para imprimirla. Cada semana tiene la suya."), { tab: "semana", sel: "#gan-hoja .botones" }],
@@ -90,6 +90,8 @@
   }
   const CASILLA = ["dia", "noche", "finde"], NUMERO = ["hora", "km", "minuto"];
   const UNIDAD = () => ({ mes: T("al mes"), dia: T("por día"), noche: T("por noche"), finde: T("por fin de semana"), vez: T("cada una"), hora: T("por hora"), km: T("por km"), minuto: T("por minuto") });
+  // v105 (lo pidió el padre): la nocturnidad (por hora) también se apunta en horas y minutos; se guarda en horas
+  const enHM = (t) => t.unidad === "hora" && /nocturn/i.test(t.concepto || "");
   const QUE = () => ({ hora: T("horas"), km: T("km"), minuto: T("minutos"), vez: T("veces") });
   const variables = () => TARIFAS.filter(t => t.unidad !== "mes");
   const fijosMes = () => TARIFAS.filter(t => t.unidad === "mes");
@@ -156,7 +158,7 @@
   }
   const hm = (n) => ({ h: Math.floor(n / 60), m: Math.round((n - Math.floor(n / 60) * 60) * 100) / 100 });
   const horasMin = (n) => { const { h, m } = hm(n); return h && m ? T("{h} h {m} min", { h, m: m.toLocaleString(LOC) }) : h ? T("{h} h", { h }) : T("{m} min", { m: m.toLocaleString(LOC) }); };
-  const cantidadTxt = (t, n) => CASILLA.includes(t.unidad) ? (n === 1 ? "" : "× " + n) : t.unidad === "vez" ? "× " + n : t.unidad === "minuto" ? horasMin(n) : n.toLocaleString(LOC, { maximumFractionDigits: 2 }) + " " + QUE()[t.unidad];
+  const cantidadTxt = (t, n) => CASILLA.includes(t.unidad) ? (n === 1 ? "" : "× " + n) : t.unidad === "vez" ? "× " + n : t.unidad === "minuto" ? horasMin(n) : enHM(t) ? horasMin(n * 60) : n.toLocaleString(LOC, { maximumFractionDigits: 2 }) + " " + QUE()[t.unidad];
   // v96: nacional, internacional y GB-CG-MA tienen conceptos que se llaman igual (Dormir, Desayuno…): cada fila lleva su etiqueta (lo pidió el padre)
   const zonaTxt = (x) => /GB-CG-MA/i.test(x) ? "gb" : /internacional/i.test(x) ? "int" : /\bnacional/i.test(x) ? "nac" : "";
   // La zona sale del grupo («Dieta fraccionada internacional») o, en las dietas de un grupo sin zona («Dieta completa»), del nombre
@@ -207,8 +209,8 @@
       const n = num(dia[t.id]), id = "gan-c" + t.id;
       if (CASILLA.includes(t.unidad)) return `<input type="checkbox" id="${id}" data-c="${t.id}" ${n ? "checked" : ""}>`;
       if (t.unidad === "vez") return `<span class="gan-paso"><button type="button" class="btn-ic" data-menos="${t.id}" aria-label="${esc(T("Quitar una"))}">−</button><b id="${id}" aria-live="polite">${n}</b><button type="button" class="btn-ic" data-mas="${t.id}" aria-label="${esc(T("Añadir una"))}">+</button></span>`;
-      if (t.unidad === "minuto") { const { h, m } = hm(n), val = (x) => x ? esc(String(x).replace(".", ",")) : ""; // v94: horas arriba y minutos abajo (se guardan como minutos)
-        return `<span class="gan-hm"><label><input id="${id}" class="gan-hm-i" data-hm="${t.id}" data-parte="h" inputmode="numeric" value="${val(h)}" placeholder="0" aria-label="${esc(T("horas"))}"><small>${esc(T("horas"))}</small></label><label><input class="gan-hm-i" data-hm="${t.id}" data-parte="m" inputmode="decimal" value="${val(m)}" placeholder="0" aria-label="${esc(T("minutos"))}"><small>${esc(T("minutos"))}</small></label></span>`; }
+      if (t.unidad === "minuto" || enHM(t)) { const { h, m } = hm(t.unidad === "hora" ? n * 60 : n), val = (x) => x ? esc(String(x).replace(".", ",")) : ""; // v94: horas arriba y minutos abajo (se guardan como minutos)
+        return `<span class="gan-hm"><label><input id="${id}" class="gan-hm-i" data-hm="${t.id}" data-en="${t.unidad}" data-parte="h" inputmode="numeric" value="${val(h)}" placeholder="0" aria-label="${esc(T("horas"))}"><small>${esc(T("horas"))}</small></label><label><input class="gan-hm-i" data-hm="${t.id}" data-en="${t.unidad}" data-parte="m" inputmode="decimal" value="${val(m)}" placeholder="0" aria-label="${esc(T("minutos"))}"><small>${esc(T("minutos"))}</small></label></span>`; }
       return `<input id="${id}" class="gan-num" data-c="${t.id}" inputmode="decimal" value="${n ? esc(String(n).replace(".", ",")) : ""}" placeholder="0" aria-label="${esc(QUE()[t.unidad])}"><small>${esc(QUE()[t.unidad])}</small>`;
     };
     const fila = (t) => { const l = linea(t), nota = [t.nota && TD(t.nota),
@@ -235,14 +237,15 @@
       <div class="botones">${anterior && !Object.keys(dia).length ? `<button class="btn sec" id="gan-copiar">${icono("copia", "p")}${esc(T("Copiar el día anterior ({fecha})", { fecha: fDia(anterior) }))}</button>` : ""}
         ${Object.keys(dia).length ? `<button class="btn sec" id="gan-vaciar">${icono("borrar", "p")}${esc(T("Vaciar este día"))}</button>` : ""}</div>`;
     pulsa("#gan-dia .gan-total b, #gan-dia .gan-mini-mes b", antes);
-    const v = $("gan-dia"), pon = (id, n) => { const d = { ...(DATOS.dias[f] || {}) }; if (n > 0) d[id] = Math.round(n * 100) / 100; else delete d[id]; if (Object.keys(d).length) DATOS.dias[f] = d; else delete DATOS.dias[f]; guarda(); };
+    const v = $("gan-dia"), pon = (id, n, prec = 100) => { const d = { ...(DATOS.dias[f] || {}) }; if (n > 0) d[id] = Math.round(n * prec) / prec; else delete d[id]; if (Object.keys(d).length) DATOS.dias[f] = d; else delete DATOS.dias[f]; guarda(); };
     v.querySelectorAll("[data-dia]").forEach(b => b.onclick = () => { DATOS.dia = suma(f, +b.dataset.dia); guarda(); pinta(); });
     v.querySelector("[data-ir-mes]").onclick = () => { DATOS.mes = f.slice(0, 7); DATOS.tab = "mes"; guarda(); pinta(); };
     $("gan-libre").onclick = () => { if (DATOS.libres[f]) delete DATOS.libres[f]; else DATOS.libres[f] = true; guarda(); pinta(); }; // v102: día libre (lo pidió el padre)
     $("gan-fecha").onchange = () => { if (/^\d{4}-\d\d-\d\d$/.test($("gan-fecha").value)) { DATOS.dia = $("gan-fecha").value; guarda(); pinta(); } };
     v.querySelectorAll("input[type=checkbox][data-c]").forEach(i => i.onchange = () => { pon(i.dataset.c, i.checked ? 1 : 0); pinta(); });
     v.querySelectorAll("[data-mas],[data-menos]").forEach(b => b.onclick = () => { const id = b.dataset.mas || b.dataset.menos; pon(id, Math.max(0, num(dia[id]) + (b.dataset.mas ? 1 : -1))); pinta(); $(`gan-c${id}`)?.parentElement.querySelector(b.dataset.mas ? "[data-mas]" : "[data-menos]")?.focus(); });
-    v.querySelectorAll(".gan-hm-i").forEach(i => i.onchange = () => { const q = (p) => v.querySelector(`[data-hm="${i.dataset.hm}"][data-parte="${p}"]`).value; pon(i.dataset.hm, Math.min(Math.floor(num(q("h"))) * 60 + num(q("m")), 100000)); pinta(); });
+    v.querySelectorAll(".gan-hm-i").forEach(i => i.onchange = () => { const q = (p) => v.querySelector(`[data-hm="${i.dataset.hm}"][data-parte="${p}"]`).value; const min = Math.min(Math.floor(num(q("h"))) * 60 + num(q("m")), 100000); // v105: las horas (nocturnidad…) también con minutos; se guardan en horas
+      pon(i.dataset.hm, i.dataset.en === "hora" ? min / 60 : min, i.dataset.en === "hora" ? 1e6 : 100); pinta(); });
     v.querySelectorAll(".gan-num").forEach(i => i.onchange = () => { pon(i.dataset.c, Math.min(num(i.value), 100000)); pinta(); });
     if ($("gan-copiar")) $("gan-copiar").onclick = () => { DATOS.dias[f] = { ...DATOS.dias[anterior] }; guarda(); pinta(); };
     if ($("gan-vaciar")) $("gan-vaciar").onclick = () => { if (!confirm(T("¿Vaciar lo apuntado este día?"))) return; delete DATOS.dias[f]; guarda(); pinta(); };
