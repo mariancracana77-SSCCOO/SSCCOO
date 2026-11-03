@@ -75,6 +75,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 105: nocturnidad en horas y minutos
+
+- **La nocturnidad se apunta en horas y minutos**, como el ADR (lo pidió el padre; las horas sindicales siguen igual): dos casillas, horas arriba y minutos abajo. Se siguen guardando en horas (20 minutos = 0,333 h), así que lo ya apuntado se ve igual (2,5 h sale como «2 h 30 min») y el importe es el mismo. La guía rápida lo cuenta.
+
 ## Versión 104: el calendario del panel, en su día
 
 - **Arreglo**: en el calendario del panel los días salían corridos una columna (el lunes 23 de noviembre aparecía debajo de la V). Pasaba desde la v84, cuando el calendario de la web ganó la columna con el número de semana: el del panel usaba los mismos estilos sin esa columna. Ahora el panel tiene sus 7 columnas (`.cal-7` en `admin.css`). Lo avisó el padre.
