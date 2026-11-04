@@ -75,6 +75,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 107: «Aparcamientos en mi ruta» deja de estar en pruebas
+
+- Fuera el aviso «En pruebas» arriba de la sección y la etiqueta «En pruebas» de su tarjeta en Zona Conductores (lo pidió el padre).
+
 ## Versión 106: añadir aparcamientos desde el mapa
 
 - **«Añadir aparcamiento» en el mapa** de «Aparcamientos en mi ruta» (lo pidió el padre). El conductor toca el sitio en el mapa (o usa su posición) y le pone nombre, plazas, vigilado, duchas, aseos y una nota.
