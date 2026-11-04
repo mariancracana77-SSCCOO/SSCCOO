@@ -75,6 +75,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 116: copias de seguridad completas (lo pidió Lorena)
+- Copia automática cada domingo dentro de Supabase (las 8 últimas). La copia del panel (Ajustes) ya lleva también delegados, enlaces, encuestas, peajes, prohibiciones, aparcamientos de los conductores y peticiones a Claude (con sus archivos), y enseña cuándo fue la última copia automática.
+
 ## Versión 115: el PDF de «Mis descansos» con colores (lo pidió el padre)
 - Como el de «Mis incentivos»: banda roja arriba, cada apartado con su franja oscura y colores fijos (verde = bien, naranja = reducido, rojo = atención o por compensar, azul = información), con la leyenda arriba.
 

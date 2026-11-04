@@ -83,8 +83,9 @@ async function pintaAjustes() {
     </div>
     <div class="panel tarjeta-ajuste" id="ajuste-copia">
       <h2>Copia de seguridad</h2>
-      <p class="ayuda">El plan gratuito no guarda copias. Descarga una al mes y guárdala en el ordenador o en el Drive: tiene todos los avisos, actas, convenio, calendario, preguntas y textos${" "}(y, si quieres, también los archivos).</p>
+      <p class="ayuda">Cada domingo de madrugada se guarda sola una copia dentro de Supabase (las 8 últimas): si algo se borra por error, Claude lo recupera de ahí. Pero si se perdiera todo el proyecto, se perdería con ella: descarga también una al mes y guárdala en el ordenador o en el Drive. Tiene todos los avisos, actas, convenio, calendario, preguntas, delegados, encuestas, importes, aparcamientos y textos${" "}(y, si quieres, también los archivos).</p>
       <p class="ayuda" id="ultima-copia"></p>
+      <p class="ayuda" id="ultima-copia-auto"></p>
       <div class="botones" style="margin-top:10px">
         <button class="btn" id="b-copia-todo">${icono("copia", "p")}Descargar copia con archivos</button>
         <button class="btn sec" id="b-copia-datos">${icono("descargar", "p")}Solo los textos</button></div>
@@ -424,7 +425,9 @@ async function prepararPlantillas() {
 }
 
 // ---------- Copia de seguridad y archivo ----------
-const TABLAS_COPIA = ["comunicados", "eventos", "convenio_secciones", "actas", "documentos", "preguntas", "plantillas", "apartados", "publicaciones", "buzon", "avisos_recurrentes", "calc_permisos", "calc_categorias", "calc_ajustes", "restricciones", "tarifas_conductor", "paginas", "opciones", "admins"];
+const TABLAS_COPIA = ["comunicados", "eventos", "convenio_secciones", "actas", "documentos", "preguntas", "plantillas", "apartados", "publicaciones", "buzon", "avisos_recurrentes", "calc_permisos", "calc_categorias", "calc_ajustes", "restricciones", "tarifas_conductor", "paginas", "opciones", "admins",
+  // v116: lo que se añadió después y no entraba en la copia
+  "delegados", "enlaces", "encuestas", "encuesta_votos", "peajes_paises", "prohibiciones_camion", "aparcamientos_compas", "aparcamientos_correcciones", "aparcamientos_opiniones", "peticiones_claude"];
 async function prepararCopiaYArchivo() {
   const { data } = await sb.from("paginas").select("slug, contenido, actualizado").in("slug", ["archivo_meses", "ultima_copia"]);
   const p = Object.fromEntries((data || []).map(x => [x.slug, x]));
@@ -434,6 +437,7 @@ async function prepararCopiaYArchivo() {
     error ? msg("m-archivo", errTxt(error)) : aviso("Guardado. Ya se aplica en la web.");
   };
   $("ultima-copia").innerHTML = p.ultima_copia?.contenido ? `Última copia: <b>${haceTxt(p.ultima_copia.contenido)}</b>.` : "<b>Todavía no se ha hecho ninguna copia.</b>";
+  sb.rpc("ultima_copia_auto").then(({ data }) => { if ($("ultima-copia-auto")) $("ultima-copia-auto").innerHTML = data ? `Última copia automática: <b>${haceTxt(data)}</b>.` : "Todavía no se ha hecho ninguna copia automática."; });
   $("b-copia-todo").onclick = () => hacerCopia(true);
   $("b-copia-datos").onclick = () => hacerCopia(false);
 }
@@ -454,9 +458,9 @@ async function hacerCopia(conArchivos) {
       await cargarJSZip();
       const zip = new JSZip();
       zip.file("datos.json", JSON.stringify(copia, null, 2));
-      zip.file("LEEME.txt", "Copia de seguridad de la web de la Sección Sindical CCOO Calsina Carré.\r\n\r\ndatos.json: todos los textos (avisos, actas, convenio, calendario, preguntas, plantillas, ajustes).\r\narchivos/: los PDF, fotos y documentos subidos.\r\n\r\nGuárdala en un sitio seguro. Si algún día hace falta recuperar algo, con este archivo se puede restaurar.");
+      zip.file("LEEME.txt", "Copia de seguridad de la web de la Sección Sindical CCOO Calsina Carré.\r\n\r\ndatos.json: todos los textos (avisos, actas, convenio, calendario, preguntas, plantillas, delegados, encuestas, importes, aparcamientos de los conductores, peticiones a Claude y ajustes).\r\narchivos/: los PDF, fotos y documentos subidos.\r\n\r\nGuárdala en un sitio seguro. Si algún día hace falta recuperar algo, con este archivo se puede restaurar.");
       const urls = new Map();
-      (copia.tablas.comunicados || []).concat(copia.tablas.actas || [], copia.tablas.convenio_secciones || [], copia.tablas.publicaciones || [])
+      (copia.tablas.comunicados || []).concat(copia.tablas.actas || [], copia.tablas.convenio_secciones || [], copia.tablas.publicaciones || [], copia.tablas.peticiones_claude || [])
         .forEach(x => (x.adjuntos || []).forEach(a => urls.set(a.url, a.nombre)));
       (copia.tablas.documentos || []).forEach(d => d.url && urls.set(d.url, d.nombre_archivo || d.titulo));
       let i = 0, fallos = 0;
