@@ -75,6 +75,14 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 108: mejoras de los mapas (lo pidió el padre)
+
+- **Dónde te toca parar.** Al calcular la ruta, sale en qué kilómetro y a qué hora tocan la pausa de 45 minutos (cada 4 h 30 de conducción) y el descanso diario (después de 9 h, o de 10 h si se marca), con los 3 aparcamientos más cercanos antes de cada parada. Si ya has conducido hoy, se pone en «¿Ya has conducido hoy?». Las horas de llegada de todos los aparcamientos ya cuentan las pausas.
+- **¿Algo está mal en este aparcamiento?** En cada aparcamiento hay un enlace para avisar a la sección de que ya no existe, de que no se puede aparcar con camión, de que tiene otras plazas o de otra cosa. Se envía sin saber quién lo manda. En el panel («Aparcamientos de los conductores»), al ponerlo en «Aplicado» se corrige para todos: se quita, se cambian las plazas o la nota sale como «Aviso de la sección».
+- **Prohibiciones de circular.** Si el día del viaje alguna prohibición pilla al camión en un país por donde pasa, sale un aviso con las horas. Las prohibiciones se editan en el panel («Prohibiciones de circular»). Están puestas las de cada semana de Alemania, Austria, Suiza, Francia e Italia, que hay que revisar, y faltan los festivos.
+- **Última ruta sin cobertura.** La última ruta calculada se guarda en el móvil y se abre con «Abrir la última ruta», aunque no haya internet.
+- **Copia de «Mis aparcamientos».** Se guarda en PDF y se recupera en otro móvil con «Recuperar una copia».
+
 ## Versión 107: «Aparcamientos en mi ruta» deja de estar en pruebas
 
 - Fuera el aviso «En pruebas» arriba de la sección y la etiqueta «En pruebas» de su tarjeta en Zona Conductores (lo pidió el padre).

@@ -337,8 +337,9 @@ $("ed-guardar").onclick = async () => {
     && !confirm(`La hora de fin (${fila.hora_fin}) es antes que la de inicio (${fila.hora}). ¿Guardar igualmente?`)) return marcaFalta("f-hora_fin", "Revisa la hora de fin: es antes que la de inicio.");
   if (ED.k === "encuestas" && ED.orig && !opcionesSeguras(ED.orig, fila)
     && !confirm("Esta encuesta ya tiene votos y has quitado o cambiado de sitio alguna opción. Los votos van por posición: pasarían a la opción que ahora ocupa ese lugar.\n\nSi solo has corregido una falta, puedes guardar. ¿Guardar igualmente?")) return marcaFalta("f-opciones", "Deja las opciones con votos en su sitio; las nuevas, al final.");
+  if (s.valida) { const m = s.valida(fila); if (m) return marcaFalta("f-" + m[0], m[1]); }
   if (!(await revisarOrtografia(s, fila))) return;
-  if (["enlaces", "restricciones"].includes(ED.k) && fila.url && !/^https?:\/\//.test(fila.url)) fila.url = "https://" + fila.url;
+  if (["enlaces", "restricciones", "prohibiciones"].includes(ED.k) && fila.url && !/^https?:\/\//.test(fila.url)) fila.url = "https://" + fila.url;
   if (s.filtro) Object.assign(fila, s.filtro);
   if ((fila.publicado === false || fila.publicada === false) && !ED.orig) fila.notificar = false;
   if (ED.k === "apartados") {

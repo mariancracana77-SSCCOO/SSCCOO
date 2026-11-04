@@ -1985,7 +1985,7 @@ b.gan-fecha { cursor: default; }
 #apc-libre[hidden] { display: none; }
 /* v92: comodidad (lo pidió Lorena: hay compañeros mayores; todo fácil). Aparcamientos: formulario recogido tras calcular,
    «Empezar viaje» arriba, botones grandes para saltar a cada parte; mapa más bajito, con dos dedos y «Pantalla completa». */
-#apc-preparar.con-ruta > .intro-vista, #apc-preparar.con-ruta > #apc-form, #apc-preparar.con-ruta > #apc-sin-destino, #apc-preparar.con-ruta > .apc-mapa-libre { display: none; }
+#apc-preparar.con-ruta > .intro-vista, #apc-preparar.con-ruta > #apc-form, #apc-preparar.con-ruta > #apc-sin-destino, #apc-preparar.con-ruta > #apc-ultima, #apc-preparar.con-ruta > .apc-mapa-libre { display: none; }
 .apc-res { align-items: center; }
 .apc-cambiar { margin-left: auto; min-height: 44px; padding: 6px 14px; border-radius: 999px; border: 2px solid #fff; background: transparent; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
 .apc-saltos { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5em, 1fr)); gap: 8px; margin: 12px 0 4px; }
@@ -2128,3 +2128,43 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .apc-mios { margin-top: 4px; }
 .apc-mios > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 1.05rem; }
 .apc-mios .msg:empty { display: none; }
+
+/* v108: dónde te toca parar */
+.apc-paradas h2 { font-family: var(--cond); text-transform: uppercase; font-size: 1.3rem; margin: 0 0 6px; }
+.apc-llevo { margin: 8px 0; border: 1px solid var(--linea); border-radius: 10px; padding: 0 12px; background: var(--tarjeta); }
+.apc-llevo > summary { min-height: 44px; display: flex; align-items: center; font-weight: 700; cursor: pointer; }
+.apc-llevo[open] { padding-bottom: 12px; }
+.apc-llevo-campos { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 8px; }
+.apc-hm-campo { display: grid; gap: 4px; font-weight: 700; }
+.apc-hm { display: flex; align-items: center; gap: 6px; }
+.apc-hm input { width: 4.2em; min-height: 44px; text-align: center; }
+.apc-hm small { font-weight: 400; }
+.apc-llegada { font-size: 1.05rem; margin: 10px 0; }
+.apc-paradas-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.apc-parada { border-left: 6px solid #1E4F9C; padding: 4px 0 4px 12px; }
+.apc-parada.diario { border-left-color: var(--rojo); }
+.apc-parada-cab { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; align-items: baseline; }
+.apc-parada-cab b { font-family: var(--cond); text-transform: uppercase; font-size: 1.15rem; }
+.apc-parada .apc-lista { margin-top: 6px; }
+
+/* v108: avisar de un aparcamiento que está mal */
+.apc-mal { justify-self: start; margin-top: 6px; min-height: 44px; font-size: .9rem; }
+.apc-aviso-sec { margin: 6px 0; padding: 6px 10px; border-left: 4px solid var(--rojo); background: var(--fondo); overflow-wrap: anywhere; }
+.apc-mal-form { display: grid; gap: 10px; }
+.apc-mal-form fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 4px; }
+.apc-mal-form label:not(.check) { display: grid; gap: 4px; font-weight: 700; }
+.apc-mal-form .msg:empty { display: none; }
+
+/* v108: prohibiciones de circular en la ruta */
+.apc-prohib h2 { font-family: var(--cond); text-transform: uppercase; font-size: 1.3rem; margin: 0 0 6px; }
+.apc-prohib.hay { border: 2px solid var(--rojo); border-radius: 12px; padding: 12px; }
+.apc-prohib-una { border-left: 6px solid var(--rojo); }
+.apc-prohib-una p { margin: 4px 0; overflow-wrap: anywhere; }
+
+/* v108: última ruta guardada */
+.apc-ultima { display: grid; gap: 2px; text-align: left; }
+.apc-ultima small { font-weight: 400; color: var(--suave); }
+.apc-ultima { justify-content: start; justify-items: start; }
+.apc-ultima[hidden] { display: none; }
+.apc-mios-copia { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.apc-mios-copia .btn { flex: 1 1 200px; }

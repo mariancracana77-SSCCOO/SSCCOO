@@ -132,7 +132,37 @@
       return (MEM[p] = l.length ? l : guardado?.l || []);
     } catch (_) { return (MEM[p] = guardado?.l || []); }
   }
-  async function cargaPaises(ps) { const ls = await Promise.all(ps.map(delPais)); const vistos = new Set(); return [...ls.flatMap((l, i) => l.map(x => ({ ...x, pais: ps[i] }))).filter(x => !vistos.has(x.osm) && vistos.add(x.osm)), ...(await extras())]; }
+  async function cargaPaises(ps) { const ls = await Promise.all(ps.map(delPais)); const vistos = new Set(); return aplicaCorrecciones([...ls.flatMap((l, i) => l.map(x => ({ ...x, pais: ps[i] }))).filter(x => !vistos.has(x.osm) && vistos.add(x.osm)), ...(await extras())], await cargaCorrecciones()); }
+
+  // ---------- Avisos de aparcamientos que están mal (v108, lo pidió el padre) ----------
+  // Cualquiera avisa (RPC anónima corregir_aparcamiento); el padre lo revisa en el panel y, si lo pone en «Aplicado», se cumple en todos los móviles:
+  // «ya no existe» o «no se puede con camión» lo quitan, «otras plazas» cambia las plazas y «otra cosa» sale como aviso de la sección en la tarjeta.
+  let CORRECCIONES = null;
+  async function cargaCorrecciones() {
+    if (CORRECCIONES) return CORRECCIONES;
+    try {
+      const { data, error } = await sb.from("aparcamientos_correcciones").select("osm,tipo,plazas,nota").eq("estado", "aplicado").limit(5000);
+      if (error) throw error;
+      CORRECCIONES = data || [];
+      try { localStorage.setItem("ccoo-aparcar-correcciones", JSON.stringify(CORRECCIONES)); } catch (_) {}
+    } catch (_) { try { CORRECCIONES = JSON.parse(localStorage.getItem("ccoo-aparcar-correcciones") || "[]"); } catch (_) { CORRECCIONES = []; } }
+    return CORRECCIONES;
+  }
+  function aplicaCorrecciones(lista, corr) {
+    if (!corr.length) return lista;
+    const por = new Map(); corr.forEach(c => { if (!por.has(c.osm)) por.set(c.osm, []); por.get(c.osm).push(c); });
+    const res = [];
+    for (const x of lista) {
+      const cs = por.get(x.osm); if (!cs) { res.push(x); continue; }
+      if (cs.some(c => c.tipo === "no_existe" || c.tipo === "no_camiones")) continue;
+      const y = { ...x }, pl = cs.find(c => c.tipo === "plazas");
+      if (pl) y.plazas = +pl.plazas > 0 ? +pl.plazas : null;
+      const notas = cs.filter(c => c.tipo === "otro" && c.nota).map(c => c.nota);
+      if (notas.length) y.avisoSec = notas.join(" · ");
+      res.push(y);
+    }
+    return res;
+  }
 
   // ---------- Geometría ----------
   const R = Math.PI / 180;
@@ -219,10 +249,11 @@
       ${x.mio ? `<div class="apc-mio-etq">${esc(MIO_TXT[MIOS.find(m => m.id === x.osm)?.propuesto] || MIO_TXT[""])}</div>` : x.compa ? `<div class="apc-mio-etq compa">Lo añadió un compañero</div>` : ""}
       <div class="apc-hor">${abreHTML(x, llegada || new Date())}</div>
       ${x.nota ? `<p class="apc-nota-c">${esc(x.nota)}</p>` : ""}
+      ${x.avisoSec ? `<p class="apc-aviso-sec"><b>Aviso de la sección:</b> ${esc(x.avisoSec)}</p>` : ""}
       ${avisoDe(x)?.tipo === "lleno" ? `<div class="apc-lleno">Lleno · avisado por un compañero ${haceTxt(avisoDe(x).t)}</div>` : ""}
       ${extras.length ? `<div class="apc-extra">${extras.map(e => `<span>${esc(e)}</span>`).join("")}</div>` : ""}
       ${llevarHref(x) ? `<a class="btn sec apc-llevar" href="${esc(llevarHref(x))}">${icono("lugar", "p")}Llevarme aquí</a>` : ""}
-      ${x.mio ? accionesMio(x.osm) : ""}
+      ${x.mio ? accionesMio(x.osm) : (VISTOS.set(x.osm, x), `<button type="button" class="btn-txt apc-mal" data-mal="${esc(x.osm)}">¿Algo está mal en este aparcamiento?</button>`)}
     </li>`;
   }
 
@@ -289,8 +320,33 @@
     // Peajes aproximados de todas las rutas (para compararlas), con el país de cada tramo
     const tabla = await cargaPeajes(), indice = indicePaises(lista);
     for (const r of RUTAS) r.costes = calculaPeajes(r, indice, tabla);
+    RUTA.tramosPais = tramosPais(RUTA, indice);
+    PROHIB = await cargaProhibiciones();
     estado("");
     pintaRuta();
+    guardaUltima();
+  }
+
+  // ---------- Última ruta guardada en el móvil (v108, lo pidió el padre: para usarla sin cobertura) ----------
+  const CLAVE_RUTA = "ccoo-aparcar-ruta";
+  function guardaUltima() {
+    if (!RUTA) return;
+    const { costes, tramosPais, alternativas, ...r } = RUTA;
+    try { localStorage.setItem(CLAVE_RUTA, JSON.stringify({ t: Date.now(), r })); } catch (_) { try { localStorage.setItem(CLAVE_RUTA, JSON.stringify({ t: Date.now(), r: { ...r, fina: null } })); } catch (_) {} }
+    pintaUltima();
+  }
+  const leeUltima = () => { try { const u = JSON.parse(localStorage.getItem(CLAVE_RUTA) || "null"); return u?.r?.puntos?.length ? u : null; } catch (_) { return null; } };
+  function pintaUltima() {
+    const b = $("apc-ultima"), u = leeUltima(); if (!b) return;
+    b.hidden = !u; if (!u) return;
+    b.innerHTML = `Abrir la última ruta: <b>${esc(u.r.desde?.nombre || "")} → ${esc(u.r.hasta?.nombre || "")}</b><small>Calculada el ${esc(new Date(u.t).toLocaleString("es-ES", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }))}. Sirve aunque no tengas cobertura.</small>`;
+  }
+  async function abreUltima() {
+    const u = leeUltima(); if (!u) return;
+    const b = $("apc-ultima"); b.disabled = true;
+    try { RUTAS = [u.r]; await eligeRuta(0); $("apc-ruta").scrollIntoView({ behavior: "smooth", block: "start" }); }
+    catch (e) { estado("No se ha podido abrir la última ruta.", true); }
+    finally { b.disabled = false; }
   }
 
   // ---------- Peajes aproximados (lo pidió el padre: «precio aproximado», camión de 5 ejes, 40 t) ----------
@@ -445,6 +501,7 @@
     const caja = $("apc-ruta");
     $("apc-preparar").classList.toggle("con-ruta", !!RUTA);
     if (!RUTA) { caja.innerHTML = ""; return; }
+    planParadas();
     const graves = (CORTES || []).filter(x => GRAVE.includes(x.tipo)).length, c = RUTA.costes;
     const salto = (id, txt, cls = "") => `<button type="button" class="apc-salto${cls}" data-salto="${id}">${txt}</button>`;
     caja.innerHTML = `
@@ -452,15 +509,19 @@
         <button type="button" class="apc-cambiar" id="apc-cambiar">Cambiar ruta</button></div>
       <button type="button" class="btn apc-grande" id="apc-empezar">${icono("lugar")}Empezar viaje</button>
       <p class="apc-nota">Con «Empezar viaje» te enseño los aparcamientos que tienes por delante mientras conduces.</p>
+      <label class="apc-salida">Salgo a las <input type="time" id="apc-salida" value="${esc(SALIDA)}"> <small>(vacío = ahora)</small></label>
       <nav class="apc-saltos" aria-label="Ir a una parte">
+        ${salto("apc-sec-prohib", prohibicionesRuta().length ? `Prohibiciones <b>${prohibicionesRuta().length}</b>` : "Prohibiciones: ninguna", prohibicionesRuta().length ? " alerta" : "")}
+        ${salto("apc-sec-paradas", PARADAS.length ? `Paradas <b>${PARADAS.length}</b>` : "Paradas: ninguna")}
         ${salto("apc-sec-aparc", `Aparcamientos <b>${EN_RUTA.length}</b>`)}
         ${CORTES == null ? "" : salto("apc-sec-cortes", graves ? `Cortes <b>${graves}</b>` : "Cortes: ninguno", graves ? " alerta" : "")}
         ${c?.conDatos ? salto("apc-sec-peajes", c.total > 0 ? `Peajes <b>≈ ${euros(c.total)}</b>` : "Peajes: 0 €") : ""}
         ${RUTAS.length > 1 ? salto("apc-sec-rutas", `Otras rutas <b>${RUTAS.length - 1}</b>`) : ""}
       </nav>
+      <div id="apc-prohib-caja">${prohibicionesHTML()}</div>
+      <section class="apc-paradas apc-sec" id="apc-sec-paradas" aria-labelledby="apc-paradas-tit"></section>
       <section class="apc-todos apc-sec" id="apc-sec-aparc" aria-labelledby="apc-todos-tit">
         <h2 id="apc-todos-tit">Aparcamientos en tu ruta</h2>
-        <label class="apc-salida">Salgo a las <input type="time" id="apc-salida" value="${esc(SALIDA)}"> <small>(vacío = ahora)</small></label>
         ${filtrosHTML()}
         <div id="apc-todos"></div>
       </section>
@@ -474,9 +535,143 @@
     $("apc-cambiar").onclick = () => { $("apc-preparar").classList.remove("con-ruta"); $("apc-form").scrollIntoView({ behavior: "smooth", block: "start" }); $("apc-hasta").focus({ preventScroll: true }); };
     caja.querySelectorAll("[data-salto]").forEach(b => b.onclick = () => { const d = $(b.dataset.salto); if (!d) return; if (d.tagName === "DETAILS") d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" }); });
     caja.querySelectorAll("[data-ruta]").forEach(b => b.onclick = () => eligeRuta(+b.dataset.ruta));
-    $("apc-salida").onchange = () => { SALIDA = $("apc-salida").value; pintaTodos(); };
+    $("apc-salida").onchange = () => { SALIDA = $("apc-salida").value; refrescaParadas(); };
     enlazaFiltros();
+    pintaParadas();
     pintaTodos();
+  }
+
+  // ---------- Prohibiciones de circular en la ruta (v108, lo pidió el padre) ----------
+  // Tabla «prohibiciones_camion» (la edita el padre en el panel): por país, semanales (día y hora, opcional por meses; sin día = todos los días)
+  // o con fecha (festivos). Se mira a qué hora pasas por cada país (con las pausas) y si coincide con alguna.
+  let PROHIB = [];
+  const PAIS_NOMBRE = { ES: "España", FR: "Francia", IT: "Italia", PT: "Portugal", AD: "Andorra", DE: "Alemania", CH: "Suiza", BE: "Bélgica", NL: "Países Bajos", LU: "Luxemburgo", AT: "Austria", GB: "Reino Unido" };
+  async function cargaProhibiciones() {
+    try {
+      const { data, error } = await sb.from("prohibiciones_camion").select("pais,motivo,tipo,dia_desde,hora_desde,dia_hasta,hora_hasta,mes_desde,mes_hasta,inicio,fin,nota,url,visible").order("orden");
+      if (error) throw error;
+      const l = (data || []).filter(x => x.visible !== false);
+      try { localStorage.setItem("ccoo-prohibiciones", JSON.stringify(l)); } catch (_) {}
+      return l;
+    } catch (_) { try { return JSON.parse(localStorage.getItem("ccoo-prohibiciones") || "[]"); } catch (_) { return []; } }
+  }
+  // Por dónde va la ruta: trozos seguidos en el mismo país, con los minutos de conducción de entrada y salida
+  function tramosPais(r, indice) {
+    const pts = r.puntos, res = [];
+    for (let i = 0; i < pts.length; i++) {
+      const p = paisDe(pts[i][0], pts[i][1], indice), ult = res[res.length - 1];
+      if (ult && ult.pais === p) { ult.minHasta = pts[i][3]; ult.kmHasta = pts[i][2]; }
+      else res.push({ pais: p, minDesde: pts[i][3], minHasta: pts[i][3], kmDesde: pts[i][2], kmHasta: pts[i][2] });
+    }
+    return res.filter(t => t.pais && t.pais !== "?");
+  }
+  const aMin = (h) => { const [a, b] = String(h || "00:00").split(":").map(Number); return a * 60 + (b || 0) + (String(h).startsWith("23:59") ? 1 : 0); };
+  const enMeses = (x, d) => { if (!x.mes_desde || !x.mes_hasta) return true; const m = d.getMonth() + 1; return x.mes_desde <= x.mes_hasta ? m >= x.mes_desde && m <= x.mes_hasta : m >= x.mes_desde || m <= x.mes_hasta; };
+  // Periodos [inicio, fin] de una prohibición entre dos momentos
+  function periodos(x, desde, hasta) {
+    if (x.tipo === "fecha") { const a = Date.parse(x.inicio), b = Date.parse(x.fin); return a && b && b > desde && a < hasta ? [[a, b]] : []; }
+    const res = [], d = new Date(desde); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - 7);
+    for (; d.getTime() < hasta; d.setDate(d.getDate() + 1)) {
+      if (x.dia_desde != null && d.getDay() !== x.dia_desde) continue;
+      if (!enMeses(x, d)) continue;
+      const a = d.getTime() + aMin(x.hora_desde) * 60000;
+      let dias = x.dia_desde != null && x.dia_hasta != null ? (x.dia_hasta - x.dia_desde + 7) % 7 : 0;
+      if (!dias && aMin(x.hora_hasta) <= aMin(x.hora_desde)) dias = x.dia_desde != null && x.dia_hasta != null && x.dia_hasta === x.dia_desde ? 7 : 1;
+      const b = d.getTime() + (dias * 1440 + aMin(x.hora_hasta)) * 60000;
+      if (b > desde && a < hasta) res.push([a, b]);
+    }
+    return res;
+  }
+  const fechaHora = (t) => new Date(t).toLocaleString("es-ES", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+  function prohibicionesRuta() {
+    if (!RUTA?.tramosPais || !PROHIB.length) return [];
+    const t0 = horaSalida(), res = [];
+    for (const tr of RUTA.tramosPais) {
+      const a = llegaA(t0, tr.minDesde).getTime(), b = llegaA(t0, tr.minHasta).getTime() + 60000;
+      for (const x of PROHIB.filter(z => z.pais === tr.pais)) for (const [pa, pb] of periodos(x, a, b)) res.push({ x, tr, pa, pb, entra: a, sale: b });
+    }
+    return res;
+  }
+  function prohibicionesHTML() {
+    const l = prohibicionesRuta(), paises = [...new Set((RUTA?.tramosPais || []).map(t => t.pais))];
+    const conReglas = paises.filter(p => PROHIB.some(x => x.pais === p));
+    return `<section class="apc-prohib apc-sec${l.length ? " hay" : ""}" id="apc-sec-prohib" aria-labelledby="apc-prohib-tit">
+      <h2 id="apc-prohib-tit">Prohibiciones de circular</h2>
+      ${l.length ? `<ul class="apc-lista">${l.map(o => `<li class="apc apc-prohib-una"><b class="apc-nom">${esc(PAIS_NOMBRE[o.x.pais] || o.x.pais)}: ${esc(o.x.motivo)}</b>
+          <p>Prohibido de ${esc(fechaHora(o.pa))} a ${esc(fechaHora(o.pb))}. Según la hora de salida, pasas por ${esc(PAIS_NOMBRE[o.tr.pais] || o.tr.pais)} entre el km ${Math.round(o.tr.kmDesde)} y el ${Math.round(o.tr.kmHasta)} (${esc(hora(new Date(o.entra)))}–${esc(hora(new Date(o.sale)))}).</p>
+          ${o.x.nota ? `<p class="apc-nota">${esc(o.x.nota)}</p>` : ""}${o.x.url ? `<a href="${esc(urlSegura(o.x.url))}" target="_blank" rel="noopener">Ver la web oficial</a>` : ""}</li>`).join("")}</ul>`
+        : `<p>${conReglas.length ? "Con la hora de salida que has puesto, no te pilla ninguna prohibición de las que tiene apuntadas la sección." : "La sección no tiene apuntadas prohibiciones para los países de esta ruta."}</p>`}
+      <p class="apc-nota">Orientativo: las horas dependen de las pausas y del tráfico, y puede haber festivos locales o restricciones que no están apuntados. Mira también «Restricciones para camiones» en Zona Conductores.</p></section>`;
+  }
+
+  // ---------- Dónde te toca parar (v108, lo pidió el padre) ----------
+  // Reglamento (CE) 561/2006: pausa de 45 min después de 4 h 30 de conducción; como mucho 9 h de conducción al día
+  // (10 h dos veces por semana) y después el descanso diario (11 h; 9 h si es reducido). Los minutos son los de conducción de la ruta.
+  // Lo que ya lleva conducido hoy lo pone el conductor (AJ.llevoDia, AJ.llevoBloque, en minutos).
+  let PARADAS = [];
+  function planParadas() {
+    PARADAS = [];
+    if (!RUTA) return PARADAS;
+    const max = AJ.diezHoras ? 600 : 540, desc = AJ.reducido ? 540 : 660, total = RUTA.min;
+    let t = 0, dia = Math.max(0, +AJ.llevoDia || 0), bloque = Math.min(Math.max(0, +AJ.llevoBloque || 0), dia), extra = 0;
+    for (let n = 0; n < 60; n++) {
+      const paso = Math.max(0, Math.min(270 - bloque, max - dia));
+      if (t + paso >= total) break;
+      t += paso; dia += paso; bloque += paso;
+      const diario = dia >= max;
+      PARADAS.push({ tipo: diario ? "diario" : "pausa", min: t, antes: extra, dura: diario ? desc : 45, km: kmEnMin(t) });
+      extra += diario ? desc : 45;
+      if (diario) dia = 0;
+      bloque = 0;
+    }
+    return PARADAS;
+  }
+  // Km de la ruta a los «m» minutos de conducción (entre los puntos de la ruta)
+  function kmEnMin(m) {
+    const p = RUTA.puntos;
+    for (let i = 1; i < p.length; i++) if (p[i][3] >= m) { const a = p[i - 1], b = p[i], f = b[3] > a[3] ? (m - a[3]) / (b[3] - a[3]) : 0; return a[2] + f * (b[2] - a[2]); }
+    return p[p.length - 1][2];
+  }
+  // Minutos de pausas y descansos que hay antes de llegar a «minRuta»
+  const retraso = (minRuta) => PARADAS.filter(q => q.min <= minRuta).reduce((s, q) => s + q.dura, 0);
+  const llegaA = (t0, minRuta) => new Date(t0 + (minRuta + retraso(minRuta)) * 60000);
+  const diaHora = (d) => { const hoy = new Date(); hoy.setHours(0, 0, 0, 0); const dd = new Date(d); dd.setHours(0, 0, 0, 0); const dif = Math.round((dd - hoy) / 864e5);
+    return (dif === 0 ? "hoy" : dif === 1 ? "mañana" : d.toLocaleDateString("es-ES", { weekday: "long", day: "numeric" })) + " a las " + hora(d); };
+  const hmTxt = (m) => durTxt(m);
+  const campoHM = (k, txt) => { const v = +AJ[k] || 0; return `<label class="apc-hm-campo"><span>${txt}</span><span class="apc-hm"><input inputmode="numeric" maxlength="2" data-hm="${k}" data-p="h" value="${Math.floor(v / 60) || ""}" placeholder="0" aria-label="${txt}: horas"><small>h</small><input inputmode="numeric" maxlength="2" data-hm="${k}" data-p="m" value="${v % 60 || ""}" placeholder="0" aria-label="${txt}: minutos"><small>min</small></span></label>`; };
+  function pintaParadas() {
+    const caja = $("apc-sec-paradas"); if (!caja || !RUTA) return;
+    planParadas();
+    const t0 = horaSalida(), fin = llegaA(t0, RUTA.min + 0.001), nP = PARADAS.filter(q => q.tipo === "pausa").length, nD = PARADAS.length - nP;
+    const candidatos = (q) => EN_RUTA.filter(x => x.kmRuta <= q.km + 0.5 && x.kmRuta >= q.km - 40).sort((a, b) => b.kmRuta - a.kmRuta).slice(0, 3);
+    caja.innerHTML = `<h2 id="apc-paradas-tit">Dónde te toca parar</h2>
+      <p class="apc-nota">Según las normas de tiempos de conducción: pausa de 45 min cada 4 h 30 de conducción y descanso diario después de ${AJ.diezHoras ? "10" : "9"} h. Es orientativo: manda tu tacógrafo.</p>
+      <details class="apc-llevo"${(+AJ.llevoDia || +AJ.llevoBloque || AJ.diezHoras || AJ.reducido) ? " open" : ""}><summary>¿Ya has conducido hoy?</summary>
+        <div class="apc-llevo-campos">${campoHM("llevoDia", "Hoy llevo conducido")}${campoHM("llevoBloque", "Desde mi última pausa")}</div>
+        <label class="check"><input type="checkbox" id="apc-diez"${AJ.diezHoras ? " checked" : ""}> Hoy puedo conducir 10 h (dos veces por semana)</label>
+        <label class="check"><input type="checkbox" id="apc-reducido"${AJ.reducido ? " checked" : ""}> Mi descanso diario será reducido (9 h)</label>
+      </details>
+      <p class="apc-llegada">Llegas a ${esc(RUTA.hasta.nombre)} <b>${esc(diaHora(fin))}</b>${PARADAS.length ? ` con ${[nP ? (nP === 1 ? "1 pausa" : nP + " pausas") : "", nD ? (nD === 1 ? "1 descanso diario" : nD + " descansos diarios") : ""].filter(Boolean).join(" y ")}` : ", sin parar"}.</p>
+      ${PARADAS.length ? `<ol class="apc-paradas-lista">${PARADAS.map(q => { const ll = new Date(t0 + (q.min + q.antes) * 60000), c = candidatos(q);
+        return `<li class="apc-parada ${q.tipo}"><div class="apc-parada-cab"><b>${q.tipo === "pausa" ? "Pausa de 45 min" : `Descanso diario (${q.dura / 60} h)`}</b><span>km ${Math.round(q.km)} · ${esc(diaHora(ll))}</span></div>
+          ${c.length ? `<p class="apc-nota">Aparcamientos en los 40 km de antes:</p><ul class="apc-lista">${c.map(x => tarjeta(x, x.kmRuta, llegaA(t0, x.minRuta))).join("")}</ul>`
+            : `<p class="apc-nota">No hay aparcamientos apuntados en los 40 km de antes: busca sitio un poco antes.</p>`}</li>`; }).join("")}</ol>`
+        : `<p class="apc-nota">Con lo que llevas conducido, haces esta ruta sin tener que parar.</p>`}`;
+    caja.querySelectorAll("[data-hm]").forEach(i => i.onchange = () => {
+      const k = i.dataset.hm, h = caja.querySelector(`[data-hm="${k}"][data-p=h]`).value, m = caja.querySelector(`[data-hm="${k}"][data-p=m]`).value;
+      AJ[k] = Math.min(Math.max(0, (parseInt(h, 10) || 0) * 60 + (parseInt(m, 10) || 0)), 15 * 60); guarda(); refrescaParadas();
+    });
+    $("apc-diez").onchange = () => { AJ.diezHoras = $("apc-diez").checked; guarda(); refrescaParadas(); };
+    $("apc-reducido").onchange = () => { AJ.reducido = $("apc-reducido").checked; guarda(); refrescaParadas(); };
+  }
+  function refrescaParadas() {
+    const abierto = $("apc-sec-paradas")?.querySelector(".apc-llevo")?.open;
+    pintaParadas(); pintaTodos();
+    const d = $("apc-sec-paradas")?.querySelector(".apc-llevo"); if (d && abierto) d.open = true;
+    const s = document.querySelector('[data-salto="apc-sec-paradas"]'); if (s) s.innerHTML = PARADAS.length ? `Paradas <b>${PARADAS.length}</b>` : "Paradas: ninguna";
+    if ($("apc-prohib-caja")) $("apc-prohib-caja").innerHTML = prohibicionesHTML();
+    const sp = document.querySelector('[data-salto="apc-sec-prohib"]'), np = prohibicionesRuta().length;
+    if (sp) { sp.innerHTML = np ? `Prohibiciones <b>${np}</b>` : "Prohibiciones: ninguna"; sp.classList.toggle("alerta", !!np); }
   }
   function ponFiltro(f) { FILTRO = f; pintaTodos(); }
   // Hora de salida: la que pone el conductor (si ya ha pasado hace rato, la de mañana) o ahora
@@ -534,7 +729,7 @@
     const t0 = horaSalida();
     const total = EN_RUTA.length, nF = filtrosActivos();
     const cuenta = $("apc-f-cuenta");
-    const lista = EN_RUTA.filter(pasaFiltro).map(x => ({ x, llega: new Date(t0 + x.minRuta * 60000), e: null })).map(y => ({ ...y, e: estadoA(y.x, y.llega) }));
+    const lista = EN_RUTA.filter(pasaFiltro).map(x => ({ x, llega: llegaA(t0, x.minRuta), e: null })).map(y => ({ ...y, e: estadoA(y.x, y.llega) }));
     // Cerrados: los que estarán cerrados cuando pases. Abiertos: los que se sabe que estarán abiertos (horario o área de autopista).
     // Sin horario: no se sabe. Así no se confunde «no sé» con «abierto».
     const cerrados = lista.filter(y => y.e === "no"), abiertos = lista.filter(y => y.e === "si" || y.e === "siempre"), sinHorario = lista.filter(y => y.e === "nose");
@@ -722,6 +917,41 @@
       } catch (_) { res.innerHTML = `<p class="msg err">No se ha podido buscar. Comprueba que tienes internet.</p>`; }
     });
   }
+  // Formulario «¿Algo está mal?» (ventana)
+  const VISTOS = new Map();
+  const MAL_TIPOS = [["no_existe", "Ya no existe o está cerrado para siempre"], ["no_camiones", "No se puede aparcar con camión"], ["plazas", "Tiene otras plazas para camiones"], ["otro", "Otra cosa (explícalo en la nota)"]];
+  function abreMal(osm) {
+    const x = VISTOS.get(osm); if (!x) return;
+    document.querySelector(".apc-mal-velo")?.remove();
+    const v = document.createElement("div"); v.className = "modal-velo apc-mal-velo";
+    v.innerHTML = `<form class="modal apc-mal-form" role="dialog" aria-modal="true" novalidate><h2>¿Qué está mal?</h2>
+      <p class="apc-nota"><b>${esc(nombre(x))}</b></p>
+      <fieldset class="apc-mal-tipos"><legend class="sr-only">Qué está mal</legend>${MAL_TIPOS.map(([k, t], i) => `<label class="check"><input type="radio" name="tipo" value="${k}"${i ? "" : " checked"}> ${t}</label>`).join("")}</fieldset>
+      <label class="apc-mal-plazas" hidden>Plazas para camiones que tiene<input name="plazas" inputmode="numeric" maxlength="3" placeholder="Ej: 20"></label>
+      <label>Nota<textarea name="nota" maxlength="300" rows="2" placeholder="Opcional. Ej: lo han vallado; ahora es solo para coches"></textarea></label>
+      <p class="apc-nota">Le llega a la sección sin saber quién lo manda. Si está bien, lo corrigen para todos. No pongas teléfonos ni nombres de personas.</p>
+      <p class="msg" role="status" aria-live="polite"></p>
+      <div class="botones"><button type="submit" class="btn">Enviar</button><button type="button" class="btn sec" data-no>Cancelar</button></div></form>`;
+    document.body.appendChild(v);
+    const f = v.querySelector("form"), msg = f.querySelector(".msg"), cierra = () => v.remove();
+    v.onclick = (e) => { if (e.target === v) cierra(); };
+    f.querySelector("[data-no]").onclick = cierra;
+    f.querySelectorAll("[name=tipo]").forEach(r => r.onchange = () => { f.querySelector(".apc-mal-plazas").hidden = f.tipo.value !== "plazas"; });
+    f.onsubmit = async (e) => {
+      e.preventDefault();
+      const tipo = f.tipo.value, pl = parseInt(f.plazas.value, 10), nota = f.nota.value.trim(), err = (t) => { msg.textContent = t; msg.classList.add("err"); };
+      if (tipo === "plazas" && !(pl >= 0 && pl <= 500)) return err("Pon cuántas plazas para camiones tiene (de 0 a 500).");
+      if (tipo === "otro" && nota.length < 5) return err("Explica en la nota qué está mal.");
+      const b = f.querySelector("[type=submit]"); b.disabled = true; msg.classList.remove("err"); msg.textContent = "Enviando…";
+      try {
+        const { data, error } = await sb.rpc("corregir_aparcamiento", { p_osm: x.osm, p_nombre: nombre(x), p_lat: x.lat, p_lon: x.lon, p_tipo: tipo, p_plazas: tipo === "plazas" ? pl : null, p_nota: nota });
+        if (error) throw new Error(error.message);
+        f.innerHTML = `<h2>Gracias</h2><p>${data === "ya" ? "Otro compañero ya había avisado de lo mismo. La sección lo revisará." : "Enviado a la sección. Cuando lo revisen, se corregirá para todos."}</p><div class="botones"><button type="button" class="btn" data-no>Cerrar</button></div>`;
+        f.querySelector("[data-no]").onclick = cierra; f.querySelector("[data-no]").focus();
+      } catch (er) { b.disabled = false; err(/Failed to fetch|NetworkError|Load failed/i.test(er.message) ? "No hay conexión. Prueba cuando tengas internet." : er.message); }
+    };
+  }
+
   // ---------- Añadir un aparcamiento desde el mapa (v106) ----------
   const MIO_TXT = { "": "Tuyo · solo en este móvil", ok: "Tuyo · propuesto a la sección", ya: "Tuyo · ya lo había propuesto otro compañero" };
   const accionesMio = (idm) => { const m = MIOS.find(z => z.id === idm); if (!m) return "";
@@ -826,6 +1056,43 @@
         ${accionesMio(m.id)}</li>`).join("")}</ul>`
       : `<p class="apc-nota">Todavía no has añadido ninguno. Abre el mapa y toca «Añadir aparcamiento».</p>`;
   }
+  // Copia en PDF de «Mis aparcamientos» (v108): la lista legible y, dentro, los datos para recuperarlos en otro móvil
+  const MARCA_MIOS = "%CCOO-APARCAMIENTOS:";
+  async function copiaMios() {
+    if (!MIOS.length) { avisoMios("Todavía no tienes ningún aparcamiento guardado."); return; }
+    const logo = typeof logoParaPDF === "function" ? await logoParaPDF() : null, X = logo ? 70 : 0, ROJO = [0.67, 0.06, 0.07];
+    const L = [{ banda: "CCOO Calsina Carré · Mis aparcamientos", color: ROJO, tam: 13, x: X }, ["", 6],
+      [`${MIOS.length === 1 ? "1 aparcamiento" : MIOS.length + " aparcamientos"} · Hecho el ${new Date().toLocaleString("es-ES", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}`, 10, false, X], ["", 10]];
+    MIOS.forEach(m => {
+      L.push([m.nombre, 13, true]);
+      L.push([`Coordenadas: ${(+m.lat).toFixed(5)}, ${(+m.lon).toFixed(5)}`, 10]);
+      const extra = [m.plazas ? m.plazas + " plazas camión" : "", m.vigilado ? "vigilado" : "", m.duchas ? "duchas" : "", m.aseos ? "aseos" : ""].filter(Boolean).join(" · ");
+      if (extra) L.push([extra, 10]);
+      if (m.nota) L.push(["Nota: " + m.nota, 10]);
+      L.push([MIO_TXT[m.propuesto] || MIO_TXT[""], 9, false, 0, [0.4, 0.4, 0.4]], ["", 8]);
+    });
+    L.push(["Para recuperarlos: en «Aparcamientos en mi ruta», abre «Mis aparcamientos» y toca «Recuperar una copia».", 9, false, 0, [0.4, 0.4, 0.4]]);
+    const datos = { app: "ccoo-aparcamientos", mios: MIOS };
+    const pdf = pdfSencillo(L, MARCA_MIOS + btoa(unescape(encodeURIComponent(JSON.stringify(datos)))), { logo });
+    const nom = "mis-aparcamientos-" + new Date().toISOString().slice(0, 10) + ".pdf";
+    try { const f = new File([pdf], nom, { type: "application/pdf" }); if (navigator.canShare?.({ files: [f] })) { await navigator.share({ files: [f], title: nom }); return; } } catch (e) { if (e?.name === "AbortError") return; }
+    const a = document.createElement("a"); a.href = URL.createObjectURL(pdf); a.download = nom; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  async function recuperaMios(f) {
+    try {
+      const d = leePDFSencillo(await f.text(), MARCA_MIOS);
+      if (d?.app !== "ccoo-aparcamientos" || !Array.isArray(d.mios)) throw 0;
+      const txt = (v, n) => String(v ?? "").slice(0, n);
+      const nuevos = d.mios.filter(m => m && Number.isFinite(+m.lat) && Number.isFinite(+m.lon) && +m.lat >= 34 && +m.lat <= 72 && +m.lon >= -25 && +m.lon <= 45 && String(m.nombre || "").trim())
+        .map(m => ({ id: /^mio:[a-z0-9]+$/.test(m.id) ? m.id : "mio:" + Math.random().toString(36).slice(2, 10), lat: +m.lat, lon: +m.lon, nombre: txt(m.nombre, 80), nota: txt(m.nota, 300), plazas: +m.plazas > 0 && +m.plazas <= 500 ? Math.round(+m.plazas) : null,
+          vigilado: !!m.vigilado, duchas: !!m.duchas, aseos: !!m.aseos, propuesto: ["ok", "ya"].includes(m.propuesto) ? m.propuesto : "", t: +m.t || Date.now() }))
+        .filter(m => !MIOS.some(z => z.id === m.id || cercaDe(z, m)));
+      if (!nuevos.length) { avisoMios("Esa copia no tiene aparcamientos nuevos: ya los tienes todos."); return; }
+      if (!confirm(`La copia tiene ${nuevos.length === 1 ? "1 aparcamiento que no tienes" : nuevos.length + " aparcamientos que no tienes"}. Se añaden a los de este móvil. ¿Seguir?`)) return;
+      MIOS.push(...nuevos); guardaMios(); await refrescaMios(); avisoMios(nuevos.length === 1 ? "Recuperado 1 aparcamiento." : `Recuperados ${nuevos.length} aparcamientos.`);
+    } catch (_) { const p = $("apc-mios-msg"); if (p) { p.textContent = "Ese archivo no es una copia de «Mis aparcamientos»."; p.classList.add("err"); } }
+  }
+
   // Botones de «Mis aparcamientos» (en la lista, en las tarjetas y en las ventanitas del mapa)
   async function accionMio(e) {
     const b = e.target.closest("[data-mio-borra],[data-mio-propone],[data-mio-ver]"); if (!b) return;
@@ -983,11 +1250,14 @@
   const GUIA_APC = () => [
     [T("Calcular la ruta"), T("Escribe adónde vas (y desde dónde, si no es donde estás) y pulsa «Buscar ruta para camión». Pon las medidas de tu camión para que la ruta le sirva."), visible("#apc-hasta", "#apc-cambiar")],
     [T("Pueblos con el mismo nombre"), T("Si hay varios sitios que se llaman igual, pon el código postal o elige el bueno de la lista que te sale."), visible("#apc-hasta-cp", "#apc-cambiar")],
+    [T("Prohibiciones de circular"), T("Si el día del viaje hay prohibición para camiones en algún país por donde pasas (fines de semana, festivos…), te aviso con la hora. Cambia «Salgo a las» para ver si te pilla."), visible("#apc-sec-prohib", "#apc-buscar")],
+    [T("Dónde te toca parar"), T("Con la ruta hecha te digo en qué kilómetro y a qué hora te toca la pausa de 45 minutos (cada 4 h 30 de conducción) y el descanso diario, con los aparcamientos que tienes justo antes. Si ya has conducido hoy, ponlo en «¿Ya has conducido hoy?»."), visible("#apc-sec-paradas", "#apc-buscar")],
     [T("Los aparcamientos de la ruta"), T("Con la ruta hecha ves todos los aparcamientos que tienes por delante, con las plazas para camiones y si estarán abiertos. Con los filtros buscas por pueblo, duchas, vigilado…"), visible("#apc-sec-aparc", "#apc-buscar")],
     [T("Lista o mapa"), T("Cambia entre la lista y el mapa. En el móvil, el mapa se mueve con dos dedos; con «Pantalla completa» se maneja con uno."), visible("[data-apc-vista]", "#apc-abre-mapa")],
     [T("Cortes y peajes"), T("Debajo salen los cortes oficiales de la carretera (los graves, en rojo) y el precio aproximado de los peajes."), visible("#apc-sec-cortes", "#apc-buscar")],
     [T("Durante el viaje"), T("Pulsa «Empezar viaje»: la pantalla no se apaga y te enseño los aparcamientos que tienes delante. Si quieres, te los digo en voz alta."), visible("#apc-empezar", "#apc-voz", "#apc-buscar")],
     [T("Llevarme aquí"), T("En cada aparcamiento, «Llevarme aquí» lo abre en el navegador que uses en el móvil (iGO, Google Maps…)."), visible(".apc-llevar", "#apc-buscar")],
+    [T("Sin cobertura"), T("La última ruta que calculas se guarda en el móvil. Si te quedas sin internet, toca «Abrir la última ruta»: verás la ruta, los aparcamientos y dónde te toca parar."), visible("#apc-ultima", "#apc-buscar", "#apc-cambiar")],
     [T("Mapa sin ruta"), T("Para mirar una zona sin calcular ruta, abre el mapa y toca «Dónde estoy» o busca un sitio."), visible("#apc-abre-mapa", "#apc-cambiar")],
     [T("Añadir un aparcamiento"), T("¿Has encontrado uno que no sale? En el mapa toca «Añadir aparcamiento», toca el sitio (o usa tu posición), ponle nombre y guárdalo. Se queda en tu móvil, en «Mis aparcamientos». Si marcas «Proponerlo también a los compañeros», la sección lo revisa y sale a todos."), visible(".apc-anade-btn", "#apc-abre-mapa", "#apc-cambiar")],
   ];
@@ -1029,12 +1299,17 @@
     $("apc-buscar").onclick = buscaRuta;
     $("apc-abre-mapa").onclick = abreMapaLibre;
     $("v-aparcar").addEventListener("click", accionMio);
+    $("apc-mios-copia").onclick = copiaMios;
+    $("apc-mios-recupera").onchange = () => { const f = $("apc-mios-recupera").files[0]; $("apc-mios-recupera").value = ""; if (f) recuperaMios(f); };
+    $("v-aparcar").addEventListener("click", (e) => { const b = e.target.closest("[data-mal]"); if (b) abreMal(b.dataset.mal); });
     pintaMios();
     $("v-aparcar").addEventListener("click", (e) => { const b = e.target.closest("[data-apc-vista]"); if (b) ponVista(b.dataset.apcVista); });
     // Si cambia el sitio o el código postal, lo elegido antes ya no vale
     [["apc-desde", "desde"], ["apc-desde-cp", "desde"], ["apc-hasta", "hasta"], ["apc-hasta-cp", "hasta"]].forEach(([id, k]) => $(id).addEventListener("input", () => { ELEGIDO[k] = null; $("apc-elegir").innerHTML = ""; }));
     $("apc-form").onsubmit = (e) => { e.preventDefault(); buscaRuta(); };
     $("apc-sin-destino").onclick = () => empiezaViaje(true);
+    $("apc-ultima").onclick = abreUltima;
+    pintaUltima();
     $("apc-terminar").onclick = terminaViaje;
     $("apc-voz").onchange = () => { AJ.voz = $("apc-voz").checked; guarda(); if (AJ.voz) habla("Te avisaré en voz alta del próximo aparcamiento abierto."); };
     $("apc-cerrados").onchange = () => { AJ.cerrados = $("apc-cerrados").checked; guarda(); if (VIAJE) { VIAJE.firma = ""; repinta(); } };
@@ -1043,6 +1318,6 @@
     addEventListener("hashchange", () => { if (location.hash !== "#aparcar" && VIAJE) terminaViaje(); });
   }
   // Para las pruebas
-  window.__aparcar = { abierto, precioTxt, enRuta, cargaAvisos, enMarcha: (a, o, rumboGps) => enMarcha({ coords: { latitude: a, longitude: o, heading: rumboGps ?? NaN, speed: rumboGps != null ? 20 : null } }) };
+  window.__aparcar = { abierto, precioTxt, enRuta, cargaAvisos, periodos, enMarcha: (a, o, rumboGps) => enMarcha({ coords: { latitude: a, longitude: o, heading: rumboGps ?? NaN, speed: rumboGps != null ? 20 : null } }) };
   prepara();
 })();
