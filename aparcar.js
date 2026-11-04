@@ -18,6 +18,30 @@
   let AJ = lee();
   const guarda = () => { try { localStorage.setItem(CLAVE, JSON.stringify(AJ)); } catch (_) {} };
 
+  // ---------- Mis aparcamientos (v106, lo pidió el padre) ----------
+  // El conductor añade en el mapa los aparcamientos que encuentra. Se guardan en este móvil («ccoo-aparcar-mios») y, si quiere,
+  // se proponen a la sección (RPC anónima proponer_aparcamiento). Los que el padre aprueba en el panel salen a todos (tabla aparcamientos_compas).
+  const CLAVE_MIOS = "ccoo-aparcar-mios";
+  let MIOS = (() => { try { const l = JSON.parse(localStorage.getItem(CLAVE_MIOS) || "[]"); return Array.isArray(l) ? l.filter(x => x && x.id && Number.isFinite(+x.lat) && Number.isFinite(+x.lon)) : []; } catch (_) { return []; } })();
+  const guardaMios = () => { try { localStorage.setItem(CLAVE_MIOS, JSON.stringify(MIOS)); } catch (_) {} };
+  let COMPAS = null;
+  async function cargaCompas() {
+    if (COMPAS) return COMPAS;
+    try {
+      const { data, error } = await sb.from("aparcamientos_compas").select("id,lat,lon,nombre,nota,plazas,vigilado,duchas,aseos").eq("estado", "aprobado").limit(5000);
+      if (error) throw error;
+      COMPAS = data || [];
+      try { localStorage.setItem("ccoo-aparcar-compas", JSON.stringify(COMPAS)); } catch (_) {}
+    } catch (_) { try { COMPAS = JSON.parse(localStorage.getItem("ccoo-aparcar-compas") || "[]"); } catch (_) { COMPAS = []; } }
+    return COMPAS;
+  }
+  const comoApc = (x, extra) => ({ lat: +x.lat, lon: +x.lon, nombre: x.nombre, nota: x.nota || "", plazas: +x.plazas > 0 ? +x.plazas : null, vigilado: !!x.vigilado, duchas: !!x.duchas, aseos: !!x.aseos, horario: null, area: false, camion: true, cerca: null, ...extra });
+  const cercaDe = (a, b) => Math.abs(a.lat - b.lat) < 0.0006 && Math.abs(a.lon - b.lon) < 0.0009; // unos 60 m
+  async function extras() {
+    const co = (await cargaCompas()).filter(c => !MIOS.some(m => cercaDe(m, c)));
+    return [...MIOS.map(x => comoApc(x, { osm: x.id, mio: true })), ...co.map(c => comoApc(c, { osm: "co:" + c.id, compa: true }))];
+  }
+
   // ---------- Horario (opening_hours de OpenStreetMap, lo más corriente) ----------
   // true abierto, false cerrado, null no se sabe
   const DIA = { Mo: 1, Tu: 2, We: 3, Th: 4, Fr: 5, Sa: 6, Su: 0 };
@@ -108,7 +132,7 @@
       return (MEM[p] = l.length ? l : guardado?.l || []);
     } catch (_) { return (MEM[p] = guardado?.l || []); }
   }
-  async function cargaPaises(ps) { const ls = await Promise.all(ps.map(delPais)); const vistos = new Set(); return ls.flatMap((l, i) => l.map(x => ({ ...x, pais: ps[i] }))).filter(x => !vistos.has(x.osm) && vistos.add(x.osm)); }
+  async function cargaPaises(ps) { const ls = await Promise.all(ps.map(delPais)); const vistos = new Set(); return [...ls.flatMap((l, i) => l.map(x => ({ ...x, pais: ps[i] }))).filter(x => !vistos.has(x.osm) && vistos.add(x.osm)), ...(await extras())]; }
 
   // ---------- Geometría ----------
   const R = Math.PI / 180;
@@ -192,10 +216,13 @@
     return `<li class="apc${estadoA(x, llegada) === "no" ? " cerrado" : ""}">
       <div class="apc-cab"><span class="apc-dist">a ${kmTxt(faltaKm)} km${llegada ? ` · llegas ${hora(llegada)}` : ""}</span>${plazasHTML(x)}</div>
       <b class="apc-nom">${esc(nombre(x))}</b>
+      ${x.mio ? `<div class="apc-mio-etq">${esc(MIO_TXT[MIOS.find(m => m.id === x.osm)?.propuesto] || MIO_TXT[""])}</div>` : x.compa ? `<div class="apc-mio-etq compa">Lo añadió un compañero</div>` : ""}
       <div class="apc-hor">${abreHTML(x, llegada || new Date())}</div>
+      ${x.nota ? `<p class="apc-nota-c">${esc(x.nota)}</p>` : ""}
       ${avisoDe(x)?.tipo === "lleno" ? `<div class="apc-lleno">Lleno · avisado por un compañero ${haceTxt(avisoDe(x).t)}</div>` : ""}
       ${extras.length ? `<div class="apc-extra">${extras.map(e => `<span>${esc(e)}</span>`).join("")}</div>` : ""}
       ${llevarHref(x) ? `<a class="btn sec apc-llevar" href="${esc(llevarHref(x))}">${icono("lugar", "p")}Llevarme aquí</a>` : ""}
+      ${x.mio ? accionesMio(x.osm) : ""}
     </li>`;
   }
 
@@ -586,6 +613,15 @@
         return b;
       } });
       new Grande().addTo(mapa);
+      // v106: «Añadir aparcamiento» (lo pidió el padre): se toca el sitio en el mapa y se rellena el formulario de debajo
+      const Anade = L.Control.extend({ options: { position: "topright" }, onAdd() {
+        const b = L.DomUtil.create("button", "apc-yo-btn apc-anade-btn"); b.type = "button";
+        b.innerHTML = icono("mas") + "<span>Añadir aparcamiento</span>";
+        L.DomEvent.disableClickPropagation(b); L.DomEvent.on(b, "click", () => empiezaAnadir(id));
+        return b;
+      } });
+      new Anade().addTo(mapa);
+      mapa.on("click", (e) => { if (MAPAS[id]?.anadiendo) ponSitio(id, e.latlng.lat, e.latlng.lng); });
       if (tactil) {
         const aviso = L.DomUtil.create("div", "apc-dos-dedos", caja); aviso.textContent = "Usa dos dedos para mover el mapa, o toca «Pantalla completa»";
         let t = null;
@@ -619,7 +655,7 @@
     }
     m.capa.clearLayers();
     for (const y of items) {
-      const e = estadoA(y.x, y.llega), cls = e === "no" ? "no" : e === "nose" ? "nose" : "si";
+      const e = estadoA(y.x, y.llega), cls = (e === "no" ? "no" : e === "nose" ? "nose" : "si") + (y.x.mio ? " mio" : "");
       const icon = L.divIcon({ className: "apc-pin " + cls, html: `<span>${y.x.plazas ? y.x.plazas : "P"}</span>`, iconSize: [36, 36], iconAnchor: [18, 18], popupAnchor: [0, -16] });
       L.marker([y.x.lat, y.x.lon], { icon, title: nombre(y.x) + (y.x.plazas ? `, ${y.x.plazas} plazas` : "") })
         .bindPopup(`<ul class="apc-lista apc-popup">${tarjeta(y.x, y.falta ?? y.x.kmRuta, y.llega)}</ul>`, { maxWidth: 290, minWidth: 220 }).addTo(m.capa);
@@ -651,12 +687,13 @@
   // Aparcamientos a menos de 30 km de un punto (sitio buscado o tu posición), en otra capa del mapa
   async function muestraZona(id, la, lo, etiqueta) {
     const m = MAPAS[id]; if (!m) return;
+    m.ultZona = [la, lo, etiqueta];
     const L = window.L, lista = await cargaPaises(paisesDe([[la, lo]]));
     const cerca = lista.map(x => ({ x, d: km(la, lo, x.lat, x.lon) })).filter(y => y.d <= 30).sort((a, b) => a.d - b.d);
     m.zona.clearLayers();
     L.marker([la, lo], { icon: L.divIcon({ className: "apc-pin-sitio", html: "<span></span>", iconSize: [22, 22], iconAnchor: [11, 11] }), title: etiqueta }).bindTooltip(etiqueta).addTo(m.zona);
     for (const { x, d } of cerca) {
-      const e = estadoA(x, new Date()), cls = e === "no" ? "no" : e === "nose" ? "nose" : "si";
+      const e = estadoA(x, new Date()), cls = (e === "no" ? "no" : e === "nose" ? "nose" : "si") + (x.mio ? " mio" : "");
       L.marker([x.lat, x.lon], { icon: L.divIcon({ className: "apc-pin " + cls, html: `<span>${x.plazas ? x.plazas : "P"}</span>`, iconSize: [36, 36], iconAnchor: [18, 18], popupAnchor: [0, -16] }), title: nombre(x) })
         .bindPopup(`<ul class="apc-lista apc-popup">${tarjeta(x, d, null)}</ul>`, { maxWidth: 290, minWidth: 220 }).addTo(m.zona);
     }
@@ -685,6 +722,131 @@
       } catch (_) { res.innerHTML = `<p class="msg err">No se ha podido buscar. Comprueba que tienes internet.</p>`; }
     });
   }
+  // ---------- Añadir un aparcamiento desde el mapa (v106) ----------
+  const MIO_TXT = { "": "Tuyo · solo en este móvil", ok: "Tuyo · propuesto a la sección", ya: "Tuyo · ya lo había propuesto otro compañero" };
+  const accionesMio = (idm) => { const m = MIOS.find(z => z.id === idm); if (!m) return "";
+    return `<div class="apc-mio-acc">${m.propuesto ? "" : `<button type="button" class="btn sec" data-mio-propone="${esc(idm)}">Proponer a los compañeros</button>`}<button type="button" class="btn sec" data-mio-borra="${esc(idm)}">Borrar</button></div>`; };
+  const formAnadirHTML = (id) => `<form class="panel apc-nuevo" data-mapa="${id}" autocomplete="off" novalidate>
+    <h3>Añadir un aparcamiento</h3>
+    <p class="apc-nota apc-nuevo-sitio">Toca en el mapa el sitio del aparcamiento, o usa tu posición si estás en él.</p>
+    <button type="button" class="btn sec" data-nuevo-yo>${icono("lugar", "p")}Estoy aquí: usar mi posición</button>
+    <label>Nombre<input name="nombre" maxlength="80" placeholder="Ej: Gasolinera de la salida 12" enterkeyhint="next"></label>
+    <label>Plazas para camiones (si lo sabes)<input name="plazas" inputmode="numeric" maxlength="3" placeholder="Opcional"></label>
+    <div class="apc-nuevo-checks"><label class="check"><input type="checkbox" name="vigilado"> Vigilado</label><label class="check"><input type="checkbox" name="duchas"> Duchas</label><label class="check"><input type="checkbox" name="aseos"> Aseos</label></div>
+    <label>Nota<textarea name="nota" maxlength="300" rows="2" placeholder="Opcional. Ej: se llena a partir de las 19 h; la entrada está detrás"></textarea></label>
+    <label class="check"><input type="checkbox" name="proponer"> Proponerlo también a los compañeros</label>
+    <p class="apc-nota">Se guarda en este móvil. Si lo propones, la sección lo revisa y, si está bien, sale en el mapa de todos. No se envía quién eres: no pongas teléfonos ni nombres de personas.</p>
+    <div class="apc-nuevo-bot"><button type="submit" class="btn">Guardar</button><button type="button" class="btn sec" data-nuevo-no>Cancelar</button></div>
+    <p class="msg" role="status" aria-live="polite"></p>
+  </form>`;
+  function empiezaAnadir(id) {
+    const m = MAPAS[id]; if (!m) return;
+    m.anadiendo = true; m.div.classList.add("apc-anadiendo");
+    let f = document.querySelector(`.apc-nuevo[data-mapa="${id}"]`);
+    if (!f) {
+      m.div.insertAdjacentHTML("afterend", formAnadirHTML(id));
+      f = document.querySelector(`.apc-nuevo[data-mapa="${id}"]`);
+      f.querySelector("[data-nuevo-no]").onclick = () => terminaAnadir(id);
+      f.querySelector("[data-nuevo-yo]").onclick = () => {
+        const b = f.querySelector("[data-nuevo-yo]"); b.disabled = true;
+        posicion().then(p => { ponSitio(id, p.lat, p.lon); MAPAS[id]?.mapa.setView([p.lat, p.lon], 16); })
+          .catch(e => msgAnadir(id, e.message, true)).finally(() => { b.disabled = false; });
+      };
+      f.onsubmit = (e) => { e.preventDefault(); guardaAnadir(id); };
+    }
+    // No se baja al formulario: primero hay que tocar el mapa, que se queda a la vista
+    let av = m.div.querySelector(".apc-anade-aviso");
+    if (!av) { av = document.createElement("div"); av.className = "apc-anade-aviso"; av.textContent = "Toca en el mapa el sitio del aparcamiento"; m.div.appendChild(av); }
+  }
+  function ponSitio(id, la, lo) {
+    const m = MAPAS[id], f = document.querySelector(`.apc-nuevo[data-mapa="${id}"]`); if (!m || !f) return;
+    if (la < 34 || la > 72 || lo < -25 || lo > 45) { msgAnadir(id, "El sitio tiene que estar en Europa.", true); return; }
+    f.dataset.lat = la.toFixed(6); f.dataset.lon = lo.toFixed(6);
+    const L = window.L, icon = L.divIcon({ className: "apc-pin mio nuevo", html: "<span>+</span>", iconSize: [36, 36], iconAnchor: [18, 18] });
+    if (m.nuevo) m.nuevo.setLatLng([la, lo]); else m.nuevo = L.marker([la, lo], { icon, title: "Aparcamiento nuevo" }).addTo(m.mapa);
+    f.querySelector(".apc-nuevo-sitio").textContent = "Sitio marcado en el mapa. Si no es ese, toca otra vez en el mapa.";
+    m.div.querySelector(".apc-anade-aviso")?.remove();
+    if (m.div.classList.contains("completa")) m.div._cierraGrande?.();
+    setTimeout(() => { f.scrollIntoView({ behavior: "smooth", block: "start" }); f.querySelector("[name=nombre]").focus({ preventScroll: true }); }, 120);
+    msgAnadir(id, "");
+  }
+  function msgAnadir(id, t, err) { const p = document.querySelector(`.apc-nuevo[data-mapa="${id}"] .msg`); if (p) { p.textContent = t || ""; p.classList.toggle("err", !!err); } }
+  function terminaAnadir(id) {
+    const m = MAPAS[id];
+    if (m) { m.anadiendo = false; m.div.classList.remove("apc-anadiendo"); m.div.querySelector(".apc-anade-aviso")?.remove(); m.nuevo?.remove(); m.nuevo = null; }
+    document.querySelector(`.apc-nuevo[data-mapa="${id}"]`)?.remove();
+  }
+  async function proponer(x) {
+    try {
+      const { data, error } = await sb.rpc("proponer_aparcamiento", { p_lat: x.lat, p_lon: x.lon, p_nombre: x.nombre, p_nota: x.nota || "", p_plazas: x.plazas || null, p_vigilado: !!x.vigilado, p_duchas: !!x.duchas, p_aseos: !!x.aseos });
+      if (error) throw new Error(error.message);
+      return data === "ya" ? "ya" : "ok";
+    } catch (e) { throw new Error(/Failed to fetch|NetworkError|Load failed/i.test(e.message) ? "No hay conexión: se ha guardado solo en tu móvil. Propónlo más tarde desde «Mis aparcamientos»." : e.message); }
+  }
+  async function guardaAnadir(id) {
+    const f = document.querySelector(`.apc-nuevo[data-mapa="${id}"]`); if (!f) return;
+    if (!f.dataset.lat) { msgAnadir(id, "Primero toca en el mapa el sitio del aparcamiento (o usa tu posición).", true); return; }
+    const v = (n) => f.querySelector(`[name=${n}]`), nom = v("nombre").value.trim(), nota = v("nota").value.trim(), pl = parseInt(v("plazas").value, 10);
+    if (nom.length < 3) { msgAnadir(id, "Escribe un nombre para el aparcamiento (mínimo 3 letras).", true); v("nombre").focus(); return; }
+    if (v("plazas").value.trim() && !(pl >= 1 && pl <= 500)) { msgAnadir(id, "Las plazas tienen que ser un número entre 1 y 500.", true); v("plazas").focus(); return; }
+    const x = { id: "mio:" + Date.now().toString(36), lat: +f.dataset.lat, lon: +f.dataset.lon, nombre: nom, nota, plazas: pl > 0 ? pl : null, vigilado: v("vigilado").checked, duchas: v("duchas").checked, aseos: v("aseos").checked, propuesto: "", t: Date.now() };
+    let aviso = "Guardado en tu móvil.";
+    if (v("proponer").checked) {
+      f.querySelector("[type=submit]").disabled = true; msgAnadir(id, "Enviando a la sección…");
+      try { x.propuesto = await proponer(x); aviso = x.propuesto === "ya" ? "Guardado. Otro compañero ya había propuesto este sitio." : "Guardado y enviado a la sección. Cuando lo revisen, saldrá a todos."; }
+      catch (e) { f.querySelector("[type=submit]").disabled = false; msgAnadir(id, e.message, true); if (!/conexión/.test(e.message)) return; aviso = e.message; }
+    }
+    MIOS.push(x); guardaMios();
+    terminaAnadir(id);
+    await refrescaMios();
+    if (!MAPAS[id]?.ultZona && id === "apc-mapa-libre") muestraZona(id, x.lat, x.lon, x.nombre);
+    avisoMios(aviso);
+  }
+  function avisoMios(t) { const p = $("apc-mios-msg"); if (p) { p.textContent = t; p.classList.remove("err"); } estado(t); }
+  // Vuelve a pintar todo lo que enseña aparcamientos
+  async function refrescaMios() {
+    pintaMios(); CERCA = [];
+    for (const id in MAPAS) { const z = MAPAS[id].ultZona; if (z && !MAPAS[id].div.hidden) muestraZona(id, ...z); }
+    if (RUTA) {
+      const [lista, oficiales] = await Promise.all([cargaPaises(paisesDe(RUTA.puntos)), cargaOficiales(RUTA)]);
+      EN_RUTA = enRuta(juntaOficiales(lista, oficiales), RUTA.puntos, RUTA);
+      if (VIAJE) VIAJE.firma = "";
+      repinta();
+    }
+  }
+  function pintaMios() {
+    const c = $("apc-mios-lista"), s = $("apc-mios-num"); if (!c) return;
+    if (s) s.textContent = MIOS.length ? `(${MIOS.length})` : "";
+    c.innerHTML = MIOS.length ? `<ul class="apc-lista">${MIOS.slice().reverse().map(m => `<li class="apc">
+        <b class="apc-nom">${esc(m.nombre)}</b>
+        <div class="apc-mio-etq">${esc(MIO_TXT[m.propuesto] || MIO_TXT[""])}</div>
+        ${m.plazas || m.vigilado || m.duchas || m.aseos ? `<div class="apc-extra">${[m.plazas ? m.plazas + " plazas camión" : "", m.vigilado ? "Vigilado" : "", m.duchas ? "Duchas" : "", m.aseos ? "Aseos" : ""].filter(Boolean).map(e => `<span>${esc(e)}</span>`).join("")}</div>` : ""}
+        ${m.nota ? `<p class="apc-nota-c">${esc(m.nota)}</p>` : ""}
+        <div class="apc-mio-acc"><button type="button" class="btn sec" data-mio-ver="${esc(m.id)}">${icono("lugar", "p")}Ver en el mapa</button>${llevarHref(m) ? `<a class="btn sec apc-llevar" href="${esc(llevarHref(m))}">Llevarme aquí</a>` : ""}</div>
+        ${accionesMio(m.id)}</li>`).join("")}</ul>`
+      : `<p class="apc-nota">Todavía no has añadido ninguno. Abre el mapa y toca «Añadir aparcamiento».</p>`;
+  }
+  // Botones de «Mis aparcamientos» (en la lista, en las tarjetas y en las ventanitas del mapa)
+  async function accionMio(e) {
+    const b = e.target.closest("[data-mio-borra],[data-mio-propone],[data-mio-ver]"); if (!b) return;
+    const idm = b.dataset.mioBorra || b.dataset.mioPropone || b.dataset.mioVer, m = MIOS.find(z => z.id === idm); if (!m) return;
+    if (b.dataset.mioVer) {
+      if ($("apc-libre").hidden) abreMapaLibre();
+      await pintaMapa("apc-mapa-libre", [], { ruta: false });
+      MAPAS["apc-mapa-libre"]?.mapa.setView([m.lat, m.lon], 15);
+      muestraZona("apc-mapa-libre", m.lat, m.lon, m.nombre);
+      $("apc-mapa-libre").scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    if (b.dataset.mioBorra) {
+      if (!confirm(`¿Borrar «${m.nombre}» de tus aparcamientos?` + (m.propuesto === "ok" ? " Lo que enviaste a la sección no se borra." : ""))) return;
+      MIOS = MIOS.filter(z => z.id !== idm); guardaMios(); await refrescaMios(); avisoMios("Borrado de tu móvil."); return;
+    }
+    b.disabled = true;
+    try { m.propuesto = await proponer(m); guardaMios(); await refrescaMios(); avisoMios(m.propuesto === "ya" ? "Otro compañero ya había propuesto este sitio." : "Enviado a la sección. Cuando lo revisen, saldrá a todos."); }
+    catch (er) { b.disabled = false; const p = $("apc-mios-msg"); if (p) { p.textContent = er.message; p.classList.add("err"); } estado(er.message, true); }
+  }
+
   // Mapa sin ruta (debajo del formulario): busca un sitio o toca «Dónde estoy»
   function abreMapaLibre() {
     const c = $("apc-libre"); c.hidden = !c.hidden;
@@ -827,6 +989,7 @@
     [T("Durante el viaje"), T("Pulsa «Empezar viaje»: la pantalla no se apaga y te enseño los aparcamientos que tienes delante. Si quieres, te los digo en voz alta."), visible("#apc-empezar", "#apc-voz", "#apc-buscar")],
     [T("Llevarme aquí"), T("En cada aparcamiento, «Llevarme aquí» lo abre en el navegador que uses en el móvil (iGO, Google Maps…)."), visible(".apc-llevar", "#apc-buscar")],
     [T("Mapa sin ruta"), T("Para mirar una zona sin calcular ruta, abre el mapa y toca «Dónde estoy» o busca un sitio."), visible("#apc-abre-mapa", "#apc-cambiar")],
+    [T("Añadir un aparcamiento"), T("¿Has encontrado uno que no sale? En el mapa toca «Añadir aparcamiento», toca el sitio (o usa tu posición), ponle nombre y guárdalo. Se queda en tu móvil, en «Mis aparcamientos». Si marcas «Proponerlo también a los compañeros», la sección lo revisa y sale a todos."), visible(".apc-anade-btn", "#apc-abre-mapa", "#apc-cambiar")],
   ];
   // La guía se traduce como «Mis descansos» (función traducir, modo textos, grupo «aparcar»: solo los T("…") de este archivo)
   let MAPA_APC = {};
@@ -865,6 +1028,8 @@
     // Durante el viaje, los avisos de los compañeros se refrescan cada 2 minutos
     $("apc-buscar").onclick = buscaRuta;
     $("apc-abre-mapa").onclick = abreMapaLibre;
+    $("v-aparcar").addEventListener("click", accionMio);
+    pintaMios();
     $("v-aparcar").addEventListener("click", (e) => { const b = e.target.closest("[data-apc-vista]"); if (b) ponVista(b.dataset.apcVista); });
     // Si cambia el sitio o el código postal, lo elegido antes ya no vale
     [["apc-desde", "desde"], ["apc-desde-cp", "desde"], ["apc-hasta", "hasta"], ["apc-hasta-cp", "hasta"]].forEach(([id, k]) => $(id).addEventListener("input", () => { ELEGIDO[k] = null; $("apc-elegir").innerHTML = ""; }));

@@ -278,6 +278,24 @@ SECCIONES.peajes = {
   extracto: (x) => x.nota, chips: (x) => [x.pais, (COBRA_PEAJE.find(c => c[0] === x.cobra) || [, ""])[1].split(" (")[0], x.cobra !== "nada" ? (Number(x.precio_km) > 0 ? precioTxt(x.precio_km) + " por km" : "Sin precio") : null, x.visible === false ? "No se usa" : null], fechas: (x) => [null, x.actualizado],
 };
 
+// v106 (lo pidió el padre): aparcamientos que proponen los conductores desde el mapa de «Aparcamientos en mi ruta».
+// Llegan como «Por revisar» (RPC proponer_aparcamiento, anónima); solo los «Aprobados» salen en el mapa de todos.
+const ESTADO_APC = [["pendiente", "Por revisar"], ["aprobado", "Aprobado: sale en el mapa de todos"], ["rechazado", "Rechazado: no sale"]];
+const mapaOSM = (x) => `https://www.openstreetmap.org/?mlat=${(+x.lat).toFixed(6)}&mlon=${(+x.lon).toFixed(6)}#map=17/${(+x.lat).toFixed(6)}/${(+x.lon).toFixed(6)}`;
+SECCIONES.compas = {
+  nombre: "Aparcamientos propuestos", icono: "lugar", tabla: "aparcamientos_compas", orden: ["id", false], uno: "aparcamiento", nuevo: "Añadir aparcamiento", lista: "aviso", campoColor: "_", oculta: true, volver: "propuestas",
+  intro: "", tituloDe: (x) => x.nombre,
+  campos: [
+    { k: "estado", l: "¿Sale en el mapa de todos?", t: "select", ops: ESTADO_APC, def: "pendiente", ayuda: "Antes de aprobarlo, mira dónde está: pestaña «Vista previa» y «Ver dónde está»." },
+    { k: "nombre", l: "Nombre", t: "text", req: true, ph: "Ej: Área de servicio La Jonquera" },
+    { fila: [{ k: "plazas", l: "Plazas para camiones", t: "number", ayuda: "0 si no se sabe." }, { k: "lat", l: "Latitud", t: "number", dec: true, paso: "any" }, { k: "lon", l: "Longitud", t: "number", dec: true, paso: "any" }] },
+    { k: "nota", l: "Nota del conductor", t: "textarea", opc: true, corto: true },
+    { checks: [{ k: "vigilado", l: "Vigilado" }, { k: "duchas", l: "Duchas" }, { k: "aseos", l: "Aseos" }] },
+  ],
+  previa: (x) => `<div class="panel calc"><div class="resultado-calc"><span class="rc-tit">${esc(x.nombre || "Aparcamiento")}</span><span class="rc-num">${Number(x.plazas) > 0 ? esc(String(x.plazas)) + " <small>plazas</small>" : "<small>Plazas sin apuntar</small>"}</span>${x.nota ? `<span class="rc-sub">${esc(x.nota)}</span>` : ""}${Number.isFinite(+x.lat) && Number.isFinite(+x.lon) && +x.lat ? `<a class="btn sec" href="${esc(mapaOSM(x))}" target="_blank" rel="noopener">${icono("lugar", "p")}Ver dónde está</a>` : ""}</div></div>`,
+  extracto: (x) => x.nota, chips: (x) => [(ESTADO_APC.find(e => e[0] === x.estado) || [, ""])[1].split(":")[0], Number(x.plazas) > 0 ? x.plazas + " plazas" : null, x.vigilado ? "Vigilado" : null, x.duchas ? "Duchas" : null, x.aseos ? "Aseos" : null], fechas: (x) => [x.dia, x.actualizado],
+};
+
 // Restricciones para camiones (Zona Conductores de la web). Se editan en la página «Restricciones camiones».
 SECCIONES.restricciones = {
   nombre: "Restricciones para camiones", icono: "lugar", tabla: "restricciones", orden: ["orden", true], uno: "país", nuevo: "Añadir país", lista: "aviso", campoColor: "_", oculta: true, volver: "camiones",
@@ -320,8 +338,8 @@ async function cargarApartados() {
 let PAGINAS = {};
 // Menú agrupado igual que las pestañas de la web (v52): cada apartado principal con lo que va dentro, un poco metido.
 // «cab» pone un título encima; «sub» lo mete dentro del de arriba. Si falta el apartado de arriba, va suelto.
-const DENTRO_PANEL = { actas: "comite", convenio: "convenio-y-leyes", calculadoras: "convenio-y-leyes", camiones: "zona-conductores", ganancias: "zona-conductores", peajes: "zona-conductores" };
-const PAG_FIJAS = { calculadoras: { nombre: "Calculadoras", icono: "reloj" }, camiones: { nombre: "Restricciones camiones", icono: "lugar" }, ganancias: { nombre: "Importes conductores", icono: "euro" }, peajes: { nombre: "Peajes camión", icono: "euro" },
+const DENTRO_PANEL = { actas: "comite", convenio: "convenio-y-leyes", calculadoras: "convenio-y-leyes", camiones: "zona-conductores", ganancias: "zona-conductores", peajes: "zona-conductores", propuestas: "zona-conductores" };
+const PAG_FIJAS = { calculadoras: { nombre: "Calculadoras", icono: "reloj" }, camiones: { nombre: "Restricciones camiones", icono: "lugar" }, ganancias: { nombre: "Importes conductores", icono: "euro" }, peajes: { nombre: "Peajes camión", icono: "euro" }, propuestas: { nombre: "Aparcamientos propuestos", icono: "lugar" },
   buzon: { nombre: "Buzón anónimo", icono: "correo" }, ortografia: { nombre: "Revisar ortografía", icono: "check" }, historial: { nombre: "Historial", icono: "reloj" }, textos: { nombre: "Textos", icono: "texto" }, ajustes: { nombre: "Ajustes", icono: "ajustes" } };
 const padreDe = (a) => a.padre_id ? APARTADOS.find(p => p.id === a.padre_id && !p.padre_id) : null;
 function construirPaginas() {
