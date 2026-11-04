@@ -75,9 +75,6 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
-## Versión 119: horas por compensar en azul en el PDF de «Mis descansos» (petición n.º 5 del padre)
-- En el PDF, el total de horas por compensar, cada descanso pendiente y «Faltan … por compensar» salen en azul; en rojo solo si el plazo ya pasó.
-
 ## Versión 118: «Toca aquí» en el camión (petición n.º 4 del padre, por el panel)
 - En la pestaña camión de Zona Conductores, una pastilla crema con un dedo y «Toca aquí» que hace un toque suave; no sale cuando ya estás dentro.
 
