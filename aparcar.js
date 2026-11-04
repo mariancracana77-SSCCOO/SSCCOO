@@ -262,7 +262,7 @@
   };
 
   // Plazas para camiones: lo más importante para el padre (capacity:hgv de OpenStreetMap)
-  const plazasHTML = (x) => x.plazas ? `<span class="apc-plazas"${x.plazasCompas ? ` title="Según ${x.plazasCompas === 1 ? "1 compañero" : x.plazasCompas + " compañeros"}"` : ""}><b>${x.plazas}</b> ${x.plazas === 1 ? "plaza" : "plazas"} camión</span>` : `<span class="apc-plazas nose">Plazas sin apuntar</span>`;
+  const plazasHTML = (x) => x.plazas ? `<span class="apc-plazas"${x.plazasCompas ? ` title="Según ${x.plazasCompas === 1 ? "1 compañero" : x.plazasCompas + " compañeros"}"` : ""}>${x.plazasCompas ? "unas " : ""}<b>${x.plazas}</b> ${x.plazas === 1 ? "plaza" : "plazas"} camión</span>` : `<span class="apc-plazas nose">Plazas sin apuntar</span>`;
   function abreHTML(x, cuando) {
     const av = avisoDe(x);
     if (av?.tipo === "cerrado") return `<span class="apc-abre no">Cerrado</span> <span class="apc-aviso-comp">avisado por un compañero ${haceTxt(av.t)}</span>`;
@@ -980,7 +980,8 @@
     v.innerHTML = `<form class="modal apc-mal-form" role="dialog" aria-modal="true" novalidate><h2>¿Qué está mal?</h2>
       <p class="apc-nota"><b>${esc(nombre(x))}</b></p>
       <fieldset class="apc-mal-tipos"><legend class="sr-only">Qué está mal</legend>${MAL_TIPOS.map(([k, t], i) => `<label class="check"><input type="radio" name="tipo" value="${k}"${i ? "" : " checked"}> ${t}</label>`).join("")}</fieldset>
-      <label class="apc-mal-plazas">Plazas para camiones que tiene <small>(si lo sabes)</small><input name="plazas" inputmode="numeric" maxlength="3" placeholder="Ej: 20"></label>
+      <label class="apc-mal-plazas">Plazas para camiones que tiene <small>(si lo sabes; vale aproximado)</small><input name="plazas" inputmode="numeric" maxlength="3" placeholder="Ej: 20"></label>
+      <div class="apc-pl-rapidas" role="group" aria-label="Plazas aproximadas">${[5, 10, 15, 20, 30, 50, 100].map(n => `<button type="button" class="btn sec peq" data-pl="${n}">unas ${n}</button>`).join("")}</div>
       <label>Nota<textarea name="nota" maxlength="300" rows="2" placeholder="Opcional. Ej: lo han vallado; ahora es solo para coches"></textarea></label>
       <p class="apc-nota">Le llega a la sección sin saber quién lo manda. Si está bien, lo corrigen para todos. No pongas teléfonos ni nombres de personas.</p>
       <p class="msg" role="status" aria-live="polite"></p>
@@ -1008,6 +1009,9 @@
 
   // v113: la ventanita del mapa no se sale de la pantalla ni queda bajo los botones de arriba a la derecha
   const POPUP_OP = () => ({ maxWidth: Math.min(290, innerWidth - 60), minWidth: Math.min(220, innerWidth - 60), autoPanPaddingTopLeft: [12, 12], autoPanPaddingBottomRight: [12, 12], autoPanPadding: [12, 12], className: "apc-popup-caja" });
+  // v113 (lo pidió el padre): plazas aproximadas sin tener que contarlas, en «Añadir», «Decir qué tiene» y «¿Algo está mal?»
+  document.addEventListener("click", (e) => { const b = e.target.closest("[data-pl]"); if (!b) return; const f = b.closest("form"), i = f?.querySelector("[name=plazas]"); if (!i) return;
+    i.value = b.dataset.pl; f.querySelectorAll("[data-pl]").forEach(z => z.classList.toggle("elegida", z === b)); });
   // «Lo confirmo» y «Decir qué tiene» (v111)
   // v113: se puede quitar lo dicho (lo pidió el padre): RPC quitar_opinion_aparcamiento borra una opinión igual de ese aparcamiento
   async function quitarOpinion(x, tipo, valor) {
@@ -1048,7 +1052,8 @@
       <p class="apc-nota"><b>${esc(nombre(x))}</b></p>
       <button type="button" class="btn sec apc-solo" data-solo>No tiene nada: solo aparcamiento</button>
       ${SERVICIOS.map(([k, t]) => { const m = mio[k] === true ? "si" : mio[k] === false ? "no" : ""; return `<div class="apc-serv" role="radiogroup" aria-label="${esc(t)}"><b class="apc-serv-tit">${esc(t)}</b><div class="apc-serv-ops">${[["si", "Sí"], ["no", "No"], ["", "No lo sé"]].map(([val, tt]) => `<label class="check"><input type="radio" name="${k}" value="${val}"${val === m ? " checked" : ""}> ${tt}</label>`).join("")}</div></div>`; }).join("")}
-      <label class="apc-serv-pl">Plazas para camiones <small>(si lo sabes)</small><input name="plazas" inputmode="numeric" maxlength="3" placeholder="Ej: 20" value="${miasPl != null ? esc(String(miasPl)) : ""}"></label>
+      <label class="apc-serv-pl">Plazas para camiones <small>(si lo sabes; vale aproximado)</small><input name="plazas" inputmode="numeric" maxlength="3" placeholder="Ej: 20" value="${miasPl != null ? esc(String(miasPl)) : ""}"></label>
+      <div class="apc-pl-rapidas" role="group" aria-label="Plazas aproximadas">${[5, 10, 15, 20, 30, 50, 100].map(n => `<button type="button" class="btn sec peq" data-pl="${n}">unas ${n}</button>`).join("")}</div>
       ${ya ? "" : `<label class="check"><input type="checkbox" name="confirma"> También confirmo que existe y se puede aparcar con camión</label>`}
       <p class="apc-nota">Sale enseguida para todos, sin saber quién lo manda. Si varios compañeros dicen cosas distintas, sale lo que diga la mayoría. Para quitar lo que dijiste, elige «No lo sé» o borra las plazas.</p>
       <p class="msg" role="status" aria-live="polite"></p>
@@ -1057,6 +1062,7 @@
     const f = v.querySelector("form"), msg = f.querySelector(".msg"), cierra = () => v.remove();
     v.onclick = (e) => { if (e.target === v) cierra(); };
     f.querySelector("[data-no]").onclick = cierra;
+    // v113 (lo pidió el padre): plazas aproximadas sin tener que contarlas
     f.querySelector("[data-solo]").onclick = () => SERVICIOS.forEach(([k]) => { const r = f.querySelector(`[name=${k}][value=no]`); if (r) r.checked = true; });
     f.onsubmit = async (e) => {
       e.preventDefault();
@@ -1088,7 +1094,8 @@
     <p class="apc-nota apc-nuevo-sitio">Toca en el mapa el sitio del aparcamiento, o usa tu posición si estás en él.</p>
     <button type="button" class="btn sec" data-nuevo-yo>${icono("lugar", "p")}Estoy aquí: usar mi posición</button>
     <label>Nombre<input name="nombre" maxlength="80" placeholder="Ej: Gasolinera de la salida 12" enterkeyhint="next"></label>
-    <label>Plazas para camiones (si lo sabes)<input name="plazas" inputmode="numeric" maxlength="3" placeholder="Opcional"></label>
+    <label>Plazas para camiones (si lo sabes; vale aproximado)<input name="plazas" inputmode="numeric" maxlength="3" placeholder="Opcional"></label>
+    <div class="apc-pl-rapidas" role="group" aria-label="Plazas aproximadas">${[5, 10, 15, 20, 30, 50, 100].map(n => `<button type="button" class="btn sec peq" data-pl="${n}">unas ${n}</button>`).join("")}</div>
     <div class="apc-nuevo-checks"><label class="check"><input type="checkbox" name="vigilado"> Vigilado</label><label class="check"><input type="checkbox" name="duchas"> Duchas</label><label class="check"><input type="checkbox" name="aseos"> Aseos</label></div>
     <label>Nota<textarea name="nota" maxlength="300" rows="2" placeholder="Opcional. Ej: se llena a partir de las 19 h; la entrada está detrás"></textarea></label>
     <label class="check"><input type="checkbox" name="proponer"> Proponerlo también a los compañeros</label>
