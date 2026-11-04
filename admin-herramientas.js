@@ -506,7 +506,10 @@ const eligePet = (input, lista) => {
   [...input.files].forEach(f => { if (!tipoPet(f)) malos.push(`«${f.name}» no es foto, vídeo ni audio`); else if (f.size > PET_MB * 1048576) malos.push(`«${f.name}» pesa más de ${PET_MB} MB (graba un vídeo más corto)`); else lista.push(f); });
   input.value = ""; return malos;
 };
-const adjPet = (a) => (a || []).length ? `<p class="fecha-txt">${(a || []).map(x => `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener">${esc(x.nombre)}</a>`).join(" · ")}</p>` : "";
+// v124 (lo pidió Lorena): las fotos (las del padre y las capturas de Claude) se ven dentro del mensaje; lo demás, como enlace
+const adjPet = (a) => { const fotos = (a || []).filter(esImagen), otros = (a || []).filter(x => !esImagen(x));
+  return (fotos.length ? `<div class="pet-fotos">${fotos.map(x => `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener" aria-label="Ver en grande: ${esc(x.nombre || "foto")}"><img src="${esc(urlSegura(x.url))}" alt="${esc(x.nombre || "")}" loading="lazy"></a>`).join("")}</div>` : "")
+    + (otros.length ? `<p class="fecha-txt">${otros.map(x => `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener">${esc(x.nombre)}</a>`).join(" · ")}</p>` : ""); };
 const horaPet = (t) => new Date(t).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 const PET_ANADE = {}; // archivos elegidos para añadir a cada petición (por id)
 async function pintaPeticiones() {

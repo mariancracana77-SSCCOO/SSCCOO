@@ -75,6 +75,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 124: fotos dentro del chat de las peticiones (lo pidió Lorena)
+- En «Pedir un cambio a Claude», las fotos de cada mensaje (las que manda el padre y las capturas que pone Claude de lo que ha hecho) se ven dentro del chat; al tocarlas, se abren en grande.
+
 ## Versión 123: dedo en el camión de Zona Conductores (petición n.º 1 del padre)
 - En la pestaña camión de Zona Conductores, un dedo pequeño en un círculo crema que hace un toque suave; no sale cuando ya estás dentro.
 
