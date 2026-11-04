@@ -165,7 +165,13 @@
   const zona = (t) => zonaTxt(t.grupo) || (/dieta/i.test(t.grupo + " " + t.concepto) ? zonaTxt(t.concepto) : "");
   const ZONA_TXT = () => ({ nac: T("Nacional"), int: T("Internacional"), gb: T("Reino Unido, Suiza y Marruecos") });
   // Etiqueta en cada fila, salvo si el grupo ya pinta la zona y el nombre también la dice («Dieta completa GB-CG-MA»)
-  const zonaHTML = (t) => { const z = zona(t); return z && !(zonaTxt(t.grupo) && zonaTxt(t.concepto) === z) ? `<span class="gan-zona z-${z}">${z === "gb" ? `<span class="sr-only">${esc(ZONA_TXT()[z])}</span>` : esc(ZONA_TXT()[z])}</span>` : ""; }; // GB-CG-MA: solo las tres banderas (el texto no cabe)
+  // v113 (lo pidió el padre: «se ven iguales y se puede confundir»): las dietas festivas llevan, junto a la zona, la etiqueta roja «Festivo» con un calendario;
+  // la fila va en rojo suave y el grupo con el sello del calendario en la cabecera
+  const esFest = (t) => /festiv/i.test(t.grupo + " " + t.concepto) && /dieta/i.test(t.grupo + " " + t.concepto);
+  const zonaHTML = (t) => { const z = zona(t), f = esFest(t); if (!z || !(f || !(zonaTxt(t.grupo) && zonaTxt(t.concepto) === z))) return "";
+    const zh = `<span class="gan-zona z-${z}">${z === "gb" ? `<span class="sr-only">${esc(ZONA_TXT()[z])}</span>` : esc(ZONA_TXT()[z])}</span>`;
+    return f ? `<span class="gan-zonas">${zh}<span class="gan-fest-etq">${icono("calendario", "p")}${esc(T("Festivo"))}</span></span>` : zh; };
+  const SELLO_FEST = `<span class="gan-fest-sello" aria-hidden="true">${icono("calendario")}</span>`; // GB-CG-MA: solo las tres banderas (el texto no cabe)
   // v109 (lo pidió el padre): la Plaça destaca como una plaza de aparcamiento (señal azul con la P y fila de asfalto con las rayas blancas)
   const esPlaza = (t) => /^pla[cçz]a\b/i.test(t.concepto || "");
   const SENAL_P = '<span class="gan-p" aria-hidden="true">P</span>';
@@ -220,7 +226,7 @@
         // v89: si el precio va a cambiar después de este día, se avisa («Desde el 1 de enero de 2027: 50,82 €»)
         t.nuevo != null && t.desde && f < t.desde && !esPropio(t, t.desde) ? T("Desde el {d}: {p}", { d: deIso(t.desde).toLocaleDateString(LOC, { day: "numeric", month: "long", year: "numeric" }), p: precio(t.nuevo) }) : "", t.sin_pagar ? (t.sin_pagar === 1 ? T("La primera de cada día no se paga.") : T("Las primeras {n} de cada día no se pagan.", { n: t.sin_pagar })) : "", t.max_mes != null ? T("Como mucho {n} al mes.", { n: t.max_mes }) : ""].filter(Boolean);
       const unicos = [...new Set(nota)];
-      return `<li class="gan-fila ${l ? "con" : ""} ${zonaHTML(t) ? "con-zona" : ""} ${zona(t) && !zonaTxt(t.grupo) ? "fila-z-" + zona(t) : ""}${esPlaza(t) ? " gan-placa" : ""}">${zonaHTML(t)}<label for="gan-c${t.id}"><b>${esPlaza(t) ? SENAL_P : ""}${esc(TD(t.concepto))}</b><small>${imp(t, f) ? `${t.unidad === "minuto" ? esc(T("{h} por hora · {m} por minuto", { h: eur(imp(t, f) * 60), m: precio(imp(t, f)) })) : `${esc(precio(imp(t, f)))} ${esc(UNIDAD()[t.unidad])}`}${esPropio(t, f) ? " · " + esc(T("el tuyo")) : ""}` : `<span class="gan-tope">${esc(T("Pon tu precio en «Ajustes»"))}</span>`}${t.pago === "Mensual" ? " · " + esc(T("en la nómina")) : " · " + esc(T("cobro semanal"))}</small>${unicos.map(x => `<small class="gan-nota">${esc(x)}</small>`).join("")}${l?.tope ? `<small class="gan-tope">${esc(T("Ya llevas el máximo de este mes: este no suma."))}</small>` : ""}</label>
+      return `<li class="gan-fila ${l ? "con" : ""} ${zonaHTML(t) ? "con-zona" : ""} ${zona(t) && !zonaTxt(t.grupo) ? "fila-z-" + zona(t) : ""}${esPlaza(t) ? " gan-placa" : ""}${esFest(t) ? " gan-festiva" : ""}">${zonaHTML(t)}<label for="gan-c${t.id}"><b>${esPlaza(t) ? SENAL_P : ""}${esc(TD(t.concepto))}</b><small>${imp(t, f) ? `${t.unidad === "minuto" ? esc(T("{h} por hora · {m} por minuto", { h: eur(imp(t, f) * 60), m: precio(imp(t, f)) })) : `${esc(precio(imp(t, f)))} ${esc(UNIDAD()[t.unidad])}`}${esPropio(t, f) ? " · " + esc(T("el tuyo")) : ""}` : `<span class="gan-tope">${esc(T("Pon tu precio en «Ajustes»"))}</span>`}${t.pago === "Mensual" ? " · " + esc(T("en la nómina")) : " · " + esc(T("cobro semanal"))}</small>${unicos.map(x => `<small class="gan-nota">${esc(x)}</small>`).join("")}${l?.tope ? `<small class="gan-tope">${esc(T("Ya llevas el máximo de este mes: este no suma."))}</small>` : ""}</label>
         <div class="gan-ctrl">${control(t)}</div><span class="gan-imp">${l ? esc(eur(l.imp)) : ""}</span></li>`; };
     // ¿Dieta completa y partes el mismo día? Normalmente es una u otra
     const lleva = (p) => r.lineas.some(l => /dieta/i.test(l.t.grupo + " " + l.t.concepto) && p(l.t));
@@ -235,7 +241,7 @@
       ${DATOS.libres[f] ? `<div class="gan-libre-aviso">${icono("check", "p")}<span>${esc(T("Día libre: este día no has trabajado."))}</span><button type="button" class="btn sec" id="gan-libre">${esc(T("Quitar «libre»"))}</button></div>`
         : `<button type="button" class="btn sec gan-libre-btn" id="gan-libre">${icono("calendario", "p")}${esc(T("Marcar este día como libre (no he trabajado)"))}</button>`}
       ${doble ? `<p class="desc-alerta">${icono("alerta", "p")}<span>${esc(T("Has marcado la dieta completa y también partes de la dieta. Normalmente se cobra una cosa o la otra: revísalo."))}</span></p>` : ""}
-      ${grupos.map(g => `<section class="gan-grupo ${zonaTxt(g.n) ? "z-" + zonaTxt(g.n) : ""}">${g.n ? `<h3>${esc(TD(g.n))}</h3>` : ""}<ul>${g.ts.map(fila).join("")}</ul></section>`).join("")}
+      ${grupos.map(g => `<section class="gan-grupo ${zonaTxt(g.n) ? "z-" + zonaTxt(g.n) : ""}${/festiv/i.test(g.n || "") ? " festiva" : ""}">${g.n ? `<h3>${/festiv/i.test(g.n) ? SELLO_FEST : ""}${esc(TD(g.n))}</h3>` : ""}<ul>${g.ts.map(fila).join("")}</ul></section>`).join("")}
       ${lista.length < variables().length ? `<p class="ayuda">${esc(T("Hay conceptos escondidos. Los vuelves a sacar en «Ajustes»."))}</p>` : ""}
       <div class="botones">${anterior && !Object.keys(dia).length ? `<button class="btn sec" id="gan-copiar">${icono("copia", "p")}${esc(T("Copiar el día anterior ({fecha})", { fecha: fDia(anterior) }))}</button>` : ""}
         ${Object.keys(dia).length ? `<button class="btn sec" id="gan-vaciar">${icono("borrar", "p")}${esc(T("Vaciar este día"))}</button>` : ""}</div>`;
@@ -411,7 +417,7 @@
     $("gan-ajustes").innerHTML = `<div class="gan-aj-resumen" id="gan-aj-resumen" aria-live="polite"></div>
       <details class="gan-checks gan-precios" open><summary>${esc(T("Lo que cobras tú"))}</summary>
         <p class="ayuda">${esc(T("Cada persona cobra distinto (antigüedad, horas sindicales…). Pon tu importe donde no te cuadre la tabla; si lo dejas vacío, se usa el de la tabla."))}</p>
-        ${grupos.map(g => `<div class="gan-precios-grupo ${zonaTxt(g.n) ? "z-" + zonaTxt(g.n) : ""}">${g.n ? `<h4>${esc(TD(g.n))}</h4>` : ""}${g.ts.map(t => `<label class="gan-precio${esPlaza(t) ? " gan-placa" : ""}"><span>${zonaHTML(t)}${esPlaza(t) ? SENAL_P : ""}${esc(TD(t.concepto))}<small>${esc(UNIDAD()[t.unidad])}${t === sal ? " · " + esc(T("con antigüedad")) : ""}</small></span>
+        ${grupos.map(g => `<div class="gan-precios-grupo ${zonaTxt(g.n) ? "z-" + zonaTxt(g.n) : ""}${/festiv/i.test(g.n || "") ? " festiva" : ""}">${g.n ? `<h4>${/festiv/i.test(g.n) ? SELLO_FEST : ""}${esc(TD(g.n))}</h4>` : ""}${g.ts.map(t => `<label class="gan-precio${esPlaza(t) ? " gan-placa" : ""}${esFest(t) ? " gan-festiva" : ""}"><span>${zonaHTML(t)}${esPlaza(t) ? SENAL_P : ""}${esc(TD(t.concepto))}<small>${esc(UNIDAD()[t.unidad])}${t === sal ? " · " + esc(T("con antigüedad")) : ""}</small></span>
           <input inputmode="decimal" data-precio="${t.id}" value="${esc(valor(t))}" placeholder="${esc(base(t) ? precio(base(t)) : T("tu precio"))}" aria-label="${esc(TD(t.concepto) + " · " + UNIDAD()[t.unidad])}"></label>`).join("")}</div>`).join("")}
       </details>
       ${fm.length ? `<fieldset class="gan-checks"><legend>${esc(T("Lo que cobro fijo cada mes"))}</legend>${fm.map(t => `<label class="check"><input type="checkbox" data-fijo="${t.id}" ${cobraFijo(t) ? "checked" : ""}><span>${esc(TD(t.concepto))} · ${esc(precio(imp(t)))}</span></label>`).join("")}</fieldset>` : ""}

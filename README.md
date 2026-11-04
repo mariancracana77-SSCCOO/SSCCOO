@@ -75,6 +75,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 113: las dietas festivas se distinguen (lo pidió el padre)
+- En «Mis incentivos», las dietas festivas llevan junto a «Nacional» la etiqueta roja «Festivo» con un calendario, la fila en rojo suave y, en su grupo, un sello de calendario en la cabecera. Así no se confunden con las normales.
+
 ## Versión 112: la pestaña Zona Conductores es un camión (lo pidió el padre)
 - Como el camión del logo: caja azul con «CC» y el nombre, cabina y ruedas. La elegida va sobre una carretera blanca.
 

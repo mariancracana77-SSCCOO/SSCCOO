@@ -2217,3 +2217,22 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 :root[data-theme="dark"] .gan-fila.gan-placa, :root[data-theme="dark"] .gan-precio.gan-placa { background: #10294a; color: #e6f0fb; border-color: #4f9dff; }
 :root[data-theme="dark"] .gan-fila.gan-placa > label small, :root[data-theme="dark"] .gan-fila.gan-placa .gan-imp, :root[data-theme="dark"] .gan-precio.gan-placa small { color: #b9cde6; }
 .gan-precio.gan-placa > span { grid-template-columns: auto minmax(0, 1fr); column-gap: 2px; align-items: center; } .gan-precio.gan-placa > span > .gan-p { grid-row: span 2; } .gan-precio.gan-placa > span > small { grid-column: 2; }
+
+/* v113: dietas festivas distintas de las normales (lo pidió el padre: «se ven iguales y se puede confundir»):
+   etiqueta roja «Festivo» con calendario junto a la zona, fila en rojo suave y sello de calendario en la cabecera del grupo */
+.gan-zonas { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; justify-self: start; }
+.gan-fila > .gan-zonas { grid-area: zona; margin-bottom: 3px; }
+.gan-zonas .gan-zona { margin-bottom: 0; }
+.gan-fest-etq { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px 2px 7px; border-radius: 999px; background: var(--rojo); color: #fff; font-size: .85rem; font-weight: 700; line-height: 1.4; box-shadow: 0 1px 3px rgba(171, 16, 18, .35); }
+.gan-fest-etq .icono { width: 1.05em; height: 1.05em; }
+.gan-fila.gan-festiva, .gan-precio.gan-festiva { background: var(--rojo-suave); border-radius: 8px; }
+.gan-fila.gan-festiva:not([class*="fila-z-"]), .gan-precio.gan-festiva { margin-inline: -6px; padding-inline: 6px; }
+.gan-fila.gan-festiva.fila-z-nac { background: linear-gradient(#AA151B 0 25%, #F1BF00 25% 75%, #AA151B 75%) left / 4px 100% no-repeat, var(--rojo-suave); border-radius: 4px 8px 8px 4px; }
+.gan-precio .gan-zonas { display: inline-flex; justify-self: start; margin-bottom: 2px; }
+.gan-precio .gan-zonas { gap: 6px; flex-wrap: wrap; }
+.gan-precio .gan-zonas > span { display: inline-flex; gap: 5px; white-space: nowrap; }
+.gan-fila.gan-festiva + .gan-fila.gan-festiva { margin-top: 6px; }
+.gan-grupo.festiva h3, .gan-precios-grupo.festiva h4 { display: flex; align-items: center; gap: 10px; }
+.gan-fest-sello { position: relative; flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; background: var(--rojo); color: #fff; box-shadow: 0 2px 5px rgba(171, 16, 18, .35); }
+.gan-fest-sello .icono { width: 22px; height: 22px; }
+.gan-fest-sello::after { content: ""; position: absolute; right: -4px; top: -4px; width: 12px; height: 12px; border-radius: 50%; background: #fff; box-shadow: inset 0 0 0 3px var(--rojo); }
