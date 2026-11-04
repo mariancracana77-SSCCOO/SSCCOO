@@ -95,9 +95,11 @@ function montaGrupos() {
   GRUPO_DE = {}; GRUPOS.forEach(g => { GRUPO_DE[g.clave] = g; g.miembros.forEach(m => GRUPO_DE[m.clave] = g); });
 }
 const ordenVistas = () => GRUPOS.length ? GRUPOS.flatMap(g => g.miembros.map(m => m.clave)) : [...document.querySelectorAll(".pestanas-web a")].map(b => b.dataset.v);
+// v117 (lo pidió el padre desde «Pedir un cambio a Claude»): un dedo pequeño en el camión de Zona Conductores, para que se vea que es un botón y no un dibujo
+const DEDO_PEST = '<span class="pc-dedo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 9.5V4a2 2 0 0 0-4 0v10l-1.6-1.6a2 2 0 0 0-2.8 2.8l3.6 3.6C6.7 20.3 8.5 22 12 22h2a8 8 0 0 0 8-8v-3a2 2 0 0 0-4 0v-1a2 2 0 0 0-4 0V9a2 2 0 0 0-4 0z"/><path d="M10 9.5V12M14 10v2M18 11v1.5"/></svg></span>';
 function pintaPestanas() {
   montaGrupos();
-  document.querySelector(".pestanas-web").innerHTML = GRUPOS.map(g => `<a href="#${esc(g.miembros[0].clave)}" data-v="${esc(g.clave)}"${g.clave === "ap-zona-conductores" ? ' class="pest-cond"' : ""}>${esc(g.titulo)}</a>`).join("");
+  document.querySelector(".pestanas-web").innerHTML = GRUPOS.map(g => `<a href="#${esc(g.miembros[0].clave)}" data-v="${esc(g.clave)}"${g.clave === "ap-zona-conductores" ? ' class="pest-cond"' : ""}>${esc(g.titulo)}${g.clave === "ap-zona-conductores" ? DEDO_PEST : ""}</a>`).join("");
   marcaPestanas(irA.antes);
   flechasPestanas();
   if (irA.antes === "buscar") buscarTodo();
