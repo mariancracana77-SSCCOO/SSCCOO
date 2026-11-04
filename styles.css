@@ -2183,6 +2183,10 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 :root { --cond-azul: #1f4aa5; --cond-azul-ic: #1f4aa5; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cond-azul-ic: #8fb0f0; } }
 :root[data-theme="dark"] { --cond-azul-ic: #8fb0f0; }
+/* v125 (petición n.º 3 del padre): los apartados de dentro de Zona Conductores (subpestañas, tarjetas y raya del título) en morado; la pestaña camión sigue azul como el camión de Calsina */
+:root { --cond-morado: #6b2fa0; --cond-morado-ic: #6b2fa0; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cond-morado-ic: #c9a6f0; } }
+:root[data-theme="dark"] { --cond-morado-ic: #c9a6f0; }
 /* La pestaña es un camión como el de Calsina (lo pidió el padre, con una foto de su web; sin el «CC» ni su logo): el enlace es el semirremolque azul con chapas,
    puertas atrás, luz roja y letras crema; ::after es la tractora (SVG: cabina crema con deflector, parasol, ventanilla y espejo, parte de abajo azul, depósito y sus dos ruedas,
    la de atrás bajo el remolque); ::before son los tres ejes de atrás, las patas de apoyo, la barra lateral y unas rayas de velocidad. Elegida: sobre la carretera blanca. */
@@ -2203,14 +2207,14 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
               linear-gradient(90deg, transparent, rgba(255, 255, 255, .3)) 0 24px / 12px 2px no-repeat; }
 .pestanas-web a.pest-cond.activa::before { border-bottom: 3px solid #fff; height: 48px; bottom: -21px; }
 .cab-tablon .pestanas-web a.pest-cond:hover { filter: brightness(1.15); }
-.subpest-caja.cond .subpestanas a { background: var(--cond-azul); border-color: var(--cond-azul); }
+.subpest-caja.cond .subpestanas a { background: var(--cond-morado); border-color: var(--cond-morado); }
 .subpest-caja.cond .subpestanas a:hover { border-color: #fff; }
-.subpest-caja.cond .subpestanas a.activa { background: #fff; border-color: #fff; color: var(--cond-azul); }
-.subpest-caja.cond .subpestanas a .cuenta-pestana { color: var(--cond-azul); }
-.subpest-caja.cond .pest-flecha.sub { background: var(--cond-azul); }
-.desc-promo.cond { border-left-color: var(--cond-azul); }
-.desc-promo.cond > .icono:first-child { color: var(--cond-azul-ic); }
-.en-cond .titulo-vista::after { background: var(--cond-azul); }
+.subpest-caja.cond .subpestanas a.activa { background: #fff; border-color: #fff; color: var(--cond-morado); }
+.subpest-caja.cond .subpestanas a .cuenta-pestana { color: var(--cond-morado); }
+.subpest-caja.cond .pest-flecha.sub { background: var(--cond-morado); }
+.desc-promo.cond { border-left-color: var(--cond-morado); }
+.desc-promo.cond > .icono:first-child { color: var(--cond-morado-ic); }
+.en-cond .titulo-vista::after { background: var(--cond-morado); }
 /* v109: la Plaça en «Mis incentivos», como una plaza de aparcamiento (lo pidió el padre) */
 .gan-p { display: inline-grid; place-items: center; width: 1.55em; height: 1.55em; margin-right: .45em; vertical-align: -.3em; border-radius: 5px; background: #1565c0; color: #fff; font-family: "Barlow Condensed", "Inter", sans-serif; font-weight: 800; font-size: 1.05em; line-height: 1; border: 2px solid #fff; box-shadow: 0 0 0 1.5px #1565c0, 0 2px 4px rgba(0, 0, 0, .25); }
 .gan-fila.gan-placa { position: relative; margin: 10px 0 4px; padding: 14px 14px 18px; border: 2px solid #1565c0; border-radius: 10px; background: #e8f1fb; color: #0d2f57; }
