@@ -75,6 +75,11 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 121: cada petición es como un chat (lo pidió Lorena)
+- En «Pedir un cambio a Claude», cada petición enviada tiene «Añadir algo a esta petición» (texto, fotos o vídeos): lo añadido y lo que contesta Claude salen debajo, como un chat, sin crear otra petición.
+- Si Claude no hace una petición (va contra las condiciones de Lorena o no se entiende), sale «Avisar a Lorena», que le manda un aviso al móvil.
+- Consejos encima del formulario y aviso cuando Claude está en pausa.
+
 ## Versión 117: el panel avisa a Claude al momento
 - Al enviar en «Pedir un cambio a Claude», el panel deja un comentario corto (sin el texto) en una pull request «buzón» de GitHub que nunca se fusiona; eso despierta a Claude. Si no se puede, queda la revisión de cada hora. Ya no hace falta el timbre.
 
