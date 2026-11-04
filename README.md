@@ -75,6 +75,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 109: la Plaça destaca en «Mis incentivos»
+
+- **Plaça** (lo pidió el padre): nuevo concepto de la tabla de la empresa (12,53 € por día; 13,49 € desde 2027), al final de «Otros pluses». Se ve como una plaza de aparcamiento: señal azul con la P y la fila en azul claro con el borde azul, en «Día» y en «Ajustes». También se añadió la **Nacional Festiva** (dieta completa y fraccionada) de la misma tabla. Los conceptos están en Supabase (`tarifas_conductor`); el estilo va por el nombre (`esPlaza` en `ganancias.js`).
+
 ## Versión 108: mejoras de los mapas (lo pidió el padre)
 
 - **Dónde te toca parar.** Al calcular la ruta, sale en qué kilómetro y a qué hora tocan la pausa de 45 minutos (cada 4 h 30 de conducción) y el descanso diario (después de 9 h, o de 10 h si se marca), con los 3 aparcamientos más cercanos antes de cada parada. Si ya has conducido hoy, se pone en «¿Ya has conducido hoy?». Las horas de llegada de todos los aparcamientos ya cuentan las pausas.
