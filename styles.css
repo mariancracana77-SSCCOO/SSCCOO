@@ -2105,3 +2105,26 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .gan-zona.z-gb::before { content: ""; width: 4.2em; height: 1em; background: var(--gb-banderas) center / contain no-repeat; }
 .gan-grupo.z-gb h3 { background: #15191E var(--gb-banderas) right 10px center / 5em auto no-repeat; padding-right: calc(5em + 20px); }
 .gan-precios-grupo.z-gb h4 { background: #15191E var(--gb-banderas) right 10px center / 4.6em auto no-repeat; padding-right: calc(4.6em + 20px); }
+
+/* v106: aparcamientos que añade el conductor (pin azul) y formulario «Añadir aparcamiento» */
+.apc-pin.mio span { background: #1E4F9C; }
+.apc-pin.mio.nuevo span { background: #AB1012; font-size: 1.3rem; }
+.apc-anade-btn .icono { width: 20px; height: 20px; }
+.apc-mapa.apc-anadiendo { outline: 3px solid #1E4F9C; outline-offset: 2px; cursor: crosshair; }
+.apc-anade-aviso { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 1000; max-width: calc(100% - 24px); padding: 8px 14px; border-radius: 8px; background: #1E4F9C; color: #fff; font-weight: 700; text-align: center; box-shadow: 0 1px 6px rgba(0,0,0,.4); pointer-events: none; }
+.apc-nuevo { display: grid; gap: 8px; padding: 16px; margin-top: 10px; scroll-margin-top: 140px; }
+.apc-nuevo h3 { margin: 0; font-family: var(--cond); text-transform: uppercase; font-size: 1.2rem; }
+.apc-nuevo > label:not(.check) { display: grid; gap: 4px; font-weight: 700; }
+.apc-nuevo textarea { resize: vertical; }
+.apc-nuevo-checks { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.apc-nuevo-bot { display: flex; flex-wrap: wrap; gap: 8px; }
+.apc-nuevo-bot .btn { flex: 1 1 140px; }
+.apc-nuevo .msg:empty { display: none; }
+.apc-mio-etq { display: inline-block; justify-self: start; margin: 2px 0; padding: 2px 8px; border-radius: 6px; background: #1E4F9C; color: #fff; font-size: .875rem; font-weight: 700; }
+.apc-mio-etq.compa { background: var(--asfalto, #15191E); }
+.apc-nota-c { margin: 4px 0; font-style: italic; overflow-wrap: anywhere; }
+.apc-mio-acc { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.apc-mio-acc .btn { flex: 1 1 auto; min-height: 44px; }
+.apc-mios { margin-top: 4px; }
+.apc-mios > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 1.05rem; }
+.apc-mios .msg:empty { display: none; }

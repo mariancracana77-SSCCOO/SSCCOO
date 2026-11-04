@@ -75,6 +75,13 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 106: añadir aparcamientos desde el mapa
+
+- **«Añadir aparcamiento» en el mapa** de «Aparcamientos en mi ruta» (lo pidió el padre). El conductor toca el sitio en el mapa (o usa su posición) y le pone nombre, plazas, vigilado, duchas, aseos y una nota.
+- **Se guarda en su móvil**, en «Mis aparcamientos», y sale con un pin azul en el mapa, en la ruta y durante el viaje. Desde la lista se ve en el mapa, se lleva con «Llevarme aquí» y se borra.
+- **Si marca «Proponerlo también a los compañeros»**, llega al panel sin saber quién lo manda. Está en «Aparcamientos propuestos», dentro de Zona Conductores, y en el Inicio sale una banda con los que faltan por revisar. Cuando el padre lo pone en «Aprobado», sale a todos los conductores.
+- Tabla `aparcamientos_compas` y función `proponer_aparcamiento`. La función comprueba que el sitio esté en Europa y que no lleve emails ni teléfonos. Admite como mucho 30 propuestas al día y no repite un sitio que ya se ha propuesto.
+
 ## Versión 105: nocturnidad en horas y minutos
 
 - **La nocturnidad se apunta en horas y minutos**, como el ADR (lo pidió el padre; las horas sindicales siguen igual): dos casillas, horas arriba y minutos abajo. Se siguen guardando en horas (20 minutos = 0,333 h), así que lo ya apuntado se ve igual (2,5 h sale como «2 h 30 min») y el importe es el mismo. La guía rápida lo cuenta.

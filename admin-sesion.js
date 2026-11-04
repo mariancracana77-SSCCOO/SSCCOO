@@ -251,6 +251,7 @@ function abrir(k) {
   else if (k === "camiones") pintaCamiones();
   else if (k === "ganancias") pintaImportes();
   else if (k === "peajes") pintaPeajes();
+  else if (k === "propuestas") pintaPropuestas();
   else if (k === "historial") pintaHistorial();
   else if (k === "textos") pintaTextos();
   else if (k === "ajustes") pintaAjustes();
@@ -292,6 +293,7 @@ async function pintaResumen() {
       <button class="panel rapido" data-ir="ajustes"><span class="ic">${icono("telegram")}</span><span><b>Telegram y avisos</b><small>Canales y cartel QR</small></span></button>
     </div>
     <div id="aviso-buzon"></div>
+    <div id="aviso-propuestas"></div>
     <div id="recordatorio-copia"></div>
     <div id="banda-instalar"></div>
     <div class="resumen-rejilla">
@@ -324,6 +326,12 @@ async function pintaResumen() {
     if (!n || !$("aviso-buzon")) return;
     $("aviso-buzon").innerHTML = `<button class="panel banda aviso-buzon" id="ir-buzon"><span class="ic">${icono("correo")}</span><span class="txt"><b>${n === 1 ? "Tienes 1 mensaje sin leer" : `Tienes ${n} mensajes sin leer`} en el buzón anónimo</b><p>Preguntas y sugerencias de la plantilla.</p></span>${icono("der")}</button>`;
     $("ir-buzon").onclick = () => abrir("buzon");
+  });
+  // v106: aparcamientos que han propuesto los conductores y faltan por revisar
+  sb.from("aparcamientos_compas").select("id", { count: "exact", head: true }).eq("estado", "pendiente").then(({ count }) => {
+    if (!count || !$("aviso-propuestas")) return;
+    $("aviso-propuestas").innerHTML = `<button class="panel banda aviso-buzon" id="ir-propuestas"><span class="ic">${icono("lugar")}</span><span class="txt"><b>${count === 1 ? "1 aparcamiento propuesto" : count + " aparcamientos propuestos"} por revisar</b><p>Los conductores los han añadido en el mapa. Mira dónde están y apruébalos para que salgan a todos.</p></span>${icono("der")}</button>`;
+    $("ir-propuestas").onclick = () => abrir("propuestas");
   });
   $("zona").querySelector("[data-orto]").onclick = () => abrir("ortografia");
   if ($("zona").querySelector("[data-en-apartado]")) $("zona").querySelector("[data-en-apartado]").onclick = abrirHojaApartados;
