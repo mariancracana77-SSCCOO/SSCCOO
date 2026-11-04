@@ -75,6 +75,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 112: la pestaña Zona Conductores es un camión (lo pidió el padre)
+- Como el camión del logo: caja azul con «CC» y el nombre, cabina y ruedas. La elegida va sobre una carretera blanca.
+
 ## Versión 111: aparcamientos de los conductores y Zona Conductores en azul (lo pidió el padre)
 - En cada aparcamiento: «Lo confirmo: está bien» y «Decir qué tiene» (aseos, duchas, vigilado, bar o restaurante). Sale enseguida a todos; manda la mayoría.
 - Zona Conductores en azul (el del camión del logo): la pestaña de arriba, los botones de dentro y las tarjetas.

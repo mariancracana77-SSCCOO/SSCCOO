@@ -97,7 +97,7 @@ function montaGrupos() {
 const ordenVistas = () => GRUPOS.length ? GRUPOS.flatMap(g => g.miembros.map(m => m.clave)) : [...document.querySelectorAll(".pestanas-web a")].map(b => b.dataset.v);
 function pintaPestanas() {
   montaGrupos();
-  document.querySelector(".pestanas-web").innerHTML = GRUPOS.map(g => `<a href="#${esc(g.miembros[0].clave)}" data-v="${esc(g.clave)}"${g.clave === "ap-zona-conductores" ? ' class="pest-cond"' : ""}>${esc(g.titulo)}</a>`).join("");
+  document.querySelector(".pestanas-web").innerHTML = GRUPOS.map(g => `<a href="#${esc(g.miembros[0].clave)}" data-v="${esc(g.clave)}"${g.clave === "ap-zona-conductores" ? ' class="pest-cond"' : ""}>${g.clave === "ap-zona-conductores" ? '<span class="pc-cc" aria-hidden="true">CC</span>' : ""}${esc(g.titulo)}</a>`).join("");
   marcaPestanas(irA.antes);
   flechasPestanas();
   if (irA.antes === "buscar") buscarTodo();
