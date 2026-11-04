@@ -693,3 +693,27 @@ label.sin-guardar::after { content: " · sin guardar"; color: var(--rojo-ic); fo
 .pet-item.est-publicada { opacity: .8; }
 .pet-form, .pet-item { padding: 16px; }
 .pet-item .pet-resp { margin-inline: 0; }
+/* v121: cada petición como un chat (lo añadido después y lo que contesta Claude) */
+.pet-chat { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.pet-m { display: grid; gap: 2px; padding: 8px 10px; border-radius: 12px; background: var(--fondo); border: 1px solid var(--linea); max-width: 92%; }
+.pet-m.de-padre { justify-self: end; border-left: 4px solid var(--suave); }
+.pet-m.de-claude { justify-self: start; border-left: 4px solid var(--rojo); }
+.pet-m small { color: var(--suave); font-weight: 700; }
+.pet-m p { margin: 0; }
+.pet-anade-abre { justify-self: start; min-height: 48px; }
+.pet-anade { display: grid; gap: 10px; padding-top: 6px; border-top: 1px solid var(--linea); }
+.pet-anade[hidden] { display: none; }
+.pet-anade label[for] { font-weight: 700; }
+.pet-anade .msg:empty { display: none; }
+.pet-anade button[type=submit] { min-height: 52px; }
+.pet-item.est-no_hecha { border-left: 5px solid var(--rojo); }
+.pet-lorena { display: grid; gap: 8px; }
+.pet-lorena .btn { justify-self: start; min-height: 52px; }
+.pet-lorena .msg:empty { display: none; }
+.pet-m.aviso { font-style: italic; }
+.aviso-pausa { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 12px; padding: 12px 14px; border-radius: 12px; border: 2px solid #8A5A00; background: #FFF1D6; color: #4A3000; font-weight: 700; }
+.aviso-pausa[hidden] { display: none; }
+:root[data-theme="dark"] .aviso-pausa { background: #33270F; color: #FFE2A8; border-color: #FFC766; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .aviso-pausa { background: #33270F; color: #FFE2A8; border-color: #FFC766; } }
+.pet-consejos { padding: 14px 16px; margin-bottom: 12px; }
+.pet-consejos ul { margin: 6px 0 0; padding-left: 20px; display: grid; gap: 4px; }
