@@ -512,11 +512,17 @@ const PET_ANADE = {}; // archivos elegidos para añadir a cada petición (por id
 async function pintaPeticiones() {
   PET_ARCH = [];
   $("zona").innerHTML = `<div class="sec-cab"><div><h1>Pedir un cambio a Claude</h1><p>Escribe lo que quieres cambiar o añadir en la web o en el panel. Para no escribir, toca el micrófono del teclado del móvil y dilo en voz alta. Puedes añadir fotos, capturas de pantalla y vídeos cortos. Al enviarlo, Claude se entera al momento, lo prepara y avisa a Lorena: no se publica nada sin que ella lo diga.</p></div></div>
+    <p class="aviso-pausa" id="pet-pausa" role="status" hidden>${icono("reloj", "p")}<span>Ahora mismo Claude está en pausa. Puedes enviar igual: lo verá más tarde, cuando Lorena lo vuelva a encender.</span></p>
+    <div class="panel pet-consejos"><b>Para que salga bien</b><ul>
+      <li><b>Una cosa por petición.</b> Si quieres tres cambios, envía tres peticiones.</li>
+      <li>Si se te olvida algo, no hagas otra: búscala abajo, en «Lo que has pedido», y toca «Añadir algo a esta petición».</li>
+      <li>Una foto o una captura de lo que quieres cambiar ayuda mucho.</li>
+    </ul></div>
     <form class="panel pet-form" id="pet-form" novalidate>
       <label for="pet-texto">¿Qué quieres?</label>
       <textarea id="pet-texto" class="crece" rows="5" maxlength="5000" spellcheck="true" autocapitalize="sentences" placeholder="Ej: En Mis incentivos, que la dieta festiva salga arriba del todo."></textarea>
       <p class="ayuda">Claude ve las fotos y lo que se ve en los vídeos, pero no oye el sonido: lo importante, escríbelo o díctalo aquí.</p>
-      <p class="ayuda">¿Se te olvidó algo de una petición que ya enviaste? No hagas otra: búscala abajo, en «Lo que has pedido», y toca «Añadir algo».</p>
+
       <label class="btn sec pet-adjuntar">${icono("clip", "p")}Añadir fotos o vídeos<input type="file" id="pet-archivos" multiple accept="image/*,video/*,audio/*" hidden></label>
       <ul class="pet-lista" id="pet-lista"></ul>
       <p class="msg" id="pet-msg" role="status" aria-live="polite"></p>
@@ -547,12 +553,14 @@ async function pintaPeticiones() {
       // v117: el timbre lo toca el panel solo (comentario corto en GitHub, función «timbre»): Claude se entera al momento
       msg("pet-msg", "Enviada. Avisando a Claude…", true);
       const r = await sb.functions.invoke("timbre", { body: { id: nueva?.id } }).catch(() => null);
-      msg("pet-msg", r?.data?.ok ? "Enviada. Claude ya está avisado y se pone con ello. Lorena recibirá un aviso cuando esté listo." : "Enviada. Claude la mirará en la próxima revisión (cada hora, de 8 a 22).", true);
+      msg("pet-msg", !$("pet-pausa")?.hidden ? "Enviada. Claude está en pausa: la verá cuando Lorena lo vuelva a encender." : r?.data?.ok ? "Enviada. Claude ya está avisado y se pone con ello. Lorena recibirá un aviso cuando esté listo." : "Enviada. Claude la mirará en la próxima revisión (cada hora, de 8 a 22).", true);
       pintaHechas();
     } catch (er) { msg("pet-msg", errTxt(er)); }
     b.disabled = false;
   };
   pintaHechas();
+  // v121: si Claude está en pausa (lo enciende o apaga Lorena desde su app; Claude lo copia en peticiones_estado), se avisa arriba
+  sb.from("peticiones_estado").select("pausa").eq("id", 1).maybeSingle().then(({ data }) => { const a = $("pet-pausa"); if (a) a.hidden = !data?.pausa; }, () => {});
 }
 async function pintaHechas() {
   const z = $("pet-hechas"); if (!z) return;

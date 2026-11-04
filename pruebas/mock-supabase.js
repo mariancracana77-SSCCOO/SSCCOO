@@ -55,6 +55,7 @@
       { id: 2, pais: "FR", motivo: "Festivo de prueba", tipo: "fecha", dia_desde: null, hora_desde: null, dia_hasta: null, hora_hasta: null, mes_desde: null, mes_hasta: null, inicio: new Date(Date.now() - 36e5).toISOString(), fin: new Date(Date.now() + 2 * 864e5).toISOString(), nota: "", url: "https://www.bison-fute.gouv.fr/", orden: 41, visible: true },
       { id: 3, pais: "DE", motivo: "Domingo", tipo: "semanal", dia_desde: 0, hora_desde: "00:00:00", dia_hasta: 0, hora_hasta: "22:00:00", mes_desde: null, mes_hasta: null, inicio: null, fin: null, nota: "", url: "", orden: 10, visible: true },
     ],
+    peticiones_estado: [{ id: 1, pausa: true }],
     peticiones_claude: [{ id: 1, creado: "2026-11-04T18:00:00Z", texto: "Que la dieta festiva salga arriba del todo.", adjuntos: [], estado: "lista", respuesta: "Hecho y probado. Falta que Lorena diga «publica».", mensajes: [{ quien: "padre", cuando: "2026-11-04T18:20:00Z", texto: "Y que se vea también en el PDF.", adjuntos: [] }, { quien: "claude", cuando: "2026-11-04T18:40:00Z", texto: "Hecho también en el PDF.", adjuntos: [] }] }, { id: 2, creado: "2026-11-04T19:00:00Z", texto: "Que se borren todas las actas viejas.", adjuntos: [], estado: "no_hecha", respuesta: "No lo he hecho: borrar actas enteras va contra las condiciones de Lorena.", mensajes: [] }],
     aparcamientos_correcciones: [
       { id: 1, osm: "w4", nombre: "Parking que cierra", lat: 42.8, lon: 2.95, tipo: "no_existe", plazas: null, nota: "", estado: "aplicado", dia: "2026-11-01" },
