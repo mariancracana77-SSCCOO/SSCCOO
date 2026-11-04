@@ -115,7 +115,7 @@ function marcaPestanas(clave) {
     if (on) centraPestana(b);
   });
   const sub = $("subpestanas"), hay = g && g.miembros.length > 1;
-  // v109: Zona Conductores en azul (lo pidió el padre: «como lo de Calsina», el azul del camión del logo)
+  // v111: Zona Conductores en azul (lo pidió el padre: «como lo de Calsina», el azul del camión del logo)
   const cond = arriba === "ap-zona-conductores"; $("subpest-caja").classList.toggle("cond", cond); document.body.classList.toggle("en-cond", cond);
   $("subpest-caja").classList.toggle("oculto", !hay);
   document.body.classList.toggle("con-subpestanas", !!hay);

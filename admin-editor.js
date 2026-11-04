@@ -224,7 +224,7 @@ function leerFormulario() {
     else if (c.t === "datetime-local") fila[c.k] = el.value ? new Date(el.value).toISOString() : null;
     else if (c.num) fila[c.k] = parseInt(el.value, 10) || 1;
     else if (c.t === "number") fila[c.k] = c.dec ? (parseFloat(String(el.value).replace(",", ".")) || 0) : parseInt(el.value || "0", 10);
-    // v109: un texto opcional vacío se guarda como "" (muchas columnas de texto no admiten null y no dejaba guardar si no se escribía algo);
+    // v111: un texto opcional vacío se guarda como "" (muchas columnas de texto no admiten null y no dejaba guardar si no se escribía algo);
     // fechas, horas y desplegables opcionales vacíos siguen siendo null
     else { const v = el.value.trim(); fila[c.k] = v || (c.opc && !TEXTO_LIBRE.includes(c.t || "text") ? null : ""); }
   }

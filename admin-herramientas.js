@@ -358,7 +358,7 @@ async function pintaPropuestas() {
   $("lista-propuestas").innerHTML = l.length ? grupo("pendiente", "Por revisar") + grupo("aprobado", "Salen en el mapa de todos") + grupo("rechazado", "Quitados: no salen")
     : `<div class="panel vacio">${icono("lugar")}Todavía nadie ha propuesto ningún aparcamiento.</div>`;
   enlazarItems($("lista-propuestas"));
-  try { localStorage.setItem("ccoo-adm-compas-visto", String(Math.max(0, ...l.map(x => +x.id || 0)))); } catch (_) {} // v109: para la banda del Inicio
+  try { localStorage.setItem("ccoo-adm-compas-visto", String(Math.max(0, ...l.map(x => +x.id || 0)))); } catch (_) {} // v111: para la banda del Inicio
   // v108: avisos de aparcamientos que están mal
   const z = $("lista-correcciones"); if (!z) return;
   try { await cargarDatos("correcciones"); } catch (e) { z.innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }

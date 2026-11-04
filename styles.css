@@ -2169,7 +2169,7 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .apc-mios-copia { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .apc-mios-copia .btn { flex: 1 1 200px; }
 
-/* v109: los compañeros confirman y dicen qué tiene cada aparcamiento */
+/* v111: los compañeros confirman y dicen qué tiene cada aparcamiento */
 .apc-confirma { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-weight: 700; font-size: .9rem; }
 .apc-confirma .icono { flex: none; color: var(--rojo-ic); }
 .apc-opina { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
@@ -2179,7 +2179,7 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .apc-serv-form .apc-serv legend { font-weight: 700; padding: 0; float: left; width: 100%; }
 .apc-serv-ops { display: flex; flex-wrap: wrap; gap: 4px 16px; clear: both; }
 
-/* v109: Zona Conductores en azul (lo pidió el padre: «como lo de Calsina», el azul del camión del logo). Solo aquí: el resto sigue en rojo */
+/* v111: Zona Conductores en azul (lo pidió el padre: «como lo de Calsina», el azul del camión del logo). Solo aquí: el resto sigue en rojo */
 :root { --cond-azul: #0e568f; --cond-azul-ic: #0e568f; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cond-azul-ic: #7db6ec; } }
 :root[data-theme="dark"] { --cond-azul-ic: #7db6ec; }
@@ -2195,3 +2195,17 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .desc-promo.cond { border-left-color: var(--cond-azul); }
 .desc-promo.cond > .icono:first-child { color: var(--cond-azul-ic); }
 .en-cond .titulo-vista::after { background: var(--cond-azul); }
+/* v109: la Plaça en «Mis incentivos», como una plaza de aparcamiento (lo pidió el padre) */
+.gan-p { display: inline-grid; place-items: center; width: 1.55em; height: 1.55em; margin-right: .45em; vertical-align: -.3em; border-radius: 5px; background: #1565c0; color: #fff; font-family: "Barlow Condensed", "Inter", sans-serif; font-weight: 800; font-size: 1.05em; line-height: 1; border: 2px solid #fff; box-shadow: 0 0 0 1.5px #1565c0, 0 2px 4px rgba(0, 0, 0, .25); }
+.gan-fila.gan-placa { position: relative; margin: 10px 0 4px; padding: 14px 14px 18px; border: 2px solid #1565c0; border-radius: 10px; background: #e8f1fb; color: #0d2f57; }
+.gan-fila.gan-placa::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: 7px; height: 3px; background: repeating-linear-gradient(90deg, #1565c0 0 14px, transparent 14px 24px); border-radius: 2px; opacity: .55; }
+.gan-fila.gan-placa > label small, .gan-fila.gan-placa .gan-imp { color: #2c4a6e; }
+.gan-fila.gan-placa.con { border: 3px solid #1565c0; background: #d6e7fa; padding-left: 14px; }
+[dir="rtl"] .gan-fila.gan-placa.con { border-right: 3px solid #1565c0; padding: 14px 14px 18px; }
+.gan-precio.gan-placa { padding: 10px 12px; border: 2px solid #1565c0; border-radius: 10px; background: #e8f1fb; color: #0d2f57; }
+.gan-precio.gan-placa small { color: #2c4a6e; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .gan-fila.gan-placa, :root:not([data-theme="light"]) .gan-precio.gan-placa { background: #10294a; color: #e6f0fb; border-color: #4f9dff; }
+  :root:not([data-theme="light"]) .gan-fila.gan-placa > label small, :root:not([data-theme="light"]) .gan-fila.gan-placa .gan-imp, :root:not([data-theme="light"]) .gan-precio.gan-placa small { color: #b9cde6; } }
+:root[data-theme="dark"] .gan-fila.gan-placa, :root[data-theme="dark"] .gan-precio.gan-placa { background: #10294a; color: #e6f0fb; border-color: #4f9dff; }
+:root[data-theme="dark"] .gan-fila.gan-placa > label small, :root[data-theme="dark"] .gan-fila.gan-placa .gan-imp, :root[data-theme="dark"] .gan-precio.gan-placa small { color: #b9cde6; }
+.gan-precio.gan-placa > span { grid-template-columns: auto minmax(0, 1fr); column-gap: 2px; align-items: center; } .gan-precio.gan-placa > span > .gan-p { grid-row: span 2; } .gan-precio.gan-placa > span > small { grid-column: 2; }

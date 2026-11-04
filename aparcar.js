@@ -20,7 +20,7 @@
 
   // ---------- Mis aparcamientos (v106, lo pidió el padre) ----------
   // El conductor añade en el mapa los aparcamientos que encuentra. Se guardan en este móvil («ccoo-aparcar-mios») y, si quiere,
-  // se proponen a la sección (RPC anónima proponer_aparcamiento). Desde la v109 salen a todos enseguida (estado «aprobado»); el padre puede quitarlos en el panel (tabla aparcamientos_compas).
+  // se proponen a la sección (RPC anónima proponer_aparcamiento). Desde la v111 salen a todos enseguida (estado «aprobado»); el padre puede quitarlos en el panel (tabla aparcamientos_compas).
   const CLAVE_MIOS = "ccoo-aparcar-mios";
   let MIOS = (() => { try { const l = JSON.parse(localStorage.getItem(CLAVE_MIOS) || "[]"); return Array.isArray(l) ? l.filter(x => x && x.id && Number.isFinite(+x.lat) && Number.isFinite(+x.lon)) : []; } catch (_) { return []; } })();
   const guardaMios = () => { try { localStorage.setItem(CLAVE_MIOS, JSON.stringify(MIOS)); } catch (_) {} };
@@ -164,7 +164,7 @@
     return res;
   }
 
-  // ---------- Opiniones de los compañeros (v109, lo pidió el padre) ----------
+  // ---------- Opiniones de los compañeros (v111, lo pidió el padre) ----------
   // Cualquiera confirma un aparcamiento («Lo confirmo») o dice qué tiene (aseos, duchas, vigilado, bar). RPC anónima opinar_aparcamiento →
   // tabla aparcamientos_opiniones; la web lee los recuentos con la RPC opiniones_aparcamientos (último año). Manda la mayoría: más «sí» que «no» lo pone, al revés lo quita.
   // Lo que ha dicho este móvil va en «ccoo-aparcar-opino» ({osm: {c: ms de la confirmación, s: {servicio: true/false}}}).
@@ -532,9 +532,18 @@
         <small>${viasDe(r).map(esc).join(" → ") || "Carreteras locales"}</small></button>`).join("")}</section>`;
   }
 
+  // v110 (lo pidió el padre): «Borrar ruta» en vez de «Cambiar ruta». Quita la ruta calculada y el destino y deja el
+  // formulario listo para otra. El origen y las medidas del camión se quedan; la ruta sigue en «Abrir la última ruta».
+  function borraRuta() {
+    RUTA = null; RUTAS = []; EN_RUTA = []; CORTES = null; PARADAS = []; ELEGIDO.hasta = null;
+    $("apc-hasta").value = ""; $("apc-hasta-cp").value = ""; leeFormulario();
+    pintaRuta(); pintaUltima();
+    $("apc-form").scrollIntoView({ behavior: "smooth", block: "start" }); $("apc-hasta").focus({ preventScroll: true });
+  }
+
   // v92 (lo pidió Lorena: «que sea todo fácil», hay compañeros mayores): lo importante arriba. Resumen y «Empezar viaje»,
   // botones grandes para saltar a cada parte, y en este orden: aparcamientos, cortes, peajes y otras rutas.
-  // Al calcular, el formulario se recoge («Cambiar ruta» lo vuelve a abrir) y la página baja sola al resultado.
+  // Al calcular, el formulario se recoge («Borrar ruta» lo vuelve a abrir vacío) y la página baja sola al resultado.
   function pintaRuta() {
     const caja = $("apc-ruta");
     $("apc-preparar").classList.toggle("con-ruta", !!RUTA);
@@ -544,7 +553,7 @@
     const salto = (id, txt, cls = "") => `<button type="button" class="apc-salto${cls}" data-salto="${id}">${txt}</button>`;
     caja.innerHTML = `
       <div class="apc-res"><b>${esc(RUTA.desde.nombre)} → ${esc(RUTA.hasta.nombre)}</b><span>${RUTA.km} km · ${durTxt(RUTA.min)} conduciendo${RUTA.ferry ? " · con ferry" : ""}</span>
-        <button type="button" class="apc-cambiar" id="apc-cambiar">Cambiar ruta</button></div>
+        <button type="button" class="apc-cambiar" id="apc-cambiar">Borrar ruta</button></div>
       <button type="button" class="btn apc-grande" id="apc-empezar">${icono("lugar")}Empezar viaje</button>
       <p class="apc-nota">Con «Empezar viaje» te enseño los aparcamientos que tienes por delante mientras conduces.</p>
       <label class="apc-salida">Salgo a las <input type="time" id="apc-salida" value="${esc(SALIDA)}"> <small>(vacío = ahora)</small></label>
@@ -570,7 +579,7 @@
       <details class="panel apc-tramos"><summary>Carreteras de la ruta (${RUTA.tramos.length})</summary>
         <ol class="apc-linea">${RUTA.tramos.map(t => `<li><b>${t.via ? `<span class="apc-via">${esc(t.via)}</span>` : "Carreteras locales"}</b>${t.hacia ? ` hacia ${esc(t.hacia)}` : ""}<small>${t.km} km</small></li>`).join("")}</ol></details>`;
     $("apc-empezar").onclick = empiezaViaje;
-    $("apc-cambiar").onclick = () => { $("apc-preparar").classList.remove("con-ruta"); $("apc-form").scrollIntoView({ behavior: "smooth", block: "start" }); $("apc-hasta").focus({ preventScroll: true }); };
+    $("apc-cambiar").onclick = borraRuta;
     caja.querySelectorAll("[data-salto]").forEach(b => b.onclick = () => { const d = $(b.dataset.salto); if (!d) return; if (d.tagName === "DETAILS") d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" }); });
     caja.querySelectorAll("[data-ruta]").forEach(b => b.onclick = () => eligeRuta(+b.dataset.ruta));
     $("apc-salida").onchange = () => { SALIDA = $("apc-salida").value; refrescaParadas(); };
@@ -875,6 +884,7 @@
       else m.mapa.setView([46, 4], 5);
     }
     if (!conRuta && m.ruta) { m.ruta.remove(); m.ruta = null; m.rutaDe = null; }
+    if (!conRuta && m.otras) { m.otras.remove(); m.otras = null; }
     // Las otras rutas, en gris y antes que la elegida para que esta quede encima (el mapa se rehace al cambiar de ruta)
     if (!m.otras && conRuta && RUTAS.length > 1 && !VIAJE) {
       m.otras = L.layerGroup().addTo(m.mapa);
@@ -990,7 +1000,7 @@
     };
   }
 
-  // «Lo confirmo» y «Decir qué tiene» (v109)
+  // «Lo confirmo» y «Decir qué tiene» (v111)
   async function opinar(x, op) {
     const { error } = await sb.rpc("opinar_aparcamiento", { p_osm: x.osm, p_nombre: nombre(x), p_lat: x.lat, p_lon: x.lon, p_confirma: !!op.confirma,
       p_aseos: op.aseos ?? null, p_duchas: op.duchas ?? null, p_vigilado: op.vigilado ?? null, p_comida: op.comida ?? null });
@@ -1098,7 +1108,7 @@
     try {
       const { data, error } = await sb.rpc("proponer_aparcamiento", { p_lat: x.lat, p_lon: x.lon, p_nombre: x.nombre, p_nota: x.nota || "", p_plazas: x.plazas || null, p_vigilado: !!x.vigilado, p_duchas: !!x.duchas, p_aseos: !!x.aseos });
       if (error) throw new Error(error.message);
-      COMPAS = null; // v109: ya sale a todos; la próxima vez se vuelve a pedir la lista
+      COMPAS = null; // v111: ya sale a todos; la próxima vez se vuelve a pedir la lista
       return data === "ya" ? "ya" : "ok";
     } catch (e) { throw new Error(/Failed to fetch|NetworkError|Load failed/i.test(e.message) ? "No hay conexión: se ha guardado solo en tu móvil. Propónlo más tarde desde «Mis aparcamientos»." : e.message); }
   }
