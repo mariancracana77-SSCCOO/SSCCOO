@@ -2168,3 +2168,13 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .apc-ultima[hidden] { display: none; }
 .apc-mios-copia { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .apc-mios-copia .btn { flex: 1 1 200px; }
+
+/* v109: los compañeros confirman y dicen qué tiene cada aparcamiento */
+.apc-confirma { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-weight: 700; font-size: .9rem; }
+.apc-confirma .icono { flex: none; color: var(--rojo-ic); }
+.apc-opina { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.apc-opina .btn { flex: 1 1 160px; min-height: 44px; }
+.apc-opina .btn:disabled { opacity: .7; }
+.apc-serv-form .apc-serv { display: grid; gap: 4px; border: 0; border-top: 1px solid var(--linea); padding: 8px 0 0; margin: 0; }
+.apc-serv-form .apc-serv legend { font-weight: 700; padding: 0; float: left; width: 100%; }
+.apc-serv-ops { display: flex; flex-wrap: wrap; gap: 4px 16px; clear: both; }

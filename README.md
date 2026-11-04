@@ -76,6 +76,8 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
 ## Versión 109: los aparcamientos de los conductores salen solos (lo pidió el padre)
+- En cada aparcamiento: «Lo confirmo: está bien» y «Decir qué tiene» (aseos, duchas, vigilado, bar o restaurante). Sale enseguida a todos; manda la mayoría.
+- Panel: los campos opcionales de texto vacíos ya se guardan (antes había que escribir algo).
 - Lo que un conductor propone en el mapa sale enseguida a todos, sin aprobarlo. En el panel («Aparcamientos de los conductores») se puede poner en «Rechazado» para quitarlo, y el Inicio avisa de los nuevos desde la última vez que se miró.
 
 ## Versión 108: mejoras de los mapas (lo pidió el padre)
