@@ -75,8 +75,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
-## Versión 122: dedo en el camión de Zona Conductores (petición n.º 1 del padre)
+## Versión 123: dedo en el camión de Zona Conductores (petición n.º 1 del padre)
 - En la pestaña camión de Zona Conductores, un dedo pequeño en un círculo crema que hace un toque suave; no sale cuando ya estás dentro.
+
+## Versión 122: volver a como estaba antes (lo pidió Lorena)
+- En «Pedir un cambio a Claude», cada petición ya publicada tiene «Volver a como estaba antes»: Claude quita ese cambio de la web, con copia antes, y avisa a Lorena.
+- «Avisar a Lorena» sale ahora en todas las peticiones.
 
 ## Versión 121: cada petición es como un chat (lo pidió Lorena)
 - En «Pedir un cambio a Claude», cada petición enviada tiene «Añadir algo a esta petición» (texto, fotos o vídeos): lo añadido y lo que contesta Claude salen debajo, como un chat, sin crear otra petición.
