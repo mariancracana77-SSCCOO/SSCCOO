@@ -387,11 +387,11 @@ let PAGINAS = {};
 // Menú agrupado igual que las pestañas de la web (v52): cada apartado principal con lo que va dentro, un poco metido.
 // «cab» pone un título encima; «sub» lo mete dentro del de arriba. Si falta el apartado de arriba, va suelto.
 const DENTRO_PANEL = { actas: "comite", convenio: "convenio-y-leyes", calculadoras: "convenio-y-leyes", camiones: "zona-conductores", ganancias: "zona-conductores", peajes: "zona-conductores", propuestas: "zona-conductores", prohibiciones: "zona-conductores" };
-const PAG_FIJAS = { calculadoras: { nombre: "Calculadoras", icono: "reloj" }, camiones: { nombre: "Restricciones camiones", icono: "lugar" }, ganancias: { nombre: "Importes conductores", icono: "euro" }, peajes: { nombre: "Peajes camión", icono: "euro" }, propuestas: { nombre: "Aparcamientos de los conductores", icono: "lugar" }, prohibiciones: { nombre: "Prohibiciones de circular", icono: "alerta" },
+const PAG_FIJAS = { peticiones: { nombre: "Pedir un cambio a Claude", icono: "magia" }, calculadoras: { nombre: "Calculadoras", icono: "reloj" }, camiones: { nombre: "Restricciones camiones", icono: "lugar" }, ganancias: { nombre: "Importes conductores", icono: "euro" }, peajes: { nombre: "Peajes camión", icono: "euro" }, propuestas: { nombre: "Aparcamientos de los conductores", icono: "lugar" }, prohibiciones: { nombre: "Prohibiciones de circular", icono: "alerta" },
   buzon: { nombre: "Buzón anónimo", icono: "correo" }, ortografia: { nombre: "Revisar ortografía", icono: "check" }, historial: { nombre: "Historial", icono: "reloj" }, textos: { nombre: "Textos", icono: "texto" }, ajustes: { nombre: "Ajustes", icono: "ajustes" } };
 const padreDe = (a) => a.padre_id ? APARTADOS.find(p => p.id === a.padre_id && !p.padre_id) : null;
 function construirPaginas() {
-  const P = { resumen: { nombre: "Inicio", icono: "resumen" } };
+  const P = { resumen: { nombre: "Inicio", icono: "resumen" }, peticiones: { ...PAG_FIJAS.peticiones } };
   const pon = (k, extra = {}) => { if (P[k] || (!SECCIONES[k] && !PAG_FIJAS[k])) return; P[k] = { nombre: SECCIONES[k]?.nombre, icono: SECCIONES[k]?.icono, ...PAG_FIJAS[k], ...extra }; };
   pon("avisos"); pon("calendario");
   const principales = APARTADOS.filter(a => !padreDe(a)), afiliate = principales.filter(a => a.slug === "afiliate");
