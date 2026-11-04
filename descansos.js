@@ -452,7 +452,7 @@
     lineas.push({ banda: "Mis descansos · Sección Sindical CCOO Calsina Carré", color: ROJO, tam: 13, x: X }, ["", 4]);
     L("Mis descansos", 22, true, X, ROJO);
     L("Copia hecha el " + new Date().toLocaleString("es-ES", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) + " · Transporte " + (DATOS.internacional ? "internacional" : "nacional"), 9, false, X, GRIS);
-    L("Colores: verde = bien · naranja = reducido · rojo = atención o por compensar · azul = información", 9, true, X, GRIS); L("", 6);
+    L("Colores: verde = bien · naranja = reducido · azul = horas por compensar e información · rojo = atención o plazo pasado", 9, true, X, GRIS); L("", 6);
     if (c.prox) {
       B("Próximo descanso semanal");
       L("Tiene que empezar antes del " + fmt(c.prox.limite) + ".", 13, true, 0, AZUL);
@@ -460,8 +460,9 @@
     }
     if (c.pendientes.length) {
       B("Horas por compensar");
-      L("Total por compensar: " + horas(c.pendientes.reduce((t, d) => t + d.queda, 0)), 14, true, 0, ROJO);
-      c.pendientes.forEach(d => L("- " + horas(d.queda) + " del descanso del " + fmt(d.de.ini) + ". " + (d.plazo < Date.now() ? "El plazo acabó el " : "Antes del ") + fmtDia(d.plazo - 1) + " a medianoche.", 10, d.plazo < Date.now(), 6, d.plazo < Date.now() ? ROJO : NARANJA));
+      // v119 (petición n.º 5 del padre): las horas acumuladas por compensar, en azul; en rojo solo si el plazo ya pasó
+      L("Total por compensar: " + horas(c.pendientes.reduce((t, d) => t + d.queda, 0)), 14, true, 0, AZUL);
+      c.pendientes.forEach(d => L("- " + horas(d.queda) + " del descanso del " + fmt(d.de.ini) + ". " + (d.plazo < Date.now() ? "El plazo acabó el " : "Antes del ") + fmtDia(d.plazo - 1) + " a medianoche.", 10, d.plazo < Date.now(), 6, d.plazo < Date.now() ? ROJO : AZUL));
       L("");
     }
     if (c.ultimos12.length) {
@@ -493,7 +494,7 @@
       L(fmt(x.ini) + "  a  " + fmt(x.fin) + "   (" + (sd.clase === "normal" ? "Normal" : sd.clase === "reducido" ? "Reducido" : "No llega a 24 h") + ", " + horas(sd.h) + ")", 10, true, 0, sd.clase === "normal" ? VERDE : sd.clase === "reducido" ? NARANJA : ROJO);
       const det = [x.casa ? "en casa" : "", tocaFinde(x.ini, x.fin) ? "fin de semana" : "", x.cabina ? "en la cabina" : ""].filter(Boolean).join(" · ");
       if (det) L(det, 10, false, 12);
-      if (deuda) L(deuda.queda > 0.05 ? "Faltan " + horas(deuda.queda) + " por compensar" : "Compensado", 10, true, 12, deuda.queda > 0.05 ? ROJO : VERDE);
+      if (deuda) L(deuda.queda > 0.05 ? "Faltan " + horas(deuda.queda) + " por compensar" : "Compensado", 10, true, 12, deuda.queda > 0.05 ? AZUL : VERDE);
       if (sd.tarde) L("Atención: empezó " + horas(sd.tarde) + " tarde (más de 6 días desde el anterior).", 10, true, 12, ROJO);
       if (sd.seguidos) L("Atención: dos semanas seguidas sin descanso normal.", 10, true, 12, ROJO);
       if (sd.enCabina) L("Atención: el descanso normal no se puede hacer en la cabina.", 10, true, 12, ROJO);
