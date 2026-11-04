@@ -2261,10 +2261,3 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .apc-pl-rapidas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: -4px; }
 .apc-pl-rapidas .btn { min-height: 40px; padding-inline: 10px; }
 .apc-pl-rapidas .btn.elegida { background: var(--rojo); border-color: var(--rojo); color: #fff; }
-
-/* v117: dedo pequeño en el camión de Zona Conductores (lo pidió el padre): se ve que es un botón */
-.pc-dedo { display: inline-grid; place-items: center; width: 1.15em; height: 1.15em; margin-left: 7px; flex: none; animation: pc-toca 2.6s ease-in-out infinite; transform-origin: 50% 90%; }
-.pc-dedo svg { width: 100%; height: 100%; fill: #f3e9cf; stroke: #0b2f6b; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .45)); }
-@keyframes pc-toca { 0%, 60%, 100% { transform: translateY(0) scale(1); } 70% { transform: translateY(2px) scale(.88); } 80% { transform: translateY(0) scale(1); } }
-.pest-cond.activa .pc-dedo { animation: none; }
-@media (prefers-reduced-motion: reduce) { .pc-dedo { animation: none; } }

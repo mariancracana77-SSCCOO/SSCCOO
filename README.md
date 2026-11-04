@@ -75,9 +75,6 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
-## Versión 117: dedo en el camión de Zona Conductores (petición desde «Pedir un cambio a Claude»)
-- Un dedo pequeño color crema al lado de «ZONA CONDUCTORES», con un toque suave cada pocos segundos, para que se vea que es un botón y no un dibujo.
-
 ## Versión 116: copias de seguridad completas (lo pidió Lorena)
 - Copia automática cada domingo dentro de Supabase (las 8 últimas). La copia del panel (Ajustes) ya lleva también delegados, enlaces, encuestas, peajes, prohibiciones, aparcamientos de los conductores y peticiones a Claude (con sus archivos), y enseña cuándo fue la última copia automática.
 
