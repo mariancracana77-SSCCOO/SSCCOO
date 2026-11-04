@@ -20,7 +20,7 @@
 
   // ---------- Mis aparcamientos (v106, lo pidió el padre) ----------
   // El conductor añade en el mapa los aparcamientos que encuentra. Se guardan en este móvil («ccoo-aparcar-mios») y, si quiere,
-  // se proponen a la sección (RPC anónima proponer_aparcamiento). Los que el padre aprueba en el panel salen a todos (tabla aparcamientos_compas).
+  // se proponen a la sección (RPC anónima proponer_aparcamiento). Desde la v111 salen a todos enseguida (estado «aprobado»); el padre puede quitarlos en el panel (tabla aparcamientos_compas).
   const CLAVE_MIOS = "ccoo-aparcar-mios";
   let MIOS = (() => { try { const l = JSON.parse(localStorage.getItem(CLAVE_MIOS) || "[]"); return Array.isArray(l) ? l.filter(x => x && x.id && Number.isFinite(+x.lat) && Number.isFinite(+x.lon)) : []; } catch (_) { return []; } })();
   const guardaMios = () => { try { localStorage.setItem(CLAVE_MIOS, JSON.stringify(MIOS)); } catch (_) {} };
@@ -132,7 +132,7 @@
       return (MEM[p] = l.length ? l : guardado?.l || []);
     } catch (_) { return (MEM[p] = guardado?.l || []); }
   }
-  async function cargaPaises(ps) { const ls = await Promise.all(ps.map(delPais)); const vistos = new Set(); return aplicaCorrecciones([...ls.flatMap((l, i) => l.map(x => ({ ...x, pais: ps[i] }))).filter(x => !vistos.has(x.osm) && vistos.add(x.osm)), ...(await extras())], await cargaCorrecciones()); }
+  async function cargaPaises(ps) { const ls = await Promise.all(ps.map(delPais)); const vistos = new Set(); const [corr, ops] = await Promise.all([cargaCorrecciones(), cargaOpiniones()]); return aplicaOpiniones(aplicaCorrecciones([...ls.flatMap((l, i) => l.map(x => ({ ...x, pais: ps[i] }))).filter(x => !vistos.has(x.osm) && vistos.add(x.osm)), ...(await extras())], corr), ops); }
 
   // ---------- Avisos de aparcamientos que están mal (v108, lo pidió el padre) ----------
   // Cualquiera avisa (RPC anónima corregir_aparcamiento); el padre lo revisa en el panel y, si lo pone en «Aplicado», se cumple en todos los móviles:
@@ -163,6 +163,43 @@
     }
     return res;
   }
+
+  // ---------- Opiniones de los compañeros (v111, lo pidió el padre) ----------
+  // Cualquiera confirma un aparcamiento («Lo confirmo») o dice qué tiene (aseos, duchas, vigilado, bar). RPC anónima opinar_aparcamiento →
+  // tabla aparcamientos_opiniones; la web lee los recuentos con la RPC opiniones_aparcamientos (último año). Manda la mayoría: más «sí» que «no» lo pone, al revés lo quita.
+  // Lo que ha dicho este móvil va en «ccoo-aparcar-opino» ({osm: {c: ms de la confirmación, s: {servicio: true/false}}}).
+  const SERVICIOS = [["aseos", "Aseos"], ["duchas", "Duchas"], ["vigilado", "Vigilado"], ["comida", "Bar o restaurante"]];
+  const CLAVE_OPINO = "ccoo-aparcar-opino";
+  const OPINO = (() => { try { const o = JSON.parse(localStorage.getItem(CLAVE_OPINO) || "{}"); return o && typeof o === "object" ? o : {}; } catch (_) { return {}; } })();
+  const guardaOpino = () => { try { localStorage.setItem(CLAVE_OPINO, JSON.stringify(OPINO)); } catch (_) {} };
+  const yaConfirmado = (osm) => Date.now() - (+OPINO[osm]?.c || 0) < 30 * 864e5;
+  let OPINIONES = null;
+  async function cargaOpiniones() {
+    if (OPINIONES) return OPINIONES;
+    try {
+      const { data, error } = await sb.rpc("opiniones_aparcamientos");
+      if (error) throw error;
+      OPINIONES = Array.isArray(data) ? data : [];
+      try { localStorage.setItem("ccoo-aparcar-opiniones", JSON.stringify(OPINIONES)); } catch (_) {}
+    } catch (_) { try { OPINIONES = JSON.parse(localStorage.getItem("ccoo-aparcar-opiniones") || "[]"); } catch (_) { OPINIONES = []; } }
+    return OPINIONES;
+  }
+  function aplicaOpiniones(lista, ops) {
+    if (!ops.length) return lista;
+    const por = new Map(ops.map(o => [o.osm, o]));
+    return lista.map(x => {
+      const o = por.get(x.osm); if (!o) return x;
+      const y = { ...x, confirman: +o.confirman || 0, confUlt: o.ultima || "" };
+      for (const [k] of SERVICIOS) { const si = +o[k + "_si"] || 0, no = +o[k + "_no"] || 0; if (si > no) y[k] = true; else if (no > si) y[k] = false; }
+      return y;
+    });
+  }
+  const confirmaTxt = (x) => {
+    if (!(x.confirman > 0)) return "";
+    const d = x.confUlt ? Math.round((Date.now() - new Date(x.confUlt + "T12:00:00")) / 864e5) : null;
+    const cuando = d == null ? "" : d <= 0 ? " · el último, hoy" : d === 1 ? " · el último, ayer" : ` · el último, hace ${d} días`;
+    return `Lo ${x.confirman === 1 ? "confirma 1 compañero" : `confirman ${x.confirman} compañeros`}${cuando}`;
+  };
 
   // ---------- Geometría ----------
   const R = Math.PI / 180;
@@ -242,7 +279,7 @@
     return ES_IOS ? `https://maps.apple.com/?daddr=${la},${lo}&dirflg=d` : `geo:${la},${lo}?q=${la},${lo}(${encodeURIComponent(nombre(x))})`;
   }
   function tarjeta(x, faltaKm, llegada) {
-    const extras = [x.camion ? "Para camiones" : "", x.vigilado ? "Vigilado" : "", x.duchas ? "Duchas" : "", x.aseos ? "Aseos" : "", x.desvio > 0.6 ? `A ${kmTxt(x.desvio)} km de la ruta` : ""].filter(Boolean);
+    const extras = [x.camion ? "Para camiones" : "", x.vigilado ? "Vigilado" : "", x.duchas ? "Duchas" : "", x.aseos ? "Aseos" : "", x.comida ? "Bar o restaurante" : "", x.desvio > 0.6 ? `A ${kmTxt(x.desvio)} km de la ruta` : ""].filter(Boolean);
     return `<li class="apc${estadoA(x, llegada) === "no" ? " cerrado" : ""}">
       <div class="apc-cab"><span class="apc-dist">a ${kmTxt(faltaKm)} km${llegada ? ` · llegas ${hora(llegada)}` : ""}</span>${plazasHTML(x)}</div>
       <b class="apc-nom">${esc(nombre(x))}</b>
@@ -252,8 +289,9 @@
       ${x.avisoSec ? `<p class="apc-aviso-sec"><b>Aviso de la sección:</b> ${esc(x.avisoSec)}</p>` : ""}
       ${avisoDe(x)?.tipo === "lleno" ? `<div class="apc-lleno">Lleno · avisado por un compañero ${haceTxt(avisoDe(x).t)}</div>` : ""}
       ${extras.length ? `<div class="apc-extra">${extras.map(e => `<span>${esc(e)}</span>`).join("")}</div>` : ""}
+      ${confirmaTxt(x) ? `<div class="apc-confirma">${icono("check", "p")}${esc(confirmaTxt(x))}</div>` : ""}
       ${llevarHref(x) ? `<a class="btn sec apc-llevar" href="${esc(llevarHref(x))}">${icono("lugar", "p")}Llevarme aquí</a>` : ""}
-      ${x.mio ? accionesMio(x.osm) : (VISTOS.set(x.osm, x), `<button type="button" class="btn-txt apc-mal" data-mal="${esc(x.osm)}">¿Algo está mal en este aparcamiento?</button>`)}
+      ${x.mio ? accionesMio(x.osm) : (VISTOS.set(x.osm, x), `<div class="apc-opina"><button type="button" class="btn sec" data-confirma="${esc(x.osm)}"${yaConfirmado(x.osm) ? " disabled" : ""}>${yaConfirmado(x.osm) ? "Ya lo has confirmado" : "Lo confirmo: está bien"}</button><button type="button" class="btn sec" data-servicios="${esc(x.osm)}">Decir qué tiene</button></div><button type="button" class="btn-txt apc-mal" data-mal="${esc(x.osm)}">¿Algo está mal en este aparcamiento?</button>`)}
     </li>`;
   }
 
@@ -962,6 +1000,56 @@
     };
   }
 
+  // «Lo confirmo» y «Decir qué tiene» (v111)
+  async function opinar(x, op) {
+    const { error } = await sb.rpc("opinar_aparcamiento", { p_osm: x.osm, p_nombre: nombre(x), p_lat: x.lat, p_lon: x.lon, p_confirma: !!op.confirma,
+      p_aseos: op.aseos ?? null, p_duchas: op.duchas ?? null, p_vigilado: op.vigilado ?? null, p_comida: op.comida ?? null });
+    if (error) throw new Error(error.message);
+    const o = OPINO[x.osm] = OPINO[x.osm] || {};
+    if (op.confirma) o.c = Date.now();
+    for (const [k] of SERVICIOS) if (op[k] != null) (o.s = o.s || {})[k] = op[k];
+    guardaOpino(); OPINIONES = null;
+  }
+  const errRed = (e) => /Failed to fetch|NetworkError|Load failed/i.test(e.message) ? "No hay conexión. Prueba cuando tengas internet." : e.message;
+  async function confirmaApc(b) {
+    const x = VISTOS.get(b.dataset.confirma); if (!x || yaConfirmado(x.osm)) return;
+    b.disabled = true; const antes = b.textContent; b.textContent = "Enviando…";
+    try { await opinar(x, { confirma: true }); b.textContent = "Confirmado. Gracias"; setTimeout(refrescaMios, 1200); }
+    catch (e) { b.disabled = false; b.textContent = antes; avisoOpina(b, errRed(e)); }
+  }
+  function avisoOpina(b, t) { const p = document.createElement("p"); p.className = "msg err"; p.textContent = t; b.closest(".apc-opina")?.after(p); setTimeout(() => p.remove(), 6000); }
+  function abreServicios(osm) {
+    const x = VISTOS.get(osm); if (!x) return;
+    document.querySelector(".apc-mal-velo")?.remove();
+    const mio = OPINO[osm]?.s || {}, ya = yaConfirmado(osm);
+    const v = document.createElement("div"); v.className = "modal-velo apc-mal-velo";
+    v.innerHTML = `<form class="modal apc-mal-form apc-serv-form" role="dialog" aria-modal="true" novalidate><h2>¿Qué tiene este aparcamiento?</h2>
+      <p class="apc-nota"><b>${esc(nombre(x))}</b></p>
+      ${SERVICIOS.map(([k, t]) => { const m = mio[k] === true ? "si" : mio[k] === false ? "no" : ""; return `<fieldset class="apc-serv"><legend>${esc(t)}</legend><div class="apc-serv-ops">${[["si", "Sí"], ["no", "No"], ["", "No lo sé"]].map(([val, tt]) => `<label class="check"><input type="radio" name="${k}" value="${val}"${val === m ? " checked" : ""}> ${tt}</label>`).join("")}</div></fieldset>`; }).join("")}
+      ${ya ? "" : `<label class="check"><input type="checkbox" name="confirma"> También confirmo que existe y se puede aparcar con camión</label>`}
+      <p class="apc-nota">Sale enseguida para todos, sin saber quién lo manda. Si varios compañeros dicen cosas distintas, sale lo que diga la mayoría.</p>
+      <p class="msg" role="status" aria-live="polite"></p>
+      <div class="botones"><button type="submit" class="btn">Enviar</button><button type="button" class="btn sec" data-no>Cancelar</button></div></form>`;
+    document.body.appendChild(v);
+    const f = v.querySelector("form"), msg = f.querySelector(".msg"), cierra = () => v.remove();
+    v.onclick = (e) => { if (e.target === v) cierra(); };
+    f.querySelector("[data-no]").onclick = cierra;
+    f.onsubmit = async (e) => {
+      e.preventDefault();
+      const op = { confirma: !!f.confirma?.checked };
+      for (const [k] of SERVICIOS) { const r = f.querySelector(`[name=${k}]:checked`)?.value; if (r === "si") op[k] = true; else if (r === "no") op[k] = false; }
+      // Solo se manda lo que ha cambiado respecto a lo que ya dijo este móvil
+      for (const [k] of SERVICIOS) if (op[k] != null && mio[k] === op[k]) delete op[k];
+      if (!op.confirma && !SERVICIOS.some(([k]) => op[k] != null)) { msg.textContent = "Marca «Sí» o «No» en algo antes de enviar."; msg.classList.add("err"); return; }
+      const b = f.querySelector("[type=submit]"); b.disabled = true; msg.classList.remove("err"); msg.textContent = "Enviando…";
+      try {
+        await opinar(x, op);
+        f.innerHTML = `<h2>Gracias</h2><p>Ya sale para todos los compañeros.</p><div class="botones"><button type="button" class="btn" data-no>Cerrar</button></div>`;
+        f.querySelector("[data-no]").onclick = () => { cierra(); refrescaMios(); }; f.querySelector("[data-no]").focus();
+      } catch (er) { b.disabled = false; msg.textContent = errRed(er); msg.classList.add("err"); }
+    };
+  }
+
   // ---------- Añadir un aparcamiento desde el mapa (v106) ----------
   const MIO_TXT = { "": "Tuyo · solo en este móvil", ok: "Tuyo · propuesto a la sección", ya: "Tuyo · ya lo había propuesto otro compañero" };
   const accionesMio = (idm) => { const m = MIOS.find(z => z.id === idm); if (!m) return "";
@@ -975,7 +1063,7 @@
     <div class="apc-nuevo-checks"><label class="check"><input type="checkbox" name="vigilado"> Vigilado</label><label class="check"><input type="checkbox" name="duchas"> Duchas</label><label class="check"><input type="checkbox" name="aseos"> Aseos</label></div>
     <label>Nota<textarea name="nota" maxlength="300" rows="2" placeholder="Opcional. Ej: se llena a partir de las 19 h; la entrada está detrás"></textarea></label>
     <label class="check"><input type="checkbox" name="proponer"> Proponerlo también a los compañeros</label>
-    <p class="apc-nota">Se guarda en este móvil. Si lo propones, la sección lo revisa y, si está bien, sale en el mapa de todos. No se envía quién eres: no pongas teléfonos ni nombres de personas.</p>
+    <p class="apc-nota">Se guarda en este móvil. Si lo propones, sale enseguida en el mapa de todos. No se envía quién eres: no pongas teléfonos ni nombres de personas.</p>
     <div class="apc-nuevo-bot"><button type="submit" class="btn">Guardar</button><button type="button" class="btn sec" data-nuevo-no>Cancelar</button></div>
     <p class="msg" role="status" aria-live="polite"></p>
   </form>`;
@@ -1020,6 +1108,7 @@
     try {
       const { data, error } = await sb.rpc("proponer_aparcamiento", { p_lat: x.lat, p_lon: x.lon, p_nombre: x.nombre, p_nota: x.nota || "", p_plazas: x.plazas || null, p_vigilado: !!x.vigilado, p_duchas: !!x.duchas, p_aseos: !!x.aseos });
       if (error) throw new Error(error.message);
+      COMPAS = null; // v111: ya sale a todos; la próxima vez se vuelve a pedir la lista
       return data === "ya" ? "ya" : "ok";
     } catch (e) { throw new Error(/Failed to fetch|NetworkError|Load failed/i.test(e.message) ? "No hay conexión: se ha guardado solo en tu móvil. Propónlo más tarde desde «Mis aparcamientos»." : e.message); }
   }
@@ -1033,7 +1122,7 @@
     let aviso = "Guardado en tu móvil.";
     if (v("proponer").checked) {
       f.querySelector("[type=submit]").disabled = true; msgAnadir(id, "Enviando a la sección…");
-      try { x.propuesto = await proponer(x); aviso = x.propuesto === "ya" ? "Guardado. Otro compañero ya había propuesto este sitio." : "Guardado y enviado a la sección. Cuando lo revisen, saldrá a todos."; }
+      try { x.propuesto = await proponer(x); aviso = x.propuesto === "ya" ? "Guardado. Otro compañero ya había propuesto este sitio." : "Guardado. Ya sale en el mapa de todos."; }
       catch (e) { f.querySelector("[type=submit]").disabled = false; msgAnadir(id, e.message, true); if (!/conexión/.test(e.message)) return; aviso = e.message; }
     }
     MIOS.push(x); guardaMios();
@@ -1120,7 +1209,7 @@
       MIOS = MIOS.filter(z => z.id !== idm); guardaMios(); await refrescaMios(); avisoMios("Borrado de tu móvil."); return;
     }
     b.disabled = true;
-    try { m.propuesto = await proponer(m); guardaMios(); await refrescaMios(); avisoMios(m.propuesto === "ya" ? "Otro compañero ya había propuesto este sitio." : "Enviado a la sección. Cuando lo revisen, saldrá a todos."); }
+    try { m.propuesto = await proponer(m); guardaMios(); await refrescaMios(); avisoMios(m.propuesto === "ya" ? "Otro compañero ya había propuesto este sitio." : "Enviado. Ya sale en el mapa de todos."); }
     catch (er) { b.disabled = false; const p = $("apc-mios-msg"); if (p) { p.textContent = er.message; p.classList.add("err"); } estado(er.message, true); }
   }
 
@@ -1269,7 +1358,8 @@
     [T("Llevarme aquí"), T("En cada aparcamiento, «Llevarme aquí» lo abre en el navegador que uses en el móvil (iGO, Google Maps…)."), visible(".apc-llevar", "#apc-buscar")],
     [T("Sin cobertura"), T("La última ruta que calculas se guarda en el móvil. Si te quedas sin internet, toca «Abrir la última ruta»: verás la ruta, los aparcamientos y dónde te toca parar."), visible("#apc-ultima", "#apc-buscar", "#apc-cambiar")],
     [T("Mapa sin ruta"), T("Para mirar una zona sin calcular ruta, abre el mapa y toca «Dónde estoy» o busca un sitio."), visible("#apc-abre-mapa", "#apc-cambiar")],
-    [T("Añadir un aparcamiento"), T("¿Has encontrado uno que no sale? En el mapa toca «Añadir aparcamiento», toca el sitio (o usa tu posición), ponle nombre y guárdalo. Se queda en tu móvil, en «Mis aparcamientos». Si marcas «Proponerlo también a los compañeros», la sección lo revisa y sale a todos."), visible(".apc-anade-btn", "#apc-abre-mapa", "#apc-cambiar")],
+    [T("Confirmar y decir qué tiene"), T("En cada aparcamiento, «Lo confirmo: está bien» avisa a los compañeros de que existe y se puede aparcar con camión. «Decir qué tiene» sirve para poner si tiene aseos, duchas, vigilancia o bar. Sale enseguida para todos; si hay opiniones distintas, manda la mayoría."), visible(".apc-opina", "#apc-abre-mapa", "#apc-cambiar")],
+    [T("Añadir un aparcamiento"), T("¿Has encontrado uno que no sale? En el mapa toca «Añadir aparcamiento», toca el sitio (o usa tu posición), ponle nombre y guárdalo. Se queda en tu móvil, en «Mis aparcamientos». Si marcas «Proponerlo también a los compañeros», sale enseguida a todos."), visible(".apc-anade-btn", "#apc-abre-mapa", "#apc-cambiar")],
   ];
   // La guía se traduce como «Mis descansos» (función traducir, modo textos, grupo «aparcar»: solo los T("…") de este archivo)
   let MAPA_APC = {};
@@ -1312,6 +1402,7 @@
     $("apc-mios-copia").onclick = copiaMios;
     $("apc-mios-recupera").onchange = () => { const f = $("apc-mios-recupera").files[0]; $("apc-mios-recupera").value = ""; if (f) recuperaMios(f); };
     $("v-aparcar").addEventListener("click", (e) => { const b = e.target.closest("[data-mal]"); if (b) abreMal(b.dataset.mal); });
+    $("v-aparcar").addEventListener("click", (e) => { const c = e.target.closest("[data-confirma]"); if (c) return confirmaApc(c); const s = e.target.closest("[data-servicios]"); if (s) abreServicios(s.dataset.servicios); });
     pintaMios();
     $("v-aparcar").addEventListener("click", (e) => { const b = e.target.closest("[data-apc-vista]"); if (b) ponVista(b.dataset.apcVista); });
     // Si cambia el sitio o el código postal, lo elegido antes ya no vale

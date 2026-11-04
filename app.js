@@ -97,7 +97,7 @@ function montaGrupos() {
 const ordenVistas = () => GRUPOS.length ? GRUPOS.flatMap(g => g.miembros.map(m => m.clave)) : [...document.querySelectorAll(".pestanas-web a")].map(b => b.dataset.v);
 function pintaPestanas() {
   montaGrupos();
-  document.querySelector(".pestanas-web").innerHTML = GRUPOS.map(g => `<a href="#${esc(g.miembros[0].clave)}" data-v="${esc(g.clave)}">${esc(g.titulo)}</a>`).join("");
+  document.querySelector(".pestanas-web").innerHTML = GRUPOS.map(g => `<a href="#${esc(g.miembros[0].clave)}" data-v="${esc(g.clave)}"${g.clave === "ap-zona-conductores" ? ' class="pest-cond"' : ""}>${esc(g.titulo)}</a>`).join("");
   marcaPestanas(irA.antes);
   flechasPestanas();
   if (irA.antes === "buscar") buscarTodo();
@@ -115,6 +115,8 @@ function marcaPestanas(clave) {
     if (on) centraPestana(b);
   });
   const sub = $("subpestanas"), hay = g && g.miembros.length > 1;
+  // v111: Zona Conductores en azul (lo pidió el padre: «como lo de Calsina», el azul del camión del logo)
+  const cond = arriba === "ap-zona-conductores"; $("subpest-caja").classList.toggle("cond", cond); document.body.classList.toggle("en-cond", cond);
   $("subpest-caja").classList.toggle("oculto", !hay);
   document.body.classList.toggle("con-subpestanas", !!hay);
   if (!hay) { sub.innerHTML = ""; flechasPestanas(); return; }
@@ -588,7 +590,7 @@ function pintaApartado() {
   $("ap-titulo").textContent = a.titulo;
   if (location.hash === "#ap-" + a.slug) ponTitulo(a.titulo); // al entrar por enlace directo, el nombre llega al cargar
   $("ap-desc").textContent = a.descripcion || "";
-  $("ap-extra").innerHTML = a.slug === APARTADO_CONDUCTORES ? `<a class="panel desc-promo" href="#descansos">${icono("reloj")}<span><b>Mis descansos</b><small>Tu descanso diario y semanal: cuándo te toca, si puede ser reducido y qué tienes que compensar. Con avisos al móvil.</small></span>${icono("der", "p")}</a><a class="panel desc-promo" href="#ganancias">${icono("euro")}<span><b>Mis incentivos</b><small>Lo que ganas cada día, semana y mes: dietas, suplementos, pluses y kilómetros.</small></span>${icono("der", "p")}</a><a class="panel desc-promo" href="#aparcar">${icono("lugar")}<span><b>Aparcamientos en mi ruta </b><small>Ruta para tu camión y, mientras conduces, los aparcamientos que tienes por delante: abiertos, gratis o de pago.</small></span>${icono("der", "p")}</a>` + restriccionesHTML() : "";
+  $("ap-extra").innerHTML = a.slug === APARTADO_CONDUCTORES ? `<a class="panel desc-promo cond" href="#descansos">${icono("reloj")}<span><b>Mis descansos</b><small>Tu descanso diario y semanal: cuándo te toca, si puede ser reducido y qué tienes que compensar. Con avisos al móvil.</small></span>${icono("der", "p")}</a><a class="panel desc-promo cond" href="#ganancias">${icono("euro")}<span><b>Mis incentivos</b><small>Lo que ganas cada día, semana y mes: dietas, suplementos, pluses y kilómetros.</small></span>${icono("der", "p")}</a><a class="panel desc-promo cond" href="#aparcar">${icono("lugar")}<span><b>Aparcamientos en mi ruta </b><small>Ruta para tu camión y, mientras conduces, los aparcamientos que tienes por delante, cortes y dónde te toca parar.</small></span>${icono("der", "p")}</a>` + restriccionesHTML() : "";
   const todas = D.publicaciones.filter(x => x.apartado_id === a.id);
   pintaFechas("fechas-ap", "ap", todas, x => x.fecha, () => pintaApartado());
   const qr = $("buscar-ap").value.trim(), q = normal(qr);

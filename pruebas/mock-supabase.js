@@ -89,7 +89,7 @@
     let filas = (T[tabla] || []).slice(), unica = false, op = "select";
     const q = {
       select() { return q; }, order() { return q; }, limit() { return q; }, range() { return q; }, in() { return q; },
-      gte() { return q; }, lte() { return q; }, neq() { return q; }, is() { return q; }, not() { return q; }, or() { return q; }, ilike() { return q; },
+      gte() { return q; }, lte() { return q; }, gt() { return q; }, lt() { return q; }, neq() { return q; }, is() { return q; }, not() { return q; }, or() { return q; }, ilike() { return q; },
       eq(c, v) { filas = filas.filter(f => !(c in f) || String(f[c]) === String(v)); return q; },
       single() { unica = true; return q; }, maybeSingle() { unica = true; return q; },
       insert(f) { op = "insert"; filas = [Object.assign({ id: 99 }, f)]; return q; },
@@ -119,7 +119,7 @@
   window.supabase = {
     createClient: () => ({
       from: consulta, auth, channel: () => canal, removeChannel() {},
-      rpc: async (n, p) => { if (n === "proponer_aparcamiento" || n === "corregir_aparcamiento") (window.__PROPUESTAS = window.__PROPUESTAS || []).push(p); return { data: ["avisar_aparcamiento", "proponer_aparcamiento", "corregir_aparcamiento"].includes(n) ? "ok" : n === "is_admin" ? true : null, error: null }; },
+      rpc: async (n, p) => { if (n === "opiniones_aparcamientos") return { data: [{ osm: "co:1", confirman: 3, ultima: new Date(Date.now() - 2 * 864e5).toISOString().slice(0, 10), aseos_si: 0, aseos_no: 0, duchas_si: 0, duchas_no: 0, vigilado_si: 2, vigilado_no: 0, comida_si: 1, comida_no: 0 }], error: null }; if (n === "proponer_aparcamiento" || n === "corregir_aparcamiento" || n === "opinar_aparcamiento") (window.__PROPUESTAS = window.__PROPUESTAS || []).push(p); return { data: ["avisar_aparcamiento", "proponer_aparcamiento", "corregir_aparcamiento", "opinar_aparcamiento"].includes(n) ? "ok" : n === "is_admin" ? true : null, error: null }; },
       // «Fleuré» sin código postal: hay dos pueblos y la función pregunta cuál (como la de verdad)
       functions: { invoke: async (n, o) => ({ data: n === "traducir" && o?.body?.modo === "textos" ? { textos: { "Ir": "Mergi", "Ir a: {t}": "Mergi la: {t}", "Calcular la ruta": "Calculează ruta", "Cada día": "În fiecare zi", "Al empezar a trabajar": "Când începi lucrul" } } : n !== "ruta" ? null : typeof o?.body?.buscar === "string" ? { lugares: /fleur/i.test(o.body.buscar)
           ? [{ nombre: "Fleuré, France", detalle: "61200, Orne, Normandie, France", lat: 48.69, lon: -0.058 }, { nombre: "Fleuré, France", detalle: "86340, Vienne, Nouvelle-Aquitaine, France", lat: 46.478, lon: 0.522 }]

@@ -2168,6 +2168,33 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .apc-ultima[hidden] { display: none; }
 .apc-mios-copia { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .apc-mios-copia .btn { flex: 1 1 200px; }
+
+/* v111: los compañeros confirman y dicen qué tiene cada aparcamiento */
+.apc-confirma { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-weight: 700; font-size: .9rem; }
+.apc-confirma .icono { flex: none; color: var(--rojo-ic); }
+.apc-opina { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.apc-opina .btn { flex: 1 1 160px; min-height: 44px; }
+.apc-opina .btn:disabled { opacity: .7; }
+.apc-serv-form .apc-serv { display: grid; gap: 4px; border: 0; border-top: 1px solid var(--linea); padding: 8px 0 0; margin: 0; }
+.apc-serv-form .apc-serv legend { font-weight: 700; padding: 0; float: left; width: 100%; }
+.apc-serv-ops { display: flex; flex-wrap: wrap; gap: 4px 16px; clear: both; }
+
+/* v111: Zona Conductores en azul (lo pidió el padre: «como lo de Calsina», el azul del camión del logo). Solo aquí: el resto sigue en rojo */
+:root { --cond-azul: #0e568f; --cond-azul-ic: #0e568f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cond-azul-ic: #7db6ec; } }
+:root[data-theme="dark"] { --cond-azul-ic: #7db6ec; }
+.cab-tablon .pestanas-web a.pest-cond, .cab-tablon .pestanas-web a.pest-cond:not(.activa) { background: var(--cond-azul); color: #fff; padding: 6px 10px 7px; border-radius: 8px 8px 0 0; border-bottom-color: #0a3f6a; }
+.cab-tablon .pestanas-web a.pest-cond.activa, :root[data-theme="dark"] .cab-tablon .pestanas-web a.pest-cond.activa { border-bottom-color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cab-tablon .pestanas-web a.pest-cond.activa { border-bottom-color: #fff; } }
+.cab-tablon .pestanas-web a.pest-cond:hover { filter: brightness(1.15); }
+.subpest-caja.cond .subpestanas a { background: var(--cond-azul); border-color: var(--cond-azul); }
+.subpest-caja.cond .subpestanas a:hover { border-color: #fff; }
+.subpest-caja.cond .subpestanas a.activa { background: #fff; border-color: #fff; color: var(--cond-azul); }
+.subpest-caja.cond .subpestanas a .cuenta-pestana { color: var(--cond-azul); }
+.subpest-caja.cond .pest-flecha.sub { background: var(--cond-azul); }
+.desc-promo.cond { border-left-color: var(--cond-azul); }
+.desc-promo.cond > .icono:first-child { color: var(--cond-azul-ic); }
+.en-cond .titulo-vista::after { background: var(--cond-azul); }
 /* v109: la Plaça en «Mis incentivos», como una plaza de aparcamiento (lo pidió el padre) */
 .gan-p { display: inline-grid; place-items: center; width: 1.55em; height: 1.55em; margin-right: .45em; vertical-align: -.3em; border-radius: 5px; background: #1565c0; color: #fff; font-family: "Barlow Condensed", "Inter", sans-serif; font-weight: 800; font-size: 1.05em; line-height: 1; border: 2px solid #fff; box-shadow: 0 0 0 1.5px #1565c0, 0 2px 4px rgba(0, 0, 0, .25); }
 .gan-fila.gan-placa { position: relative; margin: 10px 0 4px; padding: 14px 14px 18px; border: 2px solid #1565c0; border-radius: 10px; background: #e8f1fb; color: #0d2f57; }

@@ -75,6 +75,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 111: aparcamientos de los conductores y Zona Conductores en azul (lo pidió el padre)
+- En cada aparcamiento: «Lo confirmo: está bien» y «Decir qué tiene» (aseos, duchas, vigilado, bar o restaurante). Sale enseguida a todos; manda la mayoría.
+- Zona Conductores en azul (el del camión del logo): la pestaña de arriba, los botones de dentro y las tarjetas.
+- Panel: los campos opcionales de texto vacíos ya se guardan (antes había que escribir algo).
+- Lo que un conductor propone en el mapa sale enseguida a todos, sin aprobarlo. En el panel («Aparcamientos de los conductores») se puede poner en «Rechazado» para quitarlo, y el Inicio avisa de los nuevos desde la última vez que se miró.
+
 ## Versión 110: «Borrar ruta»
 
 - En «Aparcamientos en mi ruta», el botón **«Cambiar ruta» pasa a ser «Borrar ruta»** (lo pidió el padre): quita la ruta calculada y el destino, y deja el formulario listo para escribir otra. El origen y las medidas del camión se quedan, y la ruta borrada se puede volver a abrir con «Abrir la última ruta».

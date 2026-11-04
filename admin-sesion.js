@@ -329,11 +329,11 @@ async function pintaResumen() {
     $("ir-buzon").onclick = () => abrir("buzon");
   });
   // v106: aparcamientos que han propuesto los conductores y faltan por revisar
-  Promise.all([sb.from("aparcamientos_compas").select("id", { count: "exact", head: true }).eq("estado", "pendiente"), sb.from("aparcamientos_correcciones").select("id", { count: "exact", head: true }).eq("estado", "pendiente")]).then(([a, b]) => {
+  Promise.all([sb.from("aparcamientos_compas").select("id", { count: "exact", head: true }).neq("estado", "rechazado").gt("id", (() => { try { return +localStorage.getItem("ccoo-adm-compas-visto") || 0; } catch (_) { return 0; } })()), sb.from("aparcamientos_correcciones").select("id", { count: "exact", head: true }).eq("estado", "pendiente")]).then(([a, b]) => {
     const n1 = a.count || 0, n2 = b.count || 0;
     if (!(n1 + n2) || !$("aviso-propuestas")) return;
-    const t = [n1 ? (n1 === 1 ? "1 aparcamiento propuesto" : n1 + " aparcamientos propuestos") : "", n2 ? (n2 === 1 ? "1 aviso de un aparcamiento mal" : n2 + " avisos de aparcamientos mal") : ""].filter(Boolean).join(" y ");
-    $("aviso-propuestas").innerHTML = `<button class="panel banda aviso-buzon" id="ir-propuestas"><span class="ic">${icono("lugar")}</span><span class="txt"><b>${t} por revisar</b><p>Lo han enviado los conductores desde el mapa. Míralo y decide si sale a todos.</p></span>${icono("der")}</button>`;
+    const t = [n1 ? (n1 === 1 ? "1 aparcamiento nuevo de los conductores" : n1 + " aparcamientos nuevos de los conductores") : "", n2 ? (n2 === 1 ? "1 aviso de un aparcamiento mal por revisar" : n2 + " avisos de aparcamientos mal por revisar") : ""].filter(Boolean).join(" y ");
+    $("aviso-propuestas").innerHTML = `<button class="panel banda aviso-buzon" id="ir-propuestas"><span class="ic">${icono("lugar")}</span><span class="txt"><b>${t}</b><p>${n1 ? "Ya salen en el mapa de todos. Échales un vistazo y quita los que estén mal." : "Lo han enviado los conductores desde el mapa. Míralo y decide si se corrige para todos."}</p></span>${icono("der")}</button>`;
     $("ir-propuestas").onclick = () => abrir("propuestas");
   });
   $("zona").querySelector("[data-orto]").onclick = () => abrir("ortografia");

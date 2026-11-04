@@ -286,7 +286,7 @@ SECCIONES.compas = {
   nombre: "Aparcamientos propuestos", icono: "lugar", tabla: "aparcamientos_compas", orden: ["id", false], uno: "aparcamiento", nuevo: "Añadir aparcamiento", lista: "aviso", campoColor: "_", oculta: true, volver: "propuestas",
   intro: "", tituloDe: (x) => x.nombre,
   campos: [
-    { k: "estado", l: "¿Sale en el mapa de todos?", t: "select", ops: ESTADO_APC, def: "pendiente", ayuda: "Antes de aprobarlo, mira dónde está: pestaña «Vista previa» y «Ver dónde está»." },
+    { k: "estado", l: "¿Sale en el mapa de todos?", t: "select", ops: ESTADO_APC, def: "aprobado", ayuda: "Los de los conductores salen solos a todos. Si uno está mal, ponlo en «Rechazado» y deja de salir. Para ver dónde está: pestaña «Vista previa» y «Ver dónde está»." },
     { k: "nombre", l: "Nombre", t: "text", req: true, ph: "Ej: Área de servicio La Jonquera" },
     { fila: [{ k: "plazas", l: "Plazas para camiones", t: "number", ayuda: "0 si no se sabe." }, { k: "lat", l: "Latitud", t: "number", dec: true, paso: "any" }, { k: "lon", l: "Longitud", t: "number", dec: true, paso: "any" }] },
     { k: "nota", l: "Nota del conductor", t: "textarea", opc: true, corto: true },

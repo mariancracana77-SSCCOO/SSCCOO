@@ -347,7 +347,7 @@ async function pintaProhibiciones() {
 
 // ---------- Aparcamientos propuestos por los conductores (v106) ----------
 async function pintaPropuestas() {
-  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Aparcamientos propuestos</h1><p>Los conductores añaden en el mapa de «Aparcamientos en mi ruta» los aparcamientos que encuentran. Si marcan «Proponerlo a los compañeros», llegan aquí sin nombre de quien lo manda. Toca uno, mira dónde está y cambia «¿Sale en el mapa de todos?» a «Aprobado». Los rechazados no salen.</p></div><button class="btn" data-nuevo="compas">${icono("mas", "p")}Añadir aparcamiento</button></div>
+  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Aparcamientos propuestos</h1><p>Los conductores añaden en el mapa de «Aparcamientos en mi ruta» los aparcamientos que encuentran. Si marcan «Proponerlo a los compañeros», salen enseguida en el mapa de todos y llegan aquí sin nombre de quien lo manda. Si alguno está mal, tócalo y cambia «¿Sale en el mapa de todos?» a «Rechazado»: deja de salir.</p></div><button class="btn" data-nuevo="compas">${icono("mas", "p")}Añadir aparcamiento</button></div>
     <div id="lista-propuestas"><p class="fecha-txt">Cargando…</p></div>
     <h2 class="titulo-bloque" style="margin-top:28px">Avisos de aparcamientos que están mal</h2>
     <p class="fecha-txt">Desde cualquier aparcamiento, los conductores pueden avisar de que ya no existe, de que no se puede con camión, de que tiene otras plazas o de otra cosa. Si lo pones en «Aplicado», se corrige en el mapa de todos.</p>
@@ -355,9 +355,10 @@ async function pintaPropuestas() {
   $("zona").querySelector("[data-nuevo]").onclick = () => abrirEditor("compas");
   try { await cargarDatos("compas"); } catch (e) { $("lista-propuestas").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
   const l = datos.compas, grupo = (est, tit) => { const g = l.filter(x => x.estado === est); return g.length ? `<h2 class="titulo-bloque">${esc(tit)} (${g.length})</h2><div class="lista-adm">${g.map(x => itemHTML("compas", x)).join("")}</div>` : ""; };
-  $("lista-propuestas").innerHTML = l.length ? grupo("pendiente", "Por revisar") + grupo("aprobado", "Aprobados: salen en el mapa de todos") + grupo("rechazado", "Rechazados")
+  $("lista-propuestas").innerHTML = l.length ? grupo("pendiente", "Por revisar") + grupo("aprobado", "Salen en el mapa de todos") + grupo("rechazado", "Quitados: no salen")
     : `<div class="panel vacio">${icono("lugar")}Todavía nadie ha propuesto ningún aparcamiento.</div>`;
   enlazarItems($("lista-propuestas"));
+  try { localStorage.setItem("ccoo-adm-compas-visto", String(Math.max(0, ...l.map(x => +x.id || 0)))); } catch (_) {} // v111: para la banda del Inicio
   // v108: avisos de aparcamientos que están mal
   const z = $("lista-correcciones"); if (!z) return;
   try { await cargarDatos("correcciones"); } catch (e) { z.innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
