@@ -2261,3 +2261,11 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .apc-pl-rapidas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: -4px; }
 .apc-pl-rapidas .btn { min-height: 40px; padding-inline: 10px; }
 .apc-pl-rapidas .btn.elegida { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+
+/* v122: dedo pequeño en el camión de Zona Conductores (petición n.º 1 del padre; solo el dedo, sin texto) */
+.pc-toca { display: inline-flex; align-items: center; justify-content: center; margin-left: 9px; padding: 3px; border-radius: 50%; background: #f3e9cf; color: #0b2f6b; font-family: var(--texto, system-ui), sans-serif; font-size: .62em; font-weight: 800; letter-spacing: 0; text-transform: none; text-shadow: none; white-space: nowrap; line-height: 1.5; animation: pc-toca 2.6s ease-in-out infinite; transform-origin: 30% 90%; }
+.pc-toca svg { width: 1.55em; height: 1.55em; flex: none; fill: #fff; stroke: #0b2f6b; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+@keyframes pc-toca { 0%, 60%, 100% { transform: translateY(0) scale(1); } 70% { transform: translateY(1px) scale(.92); } 80% { transform: translateY(0) scale(1); } }
+/* oculto cuando ya estás dentro de Zona Conductores */
+.pest-cond.activa .pc-toca { display: none; }
+@media (prefers-reduced-motion: reduce) { .pc-toca { animation: none; } }
