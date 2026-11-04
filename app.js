@@ -97,7 +97,7 @@ function montaGrupos() {
 const ordenVistas = () => GRUPOS.length ? GRUPOS.flatMap(g => g.miembros.map(m => m.clave)) : [...document.querySelectorAll(".pestanas-web a")].map(b => b.dataset.v);
 // v118 (petición n.º 4 del padre por el panel): un dedo pequeño con «Toca aquí» en el camión de Zona Conductores, para que se vea que es un botón.
 // Solo cuando no estás dentro (con la pestaña elegida no hace falta).
-const TOCA_PEST = '<span class="pc-toca" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 9.5V4a2 2 0 0 0-4 0v10l-1.6-1.6a2 2 0 0 0-2.8 2.8l3.6 3.6C6.7 20.3 8.5 22 12 22h2a8 8 0 0 0 8-8v-3a2 2 0 0 0-4 0v-1a2 2 0 0 0-4 0V9a2 2 0 0 0-4 0z"/><path d="M10 9.5V12M14 10v2M18 11v1.5"/></svg>Toca aquí</span>';
+const TOCA_PEST = '<span class="pc-toca" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 9.5V4a2 2 0 0 0-4 0v10l-1.6-1.6a2 2 0 0 0-2.8 2.8l3.6 3.6C6.7 20.3 8.5 22 12 22h2a8 8 0 0 0 8-8v-3a2 2 0 0 0-4 0v-1a2 2 0 0 0-4 0V9a2 2 0 0 0-4 0z"/><path d="M10 9.5V12M14 10v2M18 11v1.5"/></svg></span>';
 function pintaPestanas() {
   montaGrupos();
   document.querySelector(".pestanas-web").innerHTML = GRUPOS.map(g => `<a href="#${esc(g.miembros[0].clave)}" data-v="${esc(g.clave)}"${g.clave === "ap-zona-conductores" ? ' class="pest-cond"' : ""}>${esc(g.titulo)}${g.clave === "ap-zona-conductores" ? TOCA_PEST : ""}</a>`).join("");
