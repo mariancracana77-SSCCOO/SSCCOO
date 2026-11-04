@@ -670,3 +670,26 @@ label.sin-guardar::after { content: " · sin guardar"; color: var(--rojo-ic); fo
 
 /* v104: el calendario del panel no lleva columna de semana (la web sí, desde la v84): 7 columnas */
 .semana.cal-7, .dias.cal-7 { grid-template-columns: repeat(7, 1fr); }
+
+/* v114: Pedir un cambio a Claude */
+.pet-form { display: grid; gap: 10px; }
+.pet-form label[for] { font-weight: 700; }
+.pet-form textarea { min-height: 140px; }
+.pet-adjuntar { justify-self: start; cursor: pointer; min-height: 48px; }
+.pet-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.pet-lista li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border: 1px solid var(--linea); border-radius: 10px; overflow-wrap: anywhere; }
+.pet-lista li small { color: var(--suave); }
+.pet-lista .btn-txt { min-height: 44px; flex: none; }
+.pet-form .msg:empty { display: none; }
+#pet-enviar { justify-self: stretch; min-height: 52px; font-size: 1.05rem; }
+.pet-timbre { margin-top: 16px; }
+.pet-timbre .txt .btn { margin-top: 8px; display: inline-flex; }
+.pet-item { display: grid; gap: 6px; margin-bottom: 10px; }
+.pet-cab { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; margin: 0; }
+.pet-cab small { color: var(--suave); }
+.pet-texto { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.pet-resp { margin: 0; padding: 8px 10px; border-left: 4px solid var(--rojo); background: var(--fondo); white-space: pre-wrap; overflow-wrap: anywhere; }
+.pet-item.est-lista { border-left: 5px solid #1F7A45; }
+.pet-item.est-publicada { opacity: .8; }
+.pet-form, .pet-item { padding: 16px; }
+.pet-item .pet-resp { margin-inline: 0; }

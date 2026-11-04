@@ -243,7 +243,7 @@ function abrir(k) {
     $("fab").onclick = abrirHojaNuevo; $("fab").setAttribute("aria-label", "Nuevo: elegir qué crear");
   }
   // Páginas donde no se crea nada (v79): el botón flotante solo tapaba los mensajes
-  if (["ortografia", "historial", "textos", "ajustes", "archivos"].includes(k)) $("fab").classList.add("oculto");
+  if (["ortografia", "historial", "textos", "ajustes", "archivos", "peticiones"].includes(k)) $("fab").classList.add("oculto");
   if (!window.ES_ADMIN) { $("zona").innerHTML = `<div class="panel vacio">${icono("alerta")}Esta cuenta (${esc(window.MI_EMAIL)}) no tiene permiso para publicar. Pide a la Sección Sindical que añada tu email en Ajustes.</div>`; return; }
   if (k === "resumen") pintaResumen();
   else if (k === "buzon") pintaBuzon();
@@ -252,6 +252,7 @@ function abrir(k) {
   else if (k === "ganancias") pintaImportes();
   else if (k === "peajes") pintaPeajes();
   else if (k === "propuestas") pintaPropuestas();
+  else if (k === "peticiones") pintaPeticiones();
   else if (k === "prohibiciones") pintaProhibiciones();
   else if (k === "historial") pintaHistorial();
   else if (k === "textos") pintaTextos();
@@ -290,6 +291,7 @@ async function pintaResumen() {
       <button class="panel rapido" data-n="documentos"><span class="ic">${icono("subir")}</span><span><b>Subir un documento</b><small>PDF, Word, Excel, fotos</small></span></button>
       <button class="panel rapido" data-n="convenio"><span class="ic">${icono("convenio")}</span><span><b>Apartado del convenio</b><small>Explicar un derecho</small></span></button>
       ${APARTADOS.length ? `<button class="panel rapido" data-en-apartado><span class="ic">${icono("carpeta")}</span><span><b>Publicar en un apartado</b><small>${esc(APARTADOS.slice(0, 2).map(a => a.titulo).join(", "))}…</small></span></button>` : ""}
+      <button class="panel rapido" data-peticion><span class="ic">${icono("magia")}</span><span><b>Pedir un cambio a Claude</b><small>Escrito, con fotos o vídeos</small></span></button>
       <button class="panel rapido" data-orto><span class="ic">${icono("check")}</span><span><b>Revisar la ortografía</b><small>De todo lo publicado</small></span></button>
       <button class="panel rapido" data-ir="ajustes"><span class="ic">${icono("telegram")}</span><span><b>Telegram y avisos</b><small>Canales y cartel QR</small></span></button>
     </div>
@@ -337,6 +339,7 @@ async function pintaResumen() {
     $("ir-propuestas").onclick = () => abrir("propuestas");
   });
   $("zona").querySelector("[data-orto]").onclick = () => abrir("ortografia");
+  $("zona").querySelector("[data-peticion]").onclick = () => abrir("peticiones");
   if ($("zona").querySelector("[data-en-apartado]")) $("zona").querySelector("[data-en-apartado]").onclick = abrirHojaApartados;
   $("zona").querySelector("[data-ir]").onclick = () => { abrir("ajustes"); setTimeout(() => $("ajuste-canales")?.scrollIntoView({ behavior: "smooth" }), 400); };
   sb.from("paginas").select("contenido").eq("slug", "ultima_copia").maybeSingle().then(({ data }) => {
