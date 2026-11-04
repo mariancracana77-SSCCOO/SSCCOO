@@ -75,9 +75,6 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
-## Versión 118: «Toca aquí» en el camión (petición n.º 4 del padre, por el panel)
-- En la pestaña camión de Zona Conductores, una pastilla crema con un dedo y «Toca aquí» que hace un toque suave; no sale cuando ya estás dentro.
-
 ## Versión 117: el panel avisa a Claude al momento
 - Al enviar en «Pedir un cambio a Claude», el panel deja un comentario corto (sin el texto) en una pull request «buzón» de GitHub que nunca se fusiona; eso despierta a Claude. Si no se puede, queda la revisión de cada hora. Ya no hace falta el timbre.
 
