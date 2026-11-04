@@ -77,6 +77,7 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 
 ## Versión 109: los aparcamientos de los conductores salen solos (lo pidió el padre)
 - En cada aparcamiento: «Lo confirmo: está bien» y «Decir qué tiene» (aseos, duchas, vigilado, bar o restaurante). Sale enseguida a todos; manda la mayoría.
+- Zona Conductores en azul (el del camión del logo): la pestaña de arriba, los botones de dentro y las tarjetas.
 - Panel: los campos opcionales de texto vacíos ya se guardan (antes había que escribir algo).
 - Lo que un conductor propone en el mapa sale enseguida a todos, sin aprobarlo. En el panel («Aparcamientos de los conductores») se puede poner en «Rechazado» para quitarlo, y el Inicio avisa de los nuevos desde la última vez que se miró.
 

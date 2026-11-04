@@ -2178,3 +2178,20 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .apc-serv-form .apc-serv { display: grid; gap: 4px; border: 0; border-top: 1px solid var(--linea); padding: 8px 0 0; margin: 0; }
 .apc-serv-form .apc-serv legend { font-weight: 700; padding: 0; float: left; width: 100%; }
 .apc-serv-ops { display: flex; flex-wrap: wrap; gap: 4px 16px; clear: both; }
+
+/* v109: Zona Conductores en azul (lo pidió el padre: «como lo de Calsina», el azul del camión del logo). Solo aquí: el resto sigue en rojo */
+:root { --cond-azul: #0e568f; --cond-azul-ic: #0e568f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cond-azul-ic: #7db6ec; } }
+:root[data-theme="dark"] { --cond-azul-ic: #7db6ec; }
+.cab-tablon .pestanas-web a.pest-cond, .cab-tablon .pestanas-web a.pest-cond:not(.activa) { background: var(--cond-azul); color: #fff; padding: 6px 10px 7px; border-radius: 8px 8px 0 0; border-bottom-color: #0a3f6a; }
+.cab-tablon .pestanas-web a.pest-cond.activa, :root[data-theme="dark"] .cab-tablon .pestanas-web a.pest-cond.activa { border-bottom-color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cab-tablon .pestanas-web a.pest-cond.activa { border-bottom-color: #fff; } }
+.cab-tablon .pestanas-web a.pest-cond:hover { filter: brightness(1.15); }
+.subpest-caja.cond .subpestanas a { background: var(--cond-azul); border-color: var(--cond-azul); }
+.subpest-caja.cond .subpestanas a:hover { border-color: #fff; }
+.subpest-caja.cond .subpestanas a.activa { background: #fff; border-color: #fff; color: var(--cond-azul); }
+.subpest-caja.cond .subpestanas a .cuenta-pestana { color: var(--cond-azul); }
+.subpest-caja.cond .pest-flecha.sub { background: var(--cond-azul); }
+.desc-promo.cond { border-left-color: var(--cond-azul); }
+.desc-promo.cond > .icono:first-child { color: var(--cond-azul-ic); }
+.en-cond .titulo-vista::after { background: var(--cond-azul); }
