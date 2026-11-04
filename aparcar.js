@@ -1126,6 +1126,8 @@
       const { data, error } = await sb.rpc("proponer_aparcamiento", { p_lat: x.lat, p_lon: x.lon, p_nombre: x.nombre, p_nota: x.nota || "", p_plazas: x.plazas || null, p_vigilado: !!x.vigilado, p_duchas: !!x.duchas, p_aseos: !!x.aseos });
       if (error) throw new Error(error.message);
       COMPAS = null; // v111: ya sale a todos; la próxima vez se vuelve a pedir la lista
+      // v113: el servidor devuelve «ok:<id>:<llave>»; con la llave, solo este móvil puede quitarlo luego del mapa de todos
+      const m = /^ok:(\d+):([0-9a-f]{20,})$/.exec(String(data || "")); if (m) x.co = { id: +m[1], llave: m[2] };
       return data === "ya" ? "ya" : "ok";
     } catch (e) { throw new Error(/Failed to fetch|NetworkError|Load failed/i.test(e.message) ? "No hay conexión: se ha guardado solo en tu móvil. Propónlo más tarde desde «Mis aparcamientos»." : e.message); }
   }
@@ -1222,8 +1224,14 @@
       return;
     }
     if (b.dataset.mioBorra) {
-      if (!confirm(`¿Borrar «${m.nombre}» de tus aparcamientos?` + (m.propuesto === "ok" ? " Lo que enviaste a la sección no se borra." : ""))) return;
-      MIOS = MIOS.filter(z => z.id !== idm); guardaMios(); await refrescaMios(); avisoMios("Borrado de tu móvil."); return;
+      const todos = m.propuesto === "ok" && m.co;
+      if (!confirm(`¿Borrar «${m.nombre}»?` + (todos ? " Se quita de tu móvil y del mapa de todos." : m.propuesto === "ok" ? " Se quita de tu móvil. Lo enviaste antes de que se pudiera quitar desde aquí: para quitarlo del mapa de todos, avisa a la sección." : ""))) return;
+      if (todos) {
+        b.disabled = true;
+        try { const { error } = await sb.rpc("quitar_mi_aparcamiento", { p_id: m.co.id, p_llave: m.co.llave }); if (error) throw new Error(error.message); COMPAS = null; }
+        catch (er) { b.disabled = false; const t = errRed(er); const p = $("apc-mios-msg"); if (p) { p.textContent = t; p.classList.add("err"); } estado(t, true); return; }
+      }
+      MIOS = MIOS.filter(z => z.id !== idm); guardaMios(); await refrescaMios(); avisoMios(todos ? "Borrado de tu móvil y del mapa de todos." : "Borrado de tu móvil."); return;
     }
     b.disabled = true;
     try { m.propuesto = await proponer(m); guardaMios(); await refrescaMios(); avisoMios(m.propuesto === "ya" ? "Otro compañero ya había propuesto este sitio." : "Enviado. Ya sale en el mapa de todos."); }

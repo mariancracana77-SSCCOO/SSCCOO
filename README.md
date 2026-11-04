@@ -82,6 +82,8 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 
 - Aparcamientos: se puede quitar lo dicho («Lo has confirmado · quitar»; en «Decir qué tiene», cambiar la respuesta o elegir «No lo sé» borra la de antes). La ventanita del mapa ya no se sale de la pantalla ni queda tapada por los botones.
 
+- Mis aparcamientos: al borrar uno que propusiste, se quita también del mapa de todos (solo desde el móvil que lo propuso; los enviados antes de esta versión se quitan desde el panel).
+
 ## Versión 112: la pestaña Zona Conductores es un camión (lo pidió el padre)
 - Como el camión del logo: caja azul con «CC» y el nombre, cabina y ruedas. La elegida va sobre una carretera blanca.
 
