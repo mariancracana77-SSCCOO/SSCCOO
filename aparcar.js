@@ -291,7 +291,7 @@
       ${extras.length ? `<div class="apc-extra">${extras.map(e => `<span>${esc(e)}</span>`).join("")}</div>` : ""}
       ${confirmaTxt(x) ? `<div class="apc-confirma">${icono("check", "p")}${esc(confirmaTxt(x))}</div>` : ""}
       ${llevarHref(x) ? `<a class="btn sec apc-llevar" href="${esc(llevarHref(x))}">${icono("lugar", "p")}Llevarme aquí</a>` : ""}
-      ${x.mio ? accionesMio(x.osm) : (VISTOS.set(x.osm, x), `<div class="apc-opina"><button type="button" class="btn sec" data-confirma="${esc(x.osm)}"${yaConfirmado(x.osm) ? " disabled" : ""}>${yaConfirmado(x.osm) ? "Ya lo has confirmado" : "Lo confirmo: está bien"}</button><button type="button" class="btn sec" data-servicios="${esc(x.osm)}">Decir qué tiene</button></div><button type="button" class="btn-txt apc-mal" data-mal="${esc(x.osm)}">¿Algo está mal en este aparcamiento?</button>`)}
+      ${x.mio ? accionesMio(x.osm) : (VISTOS.set(x.osm, x), `<div class="apc-opina"><button type="button" class="btn sec${yaConfirmado(x.osm) ? " apc-conf-ya" : ""}" data-confirma="${esc(x.osm)}">${yaConfirmado(x.osm) ? `${icono("check", "p")}Lo has confirmado · quitar` : "Lo confirmo: está bien"}</button><button type="button" class="btn sec" data-servicios="${esc(x.osm)}">Decir qué tiene</button></div><button type="button" class="btn-txt apc-mal" data-mal="${esc(x.osm)}">¿Algo está mal en este aparcamiento?</button>`)}
     </li>`;
   }
 
@@ -828,6 +828,8 @@
       const tactil = L.Browser.mobile || "ontouchstart" in window;
       const mapa = L.map(caja, { zoomControl: true, dragging: !tactil });
       mapa.attributionControl.setPrefix(false);
+      // v113: con una ventanita abierta se esconden los botones de la derecha (la tapaban) y vuelven al cerrarla
+      mapa.on("popupopen", () => caja.classList.add("apc-popup-abierto")); mapa.on("popupclose", () => caja.classList.remove("apc-popup-abierto"));
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(mapa);
       m = MAPAS[id] = { div: caja, mapa, capa: L.layerGroup().addTo(mapa), zona: L.layerGroup().addTo(mapa), ruta: null, rutaDe: null, yo: null, encuadrado: false };
       // Botón «Dónde estoy» (lo pidió Lorena): centra el mapa en tu posición; en el mapa sin ruta, enseña los aparcamientos de alrededor
@@ -901,13 +903,13 @@
       const e = estadoA(y.x, y.llega), cls = (e === "no" ? "no" : e === "nose" ? "nose" : "si") + (y.x.mio ? " mio" : "");
       const icon = L.divIcon({ className: "apc-pin " + cls, html: `<span>${y.x.plazas ? y.x.plazas : "P"}</span>`, iconSize: [36, 36], iconAnchor: [18, 18], popupAnchor: [0, -16] });
       L.marker([y.x.lat, y.x.lon], { icon, title: nombre(y.x) + (y.x.plazas ? `, ${y.x.plazas} plazas` : "") })
-        .bindPopup(`<ul class="apc-lista apc-popup">${tarjeta(y.x, y.falta ?? y.x.kmRuta, y.llega)}</ul>`, { maxWidth: 290, minWidth: 220 }).addTo(m.capa);
+        .bindPopup(`<ul class="apc-lista apc-popup">${tarjeta(y.x, y.falta ?? y.x.kmRuta, y.llega)}</ul>`, POPUP_OP()).addTo(m.capa);
     }
     for (const x of (conRuta && CORTES) || []) {
       if (opc.desdeKm != null && x.kmRuta < opc.desdeKm) continue;
       const icon = L.divIcon({ className: "apc-pin-corte" + (GRAVE.includes(x.tipo) ? " grave" : ""), html: "<span>!</span>", iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -14] });
       L.marker([x.lat, x.lon], { icon, title: TIPO_CORTE[x.tipo] || "Aviso", zIndexOffset: GRAVE.includes(x.tipo) ? 500 : 0 })
-        .bindPopup(`<ul class="apc-lista apc-popup">${corteHTML(x, opc.desdeKm != null ? x.kmRuta - opc.desdeKm : x.kmRuta)}</ul>`, { maxWidth: 290, minWidth: 220 }).addTo(m.capa);
+        .bindPopup(`<ul class="apc-lista apc-popup">${corteHTML(x, opc.desdeKm != null ? x.kmRuta - opc.desdeKm : x.kmRuta)}</ul>`, POPUP_OP()).addTo(m.capa);
     }
     if (opc.yo) { if (m.yo) m.yo.setLatLng(opc.yo); else m.yo = L.circleMarker(opc.yo, { radius: 9, color: "#fff", weight: 3, fillColor: "#1E4F9C", fillOpacity: 1 }).addTo(m.mapa); }
     setTimeout(() => m.mapa.invalidateSize(), 60);
@@ -938,7 +940,7 @@
     for (const { x, d } of cerca) {
       const e = estadoA(x, new Date()), cls = (e === "no" ? "no" : e === "nose" ? "nose" : "si") + (x.mio ? " mio" : "");
       L.marker([x.lat, x.lon], { icon: L.divIcon({ className: "apc-pin " + cls, html: `<span>${x.plazas ? x.plazas : "P"}</span>`, iconSize: [36, 36], iconAnchor: [18, 18], popupAnchor: [0, -16] }), title: nombre(x) })
-        .bindPopup(`<ul class="apc-lista apc-popup">${tarjeta(x, d, null)}</ul>`, { maxWidth: 290, minWidth: 220 }).addTo(m.zona);
+        .bindPopup(`<ul class="apc-lista apc-popup">${tarjeta(x, d, null)}</ul>`, POPUP_OP()).addTo(m.zona);
     }
     const c = document.querySelector(`.apc-busca-res[data-mapa="${id}"]`);
     if (c) c.innerHTML = `<p class="apc-nota">${cerca.length ? `${cerca.length === 1 ? "1 aparcamiento" : cerca.length + " aparcamientos"} a menos de 30 km de ${esc(etiqueta === "Estás aquí" ? "donde estás" : etiqueta)}. Tócalos en el mapa para ver sus datos.` : `No hay aparcamientos de camiones apuntados a menos de 30 km de ${esc(etiqueta === "Estás aquí" ? "donde estás" : etiqueta)}.`}</p>`;
@@ -1000,22 +1002,36 @@
     };
   }
 
+  // v113: la ventanita del mapa no se sale de la pantalla ni queda bajo los botones de arriba a la derecha
+  const POPUP_OP = () => ({ maxWidth: Math.min(290, innerWidth - 60), minWidth: Math.min(220, innerWidth - 60), autoPanPaddingTopLeft: [12, 12], autoPanPaddingBottomRight: [12, 12], autoPanPadding: [12, 12], className: "apc-popup-caja" });
   // «Lo confirmo» y «Decir qué tiene» (v111)
-  async function opinar(x, op) {
-    const { error } = await sb.rpc("opinar_aparcamiento", { p_osm: x.osm, p_nombre: nombre(x), p_lat: x.lat, p_lon: x.lon, p_confirma: !!op.confirma,
-      p_aseos: op.aseos ?? null, p_duchas: op.duchas ?? null, p_vigilado: op.vigilado ?? null, p_comida: op.comida ?? null });
+  // v113: se puede quitar lo dicho (lo pidió el padre): RPC quitar_opinion_aparcamiento borra una opinión igual de ese aparcamiento
+  async function quitarOpinion(x, tipo, valor) {
+    const { error } = await sb.rpc("quitar_opinion_aparcamiento", { p_osm: x.osm, p_tipo: tipo, p_valor: valor });
     if (error) throw new Error(error.message);
+  }
+  async function opinar(x, op) {
+    if (op.confirma || SERVICIOS.some(([k]) => op[k] != null)) await opinarRPC(x, op);
     const o = OPINO[x.osm] = OPINO[x.osm] || {};
     if (op.confirma) o.c = Date.now();
     for (const [k] of SERVICIOS) if (op[k] != null) (o.s = o.s || {})[k] = op[k];
     guardaOpino(); OPINIONES = null;
   }
+  async function opinarRPC(x, op) {
+    const { error } = await sb.rpc("opinar_aparcamiento", { p_osm: x.osm, p_nombre: nombre(x), p_lat: x.lat, p_lon: x.lon, p_confirma: !!op.confirma,
+      p_aseos: op.aseos ?? null, p_duchas: op.duchas ?? null, p_vigilado: op.vigilado ?? null, p_comida: op.comida ?? null });
+    if (error) throw new Error(error.message);
+  }
   const errRed = (e) => /Failed to fetch|NetworkError|Load failed/i.test(e.message) ? "No hay conexión. Prueba cuando tengas internet." : e.message;
   async function confirmaApc(b) {
-    const x = VISTOS.get(b.dataset.confirma); if (!x || yaConfirmado(x.osm)) return;
-    b.disabled = true; const antes = b.textContent; b.textContent = "Enviando…";
-    try { await opinar(x, { confirma: true }); b.textContent = "Confirmado. Gracias"; setTimeout(refrescaMios, 1200); }
-    catch (e) { b.disabled = false; b.textContent = antes; avisoOpina(b, errRed(e)); }
+    const x = VISTOS.get(b.dataset.confirma); if (!x) return;
+    b.disabled = true; const antes = b.innerHTML; b.textContent = "Enviando…";
+    try {
+      if (yaConfirmado(x.osm)) { await quitarOpinion(x, "confirma", true); delete OPINO[x.osm].c; guardaOpino(); OPINIONES = null; b.textContent = "Quitada tu confirmación"; }
+      else { await opinar(x, { confirma: true }); b.textContent = "Confirmado. Gracias"; }
+      setTimeout(refrescaMios, 1200);
+    }
+    catch (e) { b.disabled = false; b.innerHTML = antes; avisoOpina(b, errRed(e)); }
   }
   function avisoOpina(b, t) { const p = document.createElement("p"); p.className = "msg err"; p.textContent = t; b.closest(".apc-opina")?.after(p); setTimeout(() => p.remove(), 6000); }
   function abreServicios(osm) {
@@ -1025,9 +1041,9 @@
     const v = document.createElement("div"); v.className = "modal-velo apc-mal-velo";
     v.innerHTML = `<form class="modal apc-mal-form apc-serv-form" role="dialog" aria-modal="true" novalidate><h2>¿Qué tiene este aparcamiento?</h2>
       <p class="apc-nota"><b>${esc(nombre(x))}</b></p>
-      ${SERVICIOS.map(([k, t]) => { const m = mio[k] === true ? "si" : mio[k] === false ? "no" : ""; return `<fieldset class="apc-serv"><legend>${esc(t)}</legend><div class="apc-serv-ops">${[["si", "Sí"], ["no", "No"], ["", "No lo sé"]].map(([val, tt]) => `<label class="check"><input type="radio" name="${k}" value="${val}"${val === m ? " checked" : ""}> ${tt}</label>`).join("")}</div></fieldset>`; }).join("")}
+      ${SERVICIOS.map(([k, t]) => { const m = mio[k] === true ? "si" : mio[k] === false ? "no" : ""; return `<div class="apc-serv" role="radiogroup" aria-label="${esc(t)}"><b class="apc-serv-tit">${esc(t)}</b><div class="apc-serv-ops">${[["si", "Sí"], ["no", "No"], ["", "No lo sé"]].map(([val, tt]) => `<label class="check"><input type="radio" name="${k}" value="${val}"${val === m ? " checked" : ""}> ${tt}</label>`).join("")}</div></div>`; }).join("")}
       ${ya ? "" : `<label class="check"><input type="checkbox" name="confirma"> También confirmo que existe y se puede aparcar con camión</label>`}
-      <p class="apc-nota">Sale enseguida para todos, sin saber quién lo manda. Si varios compañeros dicen cosas distintas, sale lo que diga la mayoría.</p>
+      <p class="apc-nota">Sale enseguida para todos, sin saber quién lo manda. Si varios compañeros dicen cosas distintas, sale lo que diga la mayoría. Para quitar lo que dijiste, elige «No lo sé».</p>
       <p class="msg" role="status" aria-live="polite"></p>
       <div class="botones"><button type="submit" class="btn">Enviar</button><button type="button" class="btn sec" data-no>Cancelar</button></div></form>`;
     document.body.appendChild(v);
@@ -1036,13 +1052,14 @@
     f.querySelector("[data-no]").onclick = cierra;
     f.onsubmit = async (e) => {
       e.preventDefault();
-      const op = { confirma: !!f.confirma?.checked };
+      const op = { confirma: !!f.confirma?.checked }, quita = [];
       for (const [k] of SERVICIOS) { const r = f.querySelector(`[name=${k}]:checked`)?.value; if (r === "si") op[k] = true; else if (r === "no") op[k] = false; }
-      // Solo se manda lo que ha cambiado respecto a lo que ya dijo este móvil
-      for (const [k] of SERVICIOS) if (op[k] != null && mio[k] === op[k]) delete op[k];
-      if (!op.confirma && !SERVICIOS.some(([k]) => op[k] != null)) { msg.textContent = "Marca «Sí» o «No» en algo antes de enviar."; msg.classList.add("err"); return; }
+      // Solo se manda lo que ha cambiado respecto a lo que ya dijo este móvil; si cambia o pasa a «No lo sé», se quita lo de antes
+      for (const [k] of SERVICIOS) { if (op[k] != null && mio[k] === op[k]) delete op[k]; else if (typeof mio[k] === "boolean") quita.push(k); }
+      if (!op.confirma && !quita.length && !SERVICIOS.some(([k]) => op[k] != null)) { msg.textContent = "Marca «Sí» o «No» en algo antes de enviar."; msg.classList.add("err"); return; }
       const b = f.querySelector("[type=submit]"); b.disabled = true; msg.classList.remove("err"); msg.textContent = "Enviando…";
       try {
+        for (const k of quita) { await quitarOpinion(x, k, mio[k]); delete OPINO[x.osm].s[k]; }
         await opinar(x, op);
         f.innerHTML = `<h2>Gracias</h2><p>Ya sale para todos los compañeros.</p><div class="botones"><button type="button" class="btn" data-no>Cerrar</button></div>`;
         f.querySelector("[data-no]").onclick = () => { cierra(); refrescaMios(); }; f.querySelector("[data-no]").focus();

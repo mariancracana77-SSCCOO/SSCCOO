@@ -80,6 +80,8 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 
 - La pestaña Zona Conductores pasa a ser un camión como el de Calsina (lo pidió el padre, con una foto de su web): remolque azul con chapas y letras crema, tres ejes atrás y cabeza tractora crema con la parte de abajo azul. El azul de toda Zona Conductores pasa a ser el de Calsina.
 
+- Aparcamientos: se puede quitar lo dicho («Lo has confirmado · quitar»; en «Decir qué tiene», cambiar la respuesta o elegir «No lo sé» borra la de antes). La ventanita del mapa ya no se sale de la pantalla ni queda tapada por los botones.
+
 ## Versión 112: la pestaña Zona Conductores es un camión (lo pidió el padre)
 - Como el camión del logo: caja azul con «CC» y el nombre, cabina y ruedas. La elegida va sobre una carretera blanca.
 

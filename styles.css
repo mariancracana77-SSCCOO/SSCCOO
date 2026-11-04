@@ -2240,3 +2240,13 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .gan-fest-sello { position: relative; flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; background: var(--rojo); color: #fff; box-shadow: 0 2px 5px rgba(171, 16, 18, .35); }
 .gan-fest-sello .icono { width: 22px; height: 22px; }
 .gan-fest-sello::after { content: ""; position: absolute; right: -4px; top: -4px; width: 12px; height: 12px; border-radius: 50%; background: #fff; box-shadow: inset 0 0 0 3px var(--rojo); }
+
+/* v113: quitar lo confirmado; ventanita del mapa dentro de la pantalla y sin botones encima */
+.apc-opina .apc-conf-ya { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-style: dashed; }
+.apc-popup-abierto .leaflet-top.leaflet-right { opacity: 0; pointer-events: none; transition: opacity .15s; }
+.apc-popup-caja .leaflet-popup-content { overflow-wrap: anywhere; }
+.apc-popup-caja .leaflet-popup-content .apc { min-width: 0; }
+.apc-mal-velo .modal { max-height: calc(100dvh - 12px); overflow-y: auto; overscroll-behavior: contain; }
+.apc-serv-form .apc-serv { display: grid; grid-template-columns: 1fr; gap: 0; padding: 8px 0 2px; border-top: 1px solid var(--linea); }
+.apc-serv-tit { font-weight: 700; overflow-wrap: normal; word-break: normal; }
+.apc-serv-form .apc-serv-ops { display: flex; flex-wrap: wrap; gap: 0 22px; }
