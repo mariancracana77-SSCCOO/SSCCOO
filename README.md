@@ -75,6 +75,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 115: el PDF de «Mis descansos» con colores (lo pidió el padre)
+- Como el de «Mis incentivos»: banda roja arriba, cada apartado con su franja oscura y colores fijos (verde = bien, naranja = reducido, rojo = atención o por compensar, azul = información), con la leyenda arriba.
+
 ## Versión 114: «Pedir un cambio a Claude» en el panel (lo pidió Lorena para su padre)
 - Página del panel (también en el Inicio) para escribir o dictar un cambio y añadir fotos, vídeos o audios. Claude lo mira al tocar el timbre (página de Claude) o en la revisión de cada hora, lo deja hecho y avisa a Lorena; no se publica sin su «publica».
 

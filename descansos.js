@@ -442,53 +442,65 @@
     try { return hazPDFes(); } finally { LOC = locAntes; }
   }
   function hazPDFes() {
-    const c = calcula(), lineas = []; // [texto, tamaño, negrita, sangría]
-    const L = (t, tam = 10, neg = false, x = 0) => lineas.push([t, tam, neg, x]);
-    // v88: con el logo a la izquierda, las dos primeras líneas van desplazadas
-    const X = LOGO ? 70 : 0;
-    L("Mis descansos", 18, true, X); L("Sección Sindical CCOO Calsina Carré", 11, false, X); L("", 10);
-    L("Copia hecha el " + new Date().toLocaleString("es-ES", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) + " · Transporte " + (DATOS.internacional ? "internacional" : "nacional"), 9); L("");
+    // v115 (lo pidió el padre: «es mucha info y mucho texto, te puede liar»): como el PDF de «Mis incentivos», con bandas y colores fijos:
+    // verde = bien (normal, compensado, en casa), naranja = reducido, rojo = atención o por compensar, azul = información; gris = notas
+    const c = calcula(), lineas = []; // [texto, tamaño, negrita, sangría, color] o { banda, color, tam }
+    const ROJO = [0.671, 0.063, 0.071], VERDE = [0.106, 0.498, 0.231], NARANJA = [0.78, 0.42, 0], AZUL = [0.118, 0.31, 0.612], GRIS = [0.42, 0.42, 0.42], ASFALTO = [0.082, 0.098, 0.118];
+    const L = (t, tam = 10, neg = false, x = 0, color) => lineas.push([t, tam, neg, x, color]);
+    const B = (t) => lineas.push({ banda: t, color: ASFALTO, tam: 12 }, ["", 3]);
+    const X = LOGO ? 70 : 0; // con el logo a la izquierda (v88)
+    lineas.push({ banda: "Mis descansos · Sección Sindical CCOO Calsina Carré", color: ROJO, tam: 13, x: X }, ["", 4]);
+    L("Mis descansos", 22, true, X, ROJO);
+    L("Copia hecha el " + new Date().toLocaleString("es-ES", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) + " · Transporte " + (DATOS.internacional ? "internacional" : "nacional"), 9, false, X, GRIS);
+    L("Colores: verde = bien · naranja = reducido · rojo = atención o por compensar · azul = información", 9, true, X, GRIS); L("", 6);
     if (c.prox) {
-      L("Próximo descanso semanal", 13, true);
-      L("Tiene que empezar antes del " + fmt(c.prox.limite) + ".", 11);
-      L(c.prox.normal ? "Tiene que ser normal: 45 horas seguidas o más." : "Puede ser reducido (24 horas) o normal (45 horas).", 11); L("");
+      B("Próximo descanso semanal");
+      L("Tiene que empezar antes del " + fmt(c.prox.limite) + ".", 13, true, 0, AZUL);
+      L(c.prox.normal ? "Tiene que ser normal: 45 horas seguidas o más." : "Puede ser reducido (24 horas) o normal (45 horas).", 11, true, 0, c.prox.normal ? ROJO : VERDE); L("");
     }
     if (c.pendientes.length) {
-      L("Horas por compensar", 13, true);
-      L("Total por compensar: " + horas(c.pendientes.reduce((t, d) => t + d.queda, 0)) + ".", 11, true);
-      c.pendientes.forEach(d => L("- " + horas(d.queda) + " del descanso del " + fmt(d.de.ini) + ". " + (d.plazo < Date.now() ? "El plazo acabó el " : "Antes del ") + fmtDia(d.plazo - 1) + " a medianoche."));
+      B("Horas por compensar");
+      L("Total por compensar: " + horas(c.pendientes.reduce((t, d) => t + d.queda, 0)), 14, true, 0, ROJO);
+      c.pendientes.forEach(d => L("- " + horas(d.queda) + " del descanso del " + fmt(d.de.ini) + ". " + (d.plazo < Date.now() ? "El plazo acabó el " : "Antes del ") + fmtDia(d.plazo - 1) + " a medianoche.", 10, d.plazo < Date.now(), 6, d.plazo < Date.now() ? ROJO : NARANJA));
       L("");
     }
     if (c.ultimos12.length) {
-      L("En casa y en fin de semana", 13, true);
-      L(`${c.enCasa} de ${c.ultimos12.length} descansos en casa (mínimo ${DATOS.internacional ? 5 : 7} de cada 12). ${c.findeCasa} en casa y en fin de semana (al menos 1 cada 12 semanas).`); L("");
+      B("En casa y en fin de semana");
+      const min = DATOS.internacional ? 5 : 7;
+      // Rojo solo si ya no se llega al mínimo; azul mientras faltan descansos por apuntar de los 12
+      const n = c.ultimos12.length, falta = 12 - n;
+      L(`${c.enCasa} de ${n} descansos en casa (mínimo ${min} de cada 12).`, 11, true, 0, c.enCasa >= min ? VERDE : c.enCasa + falta >= min ? AZUL : ROJO);
+      L(`${c.findeCasa} en casa y en fin de semana (al menos 1 cada 12 semanas).`, 11, true, 0, c.findeCasa ? VERDE : falta > 0 ? AZUL : ROJO); L("");
     }
     const dd = calculaDiario(c);
     if (dd.js.length) {
-      L("Jornadas y descanso diario", 13, true);
+      B("Jornadas y descanso diario");
+      const COL = { normal: VERDE, reducido: NARANJA, partido: AZUL, falta: ROJO, pendiente: GRIS };
       [...dd.js].reverse().forEach(j => {
         L(fmt(j.ini) + "  a  " + fmt(j.fin), 10, true);
         const et = { normal: j.doble ? "descanso diario de 9 h (doble tripulación)" : "descanso diario normal", reducido: "descanso diario reducido", partido: "descanso diario partido (3 h + 9 h)", falta: "descanso diario insuficiente", pendiente: "falta apuntar lo siguiente" }[j.clase];
-        L([horas((j.fin - j.ini) / H) + " de jornada", j.descanso != null ? "descanso después: " + horas(j.descanso) : "", et, j.semanal ? "le sigue el descanso semanal" : "", j.ferry ? "cortado por ferry o tren" : ""].filter(Boolean).join(" · "), 10, false, 12);
-        if (j.demasiados) L("Atención: más de 3 descansos diarios reducidos entre dos semanales.", 9, false, 12);
+        L([horas((j.fin - j.ini) / H) + " de jornada", j.descanso != null ? "descanso después: " + horas(j.descanso) : "", et, j.semanal ? "le sigue el descanso semanal" : "", j.ferry ? "cortado por ferry o tren" : ""].filter(Boolean).join(" · "), 10, j.clase === "falta", 12, COL[j.clase]);
+        if (j.demasiados) L("Atención: más de 3 descansos diarios reducidos entre dos semanales.", 10, true, 12, ROJO);
       });
       L("");
     }
-    L("Descansos semanales", 13, true);
+    B("Descansos semanales");
     const filas = [...DATOS.lista].sort((a, b) => b.fin - a.fin);
-    if (!filas.length) L("Todavía no hay nada apuntado.");
+    if (!filas.length) L("Todavía no hay nada apuntado.", 10, false, 0, GRIS);
     filas.forEach(x => {
-      if (x.tipo === "comp") { L("Compensación de " + horas(+x.horas) + ", sumada a un descanso que acabó el " + fmt(x.fin) + ".", 10, true); return; }
+      if (x.tipo === "comp") { L("Compensación de " + horas(+x.horas) + ", sumada a un descanso que acabó el " + fmt(x.fin) + ".", 10, true, 0, VERDE); return; }
       const sd = c.sem.find(y => y.id === x.id), deuda = c.deudas.find(d => d.de.id === x.id);
-      L(fmt(x.ini) + "  a  " + fmt(x.fin), 10, true);
-      L([sd.clase === "normal" ? "Normal" : sd.clase === "reducido" ? "Reducido" : "No llega a 24 h", horas(sd.h), deuda ? (deuda.queda > 0.05 ? "faltan " + horas(deuda.queda) + " por compensar" : "compensado") : "", x.casa ? "en casa" : "", tocaFinde(x.ini, x.fin) ? "fin de semana" : "", x.cabina ? "en la cabina" : ""].filter(Boolean).join(" · "), 10, false, 12);
-      if (sd.tarde) L("Atención: empezó " + horas(sd.tarde) + " tarde (más de 6 días desde el anterior).", 9, false, 12);
-      if (sd.seguidos) L("Atención: dos semanas seguidas sin descanso normal.", 9, false, 12);
-      if (sd.enCabina) L("Atención: el descanso normal no se puede hacer en la cabina.", 9, false, 12);
+      L(fmt(x.ini) + "  a  " + fmt(x.fin) + "   (" + (sd.clase === "normal" ? "Normal" : sd.clase === "reducido" ? "Reducido" : "No llega a 24 h") + ", " + horas(sd.h) + ")", 10, true, 0, sd.clase === "normal" ? VERDE : sd.clase === "reducido" ? NARANJA : ROJO);
+      const det = [x.casa ? "en casa" : "", tocaFinde(x.ini, x.fin) ? "fin de semana" : "", x.cabina ? "en la cabina" : ""].filter(Boolean).join(" · ");
+      if (det) L(det, 10, false, 12);
+      if (deuda) L(deuda.queda > 0.05 ? "Faltan " + horas(deuda.queda) + " por compensar" : "Compensado", 10, true, 12, deuda.queda > 0.05 ? ROJO : VERDE);
+      if (sd.tarde) L("Atención: empezó " + horas(sd.tarde) + " tarde (más de 6 días desde el anterior).", 10, true, 12, ROJO);
+      if (sd.seguidos) L("Atención: dos semanas seguidas sin descanso normal.", 10, true, 12, ROJO);
+      if (sd.enCabina) L("Atención: el descanso normal no se puede hacer en la cabina.", 10, true, 12, ROJO);
     });
     L("");
-    L("Solo es una ayuda para organizarte; no es una prueba oficial ni sustituye al tacógrafo. Manda lo que registra el tacógrafo y el Reglamento (CE) 561/2006. Cálculos según el cuadernillo «Tiempos de conducción y descanso» de FENADISMER (mayo 2026) y el II Acuerdo Marco.", 8);
-    L("Para volver a cargar estos datos en la app: Zona Conductores > Mis descansos > Recuperar una copia, y elige este PDF.", 8);
+    L("Solo es una ayuda para organizarte; no es una prueba oficial ni sustituye al tacógrafo. Manda lo que registra el tacógrafo y el Reglamento (CE) 561/2006. Cálculos según el cuadernillo «Tiempos de conducción y descanso» de FENADISMER (mayo 2026) y el II Acuerdo Marco.", 8, false, 0, GRIS);
+    L("Para volver a cargar estos datos en la app: Zona Conductores > Mis descansos > Recuperar una copia, y elige este PDF.", 8, false, 0, GRIS);
     return pdfSencillo(lineas, MARCA + btoa(JSON.stringify({ app: "ccoo-descansos", ...DATOS })), { logo: LOGO });
   }
 
