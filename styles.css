@@ -2180,20 +2180,28 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .apc-serv-ops { display: flex; flex-wrap: wrap; gap: 4px 16px; clear: both; }
 
 /* v111: Zona Conductores en azul (lo pidió el padre: «como lo de Calsina», el azul del camión del logo). Solo aquí: el resto sigue en rojo */
-:root { --cond-azul: #0e568f; --cond-azul-ic: #0e568f; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cond-azul-ic: #7db6ec; } }
-:root[data-theme="dark"] { --cond-azul-ic: #7db6ec; }
-/* La pestaña es un camión como el del logo (lo pidió el padre): la caja azul con «CC» y el nombre, la cabina a la derecha (::after) y las ruedas (::before).
-   Elegida: las ruedas van sobre una carretera blanca. */
-.cab-tablon .pestanas-web a.pest-cond, .cab-tablon .pestanas-web a.pest-cond:not(.activa) { position: relative; display: inline-flex; align-items: center; gap: 8px; align-self: center; margin: 0 36px 14px 4px; padding: 4px 12px 4px 9px; border: 0; border-radius: 4px 4px 2px 4px; background: linear-gradient(180deg, #1a6db0 0%, #0e568f 55%, #0b4a7c 100%); color: #fff; line-height: 1.15; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), inset 0 -2px 0 rgba(0, 0, 0, .18), 0 2px 6px rgba(0, 0, 0, .45); }
-.pestanas-web a.pest-cond::after { content: ""; position: absolute; left: 100%; bottom: -1px; margin-left: 1px; width: 32px; height: 34px; background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 32'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%231a6db0'/><stop offset='1' stop-color='%230b4a7c'/></linearGradient></defs><path d='M1 3h13c2 0 3.2.8 4.2 2.4l5.6 9.2c.8 1.2 2 1.9 3.6 2.4 1.6.5 2.6 1.6 2.6 3.2V27c0 1.7-1.2 2.6-2.8 2.6H1z' fill='url(%23g)'/><path d='M4 6h9.6c1 0 1.7.4 2.2 1.2L20 14.5H4z' fill='%23e3eaf2'/><path d='M5 7.2h4.5L6 13H5z' fill='%23fff' opacity='.7'/><path d='M17.5 16.5v10.5' stroke='%230a3f6a' stroke-width='.9'/><rect x='13.5' y='18' width='2.6' height='1' rx='.5' fill='%230a3f6a'/><rect x='26.4' y='19.6' width='3' height='2.6' rx='.8' fill='%23ffd75e'/><rect x='14' y='27.6' width='16' height='3' rx='1' fill='%23083559'/></svg>") no-repeat left bottom / contain; }
-.pestanas-web a.pest-cond::before { content: ""; position: absolute; left: 4px; right: -34px; bottom: -13px; height: 14px;
-  background: radial-gradient(circle at center, #eef2f6 0 2.2px, #8b96a3 2.6px 3.6px, #101317 4px 5.6px, #5b6672 6px 6.6px, transparent 7px) 6px 0 / 14px 14px no-repeat,
-              radial-gradient(circle at center, #eef2f6 0 2.2px, #8b96a3 2.6px 3.6px, #101317 4px 5.6px, #5b6672 6px 6.6px, transparent 7px) 22px 0 / 14px 14px no-repeat,
-              radial-gradient(circle at center, #eef2f6 0 2.2px, #8b96a3 2.6px 3.6px, #101317 4px 5.6px, #5b6672 6px 6.6px, transparent 7px) right 6px top 0 / 14px 14px no-repeat,
-              linear-gradient(#083559, #083559) 0 1px / calc(100% - 20px) 3px no-repeat; }
-.pestanas-web a.pest-cond.activa::before { border-bottom: 3px solid #fff; height: 17px; bottom: -17px; }
-.pc-cc { font-size: 1.3em; font-weight: 800; letter-spacing: -.02em; line-height: 1; color: #fff; text-shadow: 0 1px 0 #6f8aa6, 0 2px 2px rgba(0, 0, 0, .35); padding-right: 8px; border-right: 2px solid rgba(255, 255, 255, .35); }
+:root { --cond-azul: #1f4aa5; --cond-azul-ic: #1f4aa5; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cond-azul-ic: #8fb0f0; } }
+:root[data-theme="dark"] { --cond-azul-ic: #8fb0f0; }
+/* La pestaña es un camión como el de Calsina (lo pidió el padre, con una foto de su web; sin el «CC» ni su logo): el enlace es el semirremolque azul con chapas,
+   puertas atrás, luz roja y letras crema; ::after es la tractora (SVG: cabina crema con deflector, parasol, ventanilla y espejo, parte de abajo azul, depósito y sus dos ruedas,
+   la de atrás bajo el remolque); ::before son los tres ejes de atrás, las patas de apoyo, la barra lateral y unas rayas de velocidad. Elegida: sobre la carretera blanca. */
+.cab-tablon .pestanas-web a.pest-cond, .cab-tablon .pestanas-web a.pest-cond:not(.activa) { position: relative; display: inline-flex; align-items: center; align-self: center; margin: 4px 46px 22px 18px; padding: 6px 14px 8px 16px; border: 0; border-radius: 2px 3px 2px 2px; color: #f3e9cf; line-height: 1.15; letter-spacing: .05em;
+  background: linear-gradient(#e0262b, #e0262b) 2px calc(100% - 4px) / 3px 4px no-repeat, linear-gradient(90deg, transparent 6px, rgba(0, 0, 0, .28) 6px 7px, transparent 7px 10px, rgba(0, 0, 0, .28) 10px 11px, transparent 11px), repeating-linear-gradient(90deg, rgba(255, 255, 255, .1) 0 1.5px, rgba(0, 0, 0, .12) 1.5px 2.5px, transparent 2.5px 8px), linear-gradient(180deg, #3a64c2 0, #2551b0 3px, #1f4aa5 50%, #183f8f 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, .25), inset 0 -3px 0 #102a63, 0 3px 6px rgba(0, 0, 0, .45); text-shadow: 0 1px 1px rgba(0, 0, 0, .4); }
+.pestanas-web a.pest-cond::after { content: ""; position: absolute; left: 100%; bottom: -18px; margin-left: -26px; width: 66px; height: 52px; background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 92 72'><defs><linearGradient id='c' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%23fbf6e8'/><stop offset='1' stop-color='%23e2d6b4'/></linearGradient><linearGradient id='b' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%232b57b5'/><stop offset='1' stop-color='%23173c8a'/></linearGradient><linearGradient id='v' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%234d5e76'/><stop offset='.55' stop-color='%23232b37'/><stop offset='1' stop-color='%23161b24'/></linearGradient><radialGradient id='r'><stop offset='0' stop-color='%23f1f3f5'/><stop offset='.55' stop-color='%23b4bcc6'/><stop offset='1' stop-color='%23707a86'/></radialGradient></defs><rect x='4' y='48' width='40' height='2.6' fill='%23161b24'/><path d='M5 57a11 11 0 0 1 22 0' fill='none' stroke='%23161b24' stroke-width='2.4'/><path d='M24 48.5h16v-2.5h50v11.5c0 1.6-1.2 2.8-2.8 2.8h-4.4a11 11 0 0 0-21.6 0H26a2 2 0 0 1-2-2z' fill='url(%23b)'/><path d='M27 57.5h33' stroke='%2312306f' stroke-width='.9'/><rect x='29' y='51.5' width='9' height='3.5' rx='1.2' fill='%2312306f' opacity='.55'/><path d='M40 46V14c0-6 3.5-10.5 10-11L78 2.4c4.5-.1 7.3 2.4 8.1 6.6L90 37v9z' fill='url(%23c)'/><path d='M42 10c1.5-5 5-7.6 11-8.4 9-1.1 17-1.3 24-.2 2.6.4 4 1.3 4.8 2.7L54 4.6c-6 .4-9.5 2.4-12 5.4z' fill='%23d6c8a1'/><rect x='63' y='4.2' width='24.5' height='2.6' rx='1.2' fill='%23262e3b'/><path d='M62 9.5h21.5c1.3 0 2.2.7 2.5 2l2.2 15.5H62z' fill='url(%23v)'/><path d='M65 11h6l-5 13.5h-1z' fill='%23fff' opacity='.28'/><path d='M59.5 8v38' stroke='%23c4b48a' stroke-width='.9'/><rect x='63' y='31' width='5' height='1.3' rx='.6' fill='%239b8c63'/><path d='M40 40h50v7H40z' fill='url(%23b)'/><path d='M40 40h50v1.4H40z' fill='%23fff' opacity='.28'/><rect x='64' y='49' width='10' height='1.6' rx='.8' fill='%2312306f'/><rect x='64' y='53' width='10' height='1.6' rx='.8' fill='%2312306f'/><path d='M86 46h4.5v12.5c0 1.2-.8 2-2 2H86z' fill='%23142f6a'/><rect x='86.5' y='42' width='4' height='3.2' rx='1' fill='%23fff1bf'/><rect x='87' y='48.5' width='3' height='1.5' rx='.6' fill='%23ffa000'/><path d='M88 13l3 1.6' stroke='%23161b24' stroke-width='1.2'/><rect x='89.6' y='12.6' width='2.4' height='10' rx='1.1' fill='%23161b24'/><g><circle cx='16' cy='62' r='9.4' fill='%230d1015'/><circle cx='16' cy='62' r='5.4' fill='url(%23r)'/><circle cx='16' cy='62' r='1.8' fill='%23565f6b'/></g><g><circle cx='72' cy='62' r='9.4' fill='%230d1015'/><circle cx='72' cy='62' r='5.4' fill='url(%23r)'/><circle cx='72' cy='62' r='1.8' fill='%23565f6b'/></g></svg>") no-repeat left bottom / contain; }
+.pestanas-web a.pest-cond::before { content: ""; position: absolute; left: -16px; right: -42px; bottom: -18px; height: 45px;
+  background: radial-gradient(circle at center, #565f6b 0 1.3px, #b4bcc6 1.7px 3.6px, #0d1015 4px 6.5px, transparent 6.9px) 22px 100% / 13px 13px no-repeat,
+              radial-gradient(circle at center, #565f6b 0 1.3px, #b4bcc6 1.7px 3.6px, #0d1015 4px 6.5px, transparent 6.9px) 35px 100% / 13px 13px no-repeat,
+              radial-gradient(circle at center, #565f6b 0 1.3px, #b4bcc6 1.7px 3.6px, #0d1015 4px 6.5px, transparent 6.9px) 48px 100% / 13px 13px no-repeat,
+              linear-gradient(#202733, #202733) right 88px bottom 1px / 3px 16px no-repeat,
+              linear-gradient(#202733, #202733) right 84px bottom 1px / 2px 14px no-repeat,
+              linear-gradient(#8a94a0, #8a94a0) 66px calc(100% - 9px) / calc(100% - 170px) 2px no-repeat,
+              linear-gradient(#141922, #141922) 18px calc(100% - 16px) / calc(100% - 60px) 2px no-repeat, linear-gradient(#141922, #141922) 26px calc(100% - 13px) / 40px 3px no-repeat,
+              linear-gradient(90deg, transparent, rgba(255, 255, 255, .55)) 0 8px / 12px 2px no-repeat,
+              linear-gradient(90deg, transparent, rgba(255, 255, 255, .4)) 3px 16px / 9px 2px no-repeat,
+              linear-gradient(90deg, transparent, rgba(255, 255, 255, .3)) 0 24px / 12px 2px no-repeat; }
+.pestanas-web a.pest-cond.activa::before { border-bottom: 3px solid #fff; height: 48px; bottom: -21px; }
 .cab-tablon .pestanas-web a.pest-cond:hover { filter: brightness(1.15); }
 .subpest-caja.cond .subpestanas a { background: var(--cond-azul); border-color: var(--cond-azul); }
 .subpest-caja.cond .subpestanas a:hover { border-color: #fff; }
@@ -2217,3 +2225,39 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 :root[data-theme="dark"] .gan-fila.gan-placa, :root[data-theme="dark"] .gan-precio.gan-placa { background: #10294a; color: #e6f0fb; border-color: #4f9dff; }
 :root[data-theme="dark"] .gan-fila.gan-placa > label small, :root[data-theme="dark"] .gan-fila.gan-placa .gan-imp, :root[data-theme="dark"] .gan-precio.gan-placa small { color: #b9cde6; }
 .gan-precio.gan-placa > span { grid-template-columns: auto minmax(0, 1fr); column-gap: 2px; align-items: center; } .gan-precio.gan-placa > span > .gan-p { grid-row: span 2; } .gan-precio.gan-placa > span > small { grid-column: 2; }
+
+/* v113: dietas festivas distintas de las normales (lo pidió el padre: «se ven iguales y se puede confundir»):
+   etiqueta roja «Festivo» con calendario junto a la zona, fila en rojo suave y sello de calendario en la cabecera del grupo */
+.gan-zonas { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; justify-self: start; }
+.gan-fila > .gan-zonas { grid-area: zona; margin-bottom: 3px; }
+.gan-zonas .gan-zona { margin-bottom: 0; }
+.gan-fest-etq { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px 2px 7px; border-radius: 999px; background: var(--rojo); color: #fff; font-size: .85rem; font-weight: 700; line-height: 1.4; box-shadow: 0 1px 3px rgba(171, 16, 18, .35); }
+.gan-fest-etq .icono { width: 1.05em; height: 1.05em; }
+.gan-fila.gan-festiva, .gan-precio.gan-festiva { background: var(--rojo-suave); border-radius: 8px; }
+.gan-fila.gan-festiva:not([class*="fila-z-"]), .gan-precio.gan-festiva { margin-inline: -6px; padding-inline: 6px; }
+.gan-fila.gan-festiva.fila-z-nac { background: linear-gradient(#AA151B 0 25%, #F1BF00 25% 75%, #AA151B 75%) left / 4px 100% no-repeat, var(--rojo-suave); border-radius: 4px 8px 8px 4px; }
+.gan-precio .gan-zonas { display: inline-flex; justify-self: start; margin-bottom: 2px; }
+.gan-precio .gan-zonas { gap: 6px; flex-wrap: wrap; }
+.gan-precio .gan-zonas > span { display: inline-flex; gap: 5px; white-space: nowrap; }
+.gan-fila.gan-festiva + .gan-fila.gan-festiva { margin-top: 6px; }
+.gan-grupo.festiva h3, .gan-precios-grupo.festiva h4 { display: flex; align-items: center; gap: 10px; }
+.gan-fest-sello { position: relative; flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; background: var(--rojo); color: #fff; box-shadow: 0 2px 5px rgba(171, 16, 18, .35); }
+.gan-fest-sello .icono { width: 22px; height: 22px; }
+.gan-fest-sello::after { content: ""; position: absolute; right: -4px; top: -4px; width: 12px; height: 12px; border-radius: 50%; background: #fff; box-shadow: inset 0 0 0 3px var(--rojo); }
+
+/* v113: quitar lo confirmado; ventanita del mapa dentro de la pantalla y sin botones encima */
+.apc-opina .apc-conf-ya { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-style: dashed; }
+.apc-popup-abierto .leaflet-top.leaflet-right { opacity: 0; pointer-events: none; transition: opacity .15s; }
+.apc-popup-caja .leaflet-popup-content { overflow-wrap: anywhere; }
+.apc-popup-caja .leaflet-popup-content .apc { min-width: 0; }
+.apc-mal-velo .modal { max-height: calc(100dvh - 12px); overflow-y: auto; overscroll-behavior: contain; }
+.apc-serv-form .apc-serv { display: grid; grid-template-columns: 1fr; gap: 0; padding: 8px 0 2px; border-top: 1px solid var(--linea); }
+.apc-serv-tit { font-weight: 700; overflow-wrap: normal; word-break: normal; }
+.apc-serv-form .apc-serv-ops { display: flex; flex-wrap: wrap; gap: 0 22px; }
+.apc-serv-form .apc-solo { justify-self: start; min-height: 44px; }
+.apc-serv-pl { display: grid; gap: 4px; font-weight: 700; }
+.apc-serv-pl small, .apc-mal-plazas small { font-weight: 400; color: var(--suave); }
+.apc-serv-pl input { max-width: 9em; }
+.apc-pl-rapidas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: -4px; }
+.apc-pl-rapidas .btn { min-height: 40px; padding-inline: 10px; }
+.apc-pl-rapidas .btn.elegida { background: var(--rojo); border-color: var(--rojo); color: #fff; }

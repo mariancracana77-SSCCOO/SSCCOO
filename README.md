@@ -75,6 +75,18 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 113: las dietas festivas se distinguen (lo pidió el padre)
+- En «Mis incentivos», las dietas festivas llevan junto a «Nacional» la etiqueta roja «Festivo» con un calendario, la fila en rojo suave y, en su grupo, un sello de calendario en la cabecera. Así no se confunden con las normales.
+
+- La pestaña Zona Conductores pasa a ser un camión como el de Calsina (lo pidió el padre, con una foto de su web): remolque azul con chapas y letras crema, tres ejes atrás y cabeza tractora crema con la parte de abajo azul. El azul de toda Zona Conductores pasa a ser el de Calsina.
+
+- Aparcamientos: se puede quitar lo dicho («Lo has confirmado · quitar»; en «Decir qué tiene», cambiar la respuesta o elegir «No lo sé» borra la de antes). La ventanita del mapa ya no se sale de la pantalla ni queda tapada por los botones.
+
+- Mis aparcamientos: al borrar uno que propusiste, se quita también del mapa de todos (solo desde el móvil que lo propuso; los enviados antes de esta versión se quitan desde el panel).
+
+- «Decir qué tiene»: botón «No tiene nada: solo aparcamiento» (la tarjeta pone «Solo aparcamiento») y casilla de plazas (con botones «unas 5, 10, 20…» para no tener que contar; sale lo que diga la mayoría como «unas N plazas»; se puede cambiar o quitar). «¿Algo está mal?» pregunta siempre las plazas.
+- La pestaña camión, más realista y como la foto del padre, sin «CC».
+
 ## Versión 112: la pestaña Zona Conductores es un camión (lo pidió el padre)
 - Como el camión del logo: caja azul con «CC» y el nombre, cabina y ruedas. La elegida va sobre una carretera blanca.
 
