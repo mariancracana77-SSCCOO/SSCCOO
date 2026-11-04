@@ -177,7 +177,7 @@
   async function cargaOpiniones() {
     if (OPINIONES) return OPINIONES;
     try {
-      const { data, error } = await sb.rpc("opiniones_aparcamientos");
+      const { data, error } = await sb.rpc("opiniones_aparcamientos2"); // v113: con las plazas (la de antes sigue para la web publicada)
       if (error) throw error;
       OPINIONES = Array.isArray(data) ? data : [];
       try { localStorage.setItem("ccoo-aparcar-opiniones", JSON.stringify(OPINIONES)); } catch (_) {}
@@ -191,6 +191,9 @@
       const o = por.get(x.osm); if (!o) return x;
       const y = { ...x, confirman: +o.confirman || 0, confUlt: o.ultima || "" };
       for (const [k] of SERVICIOS) { const si = +o[k + "_si"] || 0, no = +o[k + "_no"] || 0; if (si > no) y[k] = true; else if (no > si) y[k] = false; }
+      // v113 (lo pidió el padre): «Solo aparcamiento» si la mayoría dice que no tiene nada; plazas: la mediana de lo que dicen los compañeros
+      y.soloAparc = SERVICIOS.every(([k]) => (+o[k + "_no"] || 0) > (+o[k + "_si"] || 0));
+      if (+o.plazas_n > 0 && o.plazas != null) { y.plazas = +o.plazas > 0 ? +o.plazas : null; y.plazasCompas = +o.plazas_n; }
       return y;
     });
   }
@@ -259,7 +262,7 @@
   };
 
   // Plazas para camiones: lo más importante para el padre (capacity:hgv de OpenStreetMap)
-  const plazasHTML = (x) => x.plazas ? `<span class="apc-plazas"><b>${x.plazas}</b> ${x.plazas === 1 ? "plaza" : "plazas"} camión</span>` : `<span class="apc-plazas nose">Plazas sin apuntar</span>`;
+  const plazasHTML = (x) => x.plazas ? `<span class="apc-plazas"${x.plazasCompas ? ` title="Según ${x.plazasCompas === 1 ? "1 compañero" : x.plazasCompas + " compañeros"}"` : ""}><b>${x.plazas}</b> ${x.plazas === 1 ? "plaza" : "plazas"} camión</span>` : `<span class="apc-plazas nose">Plazas sin apuntar</span>`;
   function abreHTML(x, cuando) {
     const av = avisoDe(x);
     if (av?.tipo === "cerrado") return `<span class="apc-abre no">Cerrado</span> <span class="apc-aviso-comp">avisado por un compañero ${haceTxt(av.t)}</span>`;
@@ -279,7 +282,7 @@
     return ES_IOS ? `https://maps.apple.com/?daddr=${la},${lo}&dirflg=d` : `geo:${la},${lo}?q=${la},${lo}(${encodeURIComponent(nombre(x))})`;
   }
   function tarjeta(x, faltaKm, llegada) {
-    const extras = [x.camion ? "Para camiones" : "", x.vigilado ? "Vigilado" : "", x.duchas ? "Duchas" : "", x.aseos ? "Aseos" : "", x.comida ? "Bar o restaurante" : "", x.desvio > 0.6 ? `A ${kmTxt(x.desvio)} km de la ruta` : ""].filter(Boolean);
+    const extras = [x.soloAparc ? "Solo aparcamiento" : "", x.camion ? "Para camiones" : "", x.vigilado ? "Vigilado" : "", x.duchas ? "Duchas" : "", x.aseos ? "Aseos" : "", x.comida ? "Bar o restaurante" : "", x.desvio > 0.6 ? `A ${kmTxt(x.desvio)} km de la ruta` : ""].filter(Boolean);
     return `<li class="apc${estadoA(x, llegada) === "no" ? " cerrado" : ""}">
       <div class="apc-cab"><span class="apc-dist">a ${kmTxt(faltaKm)} km${llegada ? ` · llegas ${hora(llegada)}` : ""}</span>${plazasHTML(x)}</div>
       <b class="apc-nom">${esc(nombre(x))}</b>
@@ -977,7 +980,7 @@
     v.innerHTML = `<form class="modal apc-mal-form" role="dialog" aria-modal="true" novalidate><h2>¿Qué está mal?</h2>
       <p class="apc-nota"><b>${esc(nombre(x))}</b></p>
       <fieldset class="apc-mal-tipos"><legend class="sr-only">Qué está mal</legend>${MAL_TIPOS.map(([k, t], i) => `<label class="check"><input type="radio" name="tipo" value="${k}"${i ? "" : " checked"}> ${t}</label>`).join("")}</fieldset>
-      <label class="apc-mal-plazas" hidden>Plazas para camiones que tiene<input name="plazas" inputmode="numeric" maxlength="3" placeholder="Ej: 20"></label>
+      <label class="apc-mal-plazas">Plazas para camiones que tiene <small>(si lo sabes)</small><input name="plazas" inputmode="numeric" maxlength="3" placeholder="Ej: 20"></label>
       <label>Nota<textarea name="nota" maxlength="300" rows="2" placeholder="Opcional. Ej: lo han vallado; ahora es solo para coches"></textarea></label>
       <p class="apc-nota">Le llega a la sección sin saber quién lo manda. Si está bien, lo corrigen para todos. No pongas teléfonos ni nombres de personas.</p>
       <p class="msg" role="status" aria-live="polite"></p>
@@ -986,15 +989,16 @@
     const f = v.querySelector("form"), msg = f.querySelector(".msg"), cierra = () => v.remove();
     v.onclick = (e) => { if (e.target === v) cierra(); };
     f.querySelector("[data-no]").onclick = cierra;
-    f.querySelectorAll("[name=tipo]").forEach(r => r.onchange = () => { f.querySelector(".apc-mal-plazas").hidden = f.tipo.value !== "plazas"; });
+    // v113 (lo pidió el padre): las plazas se preguntan siempre, sea cual sea el problema
     f.onsubmit = async (e) => {
       e.preventDefault();
       const tipo = f.tipo.value, pl = parseInt(f.plazas.value, 10), nota = f.nota.value.trim(), err = (t) => { msg.textContent = t; msg.classList.add("err"); };
       if (tipo === "plazas" && !(pl >= 0 && pl <= 500)) return err("Pon cuántas plazas para camiones tiene (de 0 a 500).");
+      if (f.plazas.value.trim() && !(pl >= 0 && pl <= 500)) return err("Las plazas tienen que ser un número entre 0 y 500.");
       if (tipo === "otro" && nota.length < 5) return err("Explica en la nota qué está mal.");
       const b = f.querySelector("[type=submit]"); b.disabled = true; msg.classList.remove("err"); msg.textContent = "Enviando…";
       try {
-        const { data, error } = await sb.rpc("corregir_aparcamiento", { p_osm: x.osm, p_nombre: nombre(x), p_lat: x.lat, p_lon: x.lon, p_tipo: tipo, p_plazas: tipo === "plazas" ? pl : null, p_nota: nota });
+        const { data, error } = await sb.rpc("corregir_aparcamiento", { p_osm: x.osm, p_nombre: nombre(x), p_lat: x.lat, p_lon: x.lon, p_tipo: tipo, p_plazas: pl >= 0 && pl <= 500 ? pl : null, p_nota: nota });
         if (error) throw new Error(error.message);
         f.innerHTML = `<h2>Gracias</h2><p>${data === "ya" ? "Otro compañero ya había avisado de lo mismo. La sección lo revisará." : "Enviado a la sección. Cuando lo revisen, se corregirá para todos."}</p><div class="botones"><button type="button" class="btn" data-no>Cerrar</button></div>`;
         f.querySelector("[data-no]").onclick = cierra; f.querySelector("[data-no]").focus();
@@ -1011,14 +1015,15 @@
     if (error) throw new Error(error.message);
   }
   async function opinar(x, op) {
-    if (op.confirma || SERVICIOS.some(([k]) => op[k] != null)) await opinarRPC(x, op);
+    if (op.confirma || op.plazas != null || SERVICIOS.some(([k]) => op[k] != null)) await opinarRPC(x, op);
     const o = OPINO[x.osm] = OPINO[x.osm] || {};
     if (op.confirma) o.c = Date.now();
+    if (op.plazas != null) o.p = op.plazas;
     for (const [k] of SERVICIOS) if (op[k] != null) (o.s = o.s || {})[k] = op[k];
     guardaOpino(); OPINIONES = null;
   }
   async function opinarRPC(x, op) {
-    const { error } = await sb.rpc("opinar_aparcamiento", { p_osm: x.osm, p_nombre: nombre(x), p_lat: x.lat, p_lon: x.lon, p_confirma: !!op.confirma,
+    const { error } = await sb.rpc("opinar_aparcamiento2", { p_osm: x.osm, p_nombre: nombre(x), p_lat: x.lat, p_lon: x.lon, p_confirma: !!op.confirma, p_plazas: op.plazas ?? null,
       p_aseos: op.aseos ?? null, p_duchas: op.duchas ?? null, p_vigilado: op.vigilado ?? null, p_comida: op.comida ?? null });
     if (error) throw new Error(error.message);
   }
@@ -1037,29 +1042,36 @@
   function abreServicios(osm) {
     const x = VISTOS.get(osm); if (!x) return;
     document.querySelector(".apc-mal-velo")?.remove();
-    const mio = OPINO[osm]?.s || {}, ya = yaConfirmado(osm);
+    const mio = OPINO[osm]?.s || {}, ya = yaConfirmado(osm), miasPl = OPINO[osm]?.p;
     const v = document.createElement("div"); v.className = "modal-velo apc-mal-velo";
     v.innerHTML = `<form class="modal apc-mal-form apc-serv-form" role="dialog" aria-modal="true" novalidate><h2>¿Qué tiene este aparcamiento?</h2>
       <p class="apc-nota"><b>${esc(nombre(x))}</b></p>
+      <button type="button" class="btn sec apc-solo" data-solo>No tiene nada: solo aparcamiento</button>
       ${SERVICIOS.map(([k, t]) => { const m = mio[k] === true ? "si" : mio[k] === false ? "no" : ""; return `<div class="apc-serv" role="radiogroup" aria-label="${esc(t)}"><b class="apc-serv-tit">${esc(t)}</b><div class="apc-serv-ops">${[["si", "Sí"], ["no", "No"], ["", "No lo sé"]].map(([val, tt]) => `<label class="check"><input type="radio" name="${k}" value="${val}"${val === m ? " checked" : ""}> ${tt}</label>`).join("")}</div></div>`; }).join("")}
+      <label class="apc-serv-pl">Plazas para camiones <small>(si lo sabes)</small><input name="plazas" inputmode="numeric" maxlength="3" placeholder="Ej: 20" value="${miasPl != null ? esc(String(miasPl)) : ""}"></label>
       ${ya ? "" : `<label class="check"><input type="checkbox" name="confirma"> También confirmo que existe y se puede aparcar con camión</label>`}
-      <p class="apc-nota">Sale enseguida para todos, sin saber quién lo manda. Si varios compañeros dicen cosas distintas, sale lo que diga la mayoría. Para quitar lo que dijiste, elige «No lo sé».</p>
+      <p class="apc-nota">Sale enseguida para todos, sin saber quién lo manda. Si varios compañeros dicen cosas distintas, sale lo que diga la mayoría. Para quitar lo que dijiste, elige «No lo sé» o borra las plazas.</p>
       <p class="msg" role="status" aria-live="polite"></p>
       <div class="botones"><button type="submit" class="btn">Enviar</button><button type="button" class="btn sec" data-no>Cancelar</button></div></form>`;
     document.body.appendChild(v);
     const f = v.querySelector("form"), msg = f.querySelector(".msg"), cierra = () => v.remove();
     v.onclick = (e) => { if (e.target === v) cierra(); };
     f.querySelector("[data-no]").onclick = cierra;
+    f.querySelector("[data-solo]").onclick = () => SERVICIOS.forEach(([k]) => { const r = f.querySelector(`[name=${k}][value=no]`); if (r) r.checked = true; });
     f.onsubmit = async (e) => {
       e.preventDefault();
       const op = { confirma: !!f.confirma?.checked }, quita = [];
+      const plT = f.plazas.value.trim(), pl = parseInt(plT, 10);
+      if (plT && !(String(pl) === plT && pl >= 0 && pl <= 500)) { msg.textContent = "Las plazas tienen que ser un número entre 0 y 500."; msg.classList.add("err"); f.plazas.focus(); return; }
+      const quitaPl = miasPl != null && (plT === "" || pl !== miasPl); if (plT && pl !== miasPl) op.plazas = pl;
       for (const [k] of SERVICIOS) { const r = f.querySelector(`[name=${k}]:checked`)?.value; if (r === "si") op[k] = true; else if (r === "no") op[k] = false; }
       // Solo se manda lo que ha cambiado respecto a lo que ya dijo este móvil; si cambia o pasa a «No lo sé», se quita lo de antes
       for (const [k] of SERVICIOS) { if (op[k] != null && mio[k] === op[k]) delete op[k]; else if (typeof mio[k] === "boolean") quita.push(k); }
-      if (!op.confirma && !quita.length && !SERVICIOS.some(([k]) => op[k] != null)) { msg.textContent = "Marca «Sí» o «No» en algo antes de enviar."; msg.classList.add("err"); return; }
+      if (!op.confirma && !quita.length && !quitaPl && op.plazas == null && !SERVICIOS.some(([k]) => op[k] != null)) { msg.textContent = "Marca «Sí» o «No» en algo, o pon las plazas, antes de enviar."; msg.classList.add("err"); return; }
       const b = f.querySelector("[type=submit]"); b.disabled = true; msg.classList.remove("err"); msg.textContent = "Enviando…";
       try {
         for (const k of quita) { await quitarOpinion(x, k, mio[k]); delete OPINO[x.osm].s[k]; }
+        if (quitaPl) { await quitarOpinion(x, "plazas", true); delete OPINO[x.osm].p; }
         await opinar(x, op);
         f.innerHTML = `<h2>Gracias</h2><p>Ya sale para todos los compañeros.</p><div class="botones"><button type="button" class="btn" data-no>Cerrar</button></div>`;
         f.querySelector("[data-no]").onclick = () => { cierra(); refrescaMios(); }; f.querySelector("[data-no]").focus();

@@ -84,6 +84,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 
 - Mis aparcamientos: al borrar uno que propusiste, se quita también del mapa de todos (solo desde el móvil que lo propuso; los enviados antes de esta versión se quitan desde el panel).
 
+- «Decir qué tiene»: botón «No tiene nada: solo aparcamiento» (la tarjeta pone «Solo aparcamiento») y casilla de plazas (sale lo que diga la mayoría; se puede cambiar o quitar). «¿Algo está mal?» pregunta siempre las plazas.
+- La pestaña camión, más realista y como la foto del padre, sin «CC».
+
 ## Versión 112: la pestaña Zona Conductores es un camión (lo pidió el padre)
 - Como el camión del logo: caja azul con «CC» y el nombre, cabina y ruedas. La elegida va sobre una carretera blanca.
 

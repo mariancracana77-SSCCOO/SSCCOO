@@ -2254,3 +2254,7 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .apc-serv-form .apc-serv { display: grid; grid-template-columns: 1fr; gap: 0; padding: 8px 0 2px; border-top: 1px solid var(--linea); }
 .apc-serv-tit { font-weight: 700; overflow-wrap: normal; word-break: normal; }
 .apc-serv-form .apc-serv-ops { display: flex; flex-wrap: wrap; gap: 0 22px; }
+.apc-serv-form .apc-solo { justify-self: start; min-height: 44px; }
+.apc-serv-pl { display: grid; gap: 4px; font-weight: 700; }
+.apc-serv-pl small, .apc-mal-plazas small { font-weight: 400; color: var(--suave); }
+.apc-serv-pl input { max-width: 9em; }
