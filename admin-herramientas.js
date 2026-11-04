@@ -6,7 +6,7 @@
 const NOMBRE_TABLA = { comunicados: "el aviso", eventos: "la fecha", convenio_secciones: "el apartado del convenio", actas: "el acta", documentos: "el documento",
   preguntas: "la pregunta frecuente", plantillas: "la plantilla", delegados: "el delegado", enlaces: "el enlace", apartados: "el apartado de la web",
   publicaciones: "la publicación", opciones: "la opción de lista", calc_permisos: "el permiso de la calculadora", calc_categorias: "el precio de horas extra",
-  avisos_recurrentes: "el aviso que se repite", buzon: "el mensaje del buzón", paginas: "el texto", calc_ajustes: "el ajuste de la calculadora", admins: "el administrador", restricciones: "el país de restricciones para camiones", tarifas_conductor: "el importe de «Mis incentivos»", peajes_paises: "el precio de peaje de un país", aparcamientos_compas: "el aparcamiento propuesto" };
+  avisos_recurrentes: "el aviso que se repite", buzon: "el mensaje del buzón", paginas: "el texto", calc_ajustes: "el ajuste de la calculadora", admins: "el administrador", restricciones: "el país de restricciones para camiones", tarifas_conductor: "el importe de «Mis incentivos»", peajes_paises: "el precio de peaje de un país", aparcamientos_compas: "el aparcamiento propuesto", aparcamientos_correcciones: "el aviso de un aparcamiento", prohibiciones_camion: "la prohibición de circular" };
 const VERBO = { crear: "creó", cambiar: "cambió", borrar: "borró" };
 const BOTON_DESHACER = { borrar: "Recuperar", cambiar: "Volver a como estaba", crear: "Deshacer (quitarlo)" };
 const CAMPOS_NOMBRE = { titulo: "Título", contenido: "Texto", categoria: "Categoría", urgente: "Urgente", fijado: "Fijado", adjuntos: "Archivos", fecha: "Fecha", hora: "Hora", hora_fin: "Hora de fin",
@@ -333,16 +333,37 @@ async function pintaPeajes() {
   if (l.length > 1) hacerOrdenable($("lista-peajes"), "peajes");
 }
 
+// ---------- Prohibiciones de circular para camiones (v108) ----------
+async function pintaProhibiciones() {
+  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Prohibiciones de circular</h1><p>Cuándo no pueden circular los camiones en cada país. Al calcular una ruta, «Aparcamientos en mi ruta» avisa si alguna le pilla por el camino según la hora de salida. Las de cada semana (fines de semana, de noche) ya están puestas para Alemania, Austria, Suiza, Francia e Italia: revísalas. Añade los festivos con «Un día concreto».</p></div><button class="btn" data-nuevo="prohibiciones">${icono("mas", "p")}Añadir prohibición</button></div>
+    <div class="lista-adm" id="lista-prohibiciones"><p class="fecha-txt">Cargando…</p></div>`;
+  $("zona").querySelector("[data-nuevo]").onclick = () => abrirEditor("prohibiciones");
+  try { await cargarDatos("prohibiciones"); } catch (e) { $("lista-prohibiciones").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
+  const l = datos.prohibiciones;
+  $("lista-prohibiciones").innerHTML = l.length ? l.map(x => filaOrden("prohibiciones", x)).join("") : `<div class="panel vacio">${icono("alerta")}No hay ninguna. Pulsa «Añadir prohibición».</div>`;
+  enlazarItems($("lista-prohibiciones"));
+  if (l.length > 1) hacerOrdenable($("lista-prohibiciones"), "prohibiciones");
+}
+
 // ---------- Aparcamientos propuestos por los conductores (v106) ----------
 async function pintaPropuestas() {
   $("zona").innerHTML = `<div class="sec-cab"><div><h1>Aparcamientos propuestos</h1><p>Los conductores añaden en el mapa de «Aparcamientos en mi ruta» los aparcamientos que encuentran. Si marcan «Proponerlo a los compañeros», llegan aquí sin nombre de quien lo manda. Toca uno, mira dónde está y cambia «¿Sale en el mapa de todos?» a «Aprobado». Los rechazados no salen.</p></div><button class="btn" data-nuevo="compas">${icono("mas", "p")}Añadir aparcamiento</button></div>
-    <div id="lista-propuestas"><p class="fecha-txt">Cargando…</p></div>`;
+    <div id="lista-propuestas"><p class="fecha-txt">Cargando…</p></div>
+    <h2 class="titulo-bloque" style="margin-top:28px">Avisos de aparcamientos que están mal</h2>
+    <p class="fecha-txt">Desde cualquier aparcamiento, los conductores pueden avisar de que ya no existe, de que no se puede con camión, de que tiene otras plazas o de otra cosa. Si lo pones en «Aplicado», se corrige en el mapa de todos.</p>
+    <div id="lista-correcciones"><p class="fecha-txt">Cargando…</p></div>`;
   $("zona").querySelector("[data-nuevo]").onclick = () => abrirEditor("compas");
   try { await cargarDatos("compas"); } catch (e) { $("lista-propuestas").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
   const l = datos.compas, grupo = (est, tit) => { const g = l.filter(x => x.estado === est); return g.length ? `<h2 class="titulo-bloque">${esc(tit)} (${g.length})</h2><div class="lista-adm">${g.map(x => itemHTML("compas", x)).join("")}</div>` : ""; };
   $("lista-propuestas").innerHTML = l.length ? grupo("pendiente", "Por revisar") + grupo("aprobado", "Aprobados: salen en el mapa de todos") + grupo("rechazado", "Rechazados")
     : `<div class="panel vacio">${icono("lugar")}Todavía nadie ha propuesto ningún aparcamiento.</div>`;
   enlazarItems($("lista-propuestas"));
+  // v108: avisos de aparcamientos que están mal
+  const z = $("lista-correcciones"); if (!z) return;
+  try { await cargarDatos("correcciones"); } catch (e) { z.innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
+  const c = datos.correcciones, g2 = (est, tit) => { const g = c.filter(x => x.estado === est); return g.length ? `<h3 class="titulo-bloque">${esc(tit)} (${g.length})</h3><div class="lista-adm">${g.map(x => itemHTML("correcciones", x)).join("")}</div>` : ""; };
+  z.innerHTML = c.length ? g2("pendiente", "Por revisar") + g2("aplicado", "Aplicados: corregidos para todos") + g2("descartado", "Descartados") : `<div class="panel vacio">${icono("alerta")}Nadie ha avisado de ningún aparcamiento.</div>`;
+  enlazarItems(z);
 }
 
 // ---------- Buzón anónimo ----------

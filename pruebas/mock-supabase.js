@@ -50,6 +50,16 @@
       { id: "dgt:3", pais: "ES", fuente: "dgt", tipo: "accidente", via: "AP-7", lat: 42.70, lon: 2.928, lat2: null, lon2: null, rumbo: 180, texto: "sentido contrario: no debe salir", inicio: null, fin: null },
       { id: "dgt:4", pais: "ES", fuente: "dgt", tipo: "cortada", via: "GI-555", lat: 42.30, lon: 2.95, lat2: null, lon2: null, rumbo: null, texto: "otra carretera: no debe salir", inicio: null, fin: null }],
     avisos_aparcamiento: [{ id: 1, osm: "w3", tipo: "cerrado", cuando: new Date(Date.now() - 40 * 60000).toISOString() }],
+    prohibiciones_camion: [
+      { id: 1, pais: "FR", motivo: "Fin de semana", tipo: "semanal", dia_desde: 6, hora_desde: "22:00:00", dia_hasta: 0, hora_hasta: "22:00:00", mes_desde: null, mes_hasta: null, inicio: null, fin: null, nota: "Regla general. Revisar.", url: "", orden: 40, visible: true },
+      { id: 2, pais: "FR", motivo: "Festivo de prueba", tipo: "fecha", dia_desde: null, hora_desde: null, dia_hasta: null, hora_hasta: null, mes_desde: null, mes_hasta: null, inicio: new Date(Date.now() - 36e5).toISOString(), fin: new Date(Date.now() + 2 * 864e5).toISOString(), nota: "", url: "https://www.bison-fute.gouv.fr/", orden: 41, visible: true },
+      { id: 3, pais: "DE", motivo: "Domingo", tipo: "semanal", dia_desde: 0, hora_desde: "00:00:00", dia_hasta: 0, hora_hasta: "22:00:00", mes_desde: null, mes_hasta: null, inicio: null, fin: null, nota: "", url: "", orden: 10, visible: true },
+    ],
+    aparcamientos_correcciones: [
+      { id: 1, osm: "w4", nombre: "Parking que cierra", lat: 42.8, lon: 2.95, tipo: "no_existe", plazas: null, nota: "", estado: "aplicado", dia: "2026-11-01" },
+      { id: 2, osm: "w2", nombre: "Parking vigilado de prueba", lat: 42.35, lon: 2.89, tipo: "otro", plazas: null, nota: "La barrera se abre llamando al timbre.", estado: "aplicado", dia: "2026-11-02" },
+      { id: 3, osm: "w1", nombre: "Área de prueba", lat: 42.16, lon: 2.865, tipo: "plazas", plazas: 55, nota: "", estado: "pendiente", dia: "2026-11-04" },
+    ],
     aparcamientos_compas: [
       { id: 1, lat: 42.45, lon: 2.87, nombre: "Gasolinera de prueba (de un compañero)", nota: "Se llena a partir de las 19 h.", plazas: 12, vigilado: false, duchas: true, aseos: true, estado: "aprobado", dia: "2026-11-01" },
       { id: 2, lat: 42.6, lon: 2.9, nombre: "Propuesta pendiente", nota: "", plazas: 0, vigilado: false, duchas: false, aseos: false, estado: "pendiente", dia: "2026-11-04" },
@@ -108,7 +118,7 @@
   window.supabase = {
     createClient: () => ({
       from: consulta, auth, channel: () => canal, removeChannel() {},
-      rpc: async (n, p) => { if (n === "proponer_aparcamiento") (window.__PROPUESTAS = window.__PROPUESTAS || []).push(p); return { data: n === "avisar_aparcamiento" || n === "proponer_aparcamiento" ? "ok" : n === "is_admin" ? true : null, error: null }; },
+      rpc: async (n, p) => { if (n === "proponer_aparcamiento" || n === "corregir_aparcamiento") (window.__PROPUESTAS = window.__PROPUESTAS || []).push(p); return { data: ["avisar_aparcamiento", "proponer_aparcamiento", "corregir_aparcamiento"].includes(n) ? "ok" : n === "is_admin" ? true : null, error: null }; },
       // «Fleuré» sin código postal: hay dos pueblos y la función pregunta cuál (como la de verdad)
       functions: { invoke: async (n, o) => ({ data: n === "traducir" && o?.body?.modo === "textos" ? { textos: { "Ir": "Mergi", "Ir a: {t}": "Mergi la: {t}", "Calcular la ruta": "Calculează ruta", "Cada día": "În fiecare zi", "Al empezar a trabajar": "Când începi lucrul" } } : n !== "ruta" ? null : typeof o?.body?.buscar === "string" ? { lugares: /fleur/i.test(o.body.buscar)
           ? [{ nombre: "Fleuré, France", detalle: "61200, Orne, Normandie, France", lat: 48.69, lon: -0.058 }, { nombre: "Fleuré, France", detalle: "86340, Vienne, Nouvelle-Aquitaine, France", lat: 46.478, lon: 0.522 }]

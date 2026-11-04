@@ -296,6 +296,54 @@ SECCIONES.compas = {
   extracto: (x) => x.nota, chips: (x) => [(ESTADO_APC.find(e => e[0] === x.estado) || [, ""])[1].split(":")[0], Number(x.plazas) > 0 ? x.plazas + " plazas" : null, x.vigilado ? "Vigilado" : null, x.duchas ? "Duchas" : null, x.aseos ? "Aseos" : null], fechas: (x) => [x.dia, x.actualizado],
 };
 
+// v108: avisos de los conductores de que un aparcamiento está mal. «Aplicado» se cumple en todos los móviles:
+// «ya no existe» y «no se puede con camión» lo quitan, «otras plazas» cambia las plazas y «otra cosa» enseña la nota como aviso de la sección.
+const TIPO_MAL = [["no_existe", "Ya no existe o está cerrado para siempre"], ["no_camiones", "No se puede aparcar con camión"], ["plazas", "Tiene otras plazas"], ["otro", "Otra cosa"]];
+const ESTADO_MAL = [["pendiente", "Por revisar"], ["aplicado", "Aplicado: se corrige para todos"], ["descartado", "Descartado: no se hace nada"]];
+SECCIONES.correcciones = {
+  nombre: "Avisos de aparcamientos", icono: "alerta", tabla: "aparcamientos_correcciones", orden: ["id", false], uno: "aviso", nuevo: "Añadir aviso", lista: "aviso", campoColor: "_", oculta: true, volver: "propuestas",
+  intro: "", tituloDe: (x) => x.nombre || "Aparcamiento",
+  campos: [
+    { k: "estado", l: "¿Qué hacemos?", t: "select", ops: ESTADO_MAL, def: "pendiente", ayuda: "«Aplicado» lo corrige en el mapa de todos. Antes, mira dónde está en la pestaña «Vista previa»." },
+    { k: "tipo", l: "Qué está mal", t: "select", ops: TIPO_MAL, def: "otro" },
+    { k: "plazas", l: "Plazas para camiones (si el aviso es de plazas)", t: "number" },
+    { k: "nota", l: "Nota (si es «Otra cosa», sale tal cual en la tarjeta del aparcamiento)", t: "textarea", opc: true, corto: true },
+    { k: "nombre", l: "Aparcamiento", t: "text", opc: true },
+    { fila: [{ k: "lat", l: "Latitud", t: "number", dec: true, paso: "any" }, { k: "lon", l: "Longitud", t: "number", dec: true, paso: "any" }] },
+    { k: "osm", l: "Código del aparcamiento", t: "text", req: true, ayuda: "No lo cambies: es cómo la web sabe qué aparcamiento es." },
+  ],
+  previa: (x) => `<div class="panel calc"><div class="resultado-calc"><span class="rc-tit">${esc(x.nombre || "Aparcamiento")}</span><span class="rc-num"><small>${esc((TIPO_MAL.find(t => t[0] === x.tipo) || [, ""])[1])}${x.tipo === "plazas" ? ": " + esc(String(x.plazas ?? "")) : ""}</small></span>${x.nota ? `<span class="rc-sub">${esc(x.nota)}</span>` : ""}${Number.isFinite(+x.lat) && +x.lat ? `<a class="btn sec" href="${esc(mapaOSM(x))}" target="_blank" rel="noopener">${icono("lugar", "p")}Ver dónde está</a>` : ""}</div></div>`,
+  extracto: (x) => x.nota, chips: (x) => [(ESTADO_MAL.find(e => e[0] === x.estado) || [, ""])[1].split(":")[0], (TIPO_MAL.find(t => t[0] === x.tipo) || [, ""])[1] + (x.tipo === "plazas" ? ": " + x.plazas : "")], fechas: (x) => [x.dia, x.actualizado],
+};
+
+// v108: prohibiciones de circular para camiones. «Aparcamientos en mi ruta» avisa si te pillan por el camino (según la hora de salida).
+const DIAS_PROH = [["", "Todos los días"], ["1", "Lunes"], ["2", "Martes"], ["3", "Miércoles"], ["4", "Jueves"], ["5", "Viernes"], ["6", "Sábado"], ["0", "Domingo"]];
+const MESES_PROH = [["", "Todo el año"], ...["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"].map((m, i) => [String(i + 1), m])];
+const PAISES_PROH = { ES: "España", FR: "Francia", IT: "Italia", PT: "Portugal", AD: "Andorra", DE: "Alemania", CH: "Suiza", BE: "Bélgica", NL: "Países Bajos", LU: "Luxemburgo", AT: "Austria", GB: "Reino Unido" };
+const fechaProh = (t) => t ? new Date(t).toLocaleString("es-ES", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
+const cuandoProh = (x) => x.tipo === "fecha" ? `Del ${fechaProh(x.inicio)} al ${fechaProh(x.fin)}`
+  : `${(DIAS_PROH.find(d => d[0] === String(x.dia_desde ?? "")) || DIAS_PROH[0])[1]} ${String(x.hora_desde || "").slice(0, 5)} → ${x.dia_desde == null ? "" : (DIAS_PROH.find(d => d[0] === String(x.dia_hasta ?? x.dia_desde)) || DIAS_PROH[0])[1] + " "}${String(x.hora_hasta || "").slice(0, 5)}${x.mes_desde ? ` (de ${MESES_PROH[x.mes_desde][1].toLowerCase()} a ${MESES_PROH[x.mes_hasta || x.mes_desde][1].toLowerCase()})` : ""}`;
+SECCIONES.prohibiciones = {
+  nombre: "Prohibiciones de circular", icono: "alerta", tabla: "prohibiciones_camion", orden: ["orden", true], uno: "prohibición", nuevo: "Añadir prohibición", lista: "aviso", campoColor: "_", oculta: true, volver: "prohibiciones",
+  intro: "", tituloDe: (x) => `${PAISES_PROH[x.pais] || x.pais || "País"}: ${x.motivo || ""}`,
+  campos: [
+    { fila: [{ k: "pais", l: "País", t: "select", ops: Object.entries(PAISES_PROH), def: "FR" }, { k: "motivo", l: "Nombre", t: "text", req: true, ph: "Ej: Domingo, o Navidad" }] },
+    { k: "tipo", l: "¿Se repite cada semana o es un día concreto?", t: "select", ops: [["semanal", "Cada semana (fin de semana, de noche…)"], ["fecha", "Un día concreto (festivo)"]], def: "semanal" },
+    { fila: [{ k: "dia_desde", l: "Desde el", t: "select", ops: DIAS_PROH, opc: true, si: "tipo:semanal" }, { k: "hora_desde", l: "a las", t: "time", opc: true, si: "tipo:semanal" }] },
+    { fila: [{ k: "dia_hasta", l: "Hasta el", t: "select", ops: DIAS_PROH, opc: true, si: "tipo:semanal" }, { k: "hora_hasta", l: "a las", t: "time", opc: true, si: "tipo:semanal" }] },
+    { fila: [{ k: "mes_desde", l: "Solo de", t: "select", ops: MESES_PROH, opc: true, si: "tipo:semanal" }, { k: "mes_hasta", l: "a", t: "select", ops: MESES_PROH, opc: true, si: "tipo:semanal" }] },
+    { fila: [{ k: "inicio", l: "Empieza", t: "datetime-local", opc: true, si: "tipo:fecha" }, { k: "fin", l: "Termina", t: "datetime-local", opc: true, si: "tipo:fecha" }] },
+    { k: "nota", l: "Nota para los conductores", t: "textarea", opc: true, corto: true, ph: "Ej: camiones de más de 7,5 t; excepto mercancía perecedera" },
+    { k: "url", l: "Web oficial", t: "url", opc: true, ph: "https://…" },
+    { k: "orden", l: "Posición en la lista", t: "number" },
+    { checks: [{ k: "visible", l: "Se usa en la web", def: true }] },
+  ],
+  previa: (x) => `<div class="panel calc"><div class="resultado-calc"><span class="rc-tit">${esc(PAISES_PROH[x.pais] || x.pais || "")}: ${esc(x.motivo || "")}</span><span class="rc-num"><small>${esc(cuandoProh(x))}</small></span>${x.nota ? `<span class="rc-sub">${esc(x.nota)}</span>` : ""}</div></div>`,
+  extracto: (x) => x.nota, chips: (x) => [cuandoProh(x), x.visible === false ? "No se usa" : null], fechas: (x) => [null, x.actualizado],
+  valida: (f) => f.tipo === "fecha" ? (!f.inicio ? ["inicio", "Pon cuándo empieza."] : !f.fin ? ["fin", "Pon cuándo termina."] : new Date(f.fin) <= new Date(f.inicio) ? ["fin", "Tiene que terminar después de empezar."] : null)
+    : !f.hora_desde ? ["hora_desde", "Pon a qué hora empieza."] : !f.hora_hasta ? ["hora_hasta", "Pon a qué hora termina."] : (f.dia_desde == null) !== (f.dia_hasta == null) ? ["dia_hasta", "Pon los dos días, o «Todos los días» en los dos."] : null,
+};
+
 // Restricciones para camiones (Zona Conductores de la web). Se editan en la página «Restricciones camiones».
 SECCIONES.restricciones = {
   nombre: "Restricciones para camiones", icono: "lugar", tabla: "restricciones", orden: ["orden", true], uno: "país", nuevo: "Añadir país", lista: "aviso", campoColor: "_", oculta: true, volver: "camiones",
@@ -338,8 +386,8 @@ async function cargarApartados() {
 let PAGINAS = {};
 // Menú agrupado igual que las pestañas de la web (v52): cada apartado principal con lo que va dentro, un poco metido.
 // «cab» pone un título encima; «sub» lo mete dentro del de arriba. Si falta el apartado de arriba, va suelto.
-const DENTRO_PANEL = { actas: "comite", convenio: "convenio-y-leyes", calculadoras: "convenio-y-leyes", camiones: "zona-conductores", ganancias: "zona-conductores", peajes: "zona-conductores", propuestas: "zona-conductores" };
-const PAG_FIJAS = { calculadoras: { nombre: "Calculadoras", icono: "reloj" }, camiones: { nombre: "Restricciones camiones", icono: "lugar" }, ganancias: { nombre: "Importes conductores", icono: "euro" }, peajes: { nombre: "Peajes camión", icono: "euro" }, propuestas: { nombre: "Aparcamientos propuestos", icono: "lugar" },
+const DENTRO_PANEL = { actas: "comite", convenio: "convenio-y-leyes", calculadoras: "convenio-y-leyes", camiones: "zona-conductores", ganancias: "zona-conductores", peajes: "zona-conductores", propuestas: "zona-conductores", prohibiciones: "zona-conductores" };
+const PAG_FIJAS = { calculadoras: { nombre: "Calculadoras", icono: "reloj" }, camiones: { nombre: "Restricciones camiones", icono: "lugar" }, ganancias: { nombre: "Importes conductores", icono: "euro" }, peajes: { nombre: "Peajes camión", icono: "euro" }, propuestas: { nombre: "Aparcamientos de los conductores", icono: "lugar" }, prohibiciones: { nombre: "Prohibiciones de circular", icono: "alerta" },
   buzon: { nombre: "Buzón anónimo", icono: "correo" }, ortografia: { nombre: "Revisar ortografía", icono: "check" }, historial: { nombre: "Historial", icono: "reloj" }, textos: { nombre: "Textos", icono: "texto" }, ajustes: { nombre: "Ajustes", icono: "ajustes" } };
 const padreDe = (a) => a.padre_id ? APARTADOS.find(p => p.id === a.padre_id && !p.padre_id) : null;
 function construirPaginas() {
