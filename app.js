@@ -106,7 +106,8 @@ function pintaPestanas() {
 // sigue el tabulador y el primer Tab se saltaba «Saltar al contenido», «Aa» y la lupa (v70).
 function centraPestana(b) {
   const barra = b.parentElement, rb = b.getBoundingClientRect(), rn = barra.getBoundingClientRect();
-  barra.scrollLeft += (rb.left + rb.width / 2) - (rn.left + rn.width / 2);
+  const extra = b.classList.contains("pest-cond") ? 44 : 0; // la cabina del camión sale por la derecha del enlace
+  barra.scrollLeft += (rb.left + rb.width / 2 + extra) - (rn.left + rn.width / 2);
 }
 function marcaPestanas(clave) {
   const g = GRUPO_DE[clave], arriba = g ? g.clave : clave;

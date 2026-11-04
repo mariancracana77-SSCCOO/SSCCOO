@@ -78,6 +78,8 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 ## Versión 113: las dietas festivas se distinguen (lo pidió el padre)
 - En «Mis incentivos», las dietas festivas llevan junto a «Nacional» la etiqueta roja «Festivo» con un calendario, la fila en rojo suave y, en su grupo, un sello de calendario en la cabecera. Así no se confunden con las normales.
 
+- La pestaña Zona Conductores pasa a ser un camión como el de Calsina (lo pidió el padre, con una foto de su web): remolque azul con chapas y letras crema, tres ejes atrás y cabeza tractora crema con la parte de abajo azul. El azul de toda Zona Conductores pasa a ser el de Calsina.
+
 ## Versión 112: la pestaña Zona Conductores es un camión (lo pidió el padre)
 - Como el camión del logo: caja azul con «CC» y el nombre, cabina y ruedas. La elegida va sobre una carretera blanca.
 
