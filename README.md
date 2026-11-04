@@ -75,6 +75,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 117: el panel avisa a Claude al momento
+- Al enviar en «Pedir un cambio a Claude», el panel deja un comentario corto (sin el texto) en una pull request «buzón» de GitHub que nunca se fusiona; eso despierta a Claude. Si no se puede, queda la revisión de cada hora. Ya no hace falta el timbre.
+
 ## Versión 116: copias de seguridad completas (lo pidió Lorena)
 - Copia automática cada domingo dentro de Supabase (las 8 últimas). La copia del panel (Ajustes) ya lleva también delegados, enlaces, encuestas, peajes, prohibiciones, aparcamientos de los conductores y peticiones a Claude (con sus archivos), y enseña cuándo fue la última copia automática.
 

@@ -479,7 +479,7 @@ const pendienteAjustes = () => {
 // ---------- Pedir un cambio a Claude (v114, lo pidió Lorena para su padre) ----------
 // El padre escribe (o dicta con el micrófono del teclado) lo que quiere y añade fotos, vídeos o audios. Se guarda en la tabla
 // peticiones_claude (solo admins) y los archivos en el bucket público «peticiones» (nombres al azar, sin listar). Claude lo mira al tocar el
-// timbre (TIMBRE_URL, artefacto con «Enviar a Claude») o en la revisión de cada hora; lo deja hecho y avisa a Lorena, que publica con «publica».
+// timbre: al enviar, el panel llama a la función «timbre», que deja un comentario corto en la pull request buzón de GitHub y despierta a Claude (v117; el artefacto TIMBRE_URL queda solo para Lorena), o la revisión de cada hora; lo deja hecho y avisa a Lorena, que publica con «publica».
 // No pasa por el editor general: ni corrector (Gemini) ni avisos a los móviles.
 const TIMBRE_URL = "https://claude.ai/artifact/2gJ1aBLBNLMGCxrLZTwWdW";
 const PET_MB = 50;
@@ -488,7 +488,7 @@ const tipoPet = (f) => /^(image|video|audio)\//.test(f.type || "") ? f.type : ({
 let PET_ARCH = [];
 async function pintaPeticiones() {
   PET_ARCH = [];
-  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Pedir un cambio a Claude</h1><p>Escribe lo que quieres cambiar o añadir en la web o en el panel. Para no escribir, toca el micrófono del teclado del móvil y dilo en voz alta. Puedes añadir fotos, capturas de pantalla y vídeos cortos. Claude lo prepara y avisa a Lorena: no se publica nada sin que ella lo diga.</p></div></div>
+  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Pedir un cambio a Claude</h1><p>Escribe lo que quieres cambiar o añadir en la web o en el panel. Para no escribir, toca el micrófono del teclado del móvil y dilo en voz alta. Puedes añadir fotos, capturas de pantalla y vídeos cortos. Al enviarlo, Claude se entera al momento, lo prepara y avisa a Lorena: no se publica nada sin que ella lo diga.</p></div></div>
     <form class="panel pet-form" id="pet-form" novalidate>
       <label for="pet-texto">¿Qué quieres?</label>
       <textarea id="pet-texto" class="crece" rows="5" maxlength="5000" spellcheck="true" autocapitalize="sentences" placeholder="Ej: En Mis incentivos, que la dieta festiva salga arriba del todo."></textarea>
@@ -498,7 +498,6 @@ async function pintaPeticiones() {
       <p class="msg" id="pet-msg" role="status" aria-live="polite"></p>
       <button class="btn" type="submit" id="pet-enviar">${icono("check", "p")}Enviar a Claude</button>
     </form>
-    <div class="panel banda pet-timbre"><span class="ic">${icono("campana")}</span><span class="txt"><b>¿Quieres que lo mire ya?</b><p>Después de enviar, abre el timbre y toca «Avisar a Claude». Si no, lo mira en la revisión de cada hora (de 8 a 22).</p><a class="btn sec" href="${esc(TIMBRE_URL)}" target="_blank" rel="noopener">${icono("campana", "p")}Abrir el timbre</a></span></div>
     <h2 class="titulo-bloque">Lo que has pedido</h2>
     <div id="pet-hechas"><p class="fecha-txt">Cargando…</p></div>`;
   const t = $("pet-texto"); creceTexto?.(t);
@@ -527,10 +526,13 @@ async function pintaPeticiones() {
         subidos.push({ nombre: f.name, url: sb.storage.from("peticiones").getPublicUrl(ruta).data.publicUrl, tipo: tipoPet(f), tamano: f.size });
       }
       msg("pet-msg", "Enviando…", true);
-      const { error } = await sb.from("peticiones_claude").insert({ texto, adjuntos: subidos });
+      const { data: nueva, error } = await sb.from("peticiones_claude").insert({ texto, adjuntos: subidos }).select("id").single();
       if (error) throw error;
       t.value = ""; PET_ARCH = []; lista();
-      msg("pet-msg", "Enviada. Claude la mirará en la próxima revisión. Si quieres que la mire ya, abre el timbre y toca «Avisar a Claude».", true);
+      // v117: el timbre lo toca el panel solo (comentario corto en GitHub, función «timbre»): Claude se entera al momento
+      msg("pet-msg", "Enviada. Avisando a Claude…", true);
+      const r = await sb.functions.invoke("timbre", { body: { id: nueva?.id } }).catch(() => null);
+      msg("pet-msg", r?.data?.ok ? "Enviada. Claude ya está avisado y se pone con ello. Lorena recibirá un aviso cuando esté listo." : "Enviada. Claude la mirará en la próxima revisión (cada hora, de 8 a 22).", true);
       pintaHechas();
     } catch (er) { msg("pet-msg", errTxt(er)); }
     b.disabled = false;
