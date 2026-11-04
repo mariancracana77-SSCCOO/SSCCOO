@@ -494,9 +494,18 @@
         <small>${viasDe(r).map(esc).join(" → ") || "Carreteras locales"}</small></button>`).join("")}</section>`;
   }
 
+  // v110 (lo pidió el padre): «Borrar ruta» en vez de «Cambiar ruta». Quita la ruta calculada y el destino y deja el
+  // formulario listo para otra. El origen y las medidas del camión se quedan; la ruta sigue en «Abrir la última ruta».
+  function borraRuta() {
+    RUTA = null; RUTAS = []; EN_RUTA = []; CORTES = null; PARADAS = []; ELEGIDO.hasta = null;
+    $("apc-hasta").value = ""; $("apc-hasta-cp").value = ""; leeFormulario();
+    pintaRuta(); pintaUltima();
+    $("apc-form").scrollIntoView({ behavior: "smooth", block: "start" }); $("apc-hasta").focus({ preventScroll: true });
+  }
+
   // v92 (lo pidió Lorena: «que sea todo fácil», hay compañeros mayores): lo importante arriba. Resumen y «Empezar viaje»,
   // botones grandes para saltar a cada parte, y en este orden: aparcamientos, cortes, peajes y otras rutas.
-  // Al calcular, el formulario se recoge («Cambiar ruta» lo vuelve a abrir) y la página baja sola al resultado.
+  // Al calcular, el formulario se recoge («Borrar ruta» lo vuelve a abrir vacío) y la página baja sola al resultado.
   function pintaRuta() {
     const caja = $("apc-ruta");
     $("apc-preparar").classList.toggle("con-ruta", !!RUTA);
@@ -506,7 +515,7 @@
     const salto = (id, txt, cls = "") => `<button type="button" class="apc-salto${cls}" data-salto="${id}">${txt}</button>`;
     caja.innerHTML = `
       <div class="apc-res"><b>${esc(RUTA.desde.nombre)} → ${esc(RUTA.hasta.nombre)}</b><span>${RUTA.km} km · ${durTxt(RUTA.min)} conduciendo${RUTA.ferry ? " · con ferry" : ""}</span>
-        <button type="button" class="apc-cambiar" id="apc-cambiar">Cambiar ruta</button></div>
+        <button type="button" class="apc-cambiar" id="apc-cambiar">Borrar ruta</button></div>
       <button type="button" class="btn apc-grande" id="apc-empezar">${icono("lugar")}Empezar viaje</button>
       <p class="apc-nota">Con «Empezar viaje» te enseño los aparcamientos que tienes por delante mientras conduces.</p>
       <label class="apc-salida">Salgo a las <input type="time" id="apc-salida" value="${esc(SALIDA)}"> <small>(vacío = ahora)</small></label>
@@ -532,7 +541,7 @@
       <details class="panel apc-tramos"><summary>Carreteras de la ruta (${RUTA.tramos.length})</summary>
         <ol class="apc-linea">${RUTA.tramos.map(t => `<li><b>${t.via ? `<span class="apc-via">${esc(t.via)}</span>` : "Carreteras locales"}</b>${t.hacia ? ` hacia ${esc(t.hacia)}` : ""}<small>${t.km} km</small></li>`).join("")}</ol></details>`;
     $("apc-empezar").onclick = empiezaViaje;
-    $("apc-cambiar").onclick = () => { $("apc-preparar").classList.remove("con-ruta"); $("apc-form").scrollIntoView({ behavior: "smooth", block: "start" }); $("apc-hasta").focus({ preventScroll: true }); };
+    $("apc-cambiar").onclick = borraRuta;
     caja.querySelectorAll("[data-salto]").forEach(b => b.onclick = () => { const d = $(b.dataset.salto); if (!d) return; if (d.tagName === "DETAILS") d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" }); });
     caja.querySelectorAll("[data-ruta]").forEach(b => b.onclick = () => eligeRuta(+b.dataset.ruta));
     $("apc-salida").onchange = () => { SALIDA = $("apc-salida").value; refrescaParadas(); };
@@ -837,6 +846,7 @@
       else m.mapa.setView([46, 4], 5);
     }
     if (!conRuta && m.ruta) { m.ruta.remove(); m.ruta = null; m.rutaDe = null; }
+    if (!conRuta && m.otras) { m.otras.remove(); m.otras = null; }
     // Las otras rutas, en gris y antes que la elegida para que esta quede encima (el mapa se rehace al cambiar de ruta)
     if (!m.otras && conRuta && RUTAS.length > 1 && !VIAJE) {
       m.otras = L.layerGroup().addTo(m.mapa);

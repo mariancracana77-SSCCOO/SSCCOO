@@ -75,6 +75,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 110: «Borrar ruta»
+
+- En «Aparcamientos en mi ruta», el botón **«Cambiar ruta» pasa a ser «Borrar ruta»** (lo pidió el padre): quita la ruta calculada y el destino, y deja el formulario listo para escribir otra. El origen y las medidas del camión se quedan, y la ruta borrada se puede volver a abrir con «Abrir la última ruta».
+
 ## Versión 109: la Plaça destaca en «Mis incentivos»
 
 - **Plaça** (lo pidió el padre): nuevo concepto de la tabla de la empresa (12,53 € por día; 13,49 € desde 2027), al final de «Otros pluses». Se ve como una plaza de aparcamiento: señal azul con la P y la fila en azul claro con el borde azul, en «Día» y en «Ajustes». También se añadió la **Nacional Festiva** (dieta completa y fraccionada) de la misma tabla. Los conceptos están en Supabase (`tarifas_conductor`); el estilo va por el nombre (`esPlaza` en `ganancias.js`).
