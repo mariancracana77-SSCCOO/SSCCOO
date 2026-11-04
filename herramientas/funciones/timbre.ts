@@ -1,9 +1,10 @@
-// Copia de la edge function «timbre» (v7 en Supabase). La que manda es la de Supabase.
+// Copia de la edge function «timbre» (v8 en Supabase). La que manda es la de Supabase.
 // Timbre de «Pedir un cambio a Claude» (v117): cuando un admin envía o actualiza una petición desde el panel, deja un comentario corto
 // en la pull request «buzón» n.º 2 de GitHub (rama buzon-peticiones, nunca se fusiona). Ese comentario despierta la sesión de Claude,
 // que lee la petición en Supabase. El comentario NO lleva el texto de la petición (el repositorio es público).
 // Si la petición está en espera (Lorena quiere revisarla antes), el comentario lo dice y Claude solo avisa a Lorena.
 // v121: { id, anadido: true } cuando el padre añade algo a una petición que ya mandó (columna mensajes, RPC anadir_a_peticion).
+// v121: { id, avisar: true } cuando el padre pulsa «Avisar a Lorena» (RPC pedir_lorena, columna avisar_lorena): Claude la avisa al móvil.
 // La llave va en el secreto GITHUB_TOKEN (la pone Lorena en Supabase > Edge Functions > Secrets, nunca en el chat). Sin ella no hace nada.
 // verify_jwt desactivado: la función comprueba ella misma is_admin() con la sesión del panel o el secreto interno x-cron-secret (prueba desde SQL).
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
@@ -45,12 +46,16 @@ Deno.serve(async (req) => {
   });
   const { data: esAdmin } = await sb.rpc("is_admin");
   if (!esAdmin) return json({ error: "Solo las cuentas del panel" }, 403);
-  let id = 0, actualizada = false, anadido = false;
-  try { const b = await req.json(); id = Number(b.id) || 0; actualizada = !!b.actualizada; anadido = !!b.anadido; } catch { /* sin cuerpo */ }
+  let id = 0, actualizada = false, anadido = false, avisar = false;
+  try { const b = await req.json(); id = Number(b.id) || 0; actualizada = !!b.actualizada; anadido = !!b.anadido; avisar = !!b.avisar; } catch { /* sin cuerpo */ }
   // Solo para una petición nueva (o con algo añadido) enviada o tocada hace poco (no se puede usar para llenar GitHub de comentarios)
-  const { data: p } = await sb.from("peticiones_claude").select("id,estado,creado,actualizado,espera,mensajes").eq("id", id).maybeSingle();
+  const { data: p } = await sb.from("peticiones_claude").select("id,estado,creado,actualizado,espera,mensajes,avisar_lorena").eq("id", id).maybeSingle();
   const cuando = p ? new Date(p.actualizado || p.creado).getTime() : 0;
   const reciente = Date.now() - cuando <= 10 * 60 * 1000;
+  if (avisar) {
+    if (!p || !p.avisar_lorena || Date.now() - new Date(p.avisar_lorena).getTime() > 10 * 60 * 1000) return json({ ok: false, motivo: "no_avisar" });
+    return comenta(`Petición n.º ${p.id}: el panel pide que lo mire Lorena (avísala al móvil).`);
+  }
   if (anadido) {
     const ult = Array.isArray(p?.mensajes) ? p.mensajes[p.mensajes.length - 1] : null;
     const ultReciente = ult && ult.quien === "padre" && Date.now() - new Date(ult.cuando).getTime() <= 10 * 60 * 1000;

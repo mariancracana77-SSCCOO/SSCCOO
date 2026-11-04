@@ -483,7 +483,7 @@ const pendienteAjustes = () => {
 // No pasa por el editor general: ni corrector (Gemini) ni avisos a los móviles.
 const TIMBRE_URL = "https://claude.ai/artifact/2gJ1aBLBNLMGCxrLZTwWdW";
 const PET_MB = 50;
-const PET_ESTADO = { nueva: "Enviada: Claude la mirará", en_curso: "Claude está con ella", lista: "Hecha: falta que Lorena la publique", publicada: "Ya está en la web", descartada: "Descartada" };
+const PET_ESTADO = { nueva: "Enviada: Claude la mirará", en_curso: "Claude está con ella", lista: "Hecha: falta que Lorena la publique", publicada: "Ya está en la web", descartada: "Descartada", no_hecha: "Claude no la ha hecho: lee por qué" };
 const tipoPet = (f) => /^(image|video|audio)\//.test(f.type || "") ? f.type : ({ jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", heic: "image/heic", mp4: "video/mp4", mov: "video/quicktime", webm: "video/webm", "3gp": "video/3gpp", m4a: "audio/mp4", mp3: "audio/mpeg", ogg: "audio/ogg", opus: "audio/ogg", aac: "audio/aac", wav: "audio/wav", amr: "audio/amr" })[extDe(f.name)] || "";
 let PET_ARCH = [];
 // Sube las fotos, vídeos o audios al bucket «peticiones» (nombres al azar) y devuelve la lista para guardar
@@ -560,7 +560,7 @@ async function pintaHechas() {
   if (!$("pet-hechas")) return;
   if (error) { z.innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(errTxt(error))}</p>`; return; }
   // v121: cada petición es como un chat: lo que pidió, lo que ha ido añadiendo y lo que contesta Claude
-  const burbuja = (m) => `<li class="pet-m ${m.quien === "claude" ? "de-claude" : "de-padre"}"><small>${m.quien === "claude" ? "Claude" : "Tú"} · ${esc(horaPet(m.cuando))}</small>${m.texto ? `<p class="pet-texto">${esc(m.texto)}</p>` : ""}${adjPet(m.adjuntos)}</li>`;
+  const burbuja = (m) => `<li class="pet-m ${m.quien === "claude" ? "de-claude" : "de-padre"}${m.aviso ? " aviso" : ""}"><small>${m.quien === "claude" ? "Claude" : "Tú"} · ${esc(horaPet(m.cuando))}</small>${m.texto ? `<p class="pet-texto">${esc(m.texto)}</p>` : ""}${adjPet(m.adjuntos)}</li>`;
   z.innerHTML = (data || []).length ? (data || []).map(x => {
     const ms = Array.isArray(x.mensajes) ? x.mensajes : [];
     return `<article class="panel pet-item est-${esc(x.estado)}" data-pet="${esc(x.id)}">
@@ -569,6 +569,7 @@ async function pintaHechas() {
       ${adjPet(x.adjuntos)}
       ${ms.length ? `<ul class="pet-chat" aria-label="Lo añadido después">${ms.map(burbuja).join("")}</ul>` : ""}
       ${x.respuesta ? `<p class="pet-resp"><b>Claude:</b> ${esc(x.respuesta)}</p>` : ""}
+      ${["no_hecha", "descartada"].includes(x.estado) ? `<div class="pet-lorena"><p class="ayuda">Si no estás de acuerdo, avisa a Lorena: le llega un aviso al móvil y lo mira ella.</p><button type="button" class="btn" data-avisa-lorena="${esc(x.id)}">${icono("campana", "p")}Avisar a Lorena</button><p class="msg" role="status" aria-live="polite" id="pet-lorena-msg-${esc(x.id)}"></p></div>` : ""}
       <button type="button" class="btn sec pet-anade-abre" data-anade-abre="${esc(x.id)}" aria-expanded="false">${icono("mas", "p")}Añadir algo a esta petición</button>
       <form class="pet-anade" data-anade="${esc(x.id)}" hidden novalidate>
         <label for="pet-anade-${esc(x.id)}">¿Qué quieres añadir?</label>
@@ -579,6 +580,20 @@ async function pintaHechas() {
         <button class="btn" type="submit">${icono("check", "p")}Enviar a Claude</button>
       </form>
     </article>`; }).join("") : `<div class="panel vacio">${icono("magia")}Todavía no has pedido nada.</div>`;
+  // v121: si Claude dice que no, el padre puede pedir que lo mire Lorena (le llega un aviso al móvil)
+  z.querySelectorAll("[data-avisa-lorena]").forEach(b => b.onclick = async () => {
+    const id = Number(b.dataset.avisaLorena), mid = `pet-lorena-msg-${id}`; b.disabled = true;
+    msg(mid, "Avisando a Lorena…", true);
+    try {
+      const { data: r, error } = await sb.rpc("pedir_lorena", { p_id: id });
+      if (error) throw error;
+      if (r === "ya") { msg(mid, "Ya la avisaste hace poco. Si no contesta, vuelve a probar dentro de media hora.", true); return; }
+      if (r !== "ok") throw new Error("No se ha podido avisar. Prueba otra vez.");
+      const tr = await sb.functions.invoke("timbre", { body: { id, avisar: true } }).catch(() => null);
+      await pintaHechas();
+      msg(mid, tr?.data?.ok ? "Avisada. Le llegará un aviso al móvil." : "Apuntado. Lorena lo verá cuando mire las peticiones.", true);
+    } catch (er) { msg(mid, errTxt(er)); b.disabled = false; }
+  });
   z.querySelectorAll("[data-anade-abre]").forEach(b => b.onclick = () => {
     const f = z.querySelector(`[data-anade="${b.dataset.anadeAbre}"]`); f.hidden = !f.hidden; b.setAttribute("aria-expanded", String(!f.hidden));
     if (!f.hidden) { const t = f.querySelector("textarea"); creceTexto?.(t); t.focus(); }

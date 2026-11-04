@@ -706,3 +706,8 @@ label.sin-guardar::after { content: " · sin guardar"; color: var(--rojo-ic); fo
 .pet-anade label[for] { font-weight: 700; }
 .pet-anade .msg:empty { display: none; }
 .pet-anade button[type=submit] { min-height: 52px; }
+.pet-item.est-no_hecha { border-left: 5px solid var(--rojo); }
+.pet-lorena { display: grid; gap: 8px; }
+.pet-lorena .btn { justify-self: start; min-height: 52px; }
+.pet-lorena .msg:empty { display: none; }
+.pet-m.aviso { font-style: italic; }
