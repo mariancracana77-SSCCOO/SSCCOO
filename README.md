@@ -75,6 +75,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 109: los aparcamientos de los conductores salen solos (lo pidió el padre)
+- Lo que un conductor propone en el mapa sale enseguida a todos, sin aprobarlo. En el panel («Aparcamientos de los conductores») se puede poner en «Rechazado» para quitarlo, y el Inicio avisa de los nuevos desde la última vez que se miró.
+
 ## Versión 108: mejoras de los mapas (lo pidió el padre)
 
 - **Dónde te toca parar.** Al calcular la ruta, sale en qué kilómetro y a qué hora tocan la pausa de 45 minutos (cada 4 h 30 de conducción) y el descanso diario (después de 9 h, o de 10 h si se marca), con los 3 aparcamientos más cercanos antes de cada parada. Si ya has conducido hoy, se pone en «¿Ya has conducido hoy?». Las horas de llegada de todos los aparcamientos ya cuentan las pausas.

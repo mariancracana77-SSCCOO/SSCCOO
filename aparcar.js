@@ -20,7 +20,7 @@
 
   // ---------- Mis aparcamientos (v106, lo pidió el padre) ----------
   // El conductor añade en el mapa los aparcamientos que encuentra. Se guardan en este móvil («ccoo-aparcar-mios») y, si quiere,
-  // se proponen a la sección (RPC anónima proponer_aparcamiento). Los que el padre aprueba en el panel salen a todos (tabla aparcamientos_compas).
+  // se proponen a la sección (RPC anónima proponer_aparcamiento). Desde la v109 salen a todos enseguida (estado «aprobado»); el padre puede quitarlos en el panel (tabla aparcamientos_compas).
   const CLAVE_MIOS = "ccoo-aparcar-mios";
   let MIOS = (() => { try { const l = JSON.parse(localStorage.getItem(CLAVE_MIOS) || "[]"); return Array.isArray(l) ? l.filter(x => x && x.id && Number.isFinite(+x.lat) && Number.isFinite(+x.lon)) : []; } catch (_) { return []; } })();
   const guardaMios = () => { try { localStorage.setItem(CLAVE_MIOS, JSON.stringify(MIOS)); } catch (_) {} };
@@ -965,7 +965,7 @@
     <div class="apc-nuevo-checks"><label class="check"><input type="checkbox" name="vigilado"> Vigilado</label><label class="check"><input type="checkbox" name="duchas"> Duchas</label><label class="check"><input type="checkbox" name="aseos"> Aseos</label></div>
     <label>Nota<textarea name="nota" maxlength="300" rows="2" placeholder="Opcional. Ej: se llena a partir de las 19 h; la entrada está detrás"></textarea></label>
     <label class="check"><input type="checkbox" name="proponer"> Proponerlo también a los compañeros</label>
-    <p class="apc-nota">Se guarda en este móvil. Si lo propones, la sección lo revisa y, si está bien, sale en el mapa de todos. No se envía quién eres: no pongas teléfonos ni nombres de personas.</p>
+    <p class="apc-nota">Se guarda en este móvil. Si lo propones, sale enseguida en el mapa de todos. No se envía quién eres: no pongas teléfonos ni nombres de personas.</p>
     <div class="apc-nuevo-bot"><button type="submit" class="btn">Guardar</button><button type="button" class="btn sec" data-nuevo-no>Cancelar</button></div>
     <p class="msg" role="status" aria-live="polite"></p>
   </form>`;
@@ -1010,6 +1010,7 @@
     try {
       const { data, error } = await sb.rpc("proponer_aparcamiento", { p_lat: x.lat, p_lon: x.lon, p_nombre: x.nombre, p_nota: x.nota || "", p_plazas: x.plazas || null, p_vigilado: !!x.vigilado, p_duchas: !!x.duchas, p_aseos: !!x.aseos });
       if (error) throw new Error(error.message);
+      COMPAS = null; // v109: ya sale a todos; la próxima vez se vuelve a pedir la lista
       return data === "ya" ? "ya" : "ok";
     } catch (e) { throw new Error(/Failed to fetch|NetworkError|Load failed/i.test(e.message) ? "No hay conexión: se ha guardado solo en tu móvil. Propónlo más tarde desde «Mis aparcamientos»." : e.message); }
   }
@@ -1023,7 +1024,7 @@
     let aviso = "Guardado en tu móvil.";
     if (v("proponer").checked) {
       f.querySelector("[type=submit]").disabled = true; msgAnadir(id, "Enviando a la sección…");
-      try { x.propuesto = await proponer(x); aviso = x.propuesto === "ya" ? "Guardado. Otro compañero ya había propuesto este sitio." : "Guardado y enviado a la sección. Cuando lo revisen, saldrá a todos."; }
+      try { x.propuesto = await proponer(x); aviso = x.propuesto === "ya" ? "Guardado. Otro compañero ya había propuesto este sitio." : "Guardado. Ya sale en el mapa de todos."; }
       catch (e) { f.querySelector("[type=submit]").disabled = false; msgAnadir(id, e.message, true); if (!/conexión/.test(e.message)) return; aviso = e.message; }
     }
     MIOS.push(x); guardaMios();
@@ -1110,7 +1111,7 @@
       MIOS = MIOS.filter(z => z.id !== idm); guardaMios(); await refrescaMios(); avisoMios("Borrado de tu móvil."); return;
     }
     b.disabled = true;
-    try { m.propuesto = await proponer(m); guardaMios(); await refrescaMios(); avisoMios(m.propuesto === "ya" ? "Otro compañero ya había propuesto este sitio." : "Enviado a la sección. Cuando lo revisen, saldrá a todos."); }
+    try { m.propuesto = await proponer(m); guardaMios(); await refrescaMios(); avisoMios(m.propuesto === "ya" ? "Otro compañero ya había propuesto este sitio." : "Enviado. Ya sale en el mapa de todos."); }
     catch (er) { b.disabled = false; const p = $("apc-mios-msg"); if (p) { p.textContent = er.message; p.classList.add("err"); } estado(er.message, true); }
   }
 
@@ -1259,7 +1260,7 @@
     [T("Llevarme aquí"), T("En cada aparcamiento, «Llevarme aquí» lo abre en el navegador que uses en el móvil (iGO, Google Maps…)."), visible(".apc-llevar", "#apc-buscar")],
     [T("Sin cobertura"), T("La última ruta que calculas se guarda en el móvil. Si te quedas sin internet, toca «Abrir la última ruta»: verás la ruta, los aparcamientos y dónde te toca parar."), visible("#apc-ultima", "#apc-buscar", "#apc-cambiar")],
     [T("Mapa sin ruta"), T("Para mirar una zona sin calcular ruta, abre el mapa y toca «Dónde estoy» o busca un sitio."), visible("#apc-abre-mapa", "#apc-cambiar")],
-    [T("Añadir un aparcamiento"), T("¿Has encontrado uno que no sale? En el mapa toca «Añadir aparcamiento», toca el sitio (o usa tu posición), ponle nombre y guárdalo. Se queda en tu móvil, en «Mis aparcamientos». Si marcas «Proponerlo también a los compañeros», la sección lo revisa y sale a todos."), visible(".apc-anade-btn", "#apc-abre-mapa", "#apc-cambiar")],
+    [T("Añadir un aparcamiento"), T("¿Has encontrado uno que no sale? En el mapa toca «Añadir aparcamiento», toca el sitio (o usa tu posición), ponle nombre y guárdalo. Se queda en tu móvil, en «Mis aparcamientos». Si marcas «Proponerlo también a los compañeros», sale enseguida a todos."), visible(".apc-anade-btn", "#apc-abre-mapa", "#apc-cambiar")],
   ];
   // La guía se traduce como «Mis descansos» (función traducir, modo textos, grupo «aparcar»: solo los T("…") de este archivo)
   let MAPA_APC = {};

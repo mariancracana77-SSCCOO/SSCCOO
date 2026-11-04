@@ -88,7 +88,7 @@
     let filas = (T[tabla] || []).slice(), unica = false, op = "select";
     const q = {
       select() { return q; }, order() { return q; }, limit() { return q; }, range() { return q; }, in() { return q; },
-      gte() { return q; }, lte() { return q; }, neq() { return q; }, is() { return q; }, not() { return q; }, or() { return q; }, ilike() { return q; },
+      gte() { return q; }, lte() { return q; }, gt() { return q; }, lt() { return q; }, neq() { return q; }, is() { return q; }, not() { return q; }, or() { return q; }, ilike() { return q; },
       eq(c, v) { filas = filas.filter(f => !(c in f) || String(f[c]) === String(v)); return q; },
       single() { unica = true; return q; }, maybeSingle() { unica = true; return q; },
       insert(f) { op = "insert"; filas = [Object.assign({ id: 99 }, f)]; return q; },
