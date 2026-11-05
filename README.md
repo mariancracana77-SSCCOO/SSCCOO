@@ -75,9 +75,6 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
-## Versión 132: subapartados con los colores de la senyera (petición n.º 6 del padre)
-- La segunda fila de pestañas (subapartados) lleva el amarillo y las barras rojas de la bandera de Cataluña, con letra blanca contorneada; el elegido, blanco con letra roja y la raya de la bandera abajo. Zona Conductores sigue azul.
-
 ## Versión 131: pestañas principales en rojo (petición n.º 5 del padre)
 - Las pestañas de arriba (de Inicio a Afíliate) son botones rojos con letra blanca, como los subapartados; la elegida, blanca con letra roja. La del camión de Zona Conductores sigue azul.
 
