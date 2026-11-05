@@ -815,6 +815,9 @@ details.pet-item > summary:focus-visible { outline: 3px solid var(--rojo-ic, var
 .pet-grupo.g-toca > summary { color: var(--verde); }
 .pet-grupo.g-toca .pet-grupo-n { background: var(--verde); color: #fff; }
 .pet-grupo.g-lorena .pet-grupo-n { background: var(--azul); color: var(--tarjeta, #fff); }
+/* Confirmadas por Lorena (lo pidió Lorena, 5/11/2026): lo que ella ya aprobó, aparte de lo suyo */
+.pet-grupo.g-confirmadas > summary { color: var(--verde); }
+.pet-grupo.g-confirmadas .pet-grupo-n { background: var(--verde-suave); color: var(--verde); }
 .pet-num { color: var(--suave); font-weight: 800; white-space: nowrap; }
 .etq.pet-est { font-weight: 800; }
 .etq.pet-est.verde { background: var(--verde-suave); color: var(--verde); }
