@@ -733,7 +733,7 @@ label.sin-guardar::after { content: " · sin guardar"; color: var(--rojo-ic); fo
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pet-decide { border-color: #5FD08F; } :root:not([data-theme="light"]) .pet-decide .pet-publica { background: #1F7A45; } }
 :root[data-theme="dark"] .pet-decide { border-color: #5FD08F; }
 
-/* v127: lo que ha pedido el padre, plegado con título y estado, filtros, buscador y lo que ha hecho Claude */
+/* v128: lo que ha pedido el padre, plegado con título y estado, filtros, buscador y lo que ha hecho Claude */
 .pet-filtros { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
 .pet-chip { min-height: 44px; padding: 6px 14px; border-radius: 999px; border: 2px solid var(--linea); background: var(--fondo); color: var(--tinta); font: inherit; font-weight: 700; cursor: pointer; }
 .pet-chip span { display: inline-block; min-width: 1.6em; padding: 0 6px; margin-left: 4px; border-radius: 999px; background: var(--linea); font-size: .9rem; }

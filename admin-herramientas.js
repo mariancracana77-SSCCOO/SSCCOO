@@ -575,7 +575,7 @@ async function pintaPeticiones() {
   // v121: si Claude está en pausa (lo enciende o apaga Lorena desde su app; Claude lo copia en peticiones_estado), se avisa arriba
   sb.from("peticiones_estado").select("pausa").eq("id", 1).maybeSingle().then(({ data }) => { const a = $("pet-pausa"); if (a) a.hidden = !data?.pausa; }, () => {});
 }
-// v127 (lo pidió Lorena: que el padre vea como ella lo pedido, lo hecho y pueda volver a los chats): cada petición se pliega con su
+// v128 (lo pidió Lorena: que el padre vea como ella lo pedido, lo hecho y pueda volver a los chats): cada petición se pliega con su
 // título y estado; arriba, «En marcha» / «Terminadas» / «Todas» y un buscador; dentro, lo que ha hecho Claude (columna ficha).
 // Se recuerda qué tenía abierto, el filtro y cuántos mensajes de Claude ha visto (localStorage, en try/catch).
 const PET_EN_MARCHA = ["nueva", "en_curso", "lista", "no_hecha"];
@@ -642,7 +642,7 @@ async function pintaHechas() {
       </form>
       </div>
     </details>`; }).join("") + (filas.length >= PET_LIMITE ? `<button type="button" class="btn sec pet-mas" id="pet-mas">${icono("abajo", "p")}Ver las más antiguas</button>` : "") : `<div class="panel vacio">${icono("magia")}Todavía no has pedido nada.</div>`;
-  // v127: filtro, buscador, plegar y «mensajes nuevos»
+  // v128: filtro, buscador, plegar y «mensajes nuevos»
   const aplica = () => {
     const q = $("pet-busca")?.value.trim() || ""; let n = 0;
     z.querySelectorAll("details.pet-item").forEach(d => {
