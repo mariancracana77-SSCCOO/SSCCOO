@@ -483,7 +483,7 @@ const pendienteAjustes = () => {
 // No pasa por el editor general: ni corrector (Gemini) ni avisos a los móviles.
 const TIMBRE_URL = "https://claude.ai/artifact/2gJ1aBLBNLMGCxrLZTwWdW";
 const PET_MB = 50;
-const PET_ESTADO = { nueva: "Enviada: Claude la mirará", en_curso: "Claude está con ella", lista: "Hecha: falta que Lorena la publique", publicada: "Ya está en la web", descartada: "Descartada", no_hecha: "Claude no la ha hecho: lee por qué", deshecha: "Vuelto a como estaba antes" };
+const PET_ESTADO = { nueva: "Enviada: Claude la mirará", en_curso: "Claude está con ella", lista: "Hecha: mira las fotos y decide", publicada: "Ya está en la web", descartada: "Descartada", no_hecha: "Claude no la ha hecho: lee por qué", deshecha: "Vuelto a como estaba antes" };
 const tipoPet = (f) => /^(image|video|audio)\//.test(f.type || "") ? f.type : ({ jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", heic: "image/heic", mp4: "video/mp4", mov: "video/quicktime", webm: "video/webm", "3gp": "video/3gpp", m4a: "audio/mp4", mp3: "audio/mpeg", ogg: "audio/ogg", opus: "audio/ogg", aac: "audio/aac", wav: "audio/wav", amr: "audio/amr" })[extDe(f.name)] || "";
 let PET_ARCH = [];
 // Sube las fotos, vídeos o audios al bucket «peticiones» (nombres al azar) y devuelve la lista para guardar
@@ -506,7 +506,20 @@ const eligePet = (input, lista) => {
   [...input.files].forEach(f => { if (!tipoPet(f)) malos.push(`«${f.name}» no es foto, vídeo ni audio`); else if (f.size > PET_MB * 1048576) malos.push(`«${f.name}» pesa más de ${PET_MB} MB (graba un vídeo más corto)`); else lista.push(f); });
   input.value = ""; return malos;
 };
-const adjPet = (a) => (a || []).length ? `<p class="fecha-txt">${(a || []).map(x => `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener">${esc(x.nombre)}</a>`).join(" · ")}</p>` : "";
+// v125 (lo pidió Lorena): las fotos (las del padre y las capturas de Claude) se ven dentro del mensaje; lo demás, como enlace
+const adjPet = (a) => { const fotos = (a || []).filter(esImagen), otros = (a || []).filter(x => !esImagen(x));
+  return (fotos.length ? `<div class="pet-fotos">${fotos.map(x => `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener" aria-label="Ver en grande: ${esc(x.nombre || "foto")}"><img src="${esc(urlSegura(x.url))}" alt="${esc(x.nombre || "")}" loading="lazy"></a>`).join("")}</div>` : "")
+    + (otros.length ? `<p class="fecha-txt">${otros.map(x => `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener">${esc(x.nombre)}</a>`).join(" · ")}</p>` : ""); };
+// v125: ventana para confirmar «Descartar» (que no se pulse sin querer)
+function confirmaDescartar(id) {
+  return new Promise((ok) => {
+    const v = document.createElement("div"); v.className = "modal-velo";
+    v.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><h2>¿Descartar la petición n.º ${esc(id)}?</h2><p>Si la descartas, este cambio <b>no se publica</b> y Claude no sigue con él. Si solo quieres cambiar algo, pulsa «No, volver» y luego «Añadir algo o mejorarlo».</p><div class="botones"><button type="button" class="btn sec" data-no>No, volver</button><button type="button" class="btn pet-descarta-si" data-si>Sí, descartar</button></div></div>`;
+    const fin = (r) => { v.remove(); ok(r); };
+    v.onclick = (e) => { if (e.target === v || e.target.closest("[data-no]")) fin(false); else if (e.target.closest("[data-si]")) fin(true); };
+    document.body.appendChild(v); v.querySelector("[data-no]").focus();
+  });
+}
 const horaPet = (t) => new Date(t).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 const PET_ANADE = {}; // archivos elegidos para añadir a cada petición (por id)
 async function pintaPeticiones() {
@@ -564,7 +577,7 @@ async function pintaPeticiones() {
 }
 async function pintaHechas() {
   const z = $("pet-hechas"); if (!z) return;
-  const { data, error } = await sb.from("peticiones_claude").select("id,creado,texto,adjuntos,estado,respuesta,mensajes,deshacer,version").order("id", { ascending: false }).limit(30);
+  const { data, error } = await sb.from("peticiones_claude").select("id,creado,texto,adjuntos,estado,respuesta,mensajes,deshacer,version,propuesta,decision").order("id", { ascending: false }).limit(30);
   if (!$("pet-hechas")) return;
   if (error) { z.innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(errTxt(error))}</p>`; return; }
   // v121: cada petición es como un chat: lo que pidió, lo que ha ido añadiendo y lo que contesta Claude
@@ -577,6 +590,14 @@ async function pintaHechas() {
       ${adjPet(x.adjuntos)}
       ${ms.length ? `<ul class="pet-chat" aria-label="Lo añadido después">${ms.map(burbuja).join("")}</ul>` : ""}
       ${x.respuesta ? `<p class="pet-resp"><b>Claude:</b> ${esc(x.respuesta)}</p>` : ""}
+      ${x.estado === "lista" && x.propuesta && !x.decision ? `<div class="pet-decide" role="group" aria-label="¿Qué hago con esta petición?">
+        <p class="pet-decide-tit">${icono("ver", "p")}Mira las fotos de arriba. ¿Te gusta cómo queda?</p>
+        <button type="button" class="btn pet-publica" data-decide="${esc(x.id)}" data-que="publicar">${icono("check", "p")}Publicar</button>
+        <button type="button" class="btn sec" data-anade-abre-2="${esc(x.id)}">${icono("mas", "p")}Añadir algo o mejorarlo</button>
+        <button type="button" class="btn sec pet-descarta" data-decide="${esc(x.id)}" data-que="descartar">${icono("cerrar", "p")}Descartar</button>
+        <p class="msg" role="status" aria-live="polite" id="pet-decide-msg-${esc(x.id)}"></p>
+      </div>` : ""}
+      ${x.estado === "lista" && x.decision === "publicar" ? `<p class="aviso-pausa">${icono("reloj", "p")}<span>Has dicho «Publicar». Claude lo sube a la web y te avisa aquí.</span></p>` : ""}
       ${`<div class="pet-lorena"><p class="ayuda">${["no_hecha", "descartada"].includes(x.estado) ? "Si no estás de acuerdo, avisa a Lorena: le llega un aviso al móvil y lo mira ella." : "¿Quieres que lo mire Lorena? Le llega un aviso al móvil."}</p><button type="button" class="btn${["no_hecha", "descartada"].includes(x.estado) ? "" : " sec"}" data-avisa-lorena="${esc(x.id)}">${icono("campana", "p")}Avisar a Lorena</button><p class="msg" role="status" aria-live="polite" id="pet-lorena-msg-${esc(x.id)}"></p></div>`}
       ${x.estado === "publicada" ? (x.deshacer ? `<p class="aviso-pausa">${icono("reloj", "p")}<span>Has pedido volver a como estaba antes. Claude lo deshace y avisa a Lorena.</span></p>` : `<div class="pet-lorena"><p class="ayuda">¿No te gusta cómo ha quedado o algo ha salido mal? La web vuelve a estar como antes de esta petición.</p><button type="button" class="btn sec" data-deshacer="${esc(x.id)}">${icono("izq", "p")}Volver a como estaba antes</button><p class="msg" role="status" aria-live="polite" id="pet-deshacer-msg-${esc(x.id)}"></p></div>`) : ""}
       <button type="button" class="btn sec pet-anade-abre" data-anade-abre="${esc(x.id)}" aria-expanded="false">${icono("mas", "p")}Añadir algo a esta petición</button>
@@ -615,6 +636,21 @@ async function pintaHechas() {
       await sb.functions.invoke("timbre", { body: { id, deshacer: true } }).catch(() => null);
       await pintaHechas();
     } catch (er) { msg(mid, errTxt(er)); b.disabled = false; }
+  });
+  // v125 (lo pidió Lorena): el padre ve las capturas y decide; «Descartar» pide confirmación para no pulsarlo sin querer
+  z.querySelectorAll("[data-anade-abre-2]").forEach(b => b.onclick = () => z.querySelector(`[data-anade-abre="${b.dataset.anadeAbre2}"]`)?.click());
+  z.querySelectorAll("[data-decide]").forEach(b => b.onclick = async () => {
+    const id = Number(b.dataset.decide), que = b.dataset.que, mid = `pet-decide-msg-${id}`;
+    if (que === "descartar" && !(await confirmaDescartar(id))) return;
+    z.querySelectorAll(`[data-decide="${id}"]`).forEach(x => x.disabled = true);
+    msg(mid, que === "publicar" ? "Avisando a Claude para que lo publique…" : "Descartando…", true);
+    try {
+      const { data: r, error } = await sb.rpc("decidir_peticion", { p_id: id, p_decision: que });
+      if (error) throw error;
+      if (r !== "ok" && r !== "ya") throw new Error(r === "no_propuesta" ? "Esta petición ya no está esperando tu respuesta." : "No se ha podido guardar. Prueba otra vez.");
+      await sb.functions.invoke("timbre", { body: { id, decision: true } }).catch(() => null);
+      await pintaHechas();
+    } catch (er) { msg(mid, errTxt(er)); z.querySelectorAll(`[data-decide="${id}"]`).forEach(x => x.disabled = false); }
   });
   z.querySelectorAll("[data-anade-abre]").forEach(b => b.onclick = () => {
     const f = z.querySelector(`[data-anade="${b.dataset.anadeAbre}"]`); f.hidden = !f.hidden; b.setAttribute("aria-expanded", String(!f.hidden));

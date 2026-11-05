@@ -717,3 +717,18 @@ label.sin-guardar::after { content: " · sin guardar"; color: var(--rojo-ic); fo
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .aviso-pausa { background: #33270F; color: #FFE2A8; border-color: #FFC766; } }
 .pet-consejos { padding: 14px 16px; margin-bottom: 12px; }
 .pet-consejos ul { margin: 6px 0 0; padding-left: 20px; display: grid; gap: 4px; }
+
+/* v125: fotos dentro de los mensajes de las peticiones */
+.pet-fotos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.pet-fotos a { display: block; border-radius: 8px; overflow: hidden; border: 1px solid var(--linea); background: var(--tarjeta, var(--fondo)); }
+.pet-fotos img { display: block; max-width: min(100%, 320px); max-height: 240px; width: auto; height: auto; object-fit: contain; }
+/* v125: el padre decide (Publicar / Añadir algo / Descartar) tras ver las capturas */
+.pet-decide { display: grid; gap: 8px; padding: 12px; border: 2px solid #1F7A45; border-radius: 12px; background: var(--fondo); }
+.pet-decide-tit { margin: 0; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+.pet-decide .btn { min-height: 52px; justify-content: center; }
+.pet-decide .pet-publica { background: #1F7A45; border-color: #1F7A45; color: #fff; font-size: 1.05rem; }
+.pet-decide .pet-descarta { color: var(--rojo-ic, var(--rojo)); }
+.pet-decide .msg:empty { display: none; }
+.pet-descarta-si { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pet-decide { border-color: #5FD08F; } :root:not([data-theme="light"]) .pet-decide .pet-publica { background: #1F7A45; } }
+:root[data-theme="dark"] .pet-decide { border-color: #5FD08F; }

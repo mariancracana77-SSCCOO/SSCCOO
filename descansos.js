@@ -452,7 +452,7 @@
     lineas.push({ banda: "Mis descansos · Sección Sindical CCOO Calsina Carré", color: ROJO, tam: 13, x: X }, ["", 4]);
     L("Mis descansos", 22, true, X, ROJO);
     L("Copia hecha el " + new Date().toLocaleString("es-ES", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) + " · Transporte " + (DATOS.internacional ? "internacional" : "nacional"), 9, false, X, GRIS);
-    L("Colores: verde = bien · naranja = reducido · rojo = atención o por compensar · azul = información", 9, true, X, GRIS); L("", 6);
+    L("Colores: azul = tiempos de descanso · verde = bien · naranja = reducido · rojo = atención o por compensar", 9, true, X, GRIS); L("", 6);
     if (c.prox) {
       B("Próximo descanso semanal");
       L("Tiene que empezar antes del " + fmt(c.prox.limite) + ".", 13, true, 0, AZUL);
@@ -479,8 +479,13 @@
       [...dd.js].reverse().forEach(j => {
         L(fmt(j.ini) + "  a  " + fmt(j.fin), 10, true);
         const et = { normal: j.doble ? "descanso diario de 9 h (doble tripulación)" : "descanso diario normal", reducido: "descanso diario reducido", partido: "descanso diario partido (3 h + 9 h)", falta: "descanso diario insuficiente", pendiente: "falta apuntar lo siguiente" }[j.clase];
-        L([horas((j.fin - j.ini) / H) + " de jornada", j.descanso != null ? "descanso después: " + horas(j.descanso) : "", et, j.semanal ? "le sigue el descanso semanal" : "", j.ferry ? "cortado por ferry o tren" : ""].filter(Boolean).join(" · "), 10, j.clase === "falta", 12, COL[j.clase]);
+        // v127 (petición n.º 2 del padre: «todos los tiempos de descanso en azul, mejor visual»): la jornada en una línea y el descanso en otra, en azul y más grande
+        L([horas((j.fin - j.ini) / H) + " de jornada", j.ferry ? "cortado por ferry o tren" : ""].filter(Boolean).join(" · "), 10, false, 12);
+        if (j.descanso != null) L("Descanso después: " + horas(j.descanso) + " · " + et + (j.semanal ? " · le sigue el descanso semanal" : ""), 11, true, 12, AZUL);
+        else L(et + (j.semanal ? " · le sigue el descanso semanal" : ""), 10, false, 12, COL[j.clase]);
+        if (j.clase === "falta") L("Atención: descanso diario insuficiente.", 10, true, 12, ROJO);
         if (j.demasiados) L("Atención: más de 3 descansos diarios reducidos entre dos semanales.", 10, true, 12, ROJO);
+        L("", 4);
       });
       L("");
     }
@@ -490,13 +495,16 @@
     filas.forEach(x => {
       if (x.tipo === "comp") { L("Compensación de " + horas(+x.horas) + ", sumada a un descanso que acabó el " + fmt(x.fin) + ".", 10, true, 0, VERDE); return; }
       const sd = c.sem.find(y => y.id === x.id), deuda = c.deudas.find(d => d.de.id === x.id);
-      L(fmt(x.ini) + "  a  " + fmt(x.fin) + "   (" + (sd.clase === "normal" ? "Normal" : sd.clase === "reducido" ? "Reducido" : "No llega a 24 h") + ", " + horas(sd.h) + ")", 10, true, 0, sd.clase === "normal" ? VERDE : sd.clase === "reducido" ? NARANJA : ROJO);
+      L(fmt(x.ini) + "  a  " + fmt(x.fin), 10, true);
+      L("Descanso: " + horas(sd.h) + " · " + (sd.clase === "normal" ? "normal" : sd.clase === "reducido" ? "reducido" : "no llega a 24 h"), 11, true, 12, AZUL);
+      if (sd.clase !== "normal" && sd.clase !== "reducido") L("Atención: un descanso semanal tiene que ser de 24 horas o más.", 10, true, 12, ROJO);
       const det = [x.casa ? "en casa" : "", tocaFinde(x.ini, x.fin) ? "fin de semana" : "", x.cabina ? "en la cabina" : ""].filter(Boolean).join(" · ");
       if (det) L(det, 10, false, 12);
       if (deuda) L(deuda.queda > 0.05 ? "Faltan " + horas(deuda.queda) + " por compensar" : "Compensado", 10, true, 12, deuda.queda > 0.05 ? ROJO : VERDE);
       if (sd.tarde) L("Atención: empezó " + horas(sd.tarde) + " tarde (más de 6 días desde el anterior).", 10, true, 12, ROJO);
       if (sd.seguidos) L("Atención: dos semanas seguidas sin descanso normal.", 10, true, 12, ROJO);
       if (sd.enCabina) L("Atención: el descanso normal no se puede hacer en la cabina.", 10, true, 12, ROJO);
+      L("", 4);
     });
     L("");
     L("Solo es una ayuda para organizarte; no es una prueba oficial ni sustituye al tacógrafo. Manda lo que registra el tacógrafo y el Reglamento (CE) 561/2006. Cálculos según el cuadernillo «Tiempos de conducción y descanso» de FENADISMER (mayo 2026) y el II Acuerdo Marco.", 8, false, 0, GRIS);

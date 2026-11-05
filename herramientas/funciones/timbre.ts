@@ -1,10 +1,11 @@
-// Copia de la edge function «timbre» (v9 en Supabase). La que manda es la de Supabase.
+// Copia de la edge function «timbre» (v10 en Supabase). La que manda es la de Supabase.
 // Timbre de «Pedir un cambio a Claude» (v117): cuando un admin envía o actualiza una petición desde el panel, deja un comentario corto
 // en la pull request «buzón» n.º 2 de GitHub (rama buzon-peticiones, nunca se fusiona). Ese comentario despierta la sesión de Claude,
 // que lee la petición en Supabase. El comentario NO lleva el texto de la petición (el repositorio es público).
 // Si la petición está en espera (Lorena quiere revisarla antes), el comentario lo dice y Claude solo avisa a Lorena.
 // v121: { id, anadido: true } cuando el padre añade algo a una petición que ya mandó (columna mensajes, RPC anadir_a_peticion).
 // v121: { id, avisar: true } cuando el padre pulsa «Avisar a Lorena» (RPC pedir_lorena, columna avisar_lorena): Claude la avisa al móvil.
+// v125: { id, decision: true } cuando el padre pulsa «Publicar» o «Descartar» en lo que Claude le ha preparado (RPC decidir_peticion, columnas propuesta/decision).
 // v122: { id, deshacer: true } cuando el padre pulsa «Volver a como estaba antes» (RPC deshacer_peticion, columna deshacer).
 // La llave va en el secreto GITHUB_TOKEN (la pone Lorena en Supabase > Edge Functions > Secrets, nunca en el chat). Sin ella no hace nada.
 // verify_jwt desactivado: la función comprueba ella misma is_admin() con la sesión del panel o el secreto interno x-cron-secret (prueba desde SQL).
@@ -47,12 +48,16 @@ Deno.serve(async (req) => {
   });
   const { data: esAdmin } = await sb.rpc("is_admin");
   if (!esAdmin) return json({ error: "Solo las cuentas del panel" }, 403);
-  let id = 0, actualizada = false, anadido = false, avisar = false, deshacer = false;
-  try { const b = await req.json(); id = Number(b.id) || 0; actualizada = !!b.actualizada; anadido = !!b.anadido; avisar = !!b.avisar; deshacer = !!b.deshacer; } catch { /* sin cuerpo */ }
+  let id = 0, actualizada = false, anadido = false, avisar = false, deshacer = false, decision = false;
+  try { const b = await req.json(); id = Number(b.id) || 0; actualizada = !!b.actualizada; anadido = !!b.anadido; avisar = !!b.avisar; deshacer = !!b.deshacer; decision = !!b.decision; } catch { /* sin cuerpo */ }
   // Solo para una petición nueva (o con algo añadido) enviada o tocada hace poco (no se puede usar para llenar GitHub de comentarios)
-  const { data: p } = await sb.from("peticiones_claude").select("id,estado,creado,actualizado,espera,mensajes,avisar_lorena,deshacer").eq("id", id).maybeSingle();
+  const { data: p } = await sb.from("peticiones_claude").select("id,estado,creado,actualizado,espera,mensajes,avisar_lorena,deshacer,decision,decision_el").eq("id", id).maybeSingle();
   const cuando = p ? new Date(p.actualizado || p.creado).getTime() : 0;
   const reciente = Date.now() - cuando <= 10 * 60 * 1000;
+  if (decision) {
+    if (!p || !p.decision || !p.decision_el || Date.now() - new Date(p.decision_el).getTime() > 10 * 60 * 1000) return json({ ok: false, motivo: "no_decision" });
+    return comenta(p.decision === "publicar" ? `Petición n.º ${p.id}: el padre ha visto las capturas y dice PUBLICAR.` : `Petición n.º ${p.id}: el padre ha visto las capturas y dice DESCARTAR.`);
+  }
   if (deshacer) {
     if (!p || !p.deshacer || Date.now() - new Date(p.deshacer).getTime() > 10 * 60 * 1000) return json({ ok: false, motivo: "no_deshacer" });
     return comenta(`Petición n.º ${p.id}: el panel pide volver a como estaba antes (deshacer lo publicado).`);
