@@ -2272,3 +2272,12 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 /* oculto cuando ya estás dentro de Zona Conductores */
 .pest-cond.activa .pc-toca { display: none; }
 @media (prefers-reduced-motion: reduce) { .pc-toca { animation: none; } }
+/* v131 (petición n.º 5 del padre): las pestañas principales de arriba, botones rojos con letra blanca (como los subapartados); la elegida, blanca con letra roja. La del camión de Zona Conductores sigue azul. */
+.cab-tablon .pestanas-web { gap: 8px; align-items: center; }
+.cab-tablon .pestanas-web a:not(.pest-cond), .cab-tablon .pestanas-web a:not(.pest-cond):not(.activa) { display: inline-flex; align-items: center; align-self: center; min-height: 38px; margin: 6px 0 8px; padding: 5px 13px 4px; border: 2px solid var(--rojo); border-radius: 4px; background: var(--rojo); color: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .4); white-space: nowrap; }
+.cab-tablon .pestanas-web a:not(.pest-cond):not(.activa):hover { border-color: #fff; color: #fff; }
+.cab-tablon .pestanas-web a.activa:not(.pest-cond), :root[data-theme="dark"] .cab-tablon .pestanas-web a.activa:not(.pest-cond) { background: #fff; border-color: #fff; color: #ab1012; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cab-tablon .pestanas-web a.activa:not(.pest-cond) { background: #fff; border-color: #fff; color: #ab1012; } }
+.cab-tablon .pestanas-web a:not(.pest-cond) .cuenta-pestana { background: #fff; color: #ab1012; }
+.cab-tablon .pestanas-web a.activa:not(.pest-cond) .cuenta-pestana { background: var(--rojo); color: #fff; }
+.cab-tablon .pestanas-web a:not(.pest-cond):focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
