@@ -1,3 +1,4 @@
+// captura (v126: también con x-ficha, una ficha de un solo uso de public.captura_fichas que da privado.nueva_ficha_captura(); así la imagen se manda con curl y no por SQL)
 // captura (v124): sube una captura de pantalla de Claude al bucket «peticiones» para enseñársela al padre en el chat de su petición.
 // verify_jwt desactivado; solo con x-cron-secret (config_privada.cron_secreto). Se llama por SQL con net.http_post
 // (body {nombre, tipo, base64}) y devuelve {ok, url}; luego Claude añade {quien:'claude', texto, adjuntos:[{nombre, url, tipo}]} a peticiones_claude.mensajes.
@@ -10,7 +11,14 @@ const TIPOS: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg",
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
   const cfg = await fetch(`${URL_SB}/rest/v1/config_privada?select=valor&clave=eq.cron_secreto`, { headers: H }).then(r => r.json()).catch(() => []);
-  if (!cfg?.[0]?.valor || req.headers.get("x-cron-secret") !== cfg[0].valor) return json({ error: "No autorizado" }, 401);
+  let vale = !!cfg?.[0]?.valor && req.headers.get("x-cron-secret") === cfg[0].valor;
+  const ficha = req.headers.get("x-ficha") || "";
+  if (!vale && /^[0-9a-f]{36}$/.test(ficha)) {
+    const q = `${URL_SB}/rest/v1/captura_fichas?token=eq.${ficha}&caduca=gt.${encodeURIComponent(new Date().toISOString())}`;
+    const usada = await fetch(q, { method: "DELETE", headers: { ...H, Prefer: "return=representation" } }).then(r => r.json()).catch(() => []);
+    vale = Array.isArray(usada) && usada.length === 1;
+  }
+  if (!vale) return json({ error: "No autorizado" }, 401);
   let b: { nombre?: string; tipo?: string; base64?: string };
   try { b = await req.json(); } catch { return json({ error: "JSON" }, 400); }
   const ext = TIPOS[b.tipo || ""];
