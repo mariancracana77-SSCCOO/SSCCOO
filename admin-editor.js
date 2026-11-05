@@ -456,12 +456,26 @@ function avisoDeshacer(texto, deshacer) {
 }
 
 // ---------- Asistente de actas (a partir de fotos y archivos) ----------
-let IA_ARCHIVOS = [];
+// Foto de las notas (aunque sean a mano), PDF o Word → función «generar-acta» (IA gratuita de Google, Gemini) → rellena
+// título, tipo, fecha, resumen y acuerdos. Nunca publica solo: se revisa y se pulsa «Publicar».
+// v132, tapar datos (traído del comité, su v12; lo pidió Lorena: que no vaya a Google lo importante). Todo en el propio dispositivo:
+//  - Texto (notas, Word, PDF con texto): `tapaTexto` cambia nombres por [PERSONA n] (y `devuelveNombres` los vuelve a poner al
+//    recibir el borrador: Google nunca los ve) y tapa sin vuelta DNI/NIE, teléfonos, emails, cuentas, matrículas y n.º de la Seg. Social.
+//    Nombres: los de los delegados, la lista «Nombres que se tapan siempre» (solo en este dispositivo, localStorage ccoo-ia-tapar)
+//    y los que vienen detrás de «Sr.», «compañero», etc. o dos o tres palabras en mayúscula seguidas que no estén en `NO_NOMBRES`.
+//  - Fotos y PDF escaneados (páginas convertidas en foto con pdf.js, lib/pdfjs, 4.10.38 legacy, Apache 2.0, cargado con import()
+//    solo al usarlo): `abreTapador`, se tapa con el dedo y se envía la imagen ya pintada (sin datos ocultos de la foto).
+//  - Antes de enviar, «Esto es lo que se enviará» (`#ia-revision`, `revisaEnvio`) con lo tapado marcado; luego `generarActa`.
+let IA_ARCHIVOS = [], IA_ENVIO = null;
 const IA_MAX = 6;
+const CLAVE_TAPAR = "ccoo-ia-tapar";
+const leeTapar = () => { try { return localStorage.getItem(CLAVE_TAPAR) || ""; } catch (_) { return ""; } };
+const guardaTapar = (v) => { try { localStorage.setItem(CLAVE_TAPAR, v); } catch (_) {} };
 function asistenteHTML() {
   return `<div class="asistente">
     <h3>${icono("magia", "p")}Hacer el acta con el asistente</h3>
     <p class="ayuda">Haz una <b>foto de tus notas</b> (aunque sean a mano) o sube el <b>PDF o Word</b> de la reunión. El asistente rellena el acta de abajo y tú la revisas antes de publicar.</p>
+    <p class="ia-protege">${icono("escudo", "p")}<span><b>Los datos importantes se tapan antes de enviar.</b> En el texto se tapan solos los nombres, DNI, teléfonos, emails y cuentas. En las fotos, los tapas tú con el dedo. Antes de enviar ves exactamente lo que sale.</span></p>
     <div class="ia-botones">
       <label class="ia-boton">${icono("camara")}<b>Hacer foto</b><span>con la cámara</span>
         <input type="file" id="f-ia-cam" accept="image/*" capture="environment"></label>
@@ -471,58 +485,129 @@ function asistenteHTML() {
     <div class="archivos" id="lista-ia"></div>
     <details class="nota-ia"><summary>Añadir una nota escrita (opcional)</summary>
       <textarea id="notas-ia" placeholder="Algo que no esté en los archivos: quién asistió, la fecha…"></textarea></details>
-    <p class="ayuda"><b>Importante:</b> los archivos se envían a la IA gratuita de Google (Gemini), que puede usarlos para mejorar sus productos. Evita fotos con datos personales de compañeros o información confidencial de la empresa.</p>
-    <div class="botones" style="margin-top:12px"><button class="btn azul" id="b-ia" disabled>${icono("magia", "p")}Generar acta</button></div>
+    <details class="nota-ia"><summary>Nombres que se tapan siempre</summary>
+      <p class="ayuda">Uno por línea: compañeros, jefes, clientes… Se guardan solo en este dispositivo. Los nombres de los delegados se tapan solos.</p>
+      <textarea id="tapar-ia" placeholder="Juan Pérez García&#10;Transportes Ejemplo"></textarea></details>
+    <p class="ayuda"><b>Importante:</b> lo que se envía va a la IA gratuita de Google (Gemini), que puede usarlo para mejorar sus productos. Por eso se tapa antes lo importante.</p>
+    <div class="botones" style="margin-top:12px"><button class="btn azul" id="b-ia" disabled>${icono("magia", "p")}Preparar y revisar</button></div>
+    <div id="ia-revision" hidden></div>
     <div class="msg" id="m-ia"></div>
   </div>`;
 }
-function prepararAsistente() {
-  IA_ARCHIVOS = [];
-  const pinta = () => {
-    $("lista-ia").innerHTML = IA_ARCHIVOS.map((f, i) => {
-      const t = tipoArchivo(mimeDe(f), f.name), img = mimeDe(f).startsWith("image/");
-      return `<div class="archivo-fila"><span class="ic">${img ? `<img src="${URL.createObjectURL(f)}" alt="">` : icono(t.ic, "p")}</span>
-        <span class="txt"><b>${esc(f.name)}</b><small class="ok">${t.txt} · ${tamanoTxt(f.size)} · listo</small></span>
-        <button class="btn-ic" data-q="${i}" aria-label="Quitar">${icono("cerrar", "p")}</button></div>`;
-    }).join("");
-    $("lista-ia").querySelectorAll("[data-q]").forEach(b => b.onclick = (e) => { e.preventDefault(); IA_ARCHIVOS.splice(+b.dataset.q, 1); pinta(); });
-    $("b-ia").disabled = !IA_ARCHIVOS.length && $("notas-ia").value.trim().length < 20;
-  };
-  const añadir = (files) => {
-    const malos = [];
-    for (const f of files) {
-      const t = mimeDe(f), ext = extDe(f.name);
-      const vale = t.startsWith("image/") || t === "application/pdf" || ext === "docx" || ext === "txt";
-      if (!vale) { malos.push(f.name); continue; }
-      if (IA_ARCHIVOS.length >= IA_MAX) { malos.push(f.name + " (máximo " + IA_MAX + ")"); continue; }
-      IA_ARCHIVOS.push(f);
-    }
-    msg("m-ia", malos.length ? "No se pueden usar: " + malos.join(", ") + ". Usa fotos, PDF o Word (.docx)." : "", !malos.length);
-    $("f-ia").value = ""; $("f-ia-cam").value = ""; pinta();
-  };
-  $("f-ia").onchange = () => añadir($("f-ia").files);
-  $("f-ia-cam").onchange = () => añadir($("f-ia-cam").files);
-  $("notas-ia").oninput = pinta;
-  const zona = $("ed-form").querySelector(".asistente");
-  zona.ondragover = (e) => { e.preventDefault(); zona.classList.add("encima"); };
-  zona.ondragleave = () => zona.classList.remove("encima");
-  zona.ondrop = (e) => { e.preventDefault(); zona.classList.remove("encima"); añadir(e.dataTransfer.files); };
-  $("b-ia").onclick = generarActa;
+
+// ---- Tapar en el texto ----
+const escRe = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const VOCALES = { a: "aáàâä", e: "eéèêë", i: "iíìîï", o: "oóòôö", u: "uúùûü" };
+// «Pérez» también tapa «Perez» (y al revés)
+const patronNombre = (n) => escRe(n.trim()).replace(/\s+/g, "\\s+").replace(/[aeiouáéíóúàèìòùâêîôûäëïöü]/gi, (c) => {
+  const base = c.normalize("NFD")[0].toLowerCase(); return VOCALES[base] ? "[" + VOCALES[base] + "]" : c; });
+const BORDE_I = "(?<![\\p{L}\\p{N}])", BORDE_D = "(?![\\p{L}\\p{N}])";
+// Palabras con mayúscula que no son nombres de personas (no se tapan aunque vayan dos seguidas)
+const NO_NOMBRES = new Set(("calsina carré carre comité comite empresa recursos humanos seguridad social convenio reunión reunion acta asamblea orden día dia " +
+  "enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre lunes martes miércoles miercoles jueves viernes sábado sabado domingo " +
+  "españa espana cataluña cataluna girona barcelona francia italia alemania europa ccoo ugt cgt usoc csif sección seccion sindical sindicato el la los las del de y en por para con se que no si " +
+  "nave almacén almacen oficina dirección direccion gerencia prevención prevencion riesgos laborales salud laboral ett mutua inspección inspeccion trabajo " +
+  "turno turnos tráfico trafico taller gasolinera muelle punto puntos acuerdos acuerdo resumen asistentes asisten presidente presidenta secretario secretaria delegado delegada delegados").split(/\s+/));
+async function nombresATapar() {
+  const propios = leeTapar().split(/\n+/).map(x => x.trim()).filter(x => x.length >= 2);
+  let deleg = [];
+  try { const { data } = await sb.from("delegados").select("nombre"); deleg = (data || []).map(m => m.nombre).filter(Boolean); } catch (_) {}
+  const todos = new Set();
+  [...propios, ...deleg].forEach(n => { todos.add(n); n.split(/\s+/).filter(p => p.length >= 3 && !NO_NOMBRES.has(p.toLowerCase())).forEach(p => todos.add(p)); });
+  return [...todos].sort((x, y) => y.length - x.length); // primero los largos («Juan Pérez» antes que «Juan»)
 }
-// Reduce las fotos para que pesen poco (la IA las lee igual de bien)
-async function aBase64(f) {
-  const t = mimeDe(f);
-  if (t.startsWith("image/")) {
-    try {
-      const img = await createImageBitmap(f), max = 2000, r = Math.min(1, max / Math.max(img.width, img.height));
-      const cv = document.createElement("canvas"); cv.width = Math.round(img.width * r); cv.height = Math.round(img.height * r);
-      cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
-      return { mime: "image/jpeg", data: cv.toDataURL("image/jpeg", 0.85).split(",")[1], nombre: f.name };
-    } catch (_) { /* formato que el navegador no sabe abrir (p. ej. HEIC): se envía tal cual */ }
+function tapaTexto(texto, nombres) {
+  const mapa = {}, cuenta = {}, porValor = new Map();
+  let n = 0, t = texto;
+  const persona = (orig) => { const k = orig.replace(/\s+/g, " ").trim(); if (!porValor.has(k.toLowerCase())) { n++; porValor.set(k.toLowerCase(), n); mapa[n] = k; } cuenta.nombre = (cuenta.nombre || 0) + 1; return "[PERSONA " + porValor.get(k.toLowerCase()) + "]"; };
+  const fijo = (tipo, marca) => () => { cuenta[tipo] = (cuenta[tipo] || 0) + 1; return "[" + marca + "]"; };
+  // Datos que no vuelven: se quedan tapados también en el acta
+  t = t.replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, fijo("email", "EMAIL TAPADO"));
+  t = t.replace(/\b[A-Z]{2}\d{2}(?:[ -]?[A-Z0-9]{4}){4,7}\b/gi, fijo("cuenta", "CUENTA TAPADA"));
+  t = t.replace(/\b(?:\d[ -]?){15,18}\d\b/g, fijo("cuenta", "NÚMERO TAPADO"));
+  t = t.replace(/\b\d{2}[ /-]?\d{8}[ /-]?\d{2}\b/g, fijo("ss", "N.º SEG. SOCIAL TAPADO"));
+  t = t.replace(/\b[XYZxyz][ -]?\d{7}[ -]?[A-Za-z]\b/g, fijo("dni", "DNI TAPADO"));
+  t = t.replace(/\b\d{8}[ -]?[A-Za-z]\b/g, fijo("dni", "DNI TAPADO"));
+  t = t.replace(/(?:\+|00)\d{2}[ .-]?\d{3}[ .-]?\d{2,3}[ .-]?\d{2,3}[ .-]?\d{0,3}\b/g, fijo("tel", "TELÉFONO TAPADO"));
+  t = t.replace(/\b[6789]\d{2}(?:[ .-]?\d{2,3}){2,3}\b/g, (m) => m.replace(/\D/g, "").length === 9 ? fijo("tel", "TELÉFONO TAPADO")(m) : m);
+  t = t.replace(/\b\d{4}[ -]?[BCDFGHJKLMNPRSTVWXYZ]{3}\b/g, fijo("matricula", "MATRÍCULA TAPADA"));
+  // Nombres de las listas (se devuelven al recibir el borrador)
+  nombres.forEach(nom => { t = t.replace(new RegExp(BORDE_I + patronNombre(nom) + BORDE_D, "giu"), persona); });
+  // Detrás de tratamientos y palabras como «compañero»: hasta 3 palabras con mayúscula
+  const MAY = "\\p{Lu}[\\p{L}'-]+";
+  t = t.replace(new RegExp("(" + BORDE_I + "(?:Sr\\.?|Sra\\.?|Srta\\.?|D\\.|Dña\\.?|Don|Doña|señor|señora|compañer[oa]s?|trabajador(?:a|es|as)?|conductor(?:a|es|as)?|jef[ea]|encargad[oa]|mecánic[oa])\\s+)(" + MAY + "(?:\\s+" + MAY + "){0,2})", "gu"),
+    (m, pre, nom) => NO_NOMBRES.has(nom.split(/\s+/)[0].toLowerCase()) ? m : pre + persona(nom));
+  // Dos o tres palabras seguidas con mayúscula que no son de la lista de palabras normales (Nombre Apellido)
+  t = t.replace(new RegExp(BORDE_I + "(" + MAY + "(?:\\s+" + MAY + "){1,2})" + BORDE_D, "gu"), (m) =>
+    m.split(/\s+/).some(p => NO_NOMBRES.has(p.toLowerCase())) || /^\[|PERSONA|TAPAD/.test(m) ? m : persona(m));
+  return { texto: t, mapa, cuenta };
+}
+const devuelveNombres = (t, mapa) => String(t || "").replace(/\[?\s*PERSONA\s+(\d+)\s*\]?/gi, (m, k) => mapa[k] || m);
+
+// ---- Tapar en las fotos, con el dedo ----
+const cargaImagen = (blob) => new Promise((ok, mal) => { const u = URL.createObjectURL(blob), i = new Image(); i.onload = () => { URL.revokeObjectURL(u); ok(i); }; i.onerror = () => { URL.revokeObjectURL(u); mal(new Error("No se ha podido abrir esa foto. Prueba con JPG o PNG.")); }; i.src = u; });
+function abreTapador(img, titulo) {
+  return new Promise((ok) => {
+    const r = Math.min(1, 2000 / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+    const W = Math.round((img.naturalWidth || img.width) * r), H = Math.round((img.naturalHeight || img.height) * r);
+    const v = document.createElement("div"); v.className = "tapador"; v.setAttribute("role", "dialog"); v.setAttribute("aria-modal", "true"); v.setAttribute("aria-label", "Tapar datos de la foto");
+    v.innerHTML = `<div class="tapador-cab"><b>${esc(titulo)}</b><span>Pasa el dedo por encima de nombres, DNI, teléfonos… Lo que pintes en negro no se envía.</span></div>
+      <div class="tapador-lienzo"><canvas width="${W}" height="${H}"></canvas></div>
+      <div class="tapador-herr">
+        <span class="tapador-grosor" role="group" aria-label="Grosor">${[["Fino", 0.025], ["Medio", 0.045], ["Gordo", 0.08]].map(([l, g], i) => `<button type="button" data-grosor="${g}" aria-pressed="${i === 1}">${l}</button>`).join("")}</span>
+        <button type="button" class="btn sec peq" data-tap="deshacer">${icono("recuperar", "p")}Deshacer</button>
+        <button type="button" class="btn sec peq" data-tap="todo">${icono("borrar", "p")}Quitar lo pintado</button>
+      </div>
+      <div class="tapador-pie"><button type="button" class="btn sec" data-tap="cancelar">No usar esta foto</button><button type="button" class="btn azul" data-tap="listo">${icono("check", "p")}Listo</button></div>`;
+    document.body.appendChild(v); document.body.classList.add("sin-scroll");
+    const cv = v.querySelector("canvas"), cx = cv.getContext("2d"), trazos = [];
+    let grosor = 0.045, actual = null;
+    const pinta = () => {
+      cx.drawImage(img, 0, 0, W, H); cx.lineCap = "round"; cx.lineJoin = "round"; cx.strokeStyle = "#000";
+      trazos.forEach(t => { cx.lineWidth = t.g * Math.max(W, H); cx.beginPath(); t.p.forEach(([x, y], i) => i ? cx.lineTo(x, y) : cx.moveTo(x, y)); if (t.p.length === 1) cx.lineTo(t.p[0][0] + 0.1, t.p[0][1]); cx.stroke(); });
+    };
+    const punto = (e) => { const b = cv.getBoundingClientRect(); return [(e.clientX - b.left) * W / b.width, (e.clientY - b.top) * H / b.height]; };
+    cv.addEventListener("pointerdown", (e) => { e.preventDefault(); cv.setPointerCapture(e.pointerId); actual = { g: grosor, p: [punto(e)] }; trazos.push(actual); pinta(); });
+    cv.addEventListener("pointermove", (e) => { if (!actual) return; actual.p.push(punto(e)); pinta(); });
+    const suelta = () => { actual = null; };
+    cv.addEventListener("pointerup", suelta); cv.addEventListener("pointercancel", suelta);
+    const cierra = (res) => { v.remove(); document.body.classList.remove("sin-scroll"); ok(res); };
+    v.addEventListener("click", (e) => {
+      const g = e.target.closest("[data-grosor]");
+      if (g) { grosor = +g.dataset.grosor; v.querySelectorAll("[data-grosor]").forEach(b => b.setAttribute("aria-pressed", String(b === g))); return; }
+      const b = e.target.closest("[data-tap]"); if (!b) return;
+      if (b.dataset.tap === "deshacer") { trazos.pop(); pinta(); }
+      if (b.dataset.tap === "todo") { trazos.length = 0; pinta(); }
+      if (b.dataset.tap === "cancelar") cierra(null);
+      if (b.dataset.tap === "listo") { pinta(); cv.toBlob(bl => cierra(bl ? { blob: bl, tapado: trazos.length } : null), "image/jpeg", 0.85); }
+    });
+    v.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.stopPropagation(); cierra(null); } });
+    pinta(); v.querySelector('[data-tap="listo"]').focus();
+  });
+}
+
+// ---- PDF: texto si lo tiene; si es escaneado, cada página como foto (para taparla) ----
+let PDFJS = null;
+async function cargaPdfjs() {
+  if (PDFJS) return PDFJS;
+  PDFJS = await import("./lib/pdfjs/pdf.min.mjs");
+  PDFJS.GlobalWorkerOptions.workerSrc = "lib/pdfjs/pdf.worker.min.mjs";
+  return PDFJS;
+}
+async function leePdf(f) {
+  const pj = await cargaPdfjs();
+  const doc = await pj.getDocument({ data: new Uint8Array(await f.arrayBuffer()), isEvalSupported: false }).promise;
+  const n = Math.min(doc.numPages, 20); let texto = "";
+  for (let i = 1; i <= n; i++) { const c = await (await doc.getPage(i)).getTextContent(); texto += c.items.map(x => x.str + (x.hasEOL ? "\n" : " ")).join("") + "\n\n"; }
+  if (texto.replace(/\s/g, "").length >= 40 * n) return { texto: texto.trim(), paginas: doc.numPages };
+  const imgs = [];
+  for (let i = 1; i <= Math.min(doc.numPages, IA_MAX); i++) {
+    const p = await doc.getPage(i), v1 = p.getViewport({ scale: 1 }), vp = p.getViewport({ scale: 1600 / Math.max(v1.width, v1.height) });
+    const cv = document.createElement("canvas"); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+    const cx = cv.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height);
+    await p.render({ canvasContext: cx, viewport: vp }).promise; imgs.push(cv);
   }
-  if (f.size > 12 * 1048576) throw new Error(`«${f.name}» es demasiado grande para el asistente (máx. 12 MB).`);
-  const data = await new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.onerror = mal; r.readAsDataURL(f); });
-  return { mime: t, data, nombre: f.name };
+  return { imgs, paginas: doc.numPages };
 }
 // Saca el texto de un Word (.docx) en el propio navegador
 async function textoDeWord(f) {
@@ -532,33 +617,109 @@ async function textoDeWord(f) {
   return xml.replace(/<\/w:p>/g, "\n").replace(/<w:tab\/>/g, "\t").replace(/<[^>]+>/g, "")
     .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/\n{3,}/g, "\n\n").trim();
 }
-async function generarActa() {
-  const btn = $("b-ia");
-  let notas = $("notas-ia").value.trim();
-  if (notas.length < 20 && !IA_ARCHIVOS.length) return msg("m-ia", "Añade una foto o un archivo con las notas de la reunión.");
-  btn.disabled = true;
-  try {
-    msg("m-ia", "Preparando los archivos…", true);
-    const archivos = [];
-    for (const f of IA_ARCHIVOS) {
-      const ext = extDe(f.name);
-      if (ext === "docx") notas += `\n\nContenido del documento «${f.name}»:\n` + (await textoDeWord(f)).slice(0, 25000);
-      else if (ext === "txt") notas += `\n\nContenido de «${f.name}»:\n` + (await f.text()).slice(0, 25000);
-      else archivos.push(await aBase64(f));
+
+function prepararAsistente() {
+  IA_ARCHIVOS = []; IA_ENVIO = null;
+  $("tapar-ia").value = leeTapar();
+  const olvida = () => { $("ia-revision").hidden = true; IA_ENVIO = null; };
+  const pinta = () => {
+    $("lista-ia").innerHTML = IA_ARCHIVOS.map((x, i) => `<div class="archivo-fila"><span class="ic">${x.blob ? `<img src="${URL.createObjectURL(x.blob)}" alt="">` : icono("texto", "p")}</span>
+        <span class="txt"><b>${esc(x.nombre)}</b><small class="ok">${x.blob ? (x.tapado ? "foto con " + x.tapado + (x.tapado === 1 ? " zona tapada" : " zonas tapadas") : "foto sin tapar nada") : "texto: los datos se tapan solos"}</small></span>
+        ${x.blob ? `<button type="button" class="btn sec peq" data-tapar-ia="${i}">${icono("editar", "p")}Tapar</button>` : ""}
+        <button type="button" class="btn-ic" data-q="${i}" aria-label="Quitar ${esc(x.nombre)}">${icono("cerrar", "p")}</button></div>`).join("");
+    $("b-ia").disabled = !IA_ARCHIVOS.length && $("notas-ia").value.trim().length < 20;
+    olvida();
+  };
+  const fotos = () => IA_ARCHIVOS.filter(x => x.blob).length;
+  const añadeFoto = async (fuente, nombre) => {
+    if (fotos() >= IA_MAX) throw new Error("como mucho " + IA_MAX + " fotos o páginas");
+    const r = await abreTapador(fuente, nombre); if (r) IA_ARCHIVOS.push({ nombre, blob: r.blob, tapado: r.tapado });
+  };
+  const añadir = async (files) => {
+    const malos = [];
+    for (const f of files) {
+      const t = mimeDe(f), ext = extDe(f.name);
+      try {
+        if (t.startsWith("image/")) await añadeFoto(await cargaImagen(f), f.name);
+        else if (t === "application/pdf" || ext === "pdf") {
+          msg("m-ia", "Leyendo el PDF…", true);
+          const p = await leePdf(f);
+          if (p.texto) IA_ARCHIVOS.push({ nombre: f.name, texto: p.texto });
+          else { msg("m-ia", "Es un PDF escaneado: tapa lo que no quieras enviar en cada página.", true); for (const [i, c] of p.imgs.entries()) await añadeFoto(c, `${f.name} · página ${i + 1}${p.paginas > p.imgs.length ? " de " + p.paginas : ""}`); }
+        } else if (ext === "docx") IA_ARCHIVOS.push({ nombre: f.name, texto: (await textoDeWord(f)).slice(0, 25000) });
+        else if (ext === "txt" || t === "text/plain") IA_ARCHIVOS.push({ nombre: f.name, texto: (await f.text()).slice(0, 25000) });
+        else malos.push(f.name);
+      } catch (e) { malos.push(f.name + " (" + errTxt(e) + ")"); }
     }
+    msg("m-ia", malos.length ? "No se pueden usar: " + malos.join(", ") + ". Usa fotos, PDF o Word (.docx)." : "", !malos.length);
+    $("f-ia").value = ""; $("f-ia-cam").value = ""; pinta();
+  };
+  $("f-ia").onchange = () => añadir([...$("f-ia").files]);
+  $("f-ia-cam").onchange = () => añadir([...$("f-ia-cam").files]);
+  $("notas-ia").oninput = pinta;
+  $("tapar-ia").oninput = () => { guardaTapar($("tapar-ia").value); olvida(); };
+  $("lista-ia").onclick = async (e) => {
+    const q = e.target.closest("[data-q]"), t = e.target.closest("[data-tapar-ia]");
+    if (q) { e.preventDefault(); IA_ARCHIVOS.splice(+q.dataset.q, 1); pinta(); }
+    if (t) { e.preventDefault(); const x = IA_ARCHIVOS[+t.dataset.taparIa]; const r = await abreTapador(await cargaImagen(x.blob), x.nombre); if (r) { x.blob = r.blob; x.tapado = (x.tapado || 0) + r.tapado; } pinta(); }
+  };
+  const zona = $("ed-form").querySelector(".asistente");
+  zona.ondragover = (e) => { e.preventDefault(); zona.classList.add("encima"); };
+  zona.ondragleave = () => zona.classList.remove("encima");
+  zona.ondrop = (e) => { e.preventDefault(); zona.classList.remove("encima"); añadir([...e.dataTransfer.files]); };
+  $("b-ia").onclick = (e) => { e.preventDefault(); revisaEnvio(); };
+  $("ia-revision").onclick = (e) => {
+    if (e.target.closest("[data-ia-enviar]")) { e.preventDefault(); generarActa(); }
+    if (e.target.closest("[data-ia-volver]")) { e.preventDefault(); olvida(); }
+  };
+}
+// Paso 1: tapa y enseña exactamente lo que va a salir
+async function revisaEnvio() {
+  const notas = $("notas-ia").value.trim();
+  if (notas.length < 20 && !IA_ARCHIVOS.length) return msg("m-ia", "Añade una foto o un archivo con las notas de la reunión.");
+  let texto = notas;
+  IA_ARCHIVOS.filter(x => x.texto).forEach(x => { texto += `\n\nContenido de «${x.nombre}»:\n` + x.texto; });
+  const { texto: tapado, mapa, cuenta } = tapaTexto(texto.trim(), await nombresATapar());
+  const imgs = IA_ARCHIVOS.filter(x => x.blob), nNom = Object.keys(mapa).length;
+  IA_ENVIO = { texto: tapado, mapa, imgs };
+  const partes = [nNom && nNom + (nNom === 1 ? " nombre" : " nombres"), cuenta.dni && cuenta.dni + " DNI/NIE", cuenta.tel && cuenta.tel + (cuenta.tel === 1 ? " teléfono" : " teléfonos"),
+    cuenta.email && cuenta.email + " email", cuenta.cuenta && cuenta.cuenta + " n.º de cuenta", cuenta.ss && cuenta.ss + " n.º Seg. Social", cuenta.matricula && cuenta.matricula + " matrícula"].filter(Boolean);
+  const sinTapar = imgs.filter(x => !x.tapado).length;
+  const marca = (t) => esc(t).replace(/\[(PERSONA \d+|[^\]]*TAPAD[OA])\]/g, "<mark>[$1]</mark>");
+  $("ia-revision").innerHTML = `<div class="ia-rev">
+    <b>Esto es lo que se enviará a la IA de Google</b>
+    <p class="ayuda">${partes.length ? "Se han tapado: " + esc(partes.join(", ")) + ". Los nombres vuelven a su sitio al recibir el borrador; lo demás se queda tapado." : "En el texto no se ha encontrado nada que tapar."} Si ves algo que no quieres enviar, pulsa «Volver», añádelo a «Nombres que se tapan siempre» o bórralo de la nota.</p>
+    ${tapado ? `<pre class="ia-texto">${marca(tapado)}</pre>` : ""}
+    ${imgs.length ? `<div class="ia-fotos">${imgs.map(x => `<img src="${URL.createObjectURL(x.blob)}" alt="${esc(x.nombre)}">`).join("")}</div>` : ""}
+    ${sinTapar ? `<p class="ia-ojo">${icono("alerta", "p")}<span>${sinTapar === 1 ? "Hay 1 foto en la que no has tapado nada" : "Hay " + sinTapar + " fotos en las que no has tapado nada"}. Si sale algún nombre o dato, pulsa «Volver» y luego «Tapar».</span></p>` : ""}
+    <div class="botones"><button type="button" class="btn sec" data-ia-volver>Volver</button><button type="button" class="btn azul" data-ia-enviar>${icono("magia", "p")}Enviar y hacer el acta</button></div>
+  </div>`;
+  $("ia-revision").hidden = false; msg("m-ia", "", true);
+  $("ia-revision").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+const blobABase64 = (blob) => new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.onerror = mal; r.readAsDataURL(blob); });
+// Paso 2: envía lo tapado y vuelve a poner los nombres en el borrador
+async function generarActa() {
+  const env = IA_ENVIO; if (!env) return;
+  const btn = $("ia-revision").querySelector("[data-ia-enviar]"); btn.disabled = true;
+  try {
+    const archivos = [];
+    for (const x of env.imgs) archivos.push({ mime: "image/jpeg", data: await blobABase64(x.blob), nombre: x.nombre.replace(/\.[^.]+$/, "") + ".jpg" });
+    const nota = Object.keys(env.mapa).length ? "Nota: los nombres de personas se han cambiado por marcas como [PERSONA 1]. Usa esas marcas tal cual donde haga falta un nombre. Lo que pone TAPADO no se puede leer.\n\n" : "";
     msg("m-ia", "Leyendo las notas y redactando el acta… (puede tardar unos segundos)", true);
-    const { data, error } = await sb.functions.invoke("generar-acta", { body: { notas: notas.trim(), tipos: nombres("acta"), hoy: hoyISO(), archivos } });
+    const { data, error } = await sb.functions.invoke("generar-acta", { body: { notas: (nota + env.texto).trim(), tipos: nombres("acta"), hoy: hoyISO(), archivos } });
     if (error) { let m = "No se ha podido generar el acta."; try { m = (await error.context.json()).error || m; } catch (_) {} throw new Error(m); }
-    const a = data.acta;
-    $("f-titulo").value = a.titulo || "";
+    const a = data.acta, vuelve = (t) => devuelveNombres(t, env.mapa);
+    $("f-titulo").value = vuelve(a.titulo);
     const sel = $("f-tipo");
     if (a.tipo && ![...sel.options].some(o => o.value === a.tipo)) sel.add(new Option(a.tipo, a.tipo));
     if (a.tipo) sel.value = a.tipo;
     if (a.fecha) $("f-fecha").value = a.fecha;
-    $("f-resumen").value = a.resumen || "";
-    $("f-acuerdos").value = a.acuerdos || "";
+    $("f-resumen").value = vuelve(a.resumen);
+    $("f-acuerdos").value = vuelve(a.acuerdos);
     ED.sucio = true; actualizarPrevia();
-    const falta = [!a.fecha && "pon la fecha de la reunión", a.avisos].filter(Boolean).join(". ");
+    $("ia-revision").hidden = true;
+    const falta = [!a.fecha && "pon la fecha de la reunión", a.avisos && vuelve(a.avisos)].filter(Boolean).join(". ");
     msg("m-ia", "Hecho. Revisa el acta abajo" + (falta ? " (ojo: " + falta + ")" : "") + " y pulsa «Publicar».", true);
     $("f-titulo").scrollIntoView({ behavior: "smooth", block: "center" });
   } catch (e) { msg("m-ia", errTxt(e)); }
