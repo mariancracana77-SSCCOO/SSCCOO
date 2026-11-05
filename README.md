@@ -75,6 +75,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 127: PDF de «Mis descansos» con los descansos en azul (petición n.º 2 del padre)
+- En el PDF, cada jornada lleva su descanso en otra línea, en azul y más grande («Descanso después: 11 h · descanso diario normal»), y cada descanso semanal igual («Descanso: 62 h · normal»). Un poco de aire entre unas y otras. Los avisos siguen en rojo.
+
 ## Versión 126: Zona Conductores con el azul del camión (petición n.º 3 del padre, segunda parte)
 - Todo Zona Conductores (pestaña del camión, subapartados Mis descansos, Mis incentivos y Aparcamientos en mi ruta, tarjetas y raya del título) con el azul de la cabina del camión de Calsina de la foto del padre; se quita el morado.
 
