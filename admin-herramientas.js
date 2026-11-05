@@ -626,7 +626,9 @@ async function pintaAvisosPanel() {
     try {
       if (activo) {
         if (sub) await sb.rpc("desuscribir_push_admin", { p_endpoint: sub.endpoint });
-        try { localStorage.removeItem("ccoo-push-panel"); } catch { /* sin almacenamiento */ }
+        // Si la web no usa esta dirección para los avisos de los trabajadores (ccoo-push), se apaga también en el móvil
+        let web = ""; try { web = localStorage.getItem("ccoo-push") || ""; localStorage.removeItem("ccoo-push-panel"); } catch { /* sin almacenamiento */ }
+        if (sub && web !== sub.endpoint) await sub.unsubscribe().catch(() => {});
         msg("pet-avisos-msg", "Ya no te llegarán avisos de Claude a este móvil.", true);
       } else {
         msg("pet-avisos-msg", "Pidiendo permiso al móvil…", true);
