@@ -1135,15 +1135,19 @@ function guardarEndpoint(nuevo) {
 }
 async function desactivarAvisos() {
   const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
-  if (sub) { await sb.rpc("desuscribir_push", { p_endpoint: sub.endpoint }); await sub.unsubscribe(); }
+  // v129: si el panel usa esta misma dirección para sus avisos (ccoo-push-panel), se quita de los de la web sin apagarla en el móvil
+  let delPanel = false; try { delPanel = !!sub && localStorage.getItem("ccoo-push-panel") === sub.endpoint; } catch (_) {}
+  if (sub) { await sb.rpc("desuscribir_push", { p_endpoint: sub.endpoint }); if (!delPanel) await sub.unsubscribe(); }
   try { localStorage.removeItem("ccoo-push"); } catch (_) {}
   suscrito = false; pintaBanda();
 }
 async function comprobarSuscripcion() {
   if (!PUSH_OK || Notification.permission !== "granted") return;
   const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
-  suscrito = !!sub;
-  if (sub) { const j = sub.toJSON(); guardarEndpoint(j.endpoint); sb.rpc("suscribir_push", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth }).then(() => sincronizaIdiomaPush(), () => {}); } // por si se borró
+  // v129: si este móvil solo activó los avisos del panel (ccoo-push-panel) y no los de la web, no se apunta a los de los trabajadores
+  let soloPanel = false; try { soloPanel = !!sub && !localStorage.getItem("ccoo-push") && localStorage.getItem("ccoo-push-panel") === sub.endpoint; } catch (_) {}
+  suscrito = !!sub && !soloPanel;
+  if (sub && !soloPanel) { const j = sub.toJSON(); guardarEndpoint(j.endpoint); sb.rpc("suscribir_push", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth }).then(() => sincronizaIdiomaPush(), () => {}); } // por si se borró
   pintaBanda();
 }
 function pintaBanda() {
