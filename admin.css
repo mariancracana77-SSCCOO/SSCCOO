@@ -760,3 +760,11 @@ details.pet-item > summary:focus-visible { outline: 3px solid var(--rojo-ic, var
 .pet-ficha-etq { font-weight: 700; }
 .pet-mas { width: 100%; justify-content: center; min-height: 48px; }
 @media (prefers-reduced-motion: reduce) { details.pet-item > summary::after { transition: none; } }
+
+/* v129: avisos al móvil solo para quien usa el panel */
+.pet-avisos { display: grid; gap: 8px; padding: 14px 16px; margin-bottom: 12px; }
+.pet-avisos-tit { margin: 0; display: flex; align-items: center; gap: 6px; }
+.pet-avisos .ayuda { margin: 0; }
+.pet-avisos .btn { justify-self: start; min-height: 48px; }
+.pet-avisos.activo { border-left: 5px solid #1F7A45; }
+.pet-avisos .msg:empty { display: none; }
