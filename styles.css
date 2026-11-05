@@ -2273,3 +2273,6 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .pest-cond.activa .pc-toca { display: none; }
 @media (prefers-reduced-motion: reduce) { .pc-toca { animation: none; } }
 /* v133 (petición n.º 7 del padre): se quitó el bloque de la v131 (pestañas principales como botones rojos); vuelven a como eran antes. */
+/* v135 (petición n.º 9 del padre): el botón «Abrir el mapa» de Aparcamientos en mi ruta, relleno del azul de Zona Conductores con letra e icono blancos */
+#apc-abre-mapa.btn.sec { background: var(--cond-azul); border-color: var(--cond-azul); color: #fff; }
+#apc-abre-mapa.btn.sec:hover, #apc-abre-mapa.btn.sec:focus-visible { background: #213385; border-color: #213385; }

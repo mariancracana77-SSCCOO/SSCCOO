@@ -75,6 +75,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 135: botón «Abrir el mapa» en azul (petición n.º 9 del padre)
+- En Aparcamientos en mi ruta, el botón «Abrir el mapa» va relleno del azul de Zona Conductores con letra e icono blancos, de día y de noche.
+
 ## Versión 134: «Que lo siga Lorena», «Quitar de mi lista» y lo pedido agrupado (lo pidió Lorena)
 - En «Lo que has pedido», las peticiones salen agrupadas con su número: «Te toca a ti» (arriba y abierto), «En marcha», «Hechas», «Pasadas a Lorena» y «Quitadas de mi lista». Cada una con «N.º» y el estado en color.
 - «Que lo siga Lorena» (con confirmación): la petición sale de la lista de tu padre, le llega un aviso a Lorena y en su app sale en «Mis tareas». Cuando Lorena la marca como hecha, tu padre ve el resultado («Hecha por Lorena») y le llega un aviso.
