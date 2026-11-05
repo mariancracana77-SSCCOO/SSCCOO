@@ -75,6 +75,14 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 134: «Que lo siga Lorena», «Quitar de mi lista» y lo pedido agrupado (lo pidió Lorena)
+- En «Lo que has pedido», las peticiones salen agrupadas con su número: «Te toca a ti» (arriba y abierto), «En marcha», «Hechas», «Pasadas a Lorena» y «Quitadas de mi lista». Cada una con «N.º» y el estado en color.
+- «Que lo siga Lorena» (con confirmación): la petición sale de la lista de tu padre, le llega un aviso a Lorena y en su app sale en «Mis tareas». Cuando Lorena la marca como hecha, tu padre ve el resultado («Hecha por Lorena») y le llega un aviso.
+- «Quitar de mi lista»: la guarda en «Quitadas de mi lista» (no se borra nada) y se puede volver a poner.
+- En las publicadas, «No me gusta, quitarlo» (es «Volver a como estaba antes», con confirmación en la página).
+- Arreglo: los filtros de «Lo que has pedido» no escondían nada desde la v128.
+- Servidor: columnas `pasada_lorena`, `oculta_padre` y `hecha_lorena`; RPC `pasar_a_lorena`, `quitar_de_mi_lista` y `lorena_tarea_hecha` (esta solo para la app de Lorena); avisos al móvil de Lorena y del padre. SQL en `herramientas/sql/v134-pasar-a-lorena.sql`.
+
 ## Versión 133: las pestañas de arriba vuelven a como estaban (petición n.º 7 del padre)
 - Se quita lo de la versión 131: las pestañas principales vuelven a su aspecto de antes (letra clara sobre la cabecera oscura y la elegida subrayada en rojo). Los subapartados siguen como botones rojos.
 

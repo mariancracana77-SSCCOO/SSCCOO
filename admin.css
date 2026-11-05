@@ -789,3 +789,38 @@ details.pet-item > summary:focus-visible { outline: 3px solid var(--rojo-ic, var
 .pet-avisos .btn { justify-self: start; min-height: 48px; }
 .pet-avisos.activo { border-left: 5px solid #1F7A45; }
 .pet-avisos .msg:empty { display: none; }
+/* v134 (lo pidió Lorena): «Que lo siga Lorena» y «Quitar de mi lista» */
+.pet-item[hidden] { display: none; } /* arreglo: .pet-item display:grid pisaba [hidden] y los filtros de la v128 no escondían nada */
+.pet-cab .pet-lorena-etq { display: inline-flex; align-items: center; gap: 4px; font-size: .85rem; font-weight: 800; padding: 2px 10px; border-radius: 999px; background: var(--azul); color: var(--tarjeta, #fff); }
+.pet-pasada { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--fondo); border-left: 5px solid var(--azul); }
+.pet-ficha.de-lorena { border-color: var(--azul); }
+.pet-pasar .pet-pasar-btn { min-height: 56px; font-size: 1.05rem; }
+.pet-confirma { display: grid; gap: 8px; padding: 12px; border-radius: 10px; border: 2px solid var(--rojo); background: var(--fondo); }
+.pet-confirma[hidden] { display: none; }
+.pet-confirma p { margin: 0; font-weight: 700; }
+.pet-confirma .btn { justify-self: start; min-height: 52px; }
+.pet-quitar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding-top: 10px; border-top: 1px dashed var(--linea); }
+.pet-quitar .btn-txt { min-height: 44px; display: inline-flex; align-items: center; gap: 6px; }
+.pet-quitar .ayuda { font-size: .9rem; margin: 0; }
+.pet-quitar .msg { flex-basis: 100%; }
+.pet-quitar .msg:empty { display: none; }
+/* v134: peticiones agrupadas (Te toca a ti / En marcha / Hechas / Pasadas a Lorena / Quitadas) y estado en color */
+.pet-grupo { display: grid; gap: 0; margin-bottom: 14px; }
+.pet-grupo[hidden] { display: none; }
+.pet-grupo > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 4px; font-family: var(--cond); font-size: 1.35rem; font-weight: 800; text-transform: uppercase; letter-spacing: .02em; }
+.pet-grupo > summary::-webkit-details-marker { display: none; }
+.pet-grupo > summary::after { content: "+"; margin-left: auto; font-size: 1.5rem; line-height: 1; color: var(--suave); }
+.pet-grupo[open] > summary::after { content: "−"; }
+.pet-grupo-n { display: inline-block; min-width: 1.8em; padding: 0 8px; border-radius: 999px; background: var(--linea); font-size: .95rem; text-align: center; }
+.pet-grupo.g-toca > summary { color: var(--verde); }
+.pet-grupo.g-toca .pet-grupo-n { background: var(--verde); color: #fff; }
+.pet-grupo.g-lorena .pet-grupo-n { background: var(--azul); color: var(--tarjeta, #fff); }
+.pet-num { color: var(--suave); font-weight: 800; white-space: nowrap; }
+.etq.pet-est { font-weight: 800; }
+.etq.pet-est.verde { background: var(--verde-suave); color: var(--verde); }
+.etq.pet-est.azul { background: var(--azul-suave); color: var(--azul); }
+.etq.pet-est.rojo { background: var(--rojo-suave); color: var(--rojo-ic); }
+.etq.pet-est.gris { background: var(--linea); color: var(--suave); }
+.pet-cab .pet-lorena-etq.hecha { background: var(--verde); color: #fff; }
+.pet-pasada.hecha { border-left-color: var(--verde); }
+.pet-m.de-lorena { border-left-color: var(--azul) !important; }
