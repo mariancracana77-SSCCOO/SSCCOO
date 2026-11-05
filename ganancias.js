@@ -506,7 +506,8 @@
         const ds = dias.filter(f => lunesDe(f) === l), r = resumen(c, ds);
         // Cada semana con su banda oscura (lo pidió Lorena: que la semana se vea bien, es lo que busca la gente)
         L.push({ banda: "Semana " + semDe(l).n + " de " + semDe(l).a + " · del " + fDia(l, true) + " al " + fDia(suma(l, 6), true), color: [0.082, 0.098, 0.118], tam: 12 }, ["", 3]);
-        ds.forEach(f => { const x = c[f]; L.push([fDia(f, true) + ": " + eur(x.total), 10, true, 6]); L.push([x.lineas.map(li => nombreC(li.t) + (cantidadTxt(li.t, li.n) ? " " + cantidadTxt(li.t, li.n) : "") + " " + eur(li.imp)).join(" · "), 9, false, 14]); });
+        // v130 (petición n.º 4): el total de cada día en verde (C_TOT), como el de la semana
+        ds.forEach(f => { const x = c[f]; L.push([fDia(f, true) + ": " + eur(x.total), 10, true, 6, C_TOT]); L.push([x.lineas.map(li => nombreC(li.t) + (cantidadTxt(li.t, li.n) ? " " + cantidadTxt(li.t, li.n) : "") + " " + eur(li.imp)).join(" · "), 9, false, 14]); });
         { const lib = diasDe(l).filter(f => DATOS.libres[f] && (!elegidos || elegidos.includes(f)) && !(c[f] && c[f].lineas.length)); if (lib.length) L.push(["Días libres: " + lib.map(f => fDia(f)).join(", "), 10, false, 6, GRIS]); }
         // Resumen por conceptos de la semana (v88): para comparar con lo que paga la empresa
         if (r.por.length) { L.push(["Por conceptos:", 10, true, 6, GRIS]); r.por.forEach(p => L.push([nombreC(p.t) + (p.n && cantidadTxt(p.t, p.n) ? " " + cantidadTxt(p.t, p.n) : "") + ": " + eur(p.imp) + (p.tope ? (p.n ? " (con tope al mes)" : " (no suma: ya estaba el máximo del mes)") : ""), 9, false, 14, p.t.pago === "Mensual" ? C_NOM : C_SEM])); }
