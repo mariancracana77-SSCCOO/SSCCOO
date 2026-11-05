@@ -195,6 +195,7 @@ Las tareas mecánicas de varios pasos se encargan a un agente (herramienta Agent
 ## Pruebas
 Playwright con Chromium (sin `playwright install`), servidor local `python3 -m http.server 8765` y un mock de supabase-js que sustituye `lib/supabase.js` (`pruebas/mock-supabase.js`). Prueba rápida: `NODE_PATH=$(npm root -g) node pruebas/humo.cjs` (todas las pestañas en 320/360/412 px y PC, claro/oscuro, letra muy grande; errores de consola/CSP, scroll lateral, ventanas y recargas). Probar móvil 320–412 px y PC, claro/oscuro, letra «muy grande», y que no haya errores de consola ni de CSP.
 
+- Tampoco se llega a `mariancracana77-ssccoo.github.io` (el proxy da 403). Para comprobar lo publicado: que el «pages build and deployment» de GitHub Actions de ese commit salga «success» y la prueba rápida en verde sobre el mismo árbol de `main`.
 - Desde este entorno no se llega a Supabase por HTTP (proxy). Para probar una edge function: `net.http_post(...)` por SQL y leer `net._http_response`.
 
 ## Circuito de peticiones (v117, lo pidió Lorena)
