@@ -2281,3 +2281,10 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .cab-tablon .pestanas-web a:not(.pest-cond) .cuenta-pestana { background: #fff; color: #ab1012; }
 .cab-tablon .pestanas-web a.activa:not(.pest-cond) .cuenta-pestana { background: var(--rojo); color: #fff; }
 .cab-tablon .pestanas-web a:not(.pest-cond):focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+
+/* v132 (petición n.º 6 del padre): los subapartados (segunda fila de pestañas) con los colores de la senyera: fondo amarillo con las cuatro barras rojas y letra blanca con contorno oscuro para que se lea. El elegido, blanco con letra roja y raya de la bandera abajo. La fila de Zona Conductores sigue azul. */
+.subpest-caja:not(.cond) .subpestanas a { border-color: #DA121A; color: #fff; text-shadow: 0 0 2px #000, 0 0 3px #000, 0 1px 2px #000; }
+.subpest-caja:not(.cond) .subpestanas a { background: linear-gradient(180deg, #FCDD09 0 11.11%, #DA121A 11.11% 22.22%, #FCDD09 22.22% 33.33%, #DA121A 33.33% 44.44%, #FCDD09 44.44% 55.55%, #DA121A 55.55% 66.66%, #FCDD09 66.66% 77.77%, #DA121A 77.77% 88.88%, #FCDD09 88.88% 100%); }
+.subpest-caja:not(.cond) .subpestanas a:hover { border-color: #fff; color: #fff; }
+.subpest-caja:not(.cond) .subpestanas a.activa { background: #fff linear-gradient(90deg, #FCDD09 0 20%, #DA121A 20% 40%, #FCDD09 40% 60%, #DA121A 60% 80%, #FCDD09 80% 100%) no-repeat left bottom / 100% 5px; border-color: #DA121A; color: #ab1012; text-shadow: none; padding-bottom: 9px; }
+.subpest-caja:not(.cond) .subpestanas a:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
