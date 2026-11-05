@@ -75,6 +75,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 130: total de cada día en verde en el PDF de «Mis incentivos» (petición n.º 4 del padre)
+- En el PDF de la semana o del mes, la línea de cada día con lo ganado («lunes, 26 de octubre: 64,88 €») sale en el mismo verde que «Total de la semana». La pantalla no cambia.
+
 ## Versión 129: avisos al móvil solo para tu padre
 - En «Pedir un cambio a Claude», «Avisarme en este móvil»: le llega un aviso cuando Claude le contesta o le toca decidir algo. Solo a los móviles del panel (tabla `push_admin`, función `avisar-padre`, disparador `peticiones_avisa_padre`), nunca a los de los trabajadores.
 - En la web, un móvil que solo activó los avisos del panel no se apunta a los de los trabajadores, y apagar los de la web no apaga los del panel.
