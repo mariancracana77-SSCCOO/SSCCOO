@@ -75,6 +75,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 133: las pestañas de arriba vuelven a como estaban (petición n.º 7 del padre)
+- Se quita lo de la versión 131: las pestañas principales vuelven a su aspecto de antes (letra clara sobre la cabecera oscura y la elegida subrayada en rojo). Los subapartados siguen como botones rojos.
+
 ## Versión 132: el asistente de actas tapa nombres y datos antes de enviar (traído del comité)
 - En «Nueva acta», antes de enviar nada a la IA de Google: en el texto (nota, Word o PDF con texto) los nombres se cambian por [PERSONA 1], [PERSONA 2]… y vuelven a su sitio en el acta; DNI, teléfonos, emails, cuentas, n.º de la Seg. Social y matrículas se quedan tapados.
 - Las fotos y los PDF escaneados se tapan con el dedo antes de enviarlos («Fino», «Medio», «Gordo», «Deshacer»).
