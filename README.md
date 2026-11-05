@@ -75,6 +75,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 124: morado dentro de Zona Conductores (petición n.º 3 del padre)
+- Los apartados de dentro de Zona Conductores (Mis descansos, Mis incentivos, Aparcamientos en mi ruta: botones, tarjetas y raya del título) pasan de azul a morado. La pestaña camión sigue azul.
+
+## Versión 123: dedo en el camión de Zona Conductores (petición n.º 1 del padre)
+- En la pestaña camión de Zona Conductores, un dedo pequeño en un círculo crema que hace un toque suave; no sale cuando ya estás dentro.
+
 ## Versión 122: volver a como estaba antes (lo pidió Lorena)
 - En «Pedir un cambio a Claude», cada petición ya publicada tiene «Volver a como estaba antes»: Claude quita ese cambio de la web, con copia antes, y avisa a Lorena.
 - «Avisar a Lorena» sale ahora en todas las peticiones.
