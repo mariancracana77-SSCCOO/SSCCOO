@@ -75,6 +75,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 132: el asistente de actas tapa nombres y datos antes de enviar (traído del comité)
+- En «Nueva acta», antes de enviar nada a la IA de Google: en el texto (nota, Word o PDF con texto) los nombres se cambian por [PERSONA 1], [PERSONA 2]… y vuelven a su sitio en el acta; DNI, teléfonos, emails, cuentas, n.º de la Seg. Social y matrículas se quedan tapados.
+- Las fotos y los PDF escaneados se tapan con el dedo antes de enviarlos («Fino», «Medio», «Gordo», «Deshacer»).
+- «Nombres que se tapan siempre» (solo en ese dispositivo) y los de los delegados se tapan solos.
+- Nuevo paso «Preparar y revisar»: enseña exactamente lo que se enviará, con lo tapado marcado, antes de «Enviar y hacer el acta».
+
 ## Versión 131: pestañas principales en rojo (petición n.º 5 del padre)
 - Las pestañas de arriba (de Inicio a Afíliate) son botones rojos con letra blanca, como los subapartados; la elegida, blanca con letra roja. La del camión de Zona Conductores sigue azul.
 

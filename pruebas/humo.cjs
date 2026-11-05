@@ -78,6 +78,17 @@ const CASOS = [
       await ps.evaluate(() => { if (window.ED) { ED.sucio = false; return cerrarEditor(); } });
       await ps.waitForTimeout(120);
     }
+    // v132: el asistente de actas tapa nombres y datos antes de enviar y los nombres vuelven al acta
+    if (c.nombre === CASOS[0].nombre) {
+      await ps.evaluate(() => abrirEditor("actas")); await ps.waitForTimeout(200);
+      await ps.evaluate(() => { const d = document.querySelector("#notas-ia"); d.closest("details").open = true; d.value = "Asisten el compañero Pérez y Marta Soler. Teléfono 612 345 678, correo juan@gmail.com, DNI 12345678Z. Marta Soler pidió la jornada intensiva."; d.dispatchEvent(new Event("input")); });
+      await ps.click("#b-ia"); await ps.waitForSelector("#ia-revision:not([hidden]) [data-ia-enviar]", { timeout: 3000 }).catch(() => fallos.push(`${c.nombre}: asistente: no sale «Esto es lo que se enviará»`));
+      await ps.click("[data-ia-enviar]").catch(() => {}); await ps.waitForTimeout(400);
+      const r = await ps.evaluate(() => ({ notas: window.__IA?.notas || "", resumen: document.getElementById("f-resumen")?.value || "" }));
+      ["Pérez", "612", "juan@", "12345678", "Marta"].forEach(x => { if (r.notas.includes(x)) fallos.push(`${c.nombre}: asistente: «${x}» se envía sin tapar`); });
+      if (!/^(Pérez|Marta Soler) pidió/.test(r.resumen)) fallos.push(`${c.nombre}: asistente: el nombre no vuelve al acta (${r.resumen})`);
+      await ps.evaluate(() => { ED.sucio = false; return cerrarEditor(); }); await ps.waitForTimeout(150);
+    }
     errores.filter(e => !/favicon|ERR_|Failed to load resource/.test(e)).forEach(e => fallos.push(`${c.nombre}: ${e}`));
     await ctx.close();
     console.log("Hecho:", c.nombre);
