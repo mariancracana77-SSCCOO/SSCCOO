@@ -789,3 +789,18 @@ details.pet-item > summary:focus-visible { outline: 3px solid var(--rojo-ic, var
 .pet-avisos .btn { justify-self: start; min-height: 48px; }
 .pet-avisos.activo { border-left: 5px solid #1F7A45; }
 .pet-avisos .msg:empty { display: none; }
+/* v134 (lo pidió Lorena): «Que lo siga Lorena» y «Quitar de mi lista» */
+.pet-item[hidden] { display: none; } /* arreglo: .pet-item display:grid pisaba [hidden] y los filtros de la v128 no escondían nada */
+.pet-cab .pet-lorena-etq { display: inline-flex; align-items: center; gap: 4px; font-size: .85rem; font-weight: 800; padding: 2px 10px; border-radius: 999px; background: var(--azul); color: var(--tarjeta, #fff); }
+.pet-pasada { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--fondo); border-left: 5px solid var(--azul); }
+.pet-ficha.de-lorena { border-color: var(--azul); }
+.pet-pasar .pet-pasar-btn { min-height: 56px; font-size: 1.05rem; }
+.pet-confirma { display: grid; gap: 8px; padding: 12px; border-radius: 10px; border: 2px solid var(--rojo); background: var(--fondo); }
+.pet-confirma[hidden] { display: none; }
+.pet-confirma p { margin: 0; font-weight: 700; }
+.pet-confirma .btn { justify-self: start; min-height: 52px; }
+.pet-quitar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding-top: 10px; border-top: 1px dashed var(--linea); }
+.pet-quitar .btn-txt { min-height: 44px; display: inline-flex; align-items: center; gap: 6px; }
+.pet-quitar .ayuda { font-size: .9rem; margin: 0; }
+.pet-quitar .msg { flex-basis: 100%; }
+.pet-quitar .msg:empty { display: none; }
