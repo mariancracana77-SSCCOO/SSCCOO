@@ -1,6 +1,7 @@
-// Copia de la edge function «alerta-web» (v1). La que manda es la de Supabase.
+// Copia de la edge function «alerta-web» (v2). La que manda es la de Supabase.
 // Modo alerta (lo pidió Lorena, 5/11/2026): la llama solo privado.web_vigila() (tarea vigila-web) con x-cron-secret.
 // Deja un comentario en la PR de alertas n.º 3 (despierta a la sesión «Lorena-web») y en la PR buzón n.º 2 (despierta a «Timbres»).
+// v2: modo «coordina» (lo llama privado.coord_vigila, el coordinador): una versión subida no llega a la web en 15 min; solo en la PR n.º 3.
 // Usa el secreto GITHUB_TOKEN de siempre. El comentario solo dice qué archivo falla (el repositorio es público).
 const REPO = "mariancracana77-SSCCOO/SSCCOO";
 const PRS = (Deno.env.get("ALERTA_PRS") || "3,2").split(",");
@@ -14,14 +15,16 @@ Deno.serve(async (req) => {
   if (!cron || !cfg?.[0]?.valor || cron !== cfg[0].valor) return json({ error: "No autorizado" }, 401);
   const token = Deno.env.get("GITHUB_TOKEN");
   if (!token) return json({ ok: false, motivo: "sin_configurar" });
-  let b: { modo?: string; version?: string; detalle?: string } = {};
+  let b: { modo?: string; version?: string; detalle?: string; repo?: string } = {};
   try { b = await req.json(); } catch { /* sin cuerpo */ }
   const limpio = (s: unknown) => String(s ?? "").replace(/[^\w .,:?=()\/-]/g, "").slice(0, 400);
-  const texto = b.modo === "resuelto"
+  const texto = b.modo === "coordina"
+    ? `COORDINADOR: la versión ${limpio(b.version)} de ${limpio(b.repo)} se subió a main hace más de 15 minutos y no ha llegado a la web (la web no está rota, sigue con la anterior). Suele ser GitHub Pages atascado: mirar Actions «pages build and deployment»; si falló, coger el turno (privado.turno_coger) y volver a subir (por ejemplo un commit de documentación) para relanzarlo.`
+    : b.modo === "resuelto"
     ? `Resuelto: la web publicada vuelve a ir bien (versión ${limpio(b.version)}).`
-    : `ALERTA: la web publicada falla desde hace unos 10 minutos (versión ${limpio(b.version) || "?"}). Falla: ${limpio(b.detalle) || "?"}. Coger el turno ajustes/publicando y volver a la última versión buena.`;
+    : `ALERTA: la web publicada falla desde hace unos 10 minutos (versión ${limpio(b.version) || "?"}). Falla: ${limpio(b.detalle) || "?"}. Coger el turno (privado.turno_coger) y volver a la última versión buena.`;
   const res: Record<string, number> = {};
-  for (const pr of PRS) {
+  for (const pr of (b.modo === "coordina" ? ["3"] : PRS)) {
     const r = await fetch(`https://api.github.com/repos/${REPO}/issues/${encodeURIComponent(pr.trim())}/comments`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "ccoo-calsina-alerta", "Content-Type": "application/json" },
