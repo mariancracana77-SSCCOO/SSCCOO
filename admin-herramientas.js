@@ -525,6 +525,12 @@ const PET_ANADE = {}; // archivos elegidos para añadir a cada petición (por id
 async function pintaPeticiones() {
   PET_ARCH = [];
   $("zona").innerHTML = `<div class="sec-cab"><div><h1>Pedir un cambio a Claude</h1><p>Escribe lo que quieres cambiar o añadir en la web o en el panel. Para no escribir, toca el micrófono del teclado del móvil y dilo en voz alta. Puedes añadir fotos, capturas de pantalla y vídeos cortos. Al enviarlo, Claude se entera al momento, lo prepara y avisa a Lorena: no se publica nada sin que ella lo diga.</p></div></div>
+    <div class="panel pet-avisos" id="pet-avisos" hidden>
+      <p class="pet-avisos-tit">${icono("campana", "p")}<b>Avisos en este móvil</b></p>
+      <p class="ayuda" id="pet-avisos-txt">Te llega un aviso al móvil cuando Claude te contesta o te toca decidir algo. Solo a ti: no les llega a los trabajadores.</p>
+      <button type="button" class="btn" id="pet-avisos-btn">${icono("campana", "p")}Avisarme en este móvil</button>
+      <p class="msg" id="pet-avisos-msg" role="status" aria-live="polite"></p>
+    </div>
     <p class="aviso-pausa" id="pet-pausa" role="status" hidden>${icono("reloj", "p")}<span>Ahora mismo Claude está en pausa. Puedes enviar igual: lo verá más tarde, cuando Lorena lo vuelva a encender.</span></p>
     <div class="panel pet-consejos"><b>Para que salga bien</b><ul>
       <li><b>Una cosa por petición.</b> Si quieres tres cambios, envía tres peticiones.</li>
@@ -574,6 +580,7 @@ async function pintaPeticiones() {
   pintaHechas();
   // v121: si Claude está en pausa (lo enciende o apaga Lorena desde su app; Claude lo copia en peticiones_estado), se avisa arriba
   sb.from("peticiones_estado").select("pausa").eq("id", 1).maybeSingle().then(({ data }) => { const a = $("pet-pausa"); if (a) a.hidden = !data?.pausa; }, () => {});
+  pintaAvisosPanel();
 }
 // v128 (lo pidió Lorena: que el padre vea como ella lo pedido, lo hecho y pueda volver a los chats): cada petición se pliega con su
 // título y estado; arriba, «En marcha» / «Terminadas» / «Todas» y un buscador; dentro, lo que ha hecho Claude (columna ficha).
@@ -594,6 +601,52 @@ const fichaPet = (x) => {
     ${adjPet(caps)}
     ${x.version && ["publicada", "deshecha"].includes(x.estado) ? `<p class="fecha-txt">Se publicó en la versión ${esc(x.version)}.</p>` : ""}</div>`;
 };
+// v129 (lo pidió Lorena: «que la noti le llegue solo a su dispositivo»): avisos al móvil solo para quien usa el panel.
+// Se guarda en la tabla push_admin (RPC suscribir_push_admin / desuscribir_push_admin / push_admin_activo), aparte de push_subs
+// (los trabajadores). Los manda la función avisar-padre cuando Claude escribe en el chat de una petición (disparador peticiones_avisa_padre).
+// localStorage ccoo-push-panel = la dirección de este móvil, para que la web pública no la apunte a los avisos de los trabajadores.
+const pushB64 = (b) => { const p = "=".repeat((4 - b.length % 4) % 4), t = atob((b + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from([...t].map(c => c.charCodeAt(0))); };
+const PUSH_PANEL_OK = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+async function pintaAvisosPanel() {
+  const caja = $("pet-avisos"); if (!caja || !PUSH_PANEL_OK) return;
+  caja.hidden = false;
+  const btn = $("pet-avisos-btn"), txt = $("pet-avisos-txt");
+  let activo = false, sub = null;
+  try {
+    const reg = await navigator.serviceWorker.ready; sub = await reg.pushManager.getSubscription();
+    if (sub && Notification.permission === "granted") { const { data } = await sb.rpc("push_admin_activo", { p_endpoint: sub.endpoint }); activo = !!data; }
+  } catch { /* sin avisos en este navegador */ }
+  if (!$("pet-avisos")) return;
+  caja.classList.toggle("activo", activo);
+  txt.textContent = activo ? "Activados: te llega un aviso a este móvil cuando Claude te contesta o te toca decidir algo. Solo a ti." : "Te llega un aviso al móvil cuando Claude te contesta o te toca decidir algo. Solo a ti: no les llega a los trabajadores.";
+  btn.innerHTML = activo ? `${icono("cerrar", "p")}Dejar de avisarme en este móvil` : `${icono("campana", "p")}Avisarme en este móvil`;
+  btn.className = activo ? "btn sec" : "btn";
+  btn.onclick = async () => {
+    btn.disabled = true;
+    try {
+      if (activo) {
+        if (sub) await sb.rpc("desuscribir_push_admin", { p_endpoint: sub.endpoint });
+        try { localStorage.removeItem("ccoo-push-panel"); } catch { /* sin almacenamiento */ }
+        msg("pet-avisos-msg", "Ya no te llegarán avisos de Claude a este móvil.", true);
+      } else {
+        msg("pet-avisos-msg", "Pidiendo permiso al móvil…", true);
+        const perm = await Notification.requestPermission();
+        if (perm !== "granted") throw new Error("El móvil no ha dado permiso. Ve a los ajustes del navegador → Notificaciones y permite esta página, y vuelve a pulsar.");
+        const reg = await navigator.serviceWorker.ready;
+        let s2 = await reg.pushManager.getSubscription();
+        if (!s2) s2 = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: pushB64(VAPID_PUBLICA) });
+        const j = s2.toJSON();
+        const { data: r, error } = await sb.rpc("suscribir_push_admin", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
+        if (error) throw error;
+        if (r !== "ok") throw new Error("No se ha podido guardar. Prueba otra vez.");
+        try { localStorage.setItem("ccoo-push-panel", j.endpoint); } catch { /* sin almacenamiento */ }
+        msg("pet-avisos-msg", "Hecho: te avisaré en este móvil.", true);
+      }
+    } catch (er) { msg("pet-avisos-msg", errTxt(er)); }
+    btn.disabled = false;
+    await pintaAvisosPanel();
+  };
+}
 async function pintaHechas() {
   const z = $("pet-hechas"); if (!z) return;
   const { data, error } = await sb.from("peticiones_claude").select("id,creado,texto,adjuntos,estado,respuesta,mensajes,deshacer,version,propuesta,decision,ficha").order("id", { ascending: false }).limit(PET_LIMITE);
