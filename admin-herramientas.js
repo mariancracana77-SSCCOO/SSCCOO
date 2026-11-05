@@ -575,21 +575,52 @@ async function pintaPeticiones() {
   // v121: si Claude está en pausa (lo enciende o apaga Lorena desde su app; Claude lo copia en peticiones_estado), se avisa arriba
   sb.from("peticiones_estado").select("pausa").eq("id", 1).maybeSingle().then(({ data }) => { const a = $("pet-pausa"); if (a) a.hidden = !data?.pausa; }, () => {});
 }
+// v127 (lo pidió Lorena: que el padre vea como ella lo pedido, lo hecho y pueda volver a los chats): cada petición se pliega con su
+// título y estado; arriba, «En marcha» / «Terminadas» / «Todas» y un buscador; dentro, lo que ha hecho Claude (columna ficha).
+// Se recuerda qué tenía abierto, el filtro y cuántos mensajes de Claude ha visto (localStorage, en try/catch).
+const PET_EN_MARCHA = ["nueva", "en_curso", "lista", "no_hecha"];
+let PET_LIMITE = 30;
+const petLee = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const petGuarda = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* sin almacenamiento */ } };
+const petTitulo = (x) => (x.ficha?.titulo || String(x.texto || "").split("\n")[0]).slice(0, 90);
+const petAccion = (x) => (x.estado === "lista" && x.propuesta && !x.decision) || x.estado === "no_hecha";
+const fichaPet = (x) => {
+  const f = x.ficha || {}, hecho = Array.isArray(f.hecho) ? f.hecho : [];
+  const caps = (Array.isArray(f.capturas) ? f.capturas : []).filter(c => /^https:\/\/kdfedwcskymaitvpryvg\.supabase\.co\//.test(c?.url || "")).map(c => ({ url: c.url, nombre: c.texto || "Captura", tipo: "image/jpeg" }));
+  if (!f.entendido && !hecho.length && !caps.length && !x.version) return "";
+  return `<div class="pet-ficha"><b>${icono("magia", "p")}Lo que ha hecho Claude</b>
+    ${f.entendido ? `<p><span class="pet-ficha-etq">Lo ha entendido así:</span> ${esc(f.entendido)}</p>` : ""}
+    ${hecho.length ? `<ul>${hecho.map(h => `<li>${esc(h)}</li>`).join("")}</ul>` : ""}
+    ${adjPet(caps)}
+    ${x.version && ["publicada", "deshecha"].includes(x.estado) ? `<p class="fecha-txt">Se publicó en la versión ${esc(x.version)}.</p>` : ""}</div>`;
+};
 async function pintaHechas() {
   const z = $("pet-hechas"); if (!z) return;
-  const { data, error } = await sb.from("peticiones_claude").select("id,creado,texto,adjuntos,estado,respuesta,mensajes,deshacer,version,propuesta,decision").order("id", { ascending: false }).limit(30);
+  const { data, error } = await sb.from("peticiones_claude").select("id,creado,texto,adjuntos,estado,respuesta,mensajes,deshacer,version,propuesta,decision,ficha").order("id", { ascending: false }).limit(PET_LIMITE);
   if (!$("pet-hechas")) return;
   if (error) { z.innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(errTxt(error))}</p>`; return; }
   // v121: cada petición es como un chat: lo que pidió, lo que ha ido añadiendo y lo que contesta Claude
   const burbuja = (m) => `<li class="pet-m ${m.quien === "claude" ? "de-claude" : "de-padre"}${m.aviso ? " aviso" : ""}"><small>${m.quien === "claude" ? "Claude" : "Tú"} · ${esc(horaPet(m.cuando))}</small>${m.texto ? `<p class="pet-texto">${esc(m.texto)}</p>` : ""}${adjPet(m.adjuntos)}</li>`;
-  z.innerHTML = (data || []).length ? (data || []).map(x => {
-    const ms = Array.isArray(x.mensajes) ? x.mensajes : [];
-    return `<article class="panel pet-item est-${esc(x.estado)}" data-pet="${esc(x.id)}">
-      <p class="pet-cab"><span class="etq">${esc(PET_ESTADO[x.estado] || x.estado)}</span><small>N.º ${esc(x.id)} · ${esc(horaPet(x.creado))}</small></p>
+  const filas = data || [], abiertas = new Set(petLee("ccoo-adm-pet-abiertas", [])), vistos = petLee("ccoo-adm-pet-vistos", {});
+  const deClaude = (x) => (Array.isArray(x.mensajes) ? x.mensajes : []).filter(m => m.quien === "claude").length;
+  const enMarcha = filas.filter(x => PET_EN_MARCHA.includes(x.estado)).length;
+  let filtro = petLee("ccoo-adm-pet-filtro", "marcha"); if (filtro === "marcha" && !enMarcha && filas.length) filtro = "todas";
+  const chip = (k, t, n) => `<button type="button" class="pet-chip" data-pet-filtro="${k}" aria-pressed="${filtro === k}">${t}${n != null ? ` <span>${n}</span>` : ""}</button>`;
+  const cabecera = filas.length ? `<div class="pet-filtros" role="group" aria-label="Qué peticiones ver">${chip("marcha", "En marcha", enMarcha)}${chip("hechas", "Terminadas", filas.length - enMarcha)}${chip("todas", "Todas", null)}</div>
+    ${filas.length > 4 ? `<label class="pet-busca">${icono("buscar", "p")}<input type="search" id="pet-busca" placeholder="Buscar en lo que has pedido" aria-label="Buscar en lo que has pedido" autocomplete="off"></label>` : ""}
+    <p class="fecha-txt pet-nada" id="pet-nada" hidden>No hay ninguna aquí. Toca «Todas» para verlas todas.</p>` : "";
+  z.innerHTML = filas.length ? cabecera + filas.map(x => {
+    const ms = Array.isArray(x.mensajes) ? x.mensajes : [], nuevos = deClaude(x) - (vistos[x.id] ?? 0);
+    const abierta = abiertas.has(x.id) || petAccion(x);
+    return `<details class="panel pet-item est-${esc(x.estado)}" data-pet="${esc(x.id)}" data-grupo="${PET_EN_MARCHA.includes(x.estado) ? "marcha" : "hechas"}"${abierta ? " open" : ""}>
+      <summary class="pet-sum"><span class="pet-tit">${esc(petTitulo(x))}</span>
+        <span class="pet-cab"><span class="etq">${esc(PET_ESTADO[x.estado] || x.estado)}</span>${petAccion(x) ? `<span class="pet-toca">Te toca a ti</span>` : ""}${nuevos > 0 ? `<span class="pet-nuevo">${nuevos === 1 ? "1 mensaje nuevo" : `${nuevos} mensajes nuevos`}</span>` : ""}<small>N.º ${esc(x.id)} · ${esc(horaPet(x.creado))}${ms.length ? ` · ${ms.length} ${ms.length === 1 ? "mensaje" : "mensajes"}` : ""}</small></span></summary>
+      <div class="pet-cuerpo">
       <p class="pet-texto">${esc(x.texto)}</p>
       ${adjPet(x.adjuntos)}
       ${ms.length ? `<ul class="pet-chat" aria-label="Lo añadido después">${ms.map(burbuja).join("")}</ul>` : ""}
       ${x.respuesta ? `<p class="pet-resp"><b>Claude:</b> ${esc(x.respuesta)}</p>` : ""}
+      ${fichaPet(x)}
       ${x.estado === "lista" && x.propuesta && !x.decision ? `<div class="pet-decide" role="group" aria-label="¿Qué hago con esta petición?">
         <p class="pet-decide-tit">${icono("ver", "p")}Mira las fotos de arriba. ¿Te gusta cómo queda?</p>
         <button type="button" class="btn pet-publica" data-decide="${esc(x.id)}" data-que="publicar">${icono("check", "p")}Publicar</button>
@@ -609,7 +640,32 @@ async function pintaHechas() {
         <p class="msg" role="status" aria-live="polite"></p>
         <button class="btn" type="submit">${icono("check", "p")}Enviar a Claude</button>
       </form>
-    </article>`; }).join("") : `<div class="panel vacio">${icono("magia")}Todavía no has pedido nada.</div>`;
+      </div>
+    </details>`; }).join("") + (filas.length >= PET_LIMITE ? `<button type="button" class="btn sec pet-mas" id="pet-mas">${icono("abajo", "p")}Ver las más antiguas</button>` : "") : `<div class="panel vacio">${icono("magia")}Todavía no has pedido nada.</div>`;
+  // v127: filtro, buscador, plegar y «mensajes nuevos»
+  const aplica = () => {
+    const q = $("pet-busca")?.value.trim() || ""; let n = 0;
+    z.querySelectorAll("details.pet-item").forEach(d => {
+      const ok = (filtro === "todas" || q || d.dataset.grupo === filtro) && (!q || coincide(d.textContent, q));
+      d.hidden = !ok; if (ok) n++;
+    });
+    const nada = $("pet-nada"); if (nada) nada.hidden = n > 0;
+    z.querySelectorAll("[data-pet-filtro]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.petFiltro === filtro)));
+  };
+  z.querySelectorAll("[data-pet-filtro]").forEach(b => b.onclick = () => { filtro = b.dataset.petFiltro; petGuarda("ccoo-adm-pet-filtro", filtro); aplica(); });
+  let espera; $("pet-busca")?.addEventListener("input", () => { clearTimeout(espera); espera = setTimeout(aplica, 200); });
+  $("pet-mas")?.addEventListener("click", () => { PET_LIMITE += 30; pintaHechas(); });
+  // Las que ya salen abiertas cuentan como vistas (sin quitar ahora la marca «nuevo»); el toggle del primer pintado no se guarda
+  const vis = petLee("ccoo-adm-pet-vistos", {}); filas.forEach(x => { if (z.querySelector(`details[data-pet="${x.id}"]`)?.open) vis[x.id] = deClaude(x); }); petGuarda("ccoo-adm-pet-vistos", vis);
+  let listo = false; setTimeout(() => { listo = true; }, 0);
+  z.querySelectorAll("details.pet-item").forEach(d => d.addEventListener("toggle", () => {
+    if (!listo) return;
+    const id = Number(d.dataset.pet), ab = new Set(petLee("ccoo-adm-pet-abiertas", []));
+    if (d.open) { ab.add(id); const x = filas.find(f => f.id === id); if (x) { const v = petLee("ccoo-adm-pet-vistos", {}); v[id] = deClaude(x); petGuarda("ccoo-adm-pet-vistos", v); d.querySelector(".pet-nuevo")?.remove(); } }
+    else ab.delete(id);
+    petGuarda("ccoo-adm-pet-abiertas", [...ab].slice(-40));
+  }));
+  aplica();
   // v121: si Claude dice que no, el padre puede pedir que lo mire Lorena (le llega un aviso al móvil)
   z.querySelectorAll("[data-avisa-lorena]").forEach(b => b.onclick = async () => {
     const id = Number(b.dataset.avisaLorena), mid = `pet-lorena-msg-${id}`; b.disabled = true;
