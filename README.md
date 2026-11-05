@@ -75,7 +75,8 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
-## Versión 125: fotos dentro del chat de las peticiones (lo pidió Lorena)
+## Versión 125: el padre ve las fotos y decide antes de publicar (lo pidió Lorena)
+- Antes de publicar lo que pide el padre, Claude le deja en el chat de la petición las fotos de cómo queda y tres botones: «Publicar», «Añadir algo o mejorarlo» y «Descartar» (pregunta antes si está seguro).
 - En «Pedir un cambio a Claude», las fotos de cada mensaje (las que manda el padre y las capturas que pone Claude de lo que ha hecho) se ven dentro del chat; al tocarlas, se abren en grande.
 
 ## Versión 124: morado dentro de Zona Conductores (petición n.º 3 del padre)
