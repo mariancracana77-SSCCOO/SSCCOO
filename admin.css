@@ -804,3 +804,20 @@ details.pet-item > summary:focus-visible { outline: 3px solid var(--rojo-ic, var
 .pet-quitar .ayuda { font-size: .9rem; margin: 0; }
 .pet-quitar .msg { flex-basis: 100%; }
 .pet-quitar .msg:empty { display: none; }
+/* v134: peticiones agrupadas (Te toca a ti / En marcha / Hechas / Pasadas a Lorena / Quitadas) y estado en color */
+.pet-grupo { display: grid; gap: 0; margin-bottom: 14px; }
+.pet-grupo[hidden] { display: none; }
+.pet-grupo > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 4px; font-family: var(--cond); font-size: 1.35rem; font-weight: 800; text-transform: uppercase; letter-spacing: .02em; }
+.pet-grupo > summary::-webkit-details-marker { display: none; }
+.pet-grupo > summary::after { content: "+"; margin-left: auto; font-size: 1.5rem; line-height: 1; color: var(--suave); }
+.pet-grupo[open] > summary::after { content: "−"; }
+.pet-grupo-n { display: inline-block; min-width: 1.8em; padding: 0 8px; border-radius: 999px; background: var(--linea); font-size: .95rem; text-align: center; }
+.pet-grupo.g-toca > summary { color: var(--verde); }
+.pet-grupo.g-toca .pet-grupo-n { background: var(--verde); color: #fff; }
+.pet-grupo.g-lorena .pet-grupo-n { background: var(--azul); color: var(--tarjeta, #fff); }
+.pet-num { color: var(--suave); font-weight: 800; white-space: nowrap; }
+.etq.pet-est { font-weight: 800; }
+.etq.pet-est.verde { background: var(--verde-suave); color: var(--verde); }
+.etq.pet-est.azul { background: var(--azul-suave); color: var(--azul); }
+.etq.pet-est.rojo { background: var(--rojo-suave); color: var(--rojo-ic); }
+.etq.pet-est.gris { background: var(--linea); color: var(--suave); }
