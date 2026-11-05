@@ -75,6 +75,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 126: Zona Conductores con el azul del camión (petición n.º 3 del padre, segunda parte)
+- Todo Zona Conductores (pestaña del camión, subapartados Mis descansos, Mis incentivos y Aparcamientos en mi ruta, tarjetas y raya del título) con el azul de la cabina del camión de Calsina de la foto del padre; se quita el morado.
+
 ## Versión 125: el padre ve las fotos y decide antes de publicar (lo pidió Lorena)
 - Antes de publicar lo que pide el padre, Claude le deja en el chat de la petición las fotos de cómo queda y tres botones: «Publicar», «Añadir algo o mejorarlo» y «Descartar» (pregunta antes si está seguro).
 - En «Pedir un cambio a Claude», las fotos de cada mensaje (las que manda el padre y las capturas que pone Claude de lo que ha hecho) se ven dentro del chat; al tocarlas, se abren en grande.
