@@ -75,6 +75,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 131: pestañas principales en rojo (petición n.º 5 del padre)
+- Las pestañas de arriba (de Inicio a Afíliate) son botones rojos con letra blanca, como los subapartados; la elegida, blanca con letra roja. La del camión de Zona Conductores sigue azul.
+
 ## Versión 130: total de cada día en verde en el PDF de «Mis incentivos» (petición n.º 4 del padre)
 - En el PDF de la semana o del mes, la línea de cada día con lo ganado («lunes, 26 de octubre: 64,88 €») sale en el mismo verde que «Total de la semana». La pantalla no cambia.
 
