@@ -75,6 +75,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 128: tu padre ve en el panel lo que ha pedido y lo que se ha hecho
+- «Lo que has pedido»: cada petición plegada con su título, estado, «Te toca a ti» y «N mensajes nuevos»; «En marcha» / «Terminadas» / «Todas», buscador y «Ver las más antiguas»; dentro, «Lo que ha hecho Claude» (columna `peticiones_claude.ficha`).
+- CLAUDE.md: medidor, vuelta automática, chats que no se borran, turno entre sesiones, modo alerta, revisor barato y subir de modelo si lo barato falla.
+
 ## Versión 127: PDF de «Mis descansos» con los descansos en azul (petición n.º 2 del padre)
 - En el PDF, cada jornada lleva su descanso en otra línea, en azul y más grande («Descanso después: 11 h · descanso diario normal»), y cada descanso semanal igual («Descanso: 62 h · normal»). Un poco de aire entre unas y otras. Los avisos siguen en rojo.
 
