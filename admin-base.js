@@ -37,6 +37,13 @@ function aviso(texto, error) {
 
 // ---------- Secciones ----------
 const FORMATO = `<div class="formato">Para dar formato: deja una línea en blanco entre párrafos, empieza una línea con <code>- </code> para hacer una lista y escribe <code>**así**</code> para poner negrita. Los enlaces se activan solos.</div>`;
+// v137: « de 10:00 a 14:00» si el destacado no es el día entero (para la etiqueta de la lista)
+const horaDestacado = (iso) => new Date(iso).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+function horasDestacado(x) {
+  if (!x.destacar_desde || !x.destacar_hasta) return "";
+  const d = horaDestacado(x.destacar_desde), h = horaDestacado(x.destacar_hasta);
+  return d === "00:00" && h === "23:59" ? "" : " de " + d + " a " + h;
+}
 const SECCIONES = {
   avisos: {
     nombre: "Avisos", icono: "avisos", tabla: "comunicados", orden: ["fecha", false], uno: "aviso", nuevo: "Nuevo aviso", lista: "aviso", campoColor: "categoria",
@@ -48,11 +55,13 @@ const SECCIONES = {
       { k: "adjuntos", l: "Archivos adjuntos", t: "archivos", opc: true, ayuda: "Si añades una foto o un cartel, la primera foto sale en grande en el aviso y en «Lo último»." },
       { checks: [{ k: "urgente", l: "Urgente: sale en rojo y arriba del todo en Inicio" }, { k: "fijado", l: "Fijar arriba de la lista de avisos" }, { k: "notificar", l: "Avisar en los móviles y en el canal de Telegram", def: true, soloNuevo: true }] },
       // v101–v102 (lo pidió el padre): el aviso se ve siempre y solo ese día sale destacado arriba en Inicio; «Programar» lo esconde hasta ese día
-      { k: "destacar_dia", l: "Destacar en Inicio el día", t: "date", opc: true, ayuda: "El aviso se ve en la web como siempre y ese día (de 0:00 a 23:59) sale destacado en rojo arriba del todo en Inicio, y llega una notificación a todos los móviles y a Telegram. Déjalo vacío si no quieres destacarlo un día concreto." },
+      { k: "destacar_dia", l: "Destacar en Inicio el día", t: "date", opc: true, ayuda: "El aviso se ve en la web como siempre y ese día sale destacado en rojo arriba del todo en Inicio, y llega una notificación a todos los móviles y a Telegram. Si pones horas abajo, solo sale destacado entre esas horas y luego vuelve a ser un aviso normal; sin horas, el día entero (de 0:00 a 23:59). Déjalo vacío si no quieres destacarlo." },
+      // v137 (petición n.º 10 del padre): destacar solo unas horas de ese día (se guarda en destacar_desde/destacar_hasta, que ya llevan hora)
+      { fila: [{ k: "destacar_hora_desde", l: "Destacado desde las", t: "time", opc: true }, { k: "destacar_hora_hasta", l: "hasta las", t: "time", opc: true }] },
       { k: "publicar_en", l: "Programar la publicación", t: "datetime-local", opc: true, atajos: true, ayuda: "Déjalo vacío para publicar ahora. Si pones día y hora, el aviso NO se ve en la web hasta ese momento, y entonces se publica y avisa. Para que se vea ya y solo se destaque un día, usa «Destacar en Inicio el día» y deja esto vacío. Para que se repita, usa «Avisos que se repiten»." },
     ],
     previa: (x) => previaCanales(x),
-    extracto: (x) => x.contenido, chips: (x) => [x.publicar_en && new Date(x.publicar_en) > new Date() ? "Programado: " + new Date(x.publicar_en).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : null, x.categoria, x.destacar_desde && "Destacado el " + new Date(x.destacar_desde).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }), x.urgente && !x.destacar_desde && "Urgente", x.fijado && "Fijado"], fechas: (x) => [x.fecha, x.actualizado],
+    extracto: (x) => x.contenido, chips: (x) => [x.publicar_en && new Date(x.publicar_en) > new Date() ? "Programado: " + new Date(x.publicar_en).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : null, x.categoria, x.destacar_desde && "Destacado el " + new Date(x.destacar_desde).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }) + horasDestacado(x), x.urgente && !x.destacar_desde && "Urgente", x.fijado && "Fijado"], fechas: (x) => [x.fecha, x.actualizado],
   },
   calendario: {
     nombre: "Calendario", icono: "calendario", tabla: "eventos", orden: ["fecha", false], uno: "fecha", nuevo: "Nueva fecha", lista: "evento", campoColor: "tipo",
