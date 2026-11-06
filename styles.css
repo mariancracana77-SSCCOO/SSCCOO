@@ -1513,7 +1513,7 @@ html[data-letra] .subpestanas a { font-size: .92rem; }
 .tit-seccion .traducir .accion { text-transform: none; letter-spacing: 0; font-size: .85rem; }
 .tit-seccion .traducir .menu-idiomas { text-transform: none; letter-spacing: 0; }
 /* v58: idioma de «Mis descansos» y de los avisos al móvil */
-.desc-cab { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.desc-fila.desc-ta > .desc-cab { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
 .desc-cab .titulo-vista { margin-bottom: 0; }
 .desc-idioma, .idioma-avisos { display: inline-flex; align-items: center; gap: 6px; }
 .desc-idioma select, .idioma-avisos select { min-height: 40px; padding: 6px 10px; border-radius: 10px; border: 1.5px solid var(--linea); background: var(--tarjeta); color: var(--tinta); font: inherit; font-weight: 700; max-width: 100%; }
@@ -2336,3 +2336,26 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .desc-dias i small { font-size: .7rem; font-weight: 700; }
 .desc-estado .desc-cuenta { margin: 0; }
 p.desc-tipo { margin: 6px 0 0; }
+
+/* v144 (petición n.º 15 del padre, propuesta A «Tarjeta con color»): «Lo apuntado» de Mis descansos.
+   Cabecera de color (verde bien, naranja reducido, rojo no cumple, gris lo demás) con las horas en grande,
+   «Empieza» y «Termina» en dos líneas, etiquetas y el aviso en una caja. */
+:root { --ta-v: #1a7a43; --ta-a: #9a5a00; --ta-r: #ab1012; --ta-g: #4d535b; --ta-gs: #ecebe6; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ta-v: #6fd69a; --ta-a: #ffc457; --ta-r: #ff8a8a; --ta-g: #c3c8ce; --ta-gs: #252b33; } }
+:root[data-theme="dark"] { --ta-v: #6fd69a; --ta-a: #ffc457; --ta-r: #ff8a8a; --ta-g: #c3c8ce; --ta-gs: #252b33; }
+.desc-fila.desc-ta { display: block; padding: 0; border-left-width: 1px; border-left-style: solid; border-left-color: var(--linea); overflow: hidden; border-radius: 16px; }
+.desc-fila.desc-ta > .desc-cab { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 2px 10px; padding: 10px 14px; font-weight: 700; }
+.desc-cab.v { background: var(--verde-suave); color: var(--ta-v); }
+.desc-cab.a { background: var(--ambar-suave); color: var(--ta-a); }
+.desc-cab.r { background: var(--rojo-suave); color: var(--ta-r); }
+.desc-cab.g { background: var(--ta-gs); color: var(--ta-g); }
+.desc-cab > span { min-width: 0; }
+.desc-cab-h { font-family: var(--cond, var(--titulos)); font-size: 1.8rem; line-height: 1.05; white-space: nowrap; margin-left: auto; }
+.desc-fila.desc-ta > .desc-cuerpo { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 12px; align-items: baseline; padding: 10px 14px 4px; }
+.desc-cuerpo > span { color: var(--suave); font-size: .95rem; }
+.desc-cuerpo > b { font-size: 1.15rem; overflow-wrap: anywhere; }
+.desc-fila.desc-ta > .desc-pills { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 14px 4px; }
+.desc-pills i { font-style: normal; font-size: .9rem; border-radius: 99px; padding: 2px 10px; background: var(--ta-gs); color: var(--tinta); }
+.desc-ta .desc-mal { margin: 8px 14px 0; padding: 8px 10px; border-radius: 10px; background: var(--rojo-suave); color: var(--ta-r); }
+.desc-fila.desc-ta > .desc-pie { display: flex; gap: 8px; justify-content: flex-end; padding: 8px 14px 12px; }
+.desc-ta > .desc-edita { margin: 0 14px 14px; }

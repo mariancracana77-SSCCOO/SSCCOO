@@ -75,6 +75,8 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 144: «Lo apuntado» de Mis descansos más claro (propuesta A «Tarjeta con color»: cabecera verde, naranja o roja con las horas en grande, «Empieza» y «Termina» en dos líneas, etiquetas y el aviso en una caja; petición n.º 15 del padre)
+
 ## Versión 143: Mis descansos más fácil (propuesta C «Línea del día»: «Te quedan» en grande, línea de la jornada y días que quedan para el semanal; petición n.º 14 del padre)
 
 ## Versión 142: Mis incentivos, la semana con la hoja de trabajo en un solo PDF y preguntar dónde guardarlo (petición n.º 13 del padre)
