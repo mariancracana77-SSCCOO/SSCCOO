@@ -75,6 +75,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 139: negrita, listas y fotos grandes en el chat de «Lo que has pedido» (lo pidió Lorena)
+- En el chat de cada petición, lo escrito entre `**` sale en negrita y las líneas que empiezan por «- » salen como lista. Las fotos ocupan todo el ancho del mensaje y llevan su nombre debajo. Igual que en el panel del Comité.
+
 ## Versión 138: «Me gusta, adelante» en vez de «Publicar» (lo pidió Lorena)
 - En «Lo que has pedido», el botón para dar el sí se llama «Me gusta, adelante» y encima pone «Si te gusta, pulsa «Me gusta, adelante». Lorena lo sube a la web.». Al pulsarlo sale «Hecho: en unos minutos lo verás en la web.». Igual que en el panel del Comité.
 
