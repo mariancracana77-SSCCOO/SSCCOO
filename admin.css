@@ -708,7 +708,11 @@ label.sin-guardar::after { content: " · sin guardar"; color: var(--rojo-ic); fo
 .pet-item { display: grid; gap: 6px; margin-bottom: 10px; }
 .pet-cab { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; margin: 0; }
 .pet-cab small { color: var(--suave); }
-.pet-texto { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.pet-texto { margin: 0; overflow-wrap: anywhere; }
+.pet-texto p { margin: 0 0 6px; }
+.pet-texto p:last-child { margin-bottom: 0; }
+.pet-texto ul { margin: 2px 0 6px; padding-left: 20px; }
+.pet-texto strong { font-weight: 800; }
 .pet-resp { margin: 0; padding: 8px 10px; border-left: 4px solid var(--rojo); background: var(--fondo); white-space: pre-wrap; overflow-wrap: anywhere; }
 .pet-item.est-lista { border-left: 5px solid #1F7A45; }
 .pet-item.est-publicada { opacity: .8; }
@@ -740,9 +744,10 @@ label.sin-guardar::after { content: " · sin guardar"; color: var(--rojo-ic); fo
 .pet-consejos ul { margin: 6px 0 0; padding-left: 20px; display: grid; gap: 4px; }
 
 /* v125: fotos dentro de los mensajes de las peticiones */
-.pet-fotos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
-.pet-fotos a { display: block; border-radius: 8px; overflow: hidden; border: 1px solid var(--linea); background: var(--tarjeta, var(--fondo)); }
-.pet-fotos img { display: block; max-width: min(100%, 320px); max-height: 240px; width: auto; height: auto; object-fit: contain; }
+.pet-fotos { display: grid; gap: 8px; margin-top: 6px; }
+.pet-fotos a { display: block; border-radius: 8px; overflow: hidden; border: 1px solid var(--linea); background: var(--tarjeta, var(--fondo)); max-width: 100%; text-decoration: none; }
+.pet-fotos img { display: block; width: 100%; max-height: 75vh; height: auto; object-fit: contain; }
+.pet-foto-pie { display: block; padding: 6px 10px; font-size: .9em; font-weight: 600; color: var(--tinta); }
 /* v125: el padre decide (Publicar / Añadir algo / Descartar) tras ver las capturas */
 .pet-decide { display: grid; gap: 8px; padding: 12px; border: 2px solid #1F7A45; border-radius: 12px; background: var(--fondo); }
 .pet-decide-tit { margin: 0; font-weight: 800; display: flex; align-items: center; gap: 6px; }

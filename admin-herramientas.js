@@ -506,9 +506,10 @@ const eligePet = (input, lista) => {
   [...input.files].forEach(f => { if (!tipoPet(f)) malos.push(`«${f.name}» no es foto, vídeo ni audio`); else if (f.size > PET_MB * 1048576) malos.push(`«${f.name}» pesa más de ${PET_MB} MB (graba un vídeo más corto)`); else lista.push(f); });
   input.value = ""; return malos;
 };
+// v139 (lo pidió Lorena): fotos a todo lo ancho con su nombre; negrita y listas en el chat con textoHTML
 // v125 (lo pidió Lorena): las fotos (las del padre y las capturas de Claude) se ven dentro del mensaje; lo demás, como enlace
 const adjPet = (a) => { const fotos = (a || []).filter(esImagen), otros = (a || []).filter(x => !esImagen(x));
-  return (fotos.length ? `<div class="pet-fotos">${fotos.map(x => `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener" aria-label="Ver en grande: ${esc(x.nombre || "foto")}"><img src="${esc(urlSegura(x.url))}" alt="${esc(x.nombre || "")}" loading="lazy"></a>`).join("")}</div>` : "")
+  return (fotos.length ? `<div class="pet-fotos">${fotos.map(x => `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener" aria-label="Ver en grande: ${esc(x.nombre || "foto")}"><img src="${esc(urlSegura(x.url))}" alt="${esc(x.nombre || "")}" loading="lazy">${x.nombre ? `<span class="pet-foto-pie">${esc(x.nombre)}</span>` : ""}</a>`).join("")}</div>` : "")
     + (otros.length ? `<p class="fecha-txt">${otros.map(x => `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener">${esc(x.nombre)}</a>`).join(" · ")}</p>` : ""); };
 // v125: ventana para confirmar «Descartar» (que no se pulse sin querer)
 function confirmaDescartar(id) {
@@ -663,7 +664,7 @@ async function pintaHechas() {
   if (!$("pet-hechas")) return;
   if (error) { z.innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(errTxt(error))}</p>`; return; }
   // v121: cada petición es como un chat: lo que pidió, lo que ha ido añadiendo y lo que contesta Claude
-  const burbuja = (m) => `<li class="pet-m ${m.quien === "claude" || m.quien === "lorena" ? "de-claude" : "de-padre"}${m.quien === "lorena" ? " de-lorena" : ""}${m.aviso ? " aviso" : ""}"><small>${m.quien === "claude" ? "Claude" : m.quien === "lorena" ? "Lorena" : "Tú"} · ${esc(horaPet(m.cuando))}</small>${m.texto ? `<p class="pet-texto">${esc(m.texto)}</p>` : ""}${adjPet(m.adjuntos)}</li>`;
+  const burbuja = (m) => `<li class="pet-m ${m.quien === "claude" || m.quien === "lorena" ? "de-claude" : "de-padre"}${m.quien === "lorena" ? " de-lorena" : ""}${m.aviso ? " aviso" : ""}"><small>${m.quien === "claude" ? "Claude" : m.quien === "lorena" ? "Lorena" : "Tú"} · ${esc(horaPet(m.cuando))}</small>${m.texto ? `<div class="pet-texto">${textoHTML(m.texto)}</div>` : ""}${adjPet(m.adjuntos)}</li>`;
   const filas = data || [], abiertas = new Set(petLee("ccoo-adm-pet-abiertas", [])), vistos = petLee("ccoo-adm-pet-vistos", {});
   const deClaude = (x) => (Array.isArray(x.mensajes) ? x.mensajes : []).filter(m => m.quien === "claude").length;
   const gruposAb = petLee("ccoo-adm-pet-grupos", {});
@@ -679,7 +680,7 @@ async function pintaHechas() {
       <div class="pet-cuerpo">
       ${grupo === "lorena" ? (x.hecha_lorena ? (() => { const r = (Array.isArray(x.mensajes) ? x.mensajes : []).filter(m => m.quien === "lorena").pop(); return `<p class="pet-pasada hecha">${icono("check", "p")}<span><b>Lorena la ha terminado.</b>${r?.texto ? ` ${esc(r.texto)}` : ""}</span></p>`; })() : `<p class="pet-pasada">${icono("grupo", "p")}<span><b>Se la has pasado a Lorena.</b> Ya no te toca hacer nada: lo que ella haga lo verás aquí abajo.</span></p>`) : ""}
       ${grupo === "confirmadas" ? `<p class="pet-pasada hecha">${icono("check", "p")}<span>${x.estado === "publicada" ? `<b>Ya está en la web${x.version ? ` (versión ${esc(String(x.version))})` : ""}.</b> No tienes que hacer nada.` : `<b>Lorena le ha dado el visto bueno (${esc(horaPet(x.ficha.visto_bueno_lorena))}).</b> Claude lo sube a la web y te avisa aquí. No tienes que hacer nada.`}</span></p>` : ""}
-      <p class="pet-texto">${esc(x.texto)}</p>
+      <div class="pet-texto">${textoHTML(x.texto || "")}</div>
       ${adjPet(x.adjuntos)}
       ${ms.length ? `<ul class="pet-chat" aria-label="Lo añadido después">${ms.map(burbuja).join("")}</ul>` : ""}
       ${x.respuesta ? `<p class="pet-resp"><b>Claude:</b> ${esc(x.respuesta)}</p>` : ""}
