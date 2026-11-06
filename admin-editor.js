@@ -93,12 +93,16 @@ function abrirEditor(k, orig = null, preset = {}) {
     el.addEventListener("change", () => { ED.sucio = true; actualizarPrevia(); });
   });
   if (orig?.destacar_desde && $("f-destacar_dia")) $("f-destacar_dia").value = isoLocal(new Date(orig.destacar_desde)); // v102
+  // v137: las horas del destacado (si no era el día entero)
+  if (orig?.destacar_desde && orig?.destacar_hasta && $("f-destacar_hora_desde") && horasDestacado(orig)) {
+    $("f-destacar_hora_desde").value = horaDestacado(orig.destacar_desde); $("f-destacar_hora_hasta").value = horaDestacado(orig.destacar_hasta);
+  }
   // v103: botón para quitar el día destacado (en el móvil cuesta vaciar una fecha): borra el día y desmarca «Urgente»
   if ($("f-destacar_dia")) {
     $("f-destacar_dia").insertAdjacentHTML("afterend", `<button type="button" class="btn sec quitar-destacar" id="b-quitar-destacar">${icono("borrar", "p")}Quitar el destacado</button>`);
     const qd = $("b-quitar-destacar"), ver = () => qd.classList.toggle("oculto", !$("f-destacar_dia").value);
     ver(); $("f-destacar_dia").addEventListener("input", ver); $("f-destacar_dia").addEventListener("change", ver);
-    qd.onclick = () => { $("f-destacar_dia").value = ""; if ($("f-urgente")) $("f-urgente").checked = false; ver(); ED.sucio = true; actualizarPrevia(); msg("ed-msg", "Quitado el destacado. Pulsa el botón de guardar para que se aplique.", true); };
+    qd.onclick = () => { $("f-destacar_dia").value = ""; ["f-destacar_hora_desde", "f-destacar_hora_hasta"].forEach(i => { if ($(i)) $(i).value = ""; }); if ($("f-urgente")) $("f-urgente").checked = false; ver(); ED.sucio = true; actualizarPrevia(); msg("ed-msg", "Quitado el destacado. Pulsa el botón de guardar para que se aplique.", true); };
   }
   ofrecerBorrador();
   $("ed-form").querySelectorAll("textarea.crece").forEach(t => { if (t.style.minHeight) t.classList.add("corta"); requestAnimationFrame(() => creceTexto(t)); });
@@ -322,7 +326,11 @@ $("ed-guardar").onclick = async () => {
   const s = SECCIONES[ED.k], btn = $("ed-guardar"), fila = leerFormulario();
   // v102: «Destacar en Inicio el día» se guarda como destacar_desde/hasta (ese día entero) y lo pone urgente
   if ("destacar_dia" in fila) { const d = fila.destacar_dia; delete fila.destacar_dia;
-    Object.assign(fila, d ? { destacar_desde: new Date(d + "T00:00:00").toISOString(), destacar_hasta: new Date(d + "T23:59:59").toISOString(), urgente: true } : { destacar_desde: null, destacar_hasta: null });
+    // v137 (petición n.º 10): «Destacado desde las / hasta las» para destacarlo solo unas horas de ese día
+    const hd = fila.destacar_hora_desde || "", hh = fila.destacar_hora_hasta || ""; delete fila.destacar_hora_desde; delete fila.destacar_hora_hasta;
+    if (d && hd && hh && hh <= hd) return marcaFalta("f-destacar_hora_hasta", "La hora de «Hasta las» tiene que ser después de «Desde las».");
+    if (!d && (hd || hh)) return marcaFalta("f-destacar_dia", "Para destacarlo unas horas, elige también el día en «Destacar en Inicio el día».");
+    Object.assign(fila, d ? { destacar_desde: new Date(d + "T" + (hd || "00:00") + ":00").toISOString(), destacar_hasta: new Date(d + "T" + (hh ? hh + ":00" : "23:59:59")).toISOString(), urgente: true } : { destacar_desde: null, destacar_hasta: null });
     // v103: si se quita el día y la casilla «Urgente» no se ha tocado, deja de ser urgente (lo puso el día destacado)
     if (!d && ED.orig?.destacar_desde && fila.urgente === !!ED.orig.urgente) fila.urgente = false;
     // Ese día se avisa a los móviles («DESTACADO HOY», tarea de la función notificar). Si cambia el día, se vuelve a avisar;

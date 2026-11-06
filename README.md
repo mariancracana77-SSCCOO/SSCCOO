@@ -75,6 +75,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 137: destacar un aviso solo unas horas (petición n.º 10 del padre)
+- En el editor de avisos, debajo de «Destacar en Inicio el día», hay «Desde las» y «Hasta las». Con horas, el aviso sale arriba del todo en Inicio, en rojo, solo entre esas horas, y después vuelve a ser un aviso normal en su sitio. Sin horas, sigue como antes: el día entero.
+- Se guarda en `destacar_desde`/`destacar_hasta`, que ya tenían hora: no cambia la base de datos, ni la web, ni la función `notificar` (la notificación «Destacado» llega al empezar esas horas). En la lista del panel, la etiqueta dice «Destacado el … de 10:00 a 14:00». «Quitar el destacado» borra también las horas.
+
 ## Versión 136: «Confirmado por Lorena» en lo que ha pedido el padre (lo pidió Lorena)
 - En «Lo que has pedido», lo que Lorena ya aprobó (con su visto bueno o ya publicado) sale aparte en el grupo verde «Confirmado por Lorena». Ahí no le pide decidir ni sale en «Te toca a ti»: pone «Lorena dijo que sí: subiéndose» o «Ya está en la web».
 - Su app apunta el visto bueno en la petición (`ficha.visto_bueno_lorena`) al pulsar «Bien, publícalo». Lo descartado o deshecho va a «Cerradas sin cambios». Igual que en el panel del Comité.
