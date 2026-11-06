@@ -2304,3 +2304,35 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .gan-donde-ops .btn { width: 100%; justify-content: flex-start; text-align: left; }
 .gan-donde-nom { display: flex; gap: 8px; align-items: center; word-break: break-all; }
 .gan-donde-nom .icono { flex: none; }
+
+/* v143 (petición n.º 14 del padre, propuesta C «Línea del día»): Mis descansos, el tiempo que queda en grande y la línea del día */
+.desc-cuenta { display: grid; gap: 2px; background: var(--verde); color: #fff; border-radius: var(--radio-g); padding: 14px 18px; }
+.desc-cuenta.pronto { background: #a35f00; }
+.desc-cuenta.tarde { background: var(--rojo); }
+.desc-cuenta-et { font-size: 1rem; }
+.desc-cuenta-num { font-family: var(--cond); font-size: 2.6rem; line-height: 1.05; }
+.desc-cuenta-sub { font-size: 1rem; font-weight: 700; }
+.desc-linea { position: relative; height: 80px; margin: 14px 6px 4px; }
+.desc-linea-et { position: absolute; top: 0; font-size: .85rem; font-weight: 700; white-space: nowrap; color: var(--tinta); }
+.desc-linea-et.ini { left: -6px; color: var(--suave); }
+.desc-linea-et.ahora { top: 56px; transform: translateX(-50%); }
+.desc-riel { position: absolute; left: 0; right: 0; top: 30px; height: 14px; border-radius: 8px; background: var(--linea); overflow: hidden; }
+.desc-tramo { position: absolute; top: 0; bottom: 0; }
+.desc-tramo.ok { background: var(--verde); }
+.desc-tramo.red { background: #e8a317; }
+.desc-tramo.tarde { background: var(--rojo); }
+.desc-ya { position: absolute; left: 0; top: 0; bottom: 0; background: repeating-linear-gradient(45deg, rgba(0, 0, 0, .28) 0 6px, transparent 6px 12px); }
+.desc-marca { position: absolute; top: 24px; width: 4px; height: 30px; margin-left: -2px; border-radius: 2px; background: var(--tinta); }
+.desc-tope { position: absolute; top: 46px; width: 0; height: 0; margin-left: -7px; border: 7px solid transparent; border-bottom-color: var(--verde); border-top: 0; }
+.desc-tope.red { border-bottom-color: #e8a317; }
+.desc-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 8px; }
+.desc-chip { border-radius: 99px; padding: 4px 12px; font-size: .95rem; font-weight: 700; color: #fff; background: var(--verde); }
+.desc-chip.red { background: #a35f00; }
+.desc-chip.no { background: var(--linea); color: var(--tinta); }
+.desc-dias { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin: 10px 0 2px; }
+.desc-dias i { display: grid; place-items: center; font-style: normal; font-size: .85rem; font-weight: 700; border-radius: 8px; padding: 6px 0; background: var(--linea); color: var(--suave); text-transform: capitalize; min-width: 0; overflow: hidden; }
+.desc-dias i.ok { background: var(--verde); color: #fff; }
+.desc-dias i.limite { background: #a35f00; color: #fff; }
+.desc-dias i small { font-size: .7rem; font-weight: 700; }
+.desc-estado .desc-cuenta { margin: 0; }
+p.desc-tipo { margin: 6px 0 0; }

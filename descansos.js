@@ -108,7 +108,7 @@
   const fmtDia = (t) => new Date(t).toLocaleDateString(LOC, { weekday: "long", day: "numeric", month: "long" });
   const horas = (h) => { const e = Math.floor(h + 1e-6), m = Math.round((h - e) * 60); return m ? `${e} h ${m} min` : `${e} h`; };
   const falta = (ms) => {
-    const h = Math.floor(ms / H), d = Math.floor(h / 24), mi = Math.round(ms / 60000) % 60;
+    const tm = Math.round(ms / 60000), h = Math.floor(tm / 60), d = Math.floor(h / 24), mi = tm % 60; // v143: antes 4 h 59,6 min salía «4 h»
     if (d) return h % 24 ? (d === 1 ? T("1 día y {h} h", { h: h % 24 }) : T("{d} días y {h} h", { d, h: h % 24 })) : (d === 1 ? T("1 día") : T("{d} días", { d }));
     if (h) return mi ? `${h} h ${mi} min` : `${h} h`;
     return `${Math.max(1, Math.round(ms / 60000))} min`;
@@ -220,6 +220,31 @@
   };
   const avisoHoy = (t) => { const m = $("desc-hoy-msg"); if (m) { m.textContent = t; m.className = "msg err"; } };
   const horaInput = (t) => { const d = new Date(t); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
+  // v143 (petición n.º 14, propuesta C): el tiempo que queda en grande, en verde, naranja (queda poco) o rojo (te has pasado)
+  const relojGrande = (queda, sub, poco) => `<div class="desc-cuenta ${queda < 0 ? "tarde" : queda < poco ? "pronto" : ""}">
+      <span class="desc-cuenta-et">${esc(queda < 0 ? T("Te has pasado") : T("Te quedan"))}</span>
+      <b class="desc-cuenta-num">${esc(falta(Math.abs(queda)))}</b><span class="desc-cuenta-sub">${esc(sub)}</span></div>`;
+  // Línea del día: desde que empezaste (izquierda) hasta la última hora límite; verde = descanso normal, naranja = solo reducido, rojo = te has pasado.
+  // Lo rayado es lo que ya llevas.
+  function lineaDia(ini, ahora, ult, tramos) {
+    const fin = Math.max(ult, ahora), pc = (t) => Math.min(100, Math.max(0, (t - ini) / (fin - ini) * 100)).toFixed(1);
+    let antes = ini; const partes = tramos.map(([t, c]) => { const x = `<i class="desc-tramo ${c}" style="left:${pc(antes)}%;width:${(pc(t) - pc(antes)).toFixed(1)}%"></i>`; antes = t; return x; });
+    if (ahora > ult) partes.push(`<i class="desc-tramo tarde" style="left:${pc(ult)}%;width:${(100 - pc(ult)).toFixed(1)}%"></i>`);
+    const a = +pc(ahora), aEt = Math.min(88, Math.max(12, a));
+    return `<div class="desc-linea" role="img" aria-label="${esc(T("Empezaste a las {ini}. Ahora son las {ahora}.", { ini: hora(ini), ahora: hora(ahora) }))}">
+      <span class="desc-linea-et ini">${esc(T("Empezaste {hora}", { hora: hora(ini) }))}</span>
+      <span class="desc-linea-et ahora" style="left:${aEt}%">${esc(T("Ahora"))}</span>
+      <div class="desc-riel">${partes.join("")}<i class="desc-ya" style="width:${a}%"></i></div>
+      <i class="desc-marca" style="left:${a}%"></i>
+      ${tramos.map(([t, c]) => `<i class="desc-tope ${c}" style="left:${pc(t)}%"></i>`).join("")}</div>`;
+  }
+  // Los días que quedan hasta el límite del descanso semanal (7 casillas desde hoy)
+  function diasSemanal(ahora, limite) {
+    const hoy0 = new Date(ahora); hoy0.setHours(0, 0, 0, 0); const lim0 = new Date(limite); lim0.setHours(0, 0, 0, 0);
+    return `<div class="desc-dias" aria-hidden="true">${[0, 1, 2, 3, 4, 5, 6].map(i => { const d = new Date(hoy0); d.setDate(hoy0.getDate() + i);
+      const c = limite < ahora ? "" : d.getTime() < lim0.getTime() ? "ok" : d.getTime() === lim0.getTime() ? "limite" : "";
+      return `<i class="${c}">${esc(d.toLocaleDateString(LOC, { weekday: "short" }).replace(".", ""))}${c === "limite" ? `<small>${esc(hora(limite))}</small>` : ""}</i>`; }).join("")}</div>`;
+  }
   function pintaHoy(dd) {
     const h = DATOS.hoy, ahora = Date.now(), quedanRed = Math.max(0, 3 - dd.reducidosAhora);
     const red = `<p class="desc-red"><span class="desc-puntos">${[0, 1, 2].map(i => `<i class="${i < dd.reducidosAhora ? "usado" : ""}"></i>`).join("")}</span>${esc(T("Descansos diarios reducidos usados: {n} de 3 (hasta el próximo descanso semanal).", { n: Math.min(3, dd.reducidosAhora) }))}</p>`;
@@ -244,13 +269,19 @@
         quedanRed ? `<li>${TH("O reducido de **9 h**: antes de las **{hora}** (te quedan {n} de 3 hasta el próximo descanso semanal).", { hora: fmt(l9), n: quedanRed })}</li>` : `<li>${esc(T("Ya has usado los 3 descansos reducidos: hasta el próximo semanal tienen que ser de 11 h."))}</li>`,
         `<li>${TH("O partido: una parada de **3 h** durante la jornada y **9 h** al final, antes de las **{hora}**.", { hora: fmt(l9) })}</li>`];
     const limActual = h.doble ? l30 : l11, tarde = ahora > (h.doble ? l30 : l9), queda = limActual - ahora;
+    // v143 (petición n.º 14 del padre, propuesta C «Línea del día»): «Te quedan» en grande y una línea desde que empezó hasta la hora límite
+    const conRed = !h.doble && quedanRed > 0, ult = h.doble ? l30 : conRed ? l9 : l11;
+    const tramos = h.doble ? [[l30, "ok"]] : conRed ? [[l11, "ok"], [l9, "red"]] : [[l11, "ok"]];
+    const chips = h.doble ? [["ok", T("Doble tripulación, 9 h: para antes de las {hora}", { hora: hora(l30) })]]
+      : [["ok", T("Normal, 11 h: para antes de las {hora}", { hora: hora(l11) })], conRed ? ["red", T("Reducido, 9 h: antes de las {hora} (te quedan {n} de 3)", { hora: hora(l9), n: quedanRed })] : ["no", T("Reducido de 9 h: ya has usado los 3")]];
     $("desc-hoy").innerHTML = `<h2 class="desc-tit">${icono("reloj", "p")}${esc(T("Descanso diario"))}</h2>
-      <div class="desc-prox ${tarde ? "tarde" : queda < H ? "pronto" : ""}">
-        <span class="desc-et">${esc(T("Jornada empezada el {fecha}", { fecha: fmt(h.ini) }))}</span>
-        <b class="desc-fecha">${esc(T("Para antes de las {hora}", { hora: hora(limActual) }))}</b>
-        <span class="desc-quedan">${esc(queda > 0 ? T("Quedan {tiempo}", { tiempo: falta(queda) }) : T("Te has pasado {tiempo}", { tiempo: falta(-queda) }))}</span>
-      </div>
-      <details class="desc-mas"><summary>${esc(T("Otras opciones (reducido o partido)"))}</summary><ul class="desc-limites">${lim.join("")}</ul></details>
+      ${(() => { // pasado el de 11 h pero aún a tiempo del reducido: cuenta hasta el de 9 h (en naranja)
+        if (!h.doble && conRed && ahora > l11 && ahora <= l9) return relojGrande(l9 - ahora, T("Ya solo te queda el reducido de 9 h: para antes de las {hora}", { hora: hora(l9) }), Infinity);
+        return relojGrande(queda, queda < 0 ? T("Tenías que parar antes de las {hora}", { hora: hora(limActual) }) : T("Para el descanso antes de las {hora}", { hora: hora(limActual) }), H);
+      })()}
+      ${lineaDia(h.ini, ahora, ult, tramos)}
+      <div class="desc-chips">${chips.map(([c, t]) => `<span class="desc-chip ${c}">${esc(t)}</span>`).join("")}</div>
+      ${h.doble ? "" : `<details class="desc-mas"><summary>${esc(T("¿Y el descanso partido?"))}</summary><ul class="desc-limites">${lim[2]}</ul></details>`}
       ${h.doble ? "" : `<label class="check"><input type="checkbox" id="desc-hoy-partido" ${h.partido ? "checked" : ""}><span>${esc(T("Hoy hago el descanso partido (una parada de 3 h o más y 9 h al final)"))}</span></label>`}
       <details class="desc-mas"><summary>${esc(T("Cambiar la hora de inicio"))}</summary>
         <label class="desc-antes"><span>${esc(T("Hora a la que empezaste de verdad"))}</span><input type="time" id="desc-hoy-cambia" value="${horaInput(h.ini)}"></label>
@@ -325,12 +356,10 @@
       const tipo = p.normal
         ? (p.casa ? TH("Tiene que ser **normal: 45 horas seguidas** o más, en tu casa o en la base de la empresa, sumando las horas que debes.") : TH("Tiene que ser **normal: 45 horas seguidas** o más."))
         : TH("Puede ser **reducido (24 horas)** o **normal (45 horas)**.") + (DATOS.internacional ? " " + esc(T("Dos reducidos seguidos solo si los dos son fuera de España.")) : "");
-      h += `<div class="desc-prox ${tarde ? "tarde" : quedan < 12 * H ? "pronto" : ""}">
-        <span class="desc-et">${esc(T("Tu próximo descanso semanal tiene que empezar antes del"))}</span>
-        <b class="desc-fecha">${esc(fmt(p.limite))}</b>
-        <span class="desc-quedan">${esc(tarde ? T("Te has pasado {tiempo}", { tiempo: falta(-quedan) }) : T("Quedan {tiempo}", { tiempo: falta(quedan) }))}</span>
-        <span class="desc-tipo">${tipo}</span>
-      </div>`;
+      // v143 (petición n.º 14, propuesta C): «Te quedan» en grande y los días que quedan
+      h += `${relojGrande(quedan, tarde ? T("Tenía que empezar antes del {fecha}", { fecha: fmt(p.limite) }) : T("Empieza el descanso semanal antes del {fecha}", { fecha: fmt(p.limite) }), 12 * H)}
+        ${diasSemanal(ahora, p.limite)}
+        <p class="desc-tipo">${tipo}</p>`;
       const total = c.pendientes.reduce((t, d) => t + d.queda, 0);
       if (c.pendientes.length) h += `<div class="desc-bloque"><h3>${esc(T("Horas por compensar"))}</h3>
         <p class="desc-total"><span>${esc(T("Total por compensar"))}</span><b>${esc(horas(total))}</b></p><ul class="desc-deudas">${c.pendientes.map(d => { const v = { horas: horas(d.queda), desde: fmt(d.de.ini), dia: fmtDia(d.plazo - 1) };
