@@ -2297,3 +2297,4 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .mini-dias button.ad { border: 0; font: inherit; font-size: .78rem; font-weight: 800; cursor: pointer; background: var(--tc, var(--rojo)); color: #fff; }
 .mini-dias .ad.hoy { outline: 2px solid var(--rojo-ic); outline-offset: -1px; font-weight: 800; }
 .mini-dias button.ad.hoy { outline-color: var(--tinta); outline-offset: 1px; }
+#cal-semana[hidden], #cal-dias[hidden], #cal-ano[hidden] { display: none; }
