@@ -76,7 +76,7 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
 ## Versión 137: destacar un aviso solo unas horas (petición n.º 10 del padre)
-- En el editor de avisos, debajo de «Destacar en Inicio el día», hay «Destacado desde las» y «hasta las». Con horas, el aviso sale arriba del todo en Inicio, en rojo, solo entre esas horas, y después vuelve a ser un aviso normal en su sitio. Sin horas, sigue como antes: el día entero.
+- En el editor de avisos, debajo de «Destacar en Inicio el día», hay «Desde las» y «Hasta las». Con horas, el aviso sale arriba del todo en Inicio, en rojo, solo entre esas horas, y después vuelve a ser un aviso normal en su sitio. Sin horas, sigue como antes: el día entero.
 - Se guarda en `destacar_desde`/`destacar_hasta`, que ya tenían hora: no cambia la base de datos, ni la web, ni la función `notificar` (la notificación «Destacado» llega al empezar esas horas). En la lista del panel, la etiqueta dice «Destacado el … de 10:00 a 14:00». «Quitar el destacado» borra también las horas.
 
 ## Versión 136: «Confirmado por Lorena» en lo que ha pedido el padre (lo pidió Lorena)

@@ -328,7 +328,7 @@ $("ed-guardar").onclick = async () => {
   if ("destacar_dia" in fila) { const d = fila.destacar_dia; delete fila.destacar_dia;
     // v137 (petición n.º 10): «Destacado desde las / hasta las» para destacarlo solo unas horas de ese día
     const hd = fila.destacar_hora_desde || "", hh = fila.destacar_hora_hasta || ""; delete fila.destacar_hora_desde; delete fila.destacar_hora_hasta;
-    if (d && hd && hh && hh <= hd) return marcaFalta("f-destacar_hora_hasta", "La hora de «hasta las» tiene que ser después de «desde las».");
+    if (d && hd && hh && hh <= hd) return marcaFalta("f-destacar_hora_hasta", "La hora de «Hasta las» tiene que ser después de «Desde las».");
     if (!d && (hd || hh)) return marcaFalta("f-destacar_dia", "Para destacarlo unas horas, elige también el día en «Destacar en Inicio el día».");
     Object.assign(fila, d ? { destacar_desde: new Date(d + "T" + (hd || "00:00") + ":00").toISOString(), destacar_hasta: new Date(d + "T" + (hh ? hh + ":00" : "23:59:59")).toISOString(), urgente: true } : { destacar_desde: null, destacar_hasta: null });
     // v103: si se quita el día y la casilla «Urgente» no se ha tocado, deja de ser urgente (lo puso el día destacado)

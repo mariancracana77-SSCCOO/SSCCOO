@@ -57,7 +57,7 @@ const SECCIONES = {
       // v101–v102 (lo pidió el padre): el aviso se ve siempre y solo ese día sale destacado arriba en Inicio; «Programar» lo esconde hasta ese día
       { k: "destacar_dia", l: "Destacar en Inicio el día", t: "date", opc: true, ayuda: "El aviso se ve en la web como siempre y ese día sale destacado en rojo arriba del todo en Inicio, y llega una notificación a todos los móviles y a Telegram. Si pones horas abajo, solo sale destacado entre esas horas y luego vuelve a ser un aviso normal; sin horas, el día entero (de 0:00 a 23:59). Déjalo vacío si no quieres destacarlo." },
       // v137 (petición n.º 10 del padre): destacar solo unas horas de ese día (se guarda en destacar_desde/destacar_hasta, que ya llevan hora)
-      { fila: [{ k: "destacar_hora_desde", l: "Destacado desde las", t: "time", opc: true }, { k: "destacar_hora_hasta", l: "hasta las", t: "time", opc: true }] },
+      { fila: [{ k: "destacar_hora_desde", l: "Desde las", t: "time", opc: true }, { k: "destacar_hora_hasta", l: "Hasta las", t: "time", opc: true }] },
       { k: "publicar_en", l: "Programar la publicación", t: "datetime-local", opc: true, atajos: true, ayuda: "Déjalo vacío para publicar ahora. Si pones día y hora, el aviso NO se ve en la web hasta ese momento, y entonces se publica y avisa. Para que se vea ya y solo se destaque un día, usa «Destacar en Inicio el día» y deja esto vacío. Para que se repita, usa «Avisos que se repiten»." },
     ],
     previa: (x) => previaCanales(x),
