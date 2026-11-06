@@ -75,6 +75,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 140: botón «Marcar este día como libre» en amarillo (petición n.º 11 del padre)
+- En Mis incentivos > Día, el botón para marcar un día libre sale en amarillo con letra oscura, de día y en modo oscuro (`styles.css`, `.gan-libre-btn`). Solo cambia el color.
+
 ## Versión 139: negrita, listas y fotos grandes en el chat de «Lo que has pedido» (lo pidió Lorena)
 - En el chat de cada petición, lo escrito entre `**` sale en negrita y las líneas que empiezan por «- » salen como lista. Las fotos ocupan todo el ancho del mensaje y llevan su nombre debajo. Igual que en el panel del Comité.
 

@@ -2096,6 +2096,10 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 
 /* v102: día libre en «Mis incentivos» (lo pidió el padre) */
 .gan-libre-btn { margin: 10px 0 4px; width: 100%; justify-content: center; }
+/* v140: el botón «Marcar este día como libre» en amarillo, el mismo de las placas de «Próxima parada», con letra oscura (lo pidió el padre, petición n.º 11). Igual de día y en modo oscuro. */
+.btn.sec.gan-libre-btn { background: #ffb000; border-color: #ffb000; color: #15191e; }
+.btn.sec.gan-libre-btn .icono { color: #15191e; }
+.btn.sec.gan-libre-btn:hover, .btn.sec.gan-libre-btn:focus-visible { background: #e89f00; border-color: #15191e; }
 .gan-libre-aviso { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 10px 0 4px; padding: 10px 12px; border-radius: 10px; background: var(--fondo); border: 2px solid var(--linea); font-weight: 700; }
 .gan-libre-aviso .icono { color: var(--rojo-ic); }
 .gan-libre-aviso span { flex: 1 1 12em; }
