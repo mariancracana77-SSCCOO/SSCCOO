@@ -2280,3 +2280,21 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 /* v135 (petición n.º 9 del padre): el botón «Abrir el mapa» de Aparcamientos en mi ruta, relleno del azul de Zona Conductores con letra e icono blancos */
 #apc-abre-mapa.btn.sec { background: var(--cond-azul); border-color: var(--cond-azul); color: #fff; }
 #apc-abre-mapa.btn.sec:hover, #apc-abre-mapa.btn.sec:focus-visible { background: #213385; border-color: #213385; }
+/* v141 (petición n.º 12 del padre): calendario por «Mes» o «Año». En «Año», los 12 meses en pequeño; los días con algo, del color de su tipo. */
+.cal-vista { display: flex; gap: 8px; margin-bottom: 12px; }
+.cal-vista .filtro { flex: 1 1 0; min-height: 44px; font-size: 1rem; }
+.cal-ano { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 10px; }
+@media (min-width: 560px) { .cal-ano { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.mini-mes { min-width: 0; border: 1px solid var(--linea); border-radius: 12px; padding: 6px 6px 8px; background: var(--tarjeta); }
+.mini-mes.actual { border-color: var(--rojo-ic); box-shadow: 0 0 0 1px var(--rojo-ic); }
+.mini-tit { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; min-height: 40px; border: 0; background: none; color: var(--tinta); font: inherit; font-weight: 800; font-size: 1rem; text-transform: uppercase; letter-spacing: .02em; cursor: pointer; padding: 2px 4px; border-radius: 8px; text-align: left; }
+.mini-tit:hover, .mini-tit:focus-visible { color: var(--rojo-ic); background: var(--fondo); }
+.mini-n { background: var(--rojo); color: #fff; border-radius: 99px; font-size: .75rem; font-weight: 700; min-width: 22px; padding: 1px 7px; text-align: center; letter-spacing: 0; }
+.mini-sem, .mini-dias { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; text-align: center; }
+.mini-sem span { font-size: .68rem; font-weight: 700; color: var(--suave); }
+.mini-dias .ad { font-size: .78rem; line-height: 1; padding: 5px 0; border-radius: 6px; font-variant-numeric: tabular-nums; color: var(--tinta); }
+.mini-dias .ad.finde { color: var(--suave); }
+.mini-dias button.ad { border: 0; font: inherit; font-size: .78rem; font-weight: 800; cursor: pointer; background: var(--tc, var(--rojo)); color: #fff; }
+.mini-dias .ad.hoy { outline: 2px solid var(--rojo-ic); outline-offset: -1px; font-weight: 800; }
+.mini-dias button.ad.hoy { outline-color: var(--tinta); outline-offset: 1px; }
+#cal-semana[hidden], #cal-dias[hidden], #cal-ano[hidden] { display: none; }
