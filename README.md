@@ -75,6 +75,8 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 142: Mis incentivos, la semana con la hoja de trabajo en un solo PDF y preguntar dónde guardarlo (petición n.º 13 del padre)
+
 ## Versión 141: calendario por mes o por año (petición n.º 12 del padre)
 - En Calendario, botones «Mes» y «Año». «Año» enseña los 12 meses en pequeño, con los días que tienen algo del color de su tipo y hoy marcado; las flechas pasan de año en año y al tocar un día o un mes se vuelve a «Mes» con ese día (`index.html`, `app.js` `pintaAno`, `styles.css` `.cal-ano`). El filtro «Ver:» sirve también en el año.
 
