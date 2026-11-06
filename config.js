@@ -3,7 +3,7 @@
 window.SUPABASE_URL = "https://kdfedwcskymaitvpryvg.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_RLt0HuAMskXkKl2hxhUF2w_sCexGznp";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "141"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "142"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/SSCCOO/";
 // Clave pública de las notificaciones (la privada solo está en el servidor)
 window.VAPID_PUBLICA = "BMMdZjehtNipsScHJ__kzOIn9XCgIpya3UDDRlexxOAWJU-J6ZICDlf72ItPOebzl-SfzoU234pd82Chp87Vm1w";
@@ -167,6 +167,7 @@ window.logoParaPDF = () => LOGO_PDF || (LOGO_PDF = new Promise(res => {
   im.onerror = () => res(null); im.src = "logo.png";
 }));
 // op.logo = { jpeg, w, h } (de logoParaPDF): sale en la primera página arriba a la izquierda, 58 pt; las primeras líneas deben llevar x = 70 para no pisarlo
+// op.fotos = [{ jpeg, w, h, titulo }] (v142, petición n.º 13): una foto por página A4 al final (la hoja de trabajo en Mis incentivos)
 window.pdfSencillo = (lineas, marca, op = {}) => {
   // Partir en renglones que quepan (Helvetica ~0,5 em por letra) y en páginas A4
   // v88: cada línea puede llevar color (5.º valor, [r, g, b] de 0 a 1; sin él, negro) y hay bandas de color con letra blanca: { banda: "texto", color, tam }
@@ -188,15 +189,28 @@ window.pdfSencillo = (lineas, marca, op = {}) => {
   objs[3] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
   objs[4] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>";
   const logo = op.logo && op.logo.jpeg ? op.logo : null, base = logo ? 6 : 5;
+  const fotos = (op.fotos || []).filter(f => f && f.jpeg && f.w > 0 && f.h > 0), totalPag = paginas.length + fotos.length;
   if (logo) objs[5] = `<< /Type /XObject /Subtype /Image /Width ${logo.w} /Height ${logo.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${logo.jpeg.length} >>\nstream\n${logo.jpeg}\nendstream`;
   paginas.forEach((ls, i) => {
     const n = base + i * 2, cont = (logo && i === 0 ? "q 58 0 0 58 40 744 cm /Im1 Do Q\n" : "") + ls.map(r => {
       if (r.banda) return `q ${rgb(r.color)} rg ${40 + r.x} ${(r.y - r.tam * 0.55).toFixed(1)} ${ANCHO - r.x} ${(r.tam * 2).toFixed(1)} re f Q BT /F2 ${r.tam} Tf 1 1 1 rg ${50 + r.x} ${(r.y + r.tam * 0.1).toFixed(1)} Td (${cp(r.banda)}) Tj ET`;
       const [t, tam, neg, x, color, yy] = r; return t ? `BT /${neg ? "F2" : "F1"} ${tam} Tf ${rgb(color)} rg ${40 + x} ${yy.toFixed(1)} Td (${cp(t)}) Tj ET` : "";
     }).filter(Boolean).join("\n")
-      + `\nBT /F1 8 Tf 40 30 Td (${cp("Página " + (i + 1) + " de " + paginas.length)}) Tj ET`;
+      + `\nBT /F1 8 Tf 40 30 Td (${cp("Página " + (i + 1) + " de " + totalPag)}) Tj ET`;
     objs[n] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>${logo ? " /XObject << /Im1 5 0 R >>" : ""} >> /Contents ${n + 1} 0 R >>`;
     objs[n + 1] = `<< /Length ${cont.length} >>\nstream\n${cont}\nendstream`;
+    pag.push(`${n} 0 R`);
+  });
+  // Fotos: cada una en su página (vertical u horizontal según la foto), con un título pequeño arriba y el número abajo
+  fotos.forEach((f, j) => {
+    const n = base + paginas.length * 2 + j * 3, ap = f.w > f.h, W = ap ? 842 : 595, H = ap ? 595 : 842, M = 18, ARR = f.titulo ? 22 : 0;
+    const k = Math.min((W - 2 * M) / f.w, (H - 2 * M - ARR - 14) / f.h), w = f.w * k, h = f.h * k, x = (W - w) / 2, y = 26 + (H - 26 - ARR - h) / 2;
+    const cont = `q ${w.toFixed(2)} 0 0 ${h.toFixed(2)} ${x.toFixed(2)} ${y.toFixed(2)} cm /Im2 Do Q`
+      + (f.titulo ? `\nBT /F2 11 Tf 0.671 0.063 0.071 rg ${M} ${H - M - 10} Td (${cp(f.titulo)}) Tj ET` : "")
+      + `\nBT /F1 8 Tf 0 0 0 rg ${M} 12 Td (${cp("Página " + (paginas.length + j + 1) + " de " + totalPag)}) Tj ET`;
+    objs[n] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> /XObject << /Im2 ${n + 2} 0 R >> >> /Contents ${n + 1} 0 R >>`;
+    objs[n + 1] = `<< /Length ${cont.length} >>\nstream\n${cont}\nendstream`;
+    objs[n + 2] = `<< /Type /XObject /Subtype /Image /Width ${f.w} /Height ${f.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${f.jpeg.length} >>\nstream\n${f.jpeg}\nendstream`;
     pag.push(`${n} 0 R`);
   });
   objs[2] = `<< /Type /Pages /Kids [${pag.join(" ")}] /Count ${pag.length} >>`;

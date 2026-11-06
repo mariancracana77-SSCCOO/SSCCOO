@@ -2298,3 +2298,9 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .mini-dias .ad.hoy { outline: 2px solid var(--rojo-ic); outline-offset: -1px; font-weight: 800; }
 .mini-dias button.ad.hoy { outline-color: var(--tinta); outline-offset: 1px; }
 #cal-semana[hidden], #cal-dias[hidden], #cal-ano[hidden] { display: none; }
+
+/* v142 (petición n.º 13): Mis incentivos, preguntar dónde guardar el PDF de la semana */
+.gan-donde-ops { display: grid; gap: 10px; margin: 6px 0 4px; }
+.gan-donde-ops .btn { width: 100%; justify-content: flex-start; text-align: left; }
+.gan-donde-nom { display: flex; gap: 8px; align-items: center; word-break: break-all; }
+.gan-donde-nom .icono { flex: none; }

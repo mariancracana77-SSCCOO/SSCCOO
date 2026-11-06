@@ -47,7 +47,7 @@
     [T("La semana y el mes"), T("Arriba del todo ves siempre lo de hoy, lo de esta semana y lo del mes: toca una cifra para ir a esa vista. En «Semana» va cada día con la semana del año (la 44, la 45…) y puedes ir a una escribiendo su número. En «Mes», el total con el salario y lo que se cobra con la nómina, semana por semana."), { sel: "#gan-tira" }],
     [T("La hoja de trabajo"), T("En «Semana», abajo, haz una foto a la hoja de papel de esa semana (o elígela de la galería). Se guarda en este móvil con esa semana y la puedes bajar en PDF A4 para imprimirla. Cada semana tiene la suya."), { tab: "semana", sel: "#gan-hoja .botones" }],
     [T("Lo que cobras tú"), T("En «Ajustes», pon tu salario y lo que cobras tú de cada cosa (por ejemplo, el precio de tus horas sindicales). Si lo dejas vacío, se usa el de la tabla."), { tab: "ajustes", sel: "#gan-ajustes .gan-precios" }],
-    [T("Descargar y enviar"), T("En «Semana» y en «Mes» hay un botón para descargar el PDF y otro para enviarlo por WhatsApp a un delegado si algo no cuadra. En «Ajustes», elige en el calendario las semanas o los días que quieras."), { tab: "ajustes", sel: "#gan-descarga" }],
+    [T("Descargar y enviar"), T("En «Semana» y en «Mes» hay un botón para descargar el PDF y otro para enviarlo por WhatsApp a un delegado si algo no cuadra. El PDF de la semana lleva detrás la hoja de trabajo y te pregunta dónde guardarlo. En «Ajustes», elige en el calendario las semanas o los días que quieras."), { tab: "ajustes", sel: "#gan-descarga" }],
     [T("Copia de seguridad"), T("Lo apuntado se guarda solo en este móvil. En «Ajustes», «Copia de todo (PDF)» lo guarda y «Recuperar una copia» lo vuelve a poner (por ejemplo, en un móvil nuevo). Las fotos de la hoja no van en la copia: descárgalas en PDF."), { tab: "ajustes", sel: "#gan-copia" }],
   ];
   function pintaFijos() {
@@ -313,6 +313,7 @@
     const caja = $("gan-hoja"); if (!caja) return;
     const pag = await hojaLee(w); if (!$("gan-hoja") || $("gan-hoja") !== caja) return;
     const urls = pag.map(p => URL.createObjectURL(p.blob)), llena = pag.length >= HOJAS_MAX;
+    { const bs = $("gan-pdf-semana"); if (bs && bs.lastChild) bs.lastChild.textContent = pag.length ? T("Descargar la semana y la hoja (PDF)") : T("Descargar esta semana (PDF)"); }
     caja.innerHTML = `<h3 class="gan-sub">${esc(T("Hoja de trabajo de la semana {n}", { n: w.n }))}</h3>
       <p class="ayuda">${esc(T("Haz una foto a la hoja de la semana: se guarda aquí y la puedes bajar en PDF para imprimirla. Se queda solo en este móvil."))}</p>
       ${pag.length ? `<ul class="gan-hoja-lista">${pag.map((p, i) => `<li><img src="${urls[i]}" alt="${esc(T("Página {n} de la hoja", { n: i + 1 }))}" loading="lazy"><button type="button" class="btn sec" data-hoja-quita="${i}">${esc(T("Quitar"))}</button></li>`).join("")}</ul>` : ""}
@@ -358,8 +359,12 @@
       <div class="gan-hoja" id="gan-hoja"></div>
       <div class="botones"><button class="btn sec" id="gan-pdf-semana">${icono("descargar", "p")}${esc(T("Descargar esta semana (PDF)"))}</button>${botonEnviar("gan-env-semana")}</div>`;
     const v = $("gan-semana"); pintaHoja(w);
-    $("gan-pdf-semana").onclick = () => descarga(dias, nombreSem(l));
-    if ($("gan-env-semana")) $("gan-env-semana").onclick = () => comparte(dias, nombreSem(l));
+    // v142 (petición n.º 13): la semana con la hoja de trabajo detrás, y pregunta dónde guardarlo
+    $("gan-pdf-semana").onclick = async () => { const nom = "mis-incentivos-" + nombreSem(l) + ".pdf"; let pdf; try { pdf = await pdfSemana(dias, l); } catch (_) { pdf = hazPDF(dias); } preguntaDonde(pdf, nom); };
+    if ($("gan-env-semana")) $("gan-env-semana").onclick = async () => {
+      const nom = "mis-incentivos-" + nombreSem(l) + ".pdf"; let pdf; try { pdf = await pdfSemana(dias, l); } catch (_) { pdf = hazPDF(dias); }
+      try { await navigator.share({ files: [new File([pdf], nom, { type: "application/pdf" })], title: nom }); } catch (e) { if (e && e.name !== "AbortError") bajaArchivo(pdf, nom); }
+    };
     v.querySelectorAll("[data-sem]").forEach(b => b.onclick = () => { DATOS.semana = b.dataset.sem === "hoy" ? esta : suma(l, +b.dataset.sem); guarda(); pinta(); });
     $("gan-ir-sem").onsubmit = (e) => {
       e.preventDefault();
@@ -521,9 +526,10 @@
         L.push(["Lo que va con la nómina de estos días (nocturnidad, ADR fijo…): " + eur(k.r.mensual), 9, false, 14, C_NOM], ["En la nómina de fin de mes: " + eur(k.nomina), 11, true, 6, C_NOM], ["Total del mes (bruto): " + eur(k.total), 15, true, 6, C_TOT], [""]);
       }
       if (semanas.length > 1 && !op.mes) { const r = resumen(c, dias); L.push(["Cobro semanal de estos días: " + eur(r.semanal), 11, true, 0, C_SEM], ["En la nómina: " + eur(r.mensual), 11, true, 0, C_NOM], ["Total de estos días: " + eur(r.total), 15, true, 0, C_TOT], [""]); }
+      if (op.fotos && op.fotos.length) L.push(["Detrás va la hoja de trabajo de la semana (" + op.fotos.length + (op.fotos.length === 1 ? " página)." : " páginas)."), 10, true], [""]);
       L.push([(op.mes ? "" : "Sin el salario ni los fijos del mes. ") + "Orientativo y en bruto (antes de impuestos y descuentos): manda tu nómina.", 8], ["Para volver a cargar estos días en la app: Zona Conductores > Mis incentivos > Ajustes > Recuperar una copia, y elige este PDF.", 8]);
       const datos = { app: "ccoo-ganancias", dias: Object.fromEntries((elegidos ? dias : Object.keys(DATOS.dias)).map(f => [f, DATOS.dias[f]])), libres: Object.fromEntries(Object.keys(DATOS.libres).filter(f => !elegidos || elegidos.includes(f)).map(f => [f, true])), salario: DATOS.salario, precio: DATOS.precio, oculto: DATOS.oculto, fijo: DATOS.fijo };
-      return pdfSencillo(L, MARCA + btoa(unescape(encodeURIComponent(JSON.stringify(datos)))), { logo: LOGO });
+      return pdfSencillo(L, MARCA + btoa(unescape(encodeURIComponent(JSON.stringify(datos)))), { logo: LOGO, fotos: op.fotos });
     } finally { LOC = locAntes; MAPA = mapaAntes; }
   }
   // v88: enviar el PDF por WhatsApp u otra app con el menú de compartir del móvil (si el navegador lo permite con archivos)
@@ -532,6 +538,46 @@
   async function comparte(dias, nombre, op) {
     const nom = "mis-incentivos-" + nombre + ".pdf", f = new File([hazPDF(dias, op)], nom, { type: "application/pdf" });
     try { await navigator.share({ files: [f], title: nom }); } catch (e) { if (e && e.name !== "AbortError") descarga(dias, nombre, op); }
+  }
+  // v142 (petición n.º 13 del padre): PDF de la semana con las fotos de la hoja de trabajo al final (solo se leen, no se cambia nada)
+  const binario = async (blob) => { const u = new Uint8Array(await blob.arrayBuffer()); let t = ""; for (let i = 0; i < u.length; i += 8192) t += String.fromCharCode.apply(null, u.subarray(i, i + 8192)); return t; };
+  async function pdfSemana(dias, l) {
+    const w = semDe(l), pag = await hojaLee(w), fotos = [];
+    for (let i = 0; i < pag.length; i++) fotos.push({ jpeg: await binario(pag[i].blob), w: pag[i].w, h: pag[i].h, titulo: "Hoja de trabajo · semana " + w.n + " de " + w.a + (pag.length > 1 ? " · página " + (i + 1) + " de " + pag.length : "") });
+    return hazPDF(dias, { fotos });
+  }
+  function bajaArchivo(blob, nombre) {
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nombre;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }
+  // Pregunta dónde guardar: en el PC (Chrome/Edge) la ventana de «Guardar como»; en el móvil, Descargas u otra app (Archivos, Drive…)
+  function preguntaDonde(blob, nombre) {
+    const pc = typeof window.showSaveFilePicker === "function", comp = puedeCompartir();
+    if (!pc && !comp) return bajaArchivo(blob, nombre);
+    const v = document.createElement("div"); v.className = "modal-velo";
+    v.innerHTML = `<div class="modal gan-donde" role="dialog" aria-modal="true" aria-labelledby="gan-donde-tit"><h2 id="gan-donde-tit">${esc(T("¿Dónde lo guardo?"))}</h2>
+      <p class="ayuda gan-donde-nom">${icono("descargar", "p")}<span>${esc(nombre)}</span></p>
+      <div class="gan-donde-ops">
+        ${pc ? `<button type="button" class="btn" data-donde="elegir">${icono("carpeta", "p")}${esc(T("Elegir la carpeta y el nombre"))}</button>` : ""}
+        <button type="button" class="btn ${pc ? "sec" : ""}" data-donde="descargas">${icono("descargar", "p")}${esc(pc ? T("En la carpeta Descargas") : T("En Descargas del móvil"))}</button>
+        ${comp ? `<button type="button" class="btn sec" data-donde="app">${icono("compartir", "p")}${esc(T("En otra app (Archivos, Drive, WhatsApp…)"))}</button>` : ""}
+      </div>
+      <p class="msg" role="status"></p>
+      <div class="botones"><button type="button" class="btn sec" data-donde="no">${esc(T("Cancelar"))}</button></div></div>`;
+    document.body.appendChild(v);
+    const cierra = () => v.remove(), msg = v.querySelector(".msg");
+    v.onclick = async (e) => {
+      if (e.target === v) return cierra();
+      const b = e.target.closest("[data-donde]"); if (!b) return;
+      const d = b.dataset.donde;
+      if (d === "no") return cierra();
+      if (d === "descargas") { bajaArchivo(blob, nombre); return cierra(); }
+      try {
+        if (d === "elegir") { const h = await window.showSaveFilePicker({ suggestedName: nombre, types: [{ description: "PDF", accept: { "application/pdf": [".pdf"] } }] }); const st = await h.createWritable(); await st.write(blob); await st.close(); }
+        else await navigator.share({ files: [new File([blob], nombre, { type: "application/pdf" })], title: nombre });
+        cierra();
+      } catch (er) { if (er && er.name === "AbortError") return; msg.textContent = T("No se ha podido. Prueba «En Descargas»."); msg.className = "msg err"; }
+    };
   }
   function descarga(dias, nombre, op) {
     const a = document.createElement("a"); a.href = URL.createObjectURL(hazPDF(dias, op)); a.download = "mis-incentivos-" + nombre + ".pdf";
