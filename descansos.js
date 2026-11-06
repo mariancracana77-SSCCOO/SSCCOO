@@ -408,20 +408,25 @@
     // (verde bien, naranja reducido, rojo no cumple, gris lo demás), «Empieza» y «Termina» en dos líneas,
     // etiquetas y el aviso en una caja.
     const COLOR = { normal: "v", partido: "v", reducido: "a", corto: "r", falta: "r", pendiente: "g", comp: "g" };
-    const tarjeta = (clase, titulo, cuanto, filasF, pills, malas, botones) => `<li class="desc-fila desc-ta ${clase}">
-        <div class="desc-cab ${COLOR[clase] || "g"}"><span>${esc(titulo)}</span>${cuanto ? `<b class="desc-cab-h">${esc(cuanto)}</b>` : ""}</div>
+    // v145 (petición n.º 16): en las jornadas la cabecera va en gris con las horas de TRABAJO, y el descanso de después
+    // en su propia franja de color (`desc`: [color, texto, valor]), para que no parezca que esas horas son el descanso.
+    const tarjeta = (clase, titulo, cuanto, filasF, pills, malas, botones, desc) => `<li class="desc-fila desc-ta ${clase}">
+        <div class="desc-cab ${desc ? "g" : COLOR[clase] || "g"}"><span>${esc(titulo)}</span>${cuanto ? `<b class="desc-cab-h">${esc(cuanto)}</b>` : ""}</div>
         <div class="desc-cuerpo">${filasF.map(([e, v]) => `<span>${esc(e)}</span><b>${esc(v)}</b>`).join("")}</div>
+        ${desc ? `<div class="desc-despues ${desc[0]}"><span>${esc(desc[1])}</span><b>${esc(desc[2])}</b></div>` : ""}
         ${pills.length ? `<div class="desc-pills">${pills.map(t => `<i>${esc(t.charAt(0).toUpperCase() + t.slice(1))}</i>`).join("")}</div>` : ""}
         ${malas.map(m => `<span class="desc-mal">${icono("alerta", "p")}${esc(m)}</span>`).join("")}
         <div class="desc-pie">${botones}</div></li>`;
     $("desc-lista").innerHTML = filas.length ? filas.map(x => {
       if (x._j) {
         const et = { normal: x.doble ? T("Descanso diario de 9 h (doble tripulación)") : T("Descanso diario normal"), reducido: T("Descanso diario reducido"), partido: T("Descanso diario partido (3 h + 9 h)"), falta: T("Descanso diario insuficiente"), pendiente: T("Falta apuntar lo siguiente") }[x.clase];
-        const notas = [x.descanso != null ? T("descanso después: {horas}", { horas: horas(x.descanso) }) : "", x.semanal ? T("le sigue el descanso semanal") : "", x.ferry ? T("cortado por ferry o tren") : ""].filter(Boolean);
+        const notas = [x.semanal ? T("le sigue el descanso semanal") : "", x.ferry ? T("cortado por ferry o tren") : ""].filter(Boolean);
+        const tipo = { normal: x.doble ? T("normal (doble tripulación)") : T("normal"), reducido: T("reducido"), partido: T("partido (3 h + 9 h)"), falta: T("no llega") }[x.clase];
+        const desc = [COLOR[x.clase] || "g", T("Descanso después"), x.descanso != null ? horas(x.descanso) + (tipo ? " · " + tipo : "") : T("todavía no apuntado")];
         const malas = [x.clase === "falta" ? (x.doble ? T("No caben 9 h de descanso dentro de las 30 h desde que empezaste.") : T("No caben 9 h de descanso dentro de las 24 h desde que empezaste.")) : "",
           x.demasiados ? T("Más de 3 descansos diarios reducidos entre dos descansos semanales.") : "",
           x.ferry ? T("Con ferry o tren, el descanso se puede cortar como mucho 2 veces y 1 h en total, y hay que tener cama o litera.") : ""].filter(Boolean);
-        return tarjeta(x.clase, T("Jornada") + " · " + et, horas((x.fin - x.ini) / H), [[T("Empieza"), fmt(x.ini)], [T("Termina"), fmt(x.fin)]], notas, malas, quitar(x.id, T("Quitar esta jornada"), 1)).replace("desc-fila desc-ta", "desc-fila desc-ta jornada");
+        return tarjeta(x.clase, T("Jornada de trabajo"), horas((x.fin - x.ini) / H), [[T("Empieza"), fmt(x.ini)], [T("Termina"), fmt(x.fin)]], notas, malas, quitar(x.id, T("Quitar esta jornada"), 1), desc).replace("desc-fila desc-ta", "desc-fila desc-ta jornada");
       }
       if (x.tipo === "comp") return tarjeta("comp", T("Compensación"), horas(+x.horas), [[T("Sumadas al descanso que acabó"), fmt(x.fin)]], [], [], quitar(x.id, T("Quitar")));
       const s = c.sem.find(y => y.id === x.id), et = s.clase === "normal" ? T("Normal") : s.clase === "reducido" ? T("Reducido") : T("No llega a 24 h"), deuda = c.deudas.find(d => d.de.id === x.id);

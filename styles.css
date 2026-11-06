@@ -2359,3 +2359,11 @@ p.desc-tipo { margin: 6px 0 0; }
 .desc-ta .desc-mal { margin: 8px 14px 0; padding: 8px 10px; border-radius: 10px; background: var(--rojo-suave); color: var(--ta-r); }
 .desc-fila.desc-ta > .desc-pie { display: flex; gap: 8px; justify-content: flex-end; padding: 8px 14px 12px; }
 .desc-ta > .desc-edita { margin: 0 14px 14px; }
+
+/* v145 (petición n.º 16 del padre): en las jornadas, el descanso de después en su propia franja de color */
+.desc-fila.desc-ta > .desc-despues { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 10px; margin: 8px 14px 0; padding: 8px 12px; border-radius: 10px; font-weight: 700; }
+.desc-despues > b { font-size: 1.15rem; }
+.desc-despues.v { background: var(--verde-suave); color: var(--ta-v); }
+.desc-despues.a { background: var(--ambar-suave); color: var(--ta-a); }
+.desc-despues.r { background: var(--rojo-suave); color: var(--ta-r); }
+.desc-despues.g { background: var(--ta-gs); color: var(--ta-g); }
