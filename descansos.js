@@ -404,6 +404,16 @@
     };
     const filas = [...DATOS.lista, ...dd.js.map(j => ({ ...j, _j: true }))].filter(pasa).sort((a, b) => b.fin - a.fin);
     const quitar = (id, txt, edita) => (edita ? `<button class="btn-ic" data-edita="${esc(id)}" aria-label="${esc(T("Cambiar las horas"))}" title="${esc(T("Cambiar las horas"))}">${icono("editar", "p")}</button>` : "") + `<button class="btn-ic" data-quita="${esc(id)}" aria-label="${esc(txt)}">${icono("borrar", "p")}</button>`;
+    // v144 (petición n.º 15, propuesta A): cada cosa apuntada en una tarjeta con la cabecera de color
+    // (verde bien, naranja reducido, rojo no cumple, gris lo demás), «Empieza» y «Termina» en dos líneas,
+    // etiquetas y el aviso en una caja.
+    const COLOR = { normal: "v", partido: "v", reducido: "a", corto: "r", falta: "r", pendiente: "g", comp: "g" };
+    const tarjeta = (clase, titulo, cuanto, filasF, pills, malas, botones) => `<li class="desc-fila desc-ta ${clase}">
+        <div class="desc-cab ${COLOR[clase] || "g"}"><span>${esc(titulo)}</span>${cuanto ? `<b class="desc-cab-h">${esc(cuanto)}</b>` : ""}</div>
+        <div class="desc-cuerpo">${filasF.map(([e, v]) => `<span>${esc(e)}</span><b>${esc(v)}</b>`).join("")}</div>
+        ${pills.length ? `<div class="desc-pills">${pills.map(t => `<i>${esc(t.charAt(0).toUpperCase() + t.slice(1))}</i>`).join("")}</div>` : ""}
+        ${malas.map(m => `<span class="desc-mal">${icono("alerta", "p")}${esc(m)}</span>`).join("")}
+        <div class="desc-pie">${botones}</div></li>`;
     $("desc-lista").innerHTML = filas.length ? filas.map(x => {
       if (x._j) {
         const et = { normal: x.doble ? T("Descanso diario de 9 h (doble tripulación)") : T("Descanso diario normal"), reducido: T("Descanso diario reducido"), partido: T("Descanso diario partido (3 h + 9 h)"), falta: T("Descanso diario insuficiente"), pendiente: T("Falta apuntar lo siguiente") }[x.clase];
@@ -411,12 +421,9 @@
         const malas = [x.clase === "falta" ? (x.doble ? T("No caben 9 h de descanso dentro de las 30 h desde que empezaste.") : T("No caben 9 h de descanso dentro de las 24 h desde que empezaste.")) : "",
           x.demasiados ? T("Más de 3 descansos diarios reducidos entre dos descansos semanales.") : "",
           x.ferry ? T("Con ferry o tren, el descanso se puede cortar como mucho 2 veces y 1 h en total, y hay que tener cama o litera.") : ""].filter(Boolean);
-        return `<li class="desc-fila jornada ${x.clase}"><div><b>${esc(fmt(x.ini))} → ${esc(fmt(x.fin))}</b>
-          <small><span class="desc-clase">${esc(T("Jornada"))}</span> · ${esc(horas((x.fin - x.ini) / H))}${notas.length ? " · " + notas.map(esc).join(" · ") : ""}</small>
-          <small><span class="desc-clase">${esc(et)}</span></small>
-          ${malas.map(m => `<span class="desc-mal">${icono("alerta", "p")}${esc(m)}</span>`).join("")}</div>${quitar(x.id, T("Quitar esta jornada"), 1)}</li>`;
+        return tarjeta(x.clase, T("Jornada") + " · " + et, horas((x.fin - x.ini) / H), [[T("Empieza"), fmt(x.ini)], [T("Termina"), fmt(x.fin)]], notas, malas, quitar(x.id, T("Quitar esta jornada"), 1)).replace("desc-fila desc-ta", "desc-fila desc-ta jornada");
       }
-      if (x.tipo === "comp") return `<li class="desc-fila comp"><div><b>${esc(T("Compensación: {horas}", { horas: horas(+x.horas) }))}</b><small>${esc(T("Sumadas a un descanso diario que acabó el {fecha}", { fecha: fmt(x.fin) }))}</small></div>${quitar(x.id, T("Quitar"))}</li>`;
+      if (x.tipo === "comp") return tarjeta("comp", T("Compensación"), horas(+x.horas), [[T("Sumadas al descanso que acabó"), fmt(x.fin)]], [], [], quitar(x.id, T("Quitar")));
       const s = c.sem.find(y => y.id === x.id), et = s.clase === "normal" ? T("Normal") : s.clase === "reducido" ? T("Reducido") : T("No llega a 24 h"), deuda = c.deudas.find(d => d.de.id === x.id);
       const notas = [x.casa ? T("En casa") : "", tocaFinde(x.ini, x.fin) ? T("Fin de semana") : T("Entre semana"), x.cabina ? T("En la cabina") : ""].filter(Boolean);
       const malas = [s.clase === "corto" ? T("Un descanso semanal tiene que ser de 24 horas o más.") : "",
@@ -424,9 +431,7 @@
         s.seguidos ? T("Dos semanas seguidas sin descanso normal: en dos semanas tiene que haber al menos uno normal.") : "",
         s.enCabina ? T("El descanso normal (45 h o más) no se puede hacer en la cabina: la empresa paga un alojamiento.") : ""].filter(Boolean);
       const dTxt = deuda ? (deuda.queda > 0.05 ? T("faltan {horas} por compensar", { horas: horas(deuda.queda) }) : T("compensado")) : "";
-      return `<li class="desc-fila ${s.clase}"><div><b>${esc(fmt(x.ini))} → ${esc(fmt(x.fin))}</b>
-        <small><span class="desc-clase">${esc(T("Descanso semanal"))} · ${esc(et)}</span> · ${esc(T("Semana {n}", { n: semanaISO(new Date(x.ini)).n }))} · ${esc(horas(s.h))}${dTxt ? " · " + esc(dTxt) : ""}${notas.length ? " · " + notas.map(esc).join(" · ") : ""}</small>
-        ${malas.map(m => `<span class="desc-mal">${icono("alerta", "p")}${esc(m)}</span>`).join("")}</div>${quitar(x.id, T("Quitar este descanso"), 1)}</li>`;
+      return tarjeta(s.clase, T("Semana {n}", { n: semanaISO(new Date(x.ini)).n }) + " · " + et, horas(s.h), [[T("Empieza"), fmt(x.ini)], [T("Termina"), fmt(x.fin)]], [T("Descanso semanal"), ...notas, dTxt].filter(Boolean), malas, quitar(x.id, T("Quitar este descanso"), 1));
     }).join("") : `<li class="desc-vacio">${esc(F === "todo" ? T("Todavía no has apuntado nada.") : T("No hay nada de este tipo."))}</li>`;
     $("desc-lista").querySelectorAll("[data-quita]").forEach(b => b.onclick = () => {
       if (!confirm(T("¿Quitarlo de tu lista?"))) return;
