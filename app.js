@@ -241,7 +241,7 @@ const cuandoEvento = (e) => {
   return dia + (e.hora ? " · " + horaEvento(e).toLowerCase() : "");
 };
 const resumenPlano = (t, n) => { const r = String(t || "").replace(/\*\*/g, "").replace(/^\s*(?:[-*•]|\d+[.)])\s+/gm, "").replace(/\s+/g, " ").trim(); return r.length > n ? r.slice(0, n).replace(/\s+\S*$/, "") + "…" : r; };
-const irADia = (iso) => { const d = fechaDia(iso); estado.mes = new Date(d.getFullYear(), d.getMonth(), 1); estado.diaSel = iso; pintaCalendario(); };
+const irADia = (iso) => { const d = fechaDia(iso); estado.calVista = "mes"; estado.mes = new Date(d.getFullYear(), d.getMonth(), 1); estado.diaSel = iso; pintaCalendario(); };
 
 // Contador pequeño en cada pestaña: lo nuevo desde la última visita de este móvil (o desde que se abrió esa pestaña)
 function leeVisto() { try { return JSON.parse(localStorage.getItem("ccoo-visto") || "{}") || {}; } catch (_) { return {}; } }
@@ -458,8 +458,14 @@ $("buscar-avisos").oninput = () => pintaAvisos();
 // ---------- Calendario ----------
 const isoDe = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 function pintaCalendario() {
-  const m = estado.mes, ini = new Date(m.getFullYear(), m.getMonth(), 1);
-  $("cal-mes").textContent = may(ini.toLocaleDateString("es-ES", { month: "long" })) + " " + ini.getFullYear();
+  const m = estado.mes, ini = new Date(m.getFullYear(), m.getMonth(), 1), verAno = estado.calVista === "ano";
+  $("cal-mes").textContent = verAno ? String(ini.getFullYear()) : may(ini.toLocaleDateString("es-ES", { month: "long" })) + " " + ini.getFullYear();
+  // v141: «Mes» o «Año» (lo pidió el padre, petición n.º 12). En «Año» las flechas pasan de año en año.
+  document.querySelectorAll("[data-cal-vista]").forEach(b => { const on = b.dataset.calVista === (verAno ? "ano" : "mes"); b.classList.toggle("activo", on); b.setAttribute("aria-pressed", on); });
+  $("cal-semana").hidden = verAno; $("cal-dias").hidden = verAno; $("cal-ano").hidden = !verAno;
+  $("cal-ant").setAttribute("aria-label", verAno ? "Año anterior" : "Mes anterior");
+  $("cal-sig").setAttribute("aria-label", verAno ? "Año siguiente" : "Mes siguiente");
+  document.querySelector(".cal-mes-btn").title = verAno ? "Ir a un mes" : "Ir a otro mes";
   const desfase = (ini.getDay() + 6) % 7, hoy = hoyISO(), porDia = {};
   // Filtro por tipo (las etiquetas de colores de debajo del mes): «Todos» o solo un tipo
   const tipos = nombres("evento").filter(t => D.eventos.some(e => e.tipo === t));
@@ -479,6 +485,7 @@ function pintaCalendario() {
       <span class="puntos">${evs.slice(0, 4).map(e => `<span class="punto ${claseTipo(e.tipo, "evento")}"></span>`).join("")}</span></button>`;
   }
   $("cal-dias").innerHTML = html;
+  if (verAno) pintaAno(ini.getFullYear(), porDia, hoy);
   $("cal-dias").querySelectorAll(".dia").forEach(b => b.onclick = () => {
     estado.diaSel = b.dataset.d;
     const d = fechaDia(b.dataset.d);
@@ -503,9 +510,33 @@ function pintaCalendario() {
   }).join("") : `<p class="fecha-txt" style="margin:0;padding:16px">${estado.tipoCal ? "No hay fechas próximas de este tipo." : "No hay fechas próximas."}</p>`;
   $("cal-proximas").querySelectorAll("[data-dia]").forEach(b => b.onclick = () => { irADia(b.dataset.dia); $("cal-detalle").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); });
 }
-$("cal-ant").onclick = () => { estado.mes = new Date(estado.mes.getFullYear(), estado.mes.getMonth() - 1, 1); pintaCalendario(); };
-$("cal-sig").onclick = () => { estado.mes = new Date(estado.mes.getFullYear(), estado.mes.getMonth() + 1, 1); pintaCalendario(); };
-$("cal-ir").onchange = (e) => { if (!e.target.value) return; const [y, m] = e.target.value.split("-"); estado.mes = new Date(+y, +m - 1, 1); estado.diaSel = `${y}-${m}-01`; pintaCalendario(); };
+// v141: vista «Año»: los 12 meses en pequeño; los días con algo, del color de su tipo. Al tocar un día o un mes se vuelve a «Mes».
+function pintaAno(y, porDia, hoy) {
+  let html = "";
+  for (let mm = 0; mm < 12; mm++) {
+    const ini = new Date(y, mm, 1), desfase = (ini.getDay() + 6) % 7, nDias = new Date(y, mm + 1, 0).getDate();
+    const nombre = may(ini.toLocaleDateString("es-ES", { month: "long" }));
+    let dias = "<span></span>".repeat(desfase), n = 0;
+    for (let d = 1; d <= nDias; d++) {
+      const iso = isoDe(new Date(y, mm, d)), evs = porDia[iso] || [], dow = new Date(y, mm, d).getDay();
+      const cls = `${iso === hoy ? "hoy" : ""} ${dow === 0 || dow === 6 ? "finde" : ""}`;
+      if (evs.length) { n += evs.length;
+        dias += `<button type="button" class="ad con ${cls} ${claseTipo(evs[0].tipo, "evento")}" data-d="${iso}" aria-label="${esc(d + " de " + ini.toLocaleDateString("es-ES", { month: "long" }) + ": " + evs.map(e => e.titulo || e.tipo).join(", "))}">${d}</button>`;
+      } else dias += `<span class="ad ${cls}">${d}</span>`;
+    }
+    html += `<div class="mini-mes ${y === fechaDia(hoy).getFullYear() && mm === fechaDia(hoy).getMonth() ? "actual" : ""}">
+      <button type="button" class="mini-tit" data-mes="${mm}" aria-label="${esc("Ver " + nombre + (n ? ", " + n + " fecha" + (n === 1 ? "" : "s") : ""))}">${esc(nombre)}${n ? `<span class="mini-n">${n}</span>` : ""}</button>
+      <div class="mini-sem" aria-hidden="true"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+      <div class="mini-dias">${dias}</div></div>`;
+  }
+  $("cal-ano").innerHTML = html;
+  $("cal-ano").querySelectorAll("[data-d]").forEach(b => b.onclick = () => { estado.calVista = "mes"; irADia(b.dataset.d); if (innerWidth < 900) $("cal-detalle").scrollIntoView({ behavior: "smooth", block: "nearest" }); });
+  $("cal-ano").querySelectorAll("[data-mes]").forEach(b => b.onclick = () => { estado.calVista = "mes"; estado.mes = new Date(y, +b.dataset.mes, 1); pintaCalendario(); });
+}
+document.querySelectorAll("[data-cal-vista]").forEach(b => b.onclick = () => { estado.calVista = b.dataset.calVista; pintaCalendario(); });
+$("cal-ant").onclick = () => { estado.mes = estado.calVista === "ano" ? new Date(estado.mes.getFullYear() - 1, estado.mes.getMonth(), 1) : new Date(estado.mes.getFullYear(), estado.mes.getMonth() - 1, 1); pintaCalendario(); };
+$("cal-sig").onclick = () => { estado.mes = estado.calVista === "ano" ? new Date(estado.mes.getFullYear() + 1, estado.mes.getMonth(), 1) : new Date(estado.mes.getFullYear(), estado.mes.getMonth() + 1, 1); pintaCalendario(); };
+$("cal-ir").onchange = (e) => { if (!e.target.value) return; const [y, m] = e.target.value.split("-"); estado.calVista = "mes"; estado.mes = new Date(+y, +m - 1, 1); estado.diaSel = `${y}-${m}-01`; pintaCalendario(); };
 document.querySelector(".cal-mes-btn").onclick = (e) => { if (e.target.id !== "cal-ir") { const i = $("cal-ir"); i.value = isoDe(estado.mes).slice(0, 7); try { i.showPicker(); } catch (_) { i.focus(); i.click(); } } };
 $("cal-hoy").onclick = () => { estado.mes = new Date(); estado.diaSel = hoyISO(); pintaCalendario(); };
 
@@ -1426,7 +1457,7 @@ function buscarTodo() {
   $("resultados-todo").querySelectorAll("[data-salto]").forEach(b => b.onclick = (ev) => { ev.preventDefault(); $(b.dataset.salto)?.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); });
   $("resultados-todo").querySelectorAll("a[data-q]").forEach(l => l.onclick = () => {
     const h = l.getAttribute("href").slice(1), q2 = l.dataset.q;
-    if (l.dataset.dia) { const d = fechaDia(l.dataset.dia); estado.mes = new Date(d.getFullYear(), d.getMonth(), 1); estado.diaSel = l.dataset.dia; pintaCalendario(); }
+    if (l.dataset.dia) { const d = fechaDia(l.dataset.dia); estado.calVista = "mes"; estado.mes = new Date(d.getFullYear(), d.getMonth(), 1); estado.diaSel = l.dataset.dia; pintaCalendario(); }
     const campo = { convenio: "buscar-convenio", preguntas: "buscar-preguntas", actas: "buscar-actas" }[h];
     if (campo && q2) { $(campo).value = q2; $(campo).dispatchEvent(new Event("input")); }
   });
