@@ -75,6 +75,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 138: «Me gusta, adelante» en vez de «Publicar» (lo pidió Lorena)
+- En «Lo que has pedido», el botón para dar el sí se llama «Me gusta, adelante» y encima pone «Si te gusta, pulsa «Me gusta, adelante». Lorena lo sube a la web.». Al pulsarlo sale «Hecho: en unos minutos lo verás en la web.». Igual que en el panel del Comité.
+
 ## Versión 137: destacar un aviso solo unas horas (petición n.º 10 del padre)
 - En el editor de avisos, debajo de «Destacar en Inicio el día», hay «Desde las» y «Hasta las». Con horas, el aviso sale arriba del todo en Inicio, en rojo, solo entre esas horas, y después vuelve a ser un aviso normal en su sitio. Sin horas, sigue como antes: el día entero.
 - Se guarda en `destacar_desde`/`destacar_hasta`, que ya tenían hora: no cambia la base de datos, ni la web, ni la función `notificar` (la notificación «Destacado» llega al empezar esas horas). En la lista del panel, la etiqueta dice «Destacado el … de 10:00 a 14:00». «Quitar el destacado» borra también las horas.

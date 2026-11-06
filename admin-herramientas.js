@@ -685,13 +685,13 @@ async function pintaHechas() {
       ${x.respuesta ? `<p class="pet-resp"><b>Claude:</b> ${esc(x.respuesta)}</p>` : ""}
       ${fichaPet(x)}
       ${grupo !== "lorena" && grupo !== "quitadas" && grupo !== "confirmadas" && x.estado === "lista" && x.propuesta && !x.decision ? `<div class="pet-decide" role="group" aria-label="¿Qué hago con esta petición?">
-        <p class="pet-decide-tit">${icono("ver", "p")}Mira las fotos de arriba. ¿Te gusta cómo queda?</p>
-        <button type="button" class="btn pet-publica" data-decide="${esc(x.id)}" data-que="publicar">${icono("check", "p")}Publicar</button>
+        <p class="pet-decide-tit">${icono("ver", "p")}Mira las fotos de arriba. Si te gusta, pulsa «Me gusta, adelante». Lorena lo sube a la web.</p>
+        <button type="button" class="btn pet-publica" data-decide="${esc(x.id)}" data-que="publicar">${icono("check", "p")}Me gusta, adelante</button>
         <button type="button" class="btn sec" data-anade-abre-2="${esc(x.id)}">${icono("mas", "p")}Añadir algo o mejorarlo</button>
         <button type="button" class="btn sec pet-descarta" data-decide="${esc(x.id)}" data-que="descartar">${icono("cerrar", "p")}Descartar</button>
         <p class="msg" role="status" aria-live="polite" id="pet-decide-msg-${esc(x.id)}"></p>
       </div>` : ""}
-      ${x.estado === "lista" && x.decision === "publicar" ? `<p class="aviso-pausa">${icono("reloj", "p")}<span>Has dicho «Publicar». Claude lo sube a la web y te avisa aquí.</span></p>` : ""}
+      ${x.estado === "lista" && x.decision === "publicar" ? `<p class="aviso-pausa">${icono("reloj", "p")}<span>Hecho: en unos minutos lo verás en la web.</span></p>` : ""}
       ${grupo === "lorena" || grupo === "confirmadas" ? "" : `<div class="pet-lorena"><p class="ayuda">${["no_hecha", "descartada"].includes(x.estado) ? "Si no estás de acuerdo, avisa a Lorena: le llega un aviso al móvil y lo mira ella." : "¿Quieres que lo mire Lorena? Le llega un aviso al móvil."}</p><button type="button" class="btn${["no_hecha", "descartada"].includes(x.estado) ? "" : " sec"}" data-avisa-lorena="${esc(x.id)}">${icono("campana", "p")}Avisar a Lorena</button><p class="msg" role="status" aria-live="polite" id="pet-lorena-msg-${esc(x.id)}"></p></div>`}
       ${x.estado === "publicada" ? (x.deshacer ? `<p class="aviso-pausa">${icono("reloj", "p")}<span>Has pedido volver a como estaba antes. Claude lo deshace y avisa a Lorena.</span></p>` : `<div class="pet-lorena"><p class="ayuda">¿No te gusta cómo ha quedado o algo ha salido mal? La web vuelve a estar como antes de esta petición.</p><button type="button" class="btn sec" data-deshacer="${esc(x.id)}">${icono("cerrar", "p")}No me gusta, quitarlo</button><div class="pet-confirma" data-deshacer-confirma="${esc(x.id)}" hidden><p>¿Quitarlo y dejar la web como estaba antes?</p><button type="button" class="btn" data-deshacer-si="${esc(x.id)}">${icono("check", "p")}Sí, quitarlo</button><button type="button" class="btn sec" data-deshacer-no="${esc(x.id)}">No, dejarlo</button></div><p class="msg" role="status" aria-live="polite" id="pet-deshacer-msg-${esc(x.id)}"></p></div>`) : ""}
       ${grupo === "marcha" || grupo === "hechas" ? `<div class="pet-lorena pet-pasar"><p class="ayuda">¿Te parece complicada? Pásasela a Lorena: le llega un aviso y la sigue ella. Sale de tu lista, pero no se pierde nada.</p><button type="button" class="btn pet-pasar-btn" data-pasar="${esc(x.id)}">${icono("grupo", "p")}Que lo siga Lorena</button><div class="pet-confirma" data-pasar-confirma="${esc(x.id)}" hidden><p>¿Se la pasas a Lorena? Ya no tendrás que hacer nada con ella.</p><button type="button" class="btn" data-pasar-si="${esc(x.id)}">${icono("check", "p")}Sí, que la siga Lorena</button><button type="button" class="btn sec" data-pasar-no="${esc(x.id)}">No, volver</button></div><p class="msg" role="status" aria-live="polite" id="pet-pasar-msg-${esc(x.id)}"></p></div>` : ""}
@@ -796,7 +796,7 @@ async function pintaHechas() {
     const id = Number(b.dataset.decide), que = b.dataset.que, mid = `pet-decide-msg-${id}`;
     if (que === "descartar" && !(await confirmaDescartar(id))) return;
     z.querySelectorAll(`[data-decide="${id}"]`).forEach(x => x.disabled = true);
-    msg(mid, que === "publicar" ? "Avisando a Claude para que lo publique…" : "Descartando…", true);
+    msg(mid, que === "publicar" ? "Enviando…" : "Descartando…", true);
     try {
       const { data: r, error } = await sb.rpc("decidir_peticion", { p_id: id, p_decision: que });
       if (error) throw error;
