@@ -459,14 +459,15 @@
       const abierta = ABIERTAS.size ? ABIERTAS.has(k) : i === 0;
       const cifras = `<div class="ds-cifras">
           <div><b>${esc(js.length ? hCorta(trab) : "—")}</b><span>${esc(T("trabajadas"))}</span></div>
-          <div class="${red > 3 ? "r" : red ? "a" : ""}"><b>${esc(T("{n} de 3", { n: red }))}</b><span>${esc(T("reducidos usados"))}</span></div>
+          <div class="${red > 3 ? "r" : red ? "a" : ""}"><b>${esc(js.length ? T("{n} de 3", { n: red }) : "—")}</b><span>${esc(T("reducidos usados"))}</span></div>
           <div class="${s1 ? COLOR[s1.clase] || "" : ""}"><b>${esc(s1 ? hCorta(s1.h) : "—")}</b><span>${esc(s1 ? (s1.clase === "normal" ? T("semanal normal") : s1.clase === "reducido" ? T("semanal reducido") : T("semanal corto")) : T("sin semanal"))}</span></div></div>`;
       const tabla = js.length ? `<div class="ds-tabla-env"><table class="ds-tabla"><thead><tr><th>${esc(T("Día"))}</th><th>${esc(T("Trabajo"))}</th><th>${esc(T("Descanso después"))}</th></tr></thead><tbody>${js.map(fila).join("")}</tbody></table></div>` : "";
-      return `<li class="desc-sem"><details data-sem-k="${k}" ${abierta ? "open" : ""}><summary class="ds-cab"><span>${esc(T("Semana {n}", { n: w.n }))} <small>${esc(diaM(k + 12 * H))} – ${esc(diaM(fin))}</small></span><b>${esc(js.length ? hCorta(trab) : s1 ? T("semanal") + " " + hCorta(s1.h) : "")}</b>${icono("der", "p")}</summary>
+      return `<li class="desc-sem"><details data-sem-k="${k}" ${abierta ? "open data-ini-abierta" : ""}><summary class="ds-cab"><span>${esc(T("Semana {n}", { n: w.n }))} <small>${esc(diaM(k + 12 * H))} – ${esc(diaM(fin))}</small></span><b>${esc(js.length ? hCorta(trab) : s1 ? T("semanal") + " " + hCorta(s1.h) : "")}</b>${icono("der", "p")}</summary>
         ${js.length || sems.length ? cifras : ""}${tabla}${otros.length ? `<div class="ds-bandas">${otros.map(banda).join("")}</div>` : ""}</details></li>`;
     }).join("") : `<li class="desc-vacio">${esc(F === "todo" ? T("Todavía no has apuntado nada.") : T("No hay nada de este tipo."))}</li>`;
     $("desc-lista").querySelectorAll("details[data-sem-k]").forEach(d => d.addEventListener("toggle", () => {
-      ABIERTAS.clear(); ABIERTAS.add(-1); // -1: ya has tocado algo, no vuelve a abrir sola la primera
+      if (!d.dataset.tocada && d.open === d.hasAttribute("data-ini-abierta")) return; // el aviso del propio pintado, no de un toque
+      d.dataset.tocada = "1"; ABIERTAS.clear(); ABIERTAS.add(-1); // -1: ya has tocado algo, no vuelve a abrir sola la primera
       $("desc-lista").querySelectorAll("details[data-sem-k][open]").forEach(o => ABIERTAS.add(+o.dataset.semK));
     }));
     $("desc-lista").querySelectorAll("[data-quita]").forEach(b => b.onclick = () => {
