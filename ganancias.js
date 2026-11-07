@@ -340,6 +340,19 @@
     if ($("gan-hoja-env")) $("gan-hoja-env").onclick = () => hojaPDF(w, "enviar").catch(() => m(T("No he podido hacer el PDF."), true));
   }
 
+  // v146 (petición n.º 17): «Todas las semanas», una debajo de otra con lo ganado, como la lista de los días.
+  // Solo lee lo apuntado (no cambia nada guardado). La más reciente arriba; a partir de la 9.ª, plegadas.
+  function todasSemanas(c, actual) {
+    const lunes = [...new Set(Object.keys(c).filter(f => c[f].lineas.length).map(lunesDe))].sort().reverse();
+    if (!lunes.length) return "";
+    const anio = +hoy().slice(0, 4);
+    const fila = (l) => { const ds = diasDe(l), x = resumen(c, ds), w = semDe(l);
+      return `<li><button type="button" data-ir-sem="${l}" class="${l === actual ? "hoy" : ""}" ${l === actual ? 'aria-current="true"' : ""}><span>${esc(T("Semana {n}", { n: w.n }))}${w.a !== anio ? " · " + w.a : ""}<small>${esc(T("Del {a} al {b}", { a: fDia(ds[0]), b: fDia(ds[6]) }))}</small><small>${esc(x.apuntados === 1 ? T("1 día apuntado") : T("{n} días apuntados", { n: x.apuntados }))}</small></span><b>${esc(eur(x.total))}</b>${icono("der", "p")}</button></li>`; };
+    const PRIMERAS = 8, resto = lunes.slice(PRIMERAS);
+    return `<h3 class="gan-sub" id="gan-todas-sem">${esc(T("Todas las semanas"))}</h3>
+      <ul class="gan-dias gan-semanas gan-todas">${lunes.slice(0, PRIMERAS).map(fila).join("")}</ul>
+      ${resto.length ? `<details class="gan-ir-caja gan-mas-sem"><summary>${icono("calendario", "p")}<span>${esc(T("Ver {n} semanas más antiguas", { n: resto.length }))}</span></summary><ul class="gan-dias gan-semanas gan-todas">${resto.map(fila).join("")}</ul></details>` : ""}`;
+  }
   function pintaSemana(c) {
     const l = DATOS.semana || lunesDe(DATOS.dia || hoy()), dias = diasDe(l), r = resumen(c, dias), w = semDe(l), esta = lunesDe(hoy());
     const pasada = resumen(c, diasDe(suma(l, -7))), wp = semDe(suma(l, -7));
@@ -353,6 +366,7 @@
         <form class="gan-ir-sem" id="gan-ir-sem"><label><span>${esc(T("Semana número"))}</span><input type="number" id="gan-sem-n" min="1" max="53" inputmode="numeric" value="${w.n}" aria-label="${esc(T("Número de semana"))}"></label>
         <label><span>${esc(T("del año"))}</span><input type="number" id="gan-sem-a" min="2020" max="2100" inputmode="numeric" value="${w.a}" aria-label="${esc(T("Año"))}"></label>
         <button class="btn sec">${esc(T("Ir"))}</button>${l !== esta ? `<button type="button" class="btn sec" data-sem="hoy">${esc(T("Esta semana"))}</button>` : ""}</form></details>
+      ${todasSemanas(c, l)}
       ${pasada.apuntados ? `<p class="gan-compara">${esc(T("La semana pasada (semana {n}): {total}", { n: wp.n, total: eur(pasada.total) }))}${r.apuntados ? ` · <b class="${r.total >= pasada.total ? "mas" : "menos"}">${r.total >= pasada.total ? "+" : "−"}${esc(eur(Math.abs(r.total - pasada.total)))}</b>` : ""}</p>` : ""}
       ${r.por.length ? `<h3 class="gan-sub">${esc(T("Por conceptos"))}</h3>${desglose(r)}` : `<p class="desc-vacio">${esc(T("Esta semana todavía no has apuntado ningún día. Toca un día para apuntar."))}</p>`}
       <p class="ayuda">${esc(T("Cobro semanal: dietas, suplementos, cargas, kilómetros, festivos, ADR por minuto y horas sindicales (te los pagan por semanas). En la nómina: nocturnidad y el ADR fijo (van con el salario a fin de mes, en «Mes»)."))}</p>
@@ -366,6 +380,7 @@
       try { await navigator.share({ files: [new File([pdf], nom, { type: "application/pdf" })], title: nom }); } catch (e) { if (e && e.name !== "AbortError") bajaArchivo(pdf, nom); }
     };
     v.querySelectorAll("[data-sem]").forEach(b => b.onclick = () => { DATOS.semana = b.dataset.sem === "hoy" ? esta : suma(l, +b.dataset.sem); guarda(); pinta(); });
+    v.querySelectorAll("[data-ir-sem]").forEach(b => b.onclick = () => { DATOS.semana = b.dataset.irSem; guarda(); pinta(); const n = document.querySelector("#gan-semana .gan-nav"); if (n) n.scrollIntoView({ block: "start" }); });
     $("gan-ir-sem").onsubmit = (e) => {
       e.preventDefault();
       const n = parseInt($("gan-sem-n").value, 10), a = parseInt($("gan-sem-a").value, 10);

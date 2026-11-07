@@ -75,6 +75,8 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 146: en Mis incentivos > Semana, la lista «Todas las semanas», una debajo de otra con lo ganado (la más reciente arriba; al tocar una se abre; petición n.º 17 del padre)
+
 ## Versión 145: en «Lo apuntado», las jornadas con la cabecera en gris y sus horas de trabajo, y el descanso de después en su propia franja de color (para que no parezca que esas horas son el descanso; petición n.º 16 del padre)
 
 ## Versión 144: «Lo apuntado» de Mis descansos más claro (propuesta A «Tarjeta con color»: cabecera verde, naranja o roja con las horas en grande, «Empieza» y «Termina» en dos líneas, etiquetas y el aviso en una caja; petición n.º 15 del padre)
