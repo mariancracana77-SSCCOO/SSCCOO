@@ -2397,3 +2397,7 @@ p.desc-tipo { margin: 6px 0 0; }
 .desc-reloj .desc-mal { align-self: stretch; text-align: left; padding: 8px 10px; border-radius: 10px; background: var(--rojo-suave); color: var(--ta-r); }
 .desc-fila.desc-reloj > .desc-pie { display: flex; gap: 8px; justify-content: center; padding-top: 2px; }
 .desc-fila.desc-reloj > .desc-edita { align-self: stretch; text-align: left; }
+/* v148 (petición n.º 19): fondo suave para distinguir «Todas las semanas» */
+.gan-caja-sem { display: flex; flex-direction: column; gap: 6px; margin: 4px -6px 0; padding: 10px 12px 12px; border-radius: var(--radio-g); background: var(--fondo); border: 1px solid var(--linea); }
+.gan-caja-sem .gan-sub { margin-top: 0; }
+.gan-caja-sem .gan-dias button:hover { background: var(--tarjeta); }
