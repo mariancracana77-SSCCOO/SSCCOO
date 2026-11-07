@@ -417,16 +417,38 @@
         ${pills.length ? `<div class="desc-pills">${pills.map(t => `<i>${esc(t.charAt(0).toUpperCase() + t.slice(1))}</i>`).join("")}</div>` : ""}
         ${malas.map(m => `<span class="desc-mal">${icono("alerta", "p")}${esc(m)}</span>`).join("")}
         <div class="desc-pie">${botones}</div></li>`;
+    // v147 (petición n.º 18 del padre, eligió la propuesta F «Reloj de cada día» entre 3 maquetas): cada jornada es un
+    // reloj de 24 h (`reloj`): el trabajo en gris desde la hora en que empezó y, seguido, el descanso de después en su color;
+    // en el centro las horas trabajadas. Dos o más por fila (`.desc-reloj`); los semanales y compensaciones siguen a lo ancho.
+    const hCorta = (h) => { const e = Math.floor(h + 1e-6), m = Math.round((h - e) * 60); return m ? `${e} h ${String(m).padStart(2, "0")}` : `${e} h`; };
+    const reloj = (x, col) => {
+      const d = new Date(x.ini), h0 = d.getHours() + d.getMinutes() / 60, trab = Math.min((x.fin - x.ini) / H, 24);
+      const pt = (t) => { const g = t / 24 * 2 * Math.PI - Math.PI / 2; return `${(70 + 46 * Math.cos(g)).toFixed(2)} ${(70 + 46 * Math.sin(g)).toFixed(2)}`; };
+      const arco = (a, b, c) => { if (b - a <= 0.01) return ""; if (b - a >= 23.99) b = a + 23.99;
+        return `<path class="${c}" d="M${pt(a)} A46 46 0 ${b - a > 12 ? 1 : 0} 1 ${pt(b)}"/>`; };
+      const resto = x.descanso != null ? Math.min(x.descanso, 24 - trab) : 0;
+      return `<svg class="rl-svg" viewBox="0 0 140 140" aria-hidden="true"><circle class="rl-fondo" cx="70" cy="70" r="46"/>${arco(h0, h0 + trab, "rl-t")}${arco(h0 + trab, h0 + trab + resto, "rl-" + col)}
+        <text class="rl-n" x="70" y="70">${esc(hCorta((x.fin - x.ini) / H))}</text><text class="rl-s" x="70" y="88">${esc(T("trabajo"))}</text>
+        <text class="rl-m" x="70" y="11">0</text><text class="rl-m" x="134" y="74">6</text><text class="rl-m" x="70" y="138">12</text><text class="rl-m" x="6" y="74">18</text></svg>`;
+    };
     $("desc-lista").innerHTML = filas.length ? filas.map(x => {
       if (x._j) {
         const et = { normal: x.doble ? T("Descanso diario de 9 h (doble tripulación)") : T("Descanso diario normal"), reducido: T("Descanso diario reducido"), partido: T("Descanso diario partido (3 h + 9 h)"), falta: T("Descanso diario insuficiente"), pendiente: T("Falta apuntar lo siguiente") }[x.clase];
         const notas = [x.semanal ? T("le sigue el descanso semanal") : "", x.ferry ? T("cortado por ferry o tren") : ""].filter(Boolean);
         const tipo = { normal: x.doble ? T("normal (doble tripulación)") : T("normal"), reducido: T("reducido"), partido: T("partido (3 h + 9 h)"), falta: T("no llega") }[x.clase];
-        const desc = [COLOR[x.clase] || "g", T("Descanso después"), x.descanso != null ? horas(x.descanso) + (tipo ? " · " + tipo : "") : T("todavía no apuntado")];
         const malas = [x.clase === "falta" ? (x.doble ? T("No caben 9 h de descanso dentro de las 30 h desde que empezaste.") : T("No caben 9 h de descanso dentro de las 24 h desde que empezaste.")) : "",
           x.demasiados ? T("Más de 3 descansos diarios reducidos entre dos descansos semanales.") : "",
           x.ferry ? T("Con ferry o tren, el descanso se puede cortar como mucho 2 veces y 1 h en total, y hay que tener cama o litera.") : ""].filter(Boolean);
-        return tarjeta(x.clase, T("Jornada de trabajo"), horas((x.fin - x.ini) / H), [[T("Empieza"), fmt(x.ini)], [T("Termina"), fmt(x.fin)]], notas, malas, quitar(x.id, T("Quitar esta jornada"), 1), desc).replace("desc-fila desc-ta", "desc-fila desc-ta jornada");
+        const col = COLOR[x.clase] || "g", dia = (t) => new Date(t).toLocaleDateString(LOC, { weekday: "short", day: "numeric", month: "short" });
+        const otroDia = new Date(x.ini).toDateString() !== new Date(x.fin).toDateString();
+        const dTxt = x.descanso != null ? `${esc(T("Descanso"))} <b>${esc(horas(x.descanso))}</b>${tipo && tipo !== T("normal") ? " · " + esc(tipo) : ""}` : esc(x.clase === "pendiente" ? T("Falta apuntar lo siguiente") : T("todavía no apuntado"));
+        return `<li class="desc-fila desc-reloj ${malas.length ? "ancha" : ""}" aria-label="${esc(T("Jornada de trabajo") + " · " + horas((x.fin - x.ini) / H))}">
+          <b class="rl-dia">${esc(dia(x.ini))}</b>${reloj(x, col)}
+          <span class="rl-horas">${esc(hora(x.ini))} → ${esc(hora(x.fin))}${otroDia ? ` <small>(${esc(dia(x.fin))})</small>` : ""}</span>
+          <span class="rl-desc ${col}">${dTxt}</span>
+          ${notas.length ? `<span class="rl-notas">${esc(notas.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(" · "))}</span>` : ""}
+          ${malas.map(m => `<span class="desc-mal">${icono("alerta", "p")}${esc(m)}</span>`).join("")}
+          <div class="desc-pie">${quitar(x.id, T("Quitar esta jornada"), 1)}</div></li>`;
       }
       if (x.tipo === "comp") return tarjeta("comp", T("Compensación"), horas(+x.horas), [[T("Sumadas al descanso que acabó"), fmt(x.fin)]], [], [], quitar(x.id, T("Quitar")));
       const s = c.sem.find(y => y.id === x.id), et = s.clase === "normal" ? T("Normal") : s.clase === "reducido" ? T("Reducido") : T("No llega a 24 h"), deuda = c.deudas.find(d => d.de.id === x.id);
@@ -445,13 +467,13 @@
     $("desc-lista").querySelectorAll("[data-edita]").forEach(b => b.onclick = () => {
       const li = b.closest("li"), id = b.dataset.edita, j = DATOS.jornadas.find(x => x.id === id), x = j || DATOS.lista.find(y => y.id === id);
       if (!x || li.querySelector(".desc-edita")) return;
-      const f = document.createElement("div"); f.className = "desc-edita";
+      const f = document.createElement("div"); f.className = "desc-edita"; li.classList.add("editando");
       f.innerHTML = `<label>${esc(j ? T("Empezaste") : T("Empezó el descanso"))}<input type="datetime-local" id="ed-ini" value="${aLocal(x.ini)}"></label>
         <label>${esc(j ? T("Terminaste") : T("Terminó el descanso"))}<input type="datetime-local" id="ed-fin" value="${aLocal(x.fin)}"></label>
         <p class="msg" id="ed-msg" role="alert"></p>
         <div class="botones"><button class="btn" id="ed-ok">${esc(T("Guardar los cambios"))}</button><button class="enlace-desact" id="ed-no">${esc(T("Cancelar"))}</button></div>`;
       li.appendChild(f);
-      $("ed-no").onclick = () => f.remove();
+      $("ed-no").onclick = () => { f.remove(); li.classList.remove("editando"); };
       $("ed-ok").onclick = () => {
         const ini = new Date($("ed-ini").value).getTime(), fin = new Date($("ed-fin").value).getTime(), m = $("ed-msg");
         const mal = (t) => { m.textContent = t; m.className = "msg err"; };
