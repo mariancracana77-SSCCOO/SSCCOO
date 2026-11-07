@@ -75,6 +75,8 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 149: en Mis descansos > Lo apuntado, todo va por semanas (propuesta E): cada semana con las horas trabajadas, los reducidos usados y el semanal, una tabla día · trabajo · descanso después, y las semanas pasadas plegadas. Sustituye a los relojes de la v147 (petición n.º 18)
+
 ## Versión 148: en Mis incentivos > Semana, «Todas las semanas» y «La semana pasada…» van en una caja con fondo suave para distinguirlas del resto (petición n.º 19)
 
 ## Versión 147: en Mis descansos > Lo apuntado, cada jornada es un reloj de 24 h (trabajo en gris y el descanso de después en su color, con las horas trabajadas en el centro), dos o más por fila (petición n.º 18, propuesta F)
