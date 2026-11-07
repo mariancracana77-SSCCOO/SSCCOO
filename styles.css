@@ -2367,3 +2367,33 @@ p.desc-tipo { margin: 6px 0 0; }
 .desc-despues.a { background: var(--ambar-suave); color: var(--ta-a); }
 .desc-despues.r { background: var(--rojo-suave); color: var(--ta-r); }
 .desc-despues.g { background: var(--ta-gs); color: var(--ta-g); }
+
+/* v147 (petición n.º 18 del padre, propuesta F): en «Lo apuntado» cada jornada es un reloj de 24 h, dos o más por fila */
+#desc-lista { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+#desc-lista > li:not(.desc-reloj), #desc-lista > .desc-reloj.ancha, #desc-lista > .desc-reloj.editando { grid-column: 1 / -1; }
+.desc-fila.desc-reloj { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 8px 8px; border-left-width: 1px; border-radius: 16px; text-align: center; }
+.desc-fila.desc-reloj > * { flex: 0 0 auto; }
+.rl-dia { font-size: 1.05rem; }
+.rl-svg { width: 100%; max-width: 150px; height: auto; display: block; }
+.rl-svg circle, .rl-svg path { fill: none; stroke-width: 16; }
+.rl-fondo { stroke: var(--ta-gs); }
+.rl-t { stroke: var(--ta-g); }
+.rl-v { stroke: var(--ta-v); }
+.rl-a { stroke: var(--ta-a); }
+.rl-r { stroke: var(--ta-r); }
+.rl-g { stroke: var(--linea); }
+.rl-svg text { text-anchor: middle; fill: var(--suave); font-size: 11px; }
+.rl-svg .rl-n { fill: var(--tinta); font-family: var(--cond, var(--titulos)); font-weight: 700; font-size: 24px; }
+.rl-svg .rl-s { font-size: 12px; }
+.rl-horas { color: var(--suave); font-size: .95rem; }
+.rl-horas small { font-size: .85rem; }
+.rl-desc { font-size: .95rem; }
+.rl-desc b { font-weight: 700; }
+.rl-desc.v { color: var(--ta-v); }
+.rl-desc.a { color: var(--ta-a); }
+.rl-desc.r { color: var(--ta-r); }
+.rl-desc.g { color: var(--suave); }
+.rl-notas { color: var(--suave); font-size: .85rem; }
+.desc-reloj .desc-mal { align-self: stretch; text-align: left; padding: 8px 10px; border-radius: 10px; background: var(--rojo-suave); color: var(--ta-r); }
+.desc-fila.desc-reloj > .desc-pie { display: flex; gap: 8px; justify-content: center; padding-top: 2px; }
+.desc-fila.desc-reloj > .desc-edita { align-self: stretch; text-align: left; }
