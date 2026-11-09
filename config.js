@@ -3,7 +3,7 @@
 window.SUPABASE_URL = "https://kdfedwcskymaitvpryvg.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_RLt0HuAMskXkKl2hxhUF2w_sCexGznp";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "148"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "157"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/SSCCOO/";
 // Clave pública de las notificaciones (la privada solo está en el servidor)
 window.VAPID_PUBLICA = "BMMdZjehtNipsScHJ__kzOIn9XCgIpya3UDDRlexxOAWJU-J6ZICDlf72ItPOebzl-SfzoU234pd82Chp87Vm1w";
@@ -63,6 +63,17 @@ window.hoyISO = () => { const d = new Date(); return new Date(d - d.getTimezoneO
 window.claseTipo = (t, lista) => {
   const o = lista && (OPC[lista] || []).find(x => x[0] === t);
   return "c-" + (o ? o[1] : colorDe(t));
+};
+// v154 (petición 24): los festivos con lugar «España» llevan su bandera y los de «Cataluña»/«Catalunya», la senyera
+// (dibujadas con CSS en styles.css, .bandera). Solo mira el tipo y el lugar que pone el padre en el panel.
+window.banderaDe = (e) => {
+  if ((e.tipo || "").toLowerCase() !== "festivo") return "";
+  const l = (e.lugar || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  return /catal/.test(l) ? "cat" : /espan/.test(l) ? "es" : "";
+};
+window.bandera = (e, extra) => {
+  const b = banderaDe(e), nom = b === "es" ? "Festivo en España" : "Festivo en Cataluña";
+  return b ? `<span class="bandera b-${b} ${extra || ""}" role="img" aria-label="${esc(nom)}" title="${esc(nom)}"></span>` : "";
 };
 window.cartel = (iso, tipo, lista) => {
   const d = fechaDia(iso);

@@ -417,6 +417,7 @@ const TEXTOS = [
   { slug: "convenio", l: "Introducción del convenio", ayuda: "Sale arriba de los apartados: qué convenio es, vigencia, etc." },
   { slug: "quienes", l: "Quiénes somos" },
   { slug: "contacto", l: "Contacto", ayuda: "Email, teléfono, horario, delegados…" },
+  { slug: "horarios_dieta", l: "Horarios de la dieta (Mis incentivos)", ayuda: "Sale en «Mis incentivos» → «Día», en el cuadro «Cuándo se cobra cada parte de la dieta». Si lo dejas vacío, sale la tabla de siempre: dormir, desayuno, comida, cena y el festivo al 100 % o al 50 %." },
   { slug: "aviso_legal", l: "Aviso legal", ayuda: "Quién es el responsable de la web. Enlazado abajo en la web. Conviene que lo revise el servicio jurídico de CCOO." },
   { slug: "privacidad", l: "Privacidad y cookies", ayuda: "Qué datos se tratan y cómo. Si cambias algo de la web (por ejemplo, un formulario), actualízalo." },
   { slug: "aviso_privacidad_texto", l: "Aviso de privacidad (la franja de abajo la primera vez)", corto: true, ayuda: "Detrás sale siempre «Puedes leer cómo tratamos tus datos en Privacidad y en el Aviso legal». Si lo dejas vacío, sale: «Esta web usa solo lo necesario para funcionar.»" },

@@ -9,6 +9,7 @@
 (function () {
   const CLAVE = "ccoo-descansos", H = 3600000, DIA = 24 * H;
   const MIN = 60000;
+  const ABIERTAS = new Set(); // v149: semanas de «Lo apuntado» que has abierto (solo en memoria, no se guarda)
   const DEF = () => ({ lista: [], jornadas: [], hoy: null, internacional: false, doble: false, avisos: true, filtro: "todo", tab: "hoy", apunte: "jornada",
     ver: { semanal: true, diario: true }, aviso: { semanal: [12, 2], diario: 1 } });
   const completa = (d) => { const b = DEF(); return { ...b, ...d, jornadas: Array.isArray(d.jornadas) ? d.jornadas : [], ver: { ...b.ver, ...(d.ver || {}) }, aviso: { ...b.aviso, ...(d.aviso || {}) } }; };
@@ -345,6 +346,12 @@
       : `<summary>${icono("movil", "p")}<span>${esc(T("Instala la app"))}</span></summary><div><p>${TH("Ahora lo estás usando desde el navegador. Tus descansos se guardan solo en este móvil y aquí **se pueden borrar** si:")}</p>${lista([T("borras el historial o los datos de navegación,"), T("usas una pestaña de incógnito (se pierde todo al cerrarla),"), T("en iPhone, pasas unos días sin entrar (Safari lo borra solo),"), T("cambias de móvil o lo restableces.")])}<p>${esc(T("Con la app se guardan mejor y te llegan los avisos. Descarga de vez en cuando la copia en PDF (en iPhone, sirve también para pasar tus datos a la app)."))}</p><button class="btn" id="desc-instalar">${icono("descargar", "p")}${esc(T("Instalar la app"))}</button></div>`}</details>` +
       // v87: al lado, en la misma línea; todo el chip es el botón (un solo toque, como antes)
       (!avisosPosibles() ? `<button type="button" class="desc-mini fila-aviso" id="desc-avisos" title="${esc(T("Activa los avisos y te recuerdo tus descansos."))}">${icono("campana", "p")}<span>${esc(T("Activa los avisos"))}</span></button>` : "") + `</div>`;
+    // v151: vacío → cuadro para recuperar lo de la app antigua; con datos → «Guardar mi copia ahora» si hace 7 días o más
+    if (typeof cajaRecuperar === "function") {
+      const vacio = !DATOS.lista.length && !DATOS.jornadas.length, paso3 = T("Entra en «Mis descansos» > «Lo apuntado» y toca «Guardar una copia (PDF)».");
+      $("desc-app").insertAdjacentHTML("afterbegin", vacio ? cajaRecuperar({ entrada: "desc-recupera", paso3, arriba: true, clave: "descansos", T }) : botonCopiaAhora({ copia: "desc-copia", T }));
+      const aj = $("desc-recupera-aj"); if (aj) { const ab = !!aj.querySelector("details")?.open; aj.innerHTML = cajaRecuperar({ entrada: "desc-recupera", paso3, T }) + (vacio ? "" : botonCopiaAhora({ copia: "desc-copia", T, siempre: true })); if (ab) aj.querySelector("details").open = true; }
+    }
     if ($("desc-instalar")) $("desc-instalar").onclick = () => instalar();
     if ($("desc-avisos")) $("desc-avisos").onclick = async () => { await activarAvisos(); pinta(); };
 
@@ -404,62 +411,71 @@
     };
     const filas = [...DATOS.lista, ...dd.js.map(j => ({ ...j, _j: true }))].filter(pasa).sort((a, b) => b.fin - a.fin);
     const quitar = (id, txt, edita) => (edita ? `<button class="btn-ic" data-edita="${esc(id)}" aria-label="${esc(T("Cambiar las horas"))}" title="${esc(T("Cambiar las horas"))}">${icono("editar", "p")}</button>` : "") + `<button class="btn-ic" data-quita="${esc(id)}" aria-label="${esc(txt)}">${icono("borrar", "p")}</button>`;
-    // v144 (petición n.º 15, propuesta A): cada cosa apuntada en una tarjeta con la cabecera de color
-    // (verde bien, naranja reducido, rojo no cumple, gris lo demás), «Empieza» y «Termina» en dos líneas,
-    // etiquetas y el aviso en una caja.
+    // Colores (de la v144): verde bien, naranja reducido, rojo no cumple, gris lo demás.
     const COLOR = { normal: "v", partido: "v", reducido: "a", corto: "r", falta: "r", pendiente: "g", comp: "g" };
-    // v145 (petición n.º 16): en las jornadas la cabecera va en gris con las horas de TRABAJO, y el descanso de después
-    // en su propia franja de color (`desc`: [color, texto, valor]), para que no parezca que esas horas son el descanso.
-    const tarjeta = (clase, titulo, cuanto, filasF, pills, malas, botones, desc) => `<li class="desc-fila desc-ta ${clase}">
-        <div class="desc-cab ${desc ? "g" : COLOR[clase] || "g"}"><span>${esc(titulo)}</span>${cuanto ? `<b class="desc-cab-h">${esc(cuanto)}</b>` : ""}</div>
-        <div class="desc-cuerpo">${filasF.map(([e, v]) => `<span>${esc(e)}</span><b>${esc(v)}</b>`).join("")}</div>
-        ${desc ? `<div class="desc-despues ${desc[0]}"><span>${esc(desc[1])}</span><b>${esc(desc[2])}</b></div>` : ""}
-        ${pills.length ? `<div class="desc-pills">${pills.map(t => `<i>${esc(t.charAt(0).toUpperCase() + t.slice(1))}</i>`).join("")}</div>` : ""}
-        ${malas.map(m => `<span class="desc-mal">${icono("alerta", "p")}${esc(m)}</span>`).join("")}
-        <div class="desc-pie">${botones}</div></li>`;
-    // v147 (petición n.º 18 del padre, eligió la propuesta F «Reloj de cada día» entre 3 maquetas): cada jornada es un
-    // reloj de 24 h (`reloj`): el trabajo en gris desde la hora en que empezó y, seguido, el descanso de después en su color;
-    // en el centro las horas trabajadas. Dos o más por fila (`.desc-reloj`); los semanales y compensaciones siguen a lo ancho.
+    // v149 (petición n.º 18 del padre: al final eligió la propuesta E «Por semanas» en vez de la F): lo apuntado va
+    // agrupado por semanas (lunes a domingo, la del día en que empieza cada cosa). Cada semana es una tarjeta con
+    // tres cifras (horas trabajadas, reducidos usados de 3 y el descanso semanal), una tabla de las jornadas
+    // (día · trabajo · descanso después, con un punto del color del descanso) y debajo los descansos semanales y las
+    // compensaciones en franjas de color. La más reciente sale abierta; las pasadas, plegadas (se recuerda cuáles has
+    // abierto mientras no recargues). Solo cambia cómo se ve: no toca lo guardado.
     const hCorta = (h) => { const e = Math.floor(h + 1e-6), m = Math.round((h - e) * 60); return m ? `${e} h ${String(m).padStart(2, "0")}` : `${e} h`; };
-    const reloj = (x, col) => {
-      const d = new Date(x.ini), h0 = d.getHours() + d.getMinutes() / 60, trab = Math.min((x.fin - x.ini) / H, 24);
-      const pt = (t) => { const g = t / 24 * 2 * Math.PI - Math.PI / 2; return `${(70 + 46 * Math.cos(g)).toFixed(2)} ${(70 + 46 * Math.sin(g)).toFixed(2)}`; };
-      const arco = (a, b, c) => { if (b - a <= 0.01) return ""; if (b - a >= 23.99) b = a + 23.99;
-        return `<path class="${c}" d="M${pt(a)} A46 46 0 ${b - a > 12 ? 1 : 0} 1 ${pt(b)}"/>`; };
-      const resto = x.descanso != null ? Math.min(x.descanso, 24 - trab) : 0;
-      return `<svg class="rl-svg" viewBox="0 0 140 140" aria-hidden="true"><circle class="rl-fondo" cx="70" cy="70" r="46"/>${arco(h0, h0 + trab, "rl-t")}${arco(h0 + trab, h0 + trab + resto, "rl-" + col)}
-        <text class="rl-n" x="70" y="70">${esc(hCorta((x.fin - x.ini) / H))}</text><text class="rl-s" x="70" y="88">${esc(T("trabajo"))}</text>
-        <text class="rl-m" x="70" y="11">0</text><text class="rl-m" x="134" y="74">6</text><text class="rl-m" x="70" y="138">12</text><text class="rl-m" x="6" y="74">18</text></svg>`;
+    const diaC = (t) => new Date(t).toLocaleDateString(LOC, { weekday: "short", day: "numeric" });
+    const diaM = (t) => new Date(t).toLocaleDateString(LOC, { day: "numeric", month: "short" });
+    const diaH = (t) => new Date(t).toLocaleDateString(LOC, { weekday: "short", day: "numeric", month: "short" }) + ", " + hora(t);
+    const lunesDe = (t) => { const d = new Date(t); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getTime(); };
+    const grupos = new Map();
+    filas.forEach(x => { const k = lunesDe(x.ini); if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(x); });
+    const claves = [...grupos.keys()].sort((a, b) => b - a);
+    const fila = (x) => { // una jornada: fila de la tabla (y debajo sus avisos)
+      const tipo = { normal: x.doble ? T("normal (doble tripulación)") : T("normal"), reducido: T("reducido"), partido: T("partido (3 h + 9 h)"), falta: T("no llega") }[x.clase];
+      const notas = [x.semanal ? T("le sigue el descanso semanal") : "", x.ferry ? T("cortado por ferry o tren") : ""].filter(Boolean);
+      const malas = [x.clase === "falta" ? (x.doble ? T("No caben 9 h de descanso dentro de las 30 h desde que empezaste.") : T("No caben 9 h de descanso dentro de las 24 h desde que empezaste.")) : "",
+        x.demasiados ? T("Más de 3 descansos diarios reducidos entre dos descansos semanales.") : "",
+        x.ferry ? T("Con ferry o tren, el descanso se puede cortar como mucho 2 veces y 1 h en total, y hay que tener cama o litera.") : ""].filter(Boolean);
+      const col = COLOR[x.clase] || "g", otroDia = new Date(x.ini).toDateString() !== new Date(x.fin).toDateString();
+      const desc = x.descanso != null ? `<b><i class="ds-punto ${col}"></i>${esc(hCorta(x.descanso))}</b><small>${esc(tipo || "")}</small>`
+        : `<b class="ds-sin">${esc(x.semanal ? T("Semanal") : x.clase === "pendiente" ? T("Falta apuntar") : T("todavía no apuntado"))}</b>`;
+      return `<tr class="ds-fila ${malas.length ? "con-mal" : ""}"><td><b>${esc(diaC(x.ini))}</b><span class="ds-bots">${quitar(x.id, T("Quitar esta jornada"), 1)}</span></td>
+        <td><b>${esc(hCorta((x.fin - x.ini) / H))}</b><small>${esc(hora(x.ini))} → ${esc(hora(x.fin))}${otroDia ? " (" + esc(diaC(x.fin)) + ")" : ""}</small></td>
+        <td>${desc}${notas.length ? `<small>${esc(notas.join(" · "))}</small>` : ""}</td></tr>
+        ${malas.length ? `<tr class="ds-malas"><td colspan="3">${malas.map(m => `<span class="desc-mal">${icono("alerta", "p")}${esc(m)}</span>`).join("")}</td></tr>` : ""}`;
     };
-    $("desc-lista").innerHTML = filas.length ? filas.map(x => {
-      if (x._j) {
-        const et = { normal: x.doble ? T("Descanso diario de 9 h (doble tripulación)") : T("Descanso diario normal"), reducido: T("Descanso diario reducido"), partido: T("Descanso diario partido (3 h + 9 h)"), falta: T("Descanso diario insuficiente"), pendiente: T("Falta apuntar lo siguiente") }[x.clase];
-        const notas = [x.semanal ? T("le sigue el descanso semanal") : "", x.ferry ? T("cortado por ferry o tren") : ""].filter(Boolean);
-        const tipo = { normal: x.doble ? T("normal (doble tripulación)") : T("normal"), reducido: T("reducido"), partido: T("partido (3 h + 9 h)"), falta: T("no llega") }[x.clase];
-        const malas = [x.clase === "falta" ? (x.doble ? T("No caben 9 h de descanso dentro de las 30 h desde que empezaste.") : T("No caben 9 h de descanso dentro de las 24 h desde que empezaste.")) : "",
-          x.demasiados ? T("Más de 3 descansos diarios reducidos entre dos descansos semanales.") : "",
-          x.ferry ? T("Con ferry o tren, el descanso se puede cortar como mucho 2 veces y 1 h en total, y hay que tener cama o litera.") : ""].filter(Boolean);
-        const col = COLOR[x.clase] || "g", dia = (t) => new Date(t).toLocaleDateString(LOC, { weekday: "short", day: "numeric", month: "short" });
-        const otroDia = new Date(x.ini).toDateString() !== new Date(x.fin).toDateString();
-        const dTxt = x.descanso != null ? `${esc(T("Descanso"))} <b>${esc(horas(x.descanso))}</b>${tipo && tipo !== T("normal") ? " · " + esc(tipo) : ""}` : esc(x.clase === "pendiente" ? T("Falta apuntar lo siguiente") : T("todavía no apuntado"));
-        return `<li class="desc-fila desc-reloj ${malas.length ? "ancha" : ""}" aria-label="${esc(T("Jornada de trabajo") + " · " + horas((x.fin - x.ini) / H))}">
-          <b class="rl-dia">${esc(dia(x.ini))}</b>${reloj(x, col)}
-          <span class="rl-horas">${esc(hora(x.ini))} → ${esc(hora(x.fin))}${otroDia ? ` <small>(${esc(dia(x.fin))})</small>` : ""}</span>
-          <span class="rl-desc ${col}">${dTxt}</span>
-          ${notas.length ? `<span class="rl-notas">${esc(notas.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(" · "))}</span>` : ""}
-          ${malas.map(m => `<span class="desc-mal">${icono("alerta", "p")}${esc(m)}</span>`).join("")}
-          <div class="desc-pie">${quitar(x.id, T("Quitar esta jornada"), 1)}</div></li>`;
-      }
-      if (x.tipo === "comp") return tarjeta("comp", T("Compensación"), horas(+x.horas), [[T("Sumadas al descanso que acabó"), fmt(x.fin)]], [], [], quitar(x.id, T("Quitar")));
+    const banda = (x) => { // un descanso semanal o una compensación: franja de color debajo de la tabla
+      if (x.tipo === "comp") return `<div class="ds-banda g"><div class="ds-banda-cab"><span>${esc(T("Compensación"))}</span><b>${esc(hCorta(+x.horas))}</b></div>
+        <small>${esc(T("Sumadas al descanso que acabó"))} ${esc(fmt(x.fin))}</small><span class="ds-bots">${quitar(x.id, T("Quitar"))}</span></div>`;
       const s = c.sem.find(y => y.id === x.id), et = s.clase === "normal" ? T("Normal") : s.clase === "reducido" ? T("Reducido") : T("No llega a 24 h"), deuda = c.deudas.find(d => d.de.id === x.id);
-      const notas = [x.casa ? T("En casa") : "", tocaFinde(x.ini, x.fin) ? T("Fin de semana") : T("Entre semana"), x.cabina ? T("En la cabina") : ""].filter(Boolean);
+      const notas = [x.casa ? T("En casa") : "", tocaFinde(x.ini, x.fin) ? T("Fin de semana") : T("Entre semana"), x.cabina ? T("En la cabina") : "",
+        deuda ? (deuda.queda > 0.05 ? T("faltan {horas} por compensar", { horas: horas(deuda.queda) }) : T("compensado")) : ""].filter(Boolean);
       const malas = [s.clase === "corto" ? T("Un descanso semanal tiene que ser de 24 horas o más.") : "",
         s.tarde ? T("Empezó {horas} tarde: tenía que empezar antes de 6 días (144 h) desde el anterior.", { horas: horas(s.tarde) }) : "",
         s.seguidos ? T("Dos semanas seguidas sin descanso normal: en dos semanas tiene que haber al menos uno normal.") : "",
         s.enCabina ? T("El descanso normal (45 h o más) no se puede hacer en la cabina: la empresa paga un alojamiento.") : ""].filter(Boolean);
-      const dTxt = deuda ? (deuda.queda > 0.05 ? T("faltan {horas} por compensar", { horas: horas(deuda.queda) }) : T("compensado")) : "";
-      return tarjeta(s.clase, T("Semana {n}", { n: semanaISO(new Date(x.ini)).n }) + " · " + et, horas(s.h), [[T("Empieza"), fmt(x.ini)], [T("Termina"), fmt(x.fin)]], [T("Descanso semanal"), ...notas, dTxt].filter(Boolean), malas, quitar(x.id, T("Quitar este descanso"), 1));
+      return `<div class="ds-banda ${COLOR[s.clase] || "g"}"><div class="ds-banda-cab"><span>${esc(T("Descanso semanal"))} · ${esc(et)}</span><b>${esc(hCorta(s.h))}</b></div>
+        <small>${esc(diaH(x.ini))} → ${esc(diaH(x.fin))}</small>
+        ${notas.length ? `<div class="desc-pills">${notas.map(t => `<i>${esc(t.charAt(0).toUpperCase() + t.slice(1))}</i>`).join("")}</div>` : ""}
+        ${malas.map(m => `<span class="desc-mal">${icono("alerta", "p")}${esc(m)}</span>`).join("")}
+        <span class="ds-bots">${quitar(x.id, T("Quitar este descanso"), 1)}</span></div>`;
+    };
+    $("desc-lista").innerHTML = claves.length ? claves.map((k, i) => {
+      const xs = grupos.get(k).slice().sort((a, b) => a.ini - b.ini), js = xs.filter(x => x._j), otros = xs.filter(x => !x._j);
+      const w = semanaISO(new Date(k + 12 * H)), fin = k + 6 * DIA + 12 * H;
+      const trab = js.reduce((t, x) => t + (x.fin - x.ini) / H, 0), red = js.filter(x => x.clase === "reducido").length;
+      const sems = otros.filter(x => x.tipo !== "comp").map(x => c.sem.find(y => y.id === x.id)).filter(Boolean), s1 = sems[sems.length - 1];
+      const abierta = ABIERTAS.size ? ABIERTAS.has(k) : i === 0;
+      const cifras = `<div class="ds-cifras">
+          <div><b>${esc(js.length ? hCorta(trab) : "—")}</b><span>${esc(T("trabajadas"))}</span></div>
+          <div class="${red > 3 ? "r" : red ? "a" : ""}"><b>${esc(js.length ? T("{n} de 3", { n: red }) : "—")}</b><span>${esc(T("reducidos usados"))}</span></div>
+          <div class="${s1 ? COLOR[s1.clase] || "" : ""}"><b>${esc(s1 ? hCorta(s1.h) : "—")}</b><span>${esc(s1 ? (s1.clase === "normal" ? T("semanal normal") : s1.clase === "reducido" ? T("semanal reducido") : T("semanal corto")) : T("sin semanal"))}</span></div></div>`;
+      const tabla = js.length ? `<div class="ds-tabla-env"><table class="ds-tabla"><thead><tr><th>${esc(T("Día"))}</th><th>${esc(T("Trabajo"))}</th><th>${esc(T("Descanso después"))}</th></tr></thead><tbody>${js.map(fila).join("")}</tbody></table></div>` : "";
+      return `<li class="desc-sem"><details data-sem-k="${k}" ${abierta ? "open data-ini-abierta" : ""}><summary class="ds-cab"><span>${esc(T("Semana {n}", { n: w.n }))} <small>${esc(diaM(k + 12 * H))} – ${esc(diaM(fin))}</small></span><b>${esc(js.length ? hCorta(trab) : s1 ? T("semanal") + " " + hCorta(s1.h) : "")}</b>${icono("der", "p")}</summary>
+        ${js.length || sems.length ? cifras : ""}${tabla}${otros.length ? `<div class="ds-bandas">${otros.map(banda).join("")}</div>` : ""}</details></li>`;
     }).join("") : `<li class="desc-vacio">${esc(F === "todo" ? T("Todavía no has apuntado nada.") : T("No hay nada de este tipo."))}</li>`;
+    $("desc-lista").querySelectorAll("details[data-sem-k]").forEach(d => d.addEventListener("toggle", () => {
+      if (!d.dataset.tocada && d.open === d.hasAttribute("data-ini-abierta")) return; // el aviso del propio pintado, no de un toque
+      d.dataset.tocada = "1"; ABIERTAS.clear(); ABIERTAS.add(-1); // -1: ya has tocado algo, no vuelve a abrir sola la primera
+      $("desc-lista").querySelectorAll("details[data-sem-k][open]").forEach(o => ABIERTAS.add(+o.dataset.semK));
+    }));
     $("desc-lista").querySelectorAll("[data-quita]").forEach(b => b.onclick = () => {
       if (!confirm(T("¿Quitarlo de tu lista?"))) return;
       DATOS.lista = DATOS.lista.filter(x => x.id !== b.dataset.quita); DATOS.jornadas = DATOS.jornadas.filter(x => x.id !== b.dataset.quita); guarda(); pinta();
@@ -467,13 +483,16 @@
     $("desc-lista").querySelectorAll("[data-edita]").forEach(b => b.onclick = () => {
       const li = b.closest("li"), id = b.dataset.edita, j = DATOS.jornadas.find(x => x.id === id), x = j || DATOS.lista.find(y => y.id === id);
       if (!x || li.querySelector(".desc-edita")) return;
-      const f = document.createElement("div"); f.className = "desc-edita"; li.classList.add("editando");
+      const f = document.createElement("div"); f.className = "desc-edita";
       f.innerHTML = `<label>${esc(j ? T("Empezaste") : T("Empezó el descanso"))}<input type="datetime-local" id="ed-ini" value="${aLocal(x.ini)}"></label>
         <label>${esc(j ? T("Terminaste") : T("Terminó el descanso"))}<input type="datetime-local" id="ed-fin" value="${aLocal(x.fin)}"></label>
         <p class="msg" id="ed-msg" role="alert"></p>
         <div class="botones"><button class="btn" id="ed-ok">${esc(T("Guardar los cambios"))}</button><button class="enlace-desact" id="ed-no">${esc(T("Cancelar"))}</button></div>`;
-      li.appendChild(f);
-      $("ed-no").onclick = () => { f.remove(); li.classList.remove("editando"); };
+      // v149: en la tabla, en una fila nueva justo debajo de la jornada; en un semanal, dentro de su franja
+      const tr = b.closest("tr"), caja = tr ? document.createElement("tr") : f;
+      if (tr) { caja.className = "ds-edita"; const td = document.createElement("td"); td.colSpan = 3; td.appendChild(f); caja.appendChild(td); tr.after(caja); }
+      else b.closest(".ds-banda").appendChild(f);
+      $("ed-no").onclick = () => caja.remove();
       $("ed-ok").onclick = () => {
         const ini = new Date($("ed-ini").value).getTime(), fin = new Date($("ed-fin").value).getTime(), m = $("ed-msg");
         const mal = (t) => { m.textContent = t; m.className = "msg err"; };
@@ -631,8 +650,15 @@
           .map(x => x.tipo === "comp" ? { id: x.id, tipo: "comp", fin: x.fin, horas: +x.horas } : { id: x.id, ini: x.ini, fin: x.fin, casa: !!x.casa, cabina: !!x.cabina });
         const jornadas = (Array.isArray(d.jornadas) ? d.jornadas : []).filter(j => j && typeof j.id === "string" && Number.isFinite(j.ini) && Number.isFinite(j.fin))
           .map(j => ({ id: j.id, ini: j.ini, fin: j.fin, cond: Number.isFinite(+j.cond) ? +j.cond : 0, doble: !!j.doble, partido: !!j.partido, ferry: !!j.ferry }));
-        if (!confirm(T("La copia tiene {n} apuntes. ¿Sustituir lo que hay ahora en este móvil?", { n: lista.length + jornadas.length }))) return;
-        DATOS = completa({ lista, jornadas, internacional: !!d.internacional, doble: !!d.doble, avisos: d.avisos !== false, ver: d.ver || {}, aviso: d.aviso || {} }); guarda(); pinta();
+        // v151: ya no se sustituye lo que hay: se añaden los apuntes que no estén en el móvil (mismo id = el mismo apunte, se queda el del móvil)
+        const vacio = !DATOS.lista.length && !DATOS.jornadas.length;
+        const nl = lista.filter(x => !DATOS.lista.some(y => y.id === x.id)), nj = jornadas.filter(j => !DATOS.jornadas.some(y => y.id === j.id));
+        if (!nl.length && !nj.length) { aviso(T("Esa copia no tiene apuntes nuevos: ya los tienes todos en este móvil.")); return; }
+        if (!confirm(vacio ? T("La copia tiene {n} apuntes. ¿Recuperarlos en este móvil?", { n: nl.length + nj.length })
+          : T("La copia tiene {n} apuntes que no están en este móvil. Se añaden a los que ya tienes (no se borra nada). ¿Seguir?", { n: nl.length + nj.length }))) return;
+        if (vacio) DATOS = completa({ lista: nl, jornadas: nj, internacional: !!d.internacional, doble: !!d.doble, avisos: d.avisos !== false, ver: d.ver || {}, aviso: d.aviso || {} });
+        else { DATOS.lista.push(...nl); DATOS.jornadas.push(...nj); DATOS = completa(DATOS); }
+        guarda(); pinta();
         ok(T("Copia recuperada."));
       } catch (_) { aviso(T("Ese archivo no es una copia de «Mis descansos». Elige el PDF (o el .json antiguo) que guardaste con «Guardar una copia».")); }
     };

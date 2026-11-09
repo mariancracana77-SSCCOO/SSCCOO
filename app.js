@@ -477,12 +477,13 @@ function pintaCalendario() {
     const d = new Date(m.getFullYear(), m.getMonth(), 1 - desfase + i), iso = isoDe(d);
     if (i >= 35 && d.getMonth() !== m.getMonth()) break;
     const evs = porDia[iso] || [], dow = d.getDay();
+    // v153: los días con algo apuntado llevan el color del tipo (con-ev) y la semana va en pastilla (styles.css)
     // v84: al principio de cada fila, el número de la semana del año (ISO), como en los calendarios de pared
     if (i % 7 === 0) { const s = semanaISO(d); html += `<span class="cal-sem ${semanaISO(fechaDia(hoy)).n === s.n && semanaISO(fechaDia(hoy)).a === s.a ? "actual" : ""}" title="${esc("Semana " + s.n + " del año")}" aria-label="${esc("Semana " + s.n)}">${s.n}</span>`; }
-    html += `<button class="dia ${d.getMonth() !== m.getMonth() ? "fuera" : ""} ${iso === hoy ? "hoy" : ""} ${iso === estado.diaSel ? "sel" : ""} ${dow === 0 || dow === 6 ? "finde" : ""}"
+    html += `<button class="dia ${d.getMonth() !== m.getMonth() ? "fuera" : ""} ${iso === hoy ? "hoy" : ""} ${iso === estado.diaSel ? "sel" : ""} ${dow === 0 || dow === 6 ? "finde" : ""} ${evs.length ? "con-ev " + claseTipo(evs[0].tipo, "evento") : ""}"
       data-d="${iso}" aria-label="${d.toLocaleDateString("es-ES", { day: "numeric", month: "long" })}${evs.length ? ", " + evs.length + " evento(s)" : ""}">
       <span class="n">${d.getDate()}</span>
-      <span class="puntos">${evs.slice(0, 4).map(e => `<span class="punto ${claseTipo(e.tipo, "evento")}"></span>`).join("")}</span></button>`;
+      <span class="puntos">${evs.slice(0, 4).map(e => banderaDe(e) ? `<span class="punto bandera b-${banderaDe(e)}"></span>` : `<span class="punto ${claseTipo(e.tipo, "evento")}"></span>`).join("")}</span></button>`;
   }
   $("cal-dias").innerHTML = html;
   if (verAno) pintaAno(ini.getFullYear(), porDia, hoy);
@@ -506,7 +507,7 @@ function pintaCalendario() {
     const dia = dias === 0 ? "Hoy" : dias === 1 ? "Mañana" : may(DIA_CORTO[d.getDay()]) + " " + d.getDate();
     const sub = (dias <= 1 ? d.getDate() + " " + MES_CORTO[d.getMonth()] : MES_CORTO[d.getMonth()]) + (e.hora ? " · " + (esTodoElDia(e) ? "todo el día" : e.hora.slice(0, 5)) : "");
     return `<button class="fila-tablero ${claseTipo(e.tipo, "evento")}" data-dia="${e.fecha}"><span class="t-dia">${esc(dia)}<small>${esc(sub)}</small></span>
-      <span class="t-que"><span class="t-tipo">${esc(e.tipo)}</span><b>${esc(e.titulo || "Sin título")}</b>${e.lugar ? `<span class="t-lugar">${esc(e.lugar)}</span>` : ""}</span></button>`;
+      <span class="t-que"><span class="t-tipo">${esc(e.tipo)}${bandera(e, "b-etq")}</span><b>${esc(e.titulo || "Sin título")}</b>${e.lugar ? `<span class="t-lugar">${esc(e.lugar)}</span>` : ""}</span></button>`;
   }).join("") : `<p class="fecha-txt" style="margin:0;padding:16px">${estado.tipoCal ? "No hay fechas próximas de este tipo." : "No hay fechas próximas."}</p>`;
   $("cal-proximas").querySelectorAll("[data-dia]").forEach(b => b.onclick = () => { irADia(b.dataset.dia); $("cal-detalle").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); });
 }
@@ -1045,6 +1046,94 @@ $("cab-logo").addEventListener("click", () => {
   if (QUIETO()) return; const l = $("cab-logo");
   l.classList.remove("vuelta"); void l.offsetWidth; l.classList.add("vuelta");
 });
+
+// ---------- v151: recuperar los datos de la app antigua y guardar copia (Mis descansos, Mis incentivos, Aparcamientos) ----------
+// Lo que apuntan los conductores se guarda solo en el móvil y va unido a la dirección de la web: lo de la app antigua no se ve aquí.
+// Este cuadro explica cómo sacarlo con la copia en PDF de la app antigua y meterlo aquí con «Recuperar una copia».
+// Los botones son los de cada herramienta (label for= su <input type=file>, data-pulsa= su botón de copia): no hay otra forma de importar.
+const COPIA_CLAVE = { "desc-copia": "ccoo-copia-descansos", "gan-copia": "ccoo-copia-ganancias", "apc-mios-copia": "ccoo-copia-aparcar" };
+const T_ES = (s, v) => String(s).replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m);
+document.addEventListener("click", (ev) => {
+  const b = ev.target.closest("[data-pulsa]");
+  if (b) { const d = document.getElementById(b.dataset.pulsa); if (d) d.click(); return; }
+  const o = ev.target.closest("[data-oculta-recupera]");
+  if (o) { try { localStorage.setItem("ccoo-recupera-oculto-" + o.dataset.ocultaRecupera, "1"); } catch (_) {} o.closest(".recupera-caja")?.remove(); return; }
+  const c = ev.target.closest("#desc-copia, #gan-copia, #apc-mios-copia");
+  if (c) try { localStorage.setItem(COPIA_CLAVE[c.id], String(Date.now())); } catch (_) {}
+});
+function diasDesdeCopia(id) { try { const t = +localStorage.getItem(COPIA_CLAVE[id]); return t ? Math.max(0, Math.floor((Date.now() - t) / 86400000)) : null; } catch (_) { return null; } }
+// o: { entrada: id del <input type=file>, paso3: dónde está la copia en la app antigua, arriba: true = cuadro abierto arriba (herramienta vacía),
+//      clave: nombre corto para «No lo necesito» (solo arriba), T: traductor de la herramienta }
+function cajaRecuperar(o) {
+  const T = o.T || T_ES;
+  if (o.arriba) { try { if (localStorage.getItem("ccoo-recupera-oculto-" + o.clave)) return ""; } catch (_) {} }
+  const pasos = [T("Pon el móvil en modo avión."), T("Abre la app antigua (o la web antigua en el navegador)."), o.paso3, T("Quita el modo avión."), T("Vuelve aquí, toca «Recuperar una copia» y elige ese PDF.")];
+  const tit = esc(T("¿Usabas la app antigua? Recupera tus datos"));
+  const cuerpo = `<ol class="recupera-pasos">${pasos.map(p => `<li>${esc(p)}</li>`).join("")}</ol>
+    <label class="btn grande recupera-btn" for="${esc(o.entrada)}">${icono("subir")}<span>${esc(T("Recuperar una copia"))}</span></label>
+    <p class="ayuda">${esc(T("Antes de cambiar nada te pregunta. Lo de la copia se añade a lo que ya tengas aquí."))}</p>
+    ${o.arriba ? `<button type="button" class="btn-txt" data-oculta-recupera="${esc(o.clave)}">${esc(T("No lo necesito: ocultar"))}</button>` : ""}`;
+  return o.arriba ? `<section class="recupera-caja"><h2>${icono("subir")}<span>${tit}</span></h2>${cuerpo}</section>`
+    : `<details class="recupera-caja"><summary>${icono("subir", "p")}<span>${tit}</span></summary><div>${cuerpo}</div></details>`;
+}
+// Botón destacado «Guardar mi copia ahora» si nunca se ha guardado o hace 7 días o más. o: { copia: id del botón de copia, T, siempre }
+function botonCopiaAhora(o) {
+  const T = o.T || T_ES, d = diasDesdeCopia(o.copia);
+  if (!o.siempre && d !== null && d < 7) return "";
+  const txt = d === null ? T("Aún no has guardado ninguna copia de lo que tienes aquí.") : d === 0 ? T("Tu última copia es de hoy.") : d === 1 ? T("Tu última copia es de ayer.") : T("Tu última copia es de hace {n} días.", { n: d });
+  return `<div class="copia-ahora"><p>${esc(txt)}</p><button type="button" class="btn grande" data-pulsa="${esc(o.copia)}">${icono("descargar")}<span>${esc(T("Guardar mi copia ahora"))}</span></button></div>`;
+}
+
+// ---------- v152: «Borrar toda la semana» (Mis incentivos) ----------
+// Dos pasos dentro de la propia página (en la app instalada window.confirm puede no salir) y, al borrar, «Deshacer»
+// durante unos segundos en una barra fija abajo (fuera de la vista, que se vuelve a pintar).
+// caja: elemento donde va el botón. o: { fechas: texto de la semana, copia: id del botón de copia, T,
+//   borrar: () => función para deshacer (o null), hecho: () => volver a pintar }
+function pintaBorrarSemana(caja, o) {
+  if (!caja) return;
+  const T = o.T || T_ES;
+  const inicio = () => {
+    caja.innerHTML = `<button type="button" class="btn peligro borra-sem-btn">${icono("borrar", "p")}<span>${esc(T("Borrar toda la semana"))}</span></button>`;
+    caja.firstChild.onclick = paso1;
+  };
+  const paso1 = () => {
+    caja.innerHTML = `<div class="borra-paso" role="group" aria-label="${esc(T("Borrar toda la semana"))}">
+      <p class="borra-tit">${icono("alerta", "p")}<b>${esc(T("¿Borrar toda esta semana ({fechas})?", { fechas: o.fechas }))}</b></p>
+      <p>${esc(T("Se borra lo apuntado esos 7 días en este móvil. Las demás semanas no se tocan."))}</p>
+      ${o.copia ? `<button type="button" class="btn sec" data-pulsa="${esc(o.copia)}">${icono("descargar", "p")}<span>${esc(T("Antes, guardar mi copia (PDF)"))}</span></button>` : ""}
+      <div class="botones"><button type="button" class="btn sec" data-borra="no">${esc(T("Cancelar"))}</button><button type="button" class="btn peligro" data-borra="sigue">${esc(T("Sí, seguir"))}</button></div></div>`;
+    caja.querySelector('[data-borra="no"]').onclick = inicio;
+    caja.querySelector('[data-borra="sigue"]').onclick = paso2;
+    caja.querySelector('[data-borra="no"]').focus();
+  };
+  const paso2 = () => {
+    caja.innerHTML = `<div class="borra-paso fuerte" role="group" aria-label="${esc(T("Borrar toda la semana"))}">
+      <p class="borra-tit">${icono("alerta", "p")}<b>${esc(T("¿Seguro? Se borra la semana del {fechas}.", { fechas: o.fechas }))}</b></p>
+      <p>${esc(T("Solo podrás deshacerlo justo después, durante unos segundos. Luego ya no se puede recuperar (salvo con una copia en PDF)."))}</p>
+      <div class="botones"><button type="button" class="btn sec" data-borra="no">${esc(T("Cancelar"))}</button><button type="button" class="btn peligro" data-borra="si">${icono("borrar", "p")}<span>${esc(T("Borrar la semana"))}</span></button></div></div>`;
+    caja.querySelector('[data-borra="no"]').onclick = inicio;
+    caja.querySelector('[data-borra="si"]').onclick = async () => {
+      if (caja.dataset.borrando) return; // un doble toque rápido no borra dos veces
+      caja.dataset.borrando = "1"; caja.querySelectorAll("button").forEach(b => { b.disabled = true; });
+      let deshacer = null;
+      try { deshacer = await o.borrar(); } catch (_) { delete caja.dataset.borrando; inicio(); return; }
+      o.hecho();
+      barraDeshacer(T("Semana borrada."), T("Deshacer"), deshacer);
+    };
+    caja.querySelector('[data-borra="no"]').focus();
+  };
+  inicio();
+}
+let BARRA_DESHACER = null;
+function barraDeshacer(texto, boton, deshacer) {
+  if (BARRA_DESHACER) { clearTimeout(BARRA_DESHACER.t); BARRA_DESHACER.el.remove(); BARRA_DESHACER = null; }
+  const el = document.createElement("div"); el.className = "barra-deshacer"; el.setAttribute("role", "status");
+  el.innerHTML = `<span>${esc(texto)}</span>${deshacer ? `<button type="button" class="btn">${esc(boton)}</button>` : ""}`;
+  document.body.appendChild(el);
+  const quita = () => { if (BARRA_DESHACER && BARRA_DESHACER.el === el) { clearTimeout(BARRA_DESHACER.t); BARRA_DESHACER = null; } el.remove(); };
+  if (deshacer) el.querySelector("button").onclick = async () => { quita(); try { await deshacer(); } catch (_) {} };
+  BARRA_DESHACER = { el, t: setTimeout(quita, 12000) };
+}
 
 // ---------- Instalar como app y activar avisos ----------
 const ES_IOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);

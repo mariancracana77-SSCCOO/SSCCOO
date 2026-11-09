@@ -83,7 +83,7 @@ window.esTodoElDia = (e) => !!e.hora && e.hora.slice(0, 5) === "00:00" && (!e.ho
 window.horaEvento = (e) => !e.hora ? "" : esTodoElDia(e) ? "Todo el día" : e.hora.slice(0, 5) + (e.hora_fin ? "–" + e.hora_fin.slice(0, 5) : "");
 window.eventoHTML = (e, conCartel) => `<div class="evento" data-reg="eventos:${e.id}">
   ${conCartel ? cartel(e.fecha, e.tipo, "evento") : ""}
-  <div><span class="etq tipo ${claseTipo(e.tipo, "evento")}">${esc(e.tipo)}</span>
+  <div><span class="etq tipo ${claseTipo(e.tipo, "evento")}">${esc(e.tipo)}</span>${bandera(e, "b-etq")}
     <h4 data-campo="titulo" data-plano>${esc(e.titulo || "Sin título")}</h4>
     <div class="info">
       ${e.hora ? `<span>${icono("reloj", "p")}${esc(horaEvento(e))}</span>` : ""}

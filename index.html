@@ -25,9 +25,9 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="fuentes.css?v=148">
-<script src="lectura.js?v=148"></script>
-<link rel="stylesheet" href="styles.css?v=148">
+<link rel="stylesheet" href="fuentes.css?v=157">
+<script src="lectura.js?v=157"></script>
+<link rel="stylesheet" href="styles.css?v=157">
 </head>
 <body class="publica">
 
@@ -314,6 +314,7 @@
         <label class="check" id="desc-avisar-caja"><input type="checkbox" id="desc-avisar"><span data-dt="avisar">Avisarme en el móvil antes de mis descansos y de los plazos de compensación. Al servidor solo va cuándo avisarte y el texto del aviso, sin tu nombre; se borra al enviarse.</span></label>
         <div id="desc-personaliza-cuerpo"></div>
       </div>
+      <div class="panel" id="desc-recupera-aj"></div>
     </div>
   </section>
 
@@ -340,6 +341,7 @@
     <div class="desc-panel" data-gpanel="ajustes">
       <div class="panel gan-panel" id="gan-ajustes"></div>
       <div class="panel gan-panel" id="gan-descarga"></div>
+      <div class="panel gan-panel" id="gan-recupera-aj"></div>
       <div class="botones desc-copias">
         <button class="btn sec" id="gan-copia"><svg class="icono p" aria-hidden="true"><use href="#i-descargar"/></svg><span data-gt="copia">Copia de todo (PDF)</span></button>
         <label class="btn sec" for="gan-recupera"><svg class="icono p" aria-hidden="true"><use href="#i-subir"/></svg><span data-gt="recupera">Recuperar una copia</span></label>
@@ -357,6 +359,7 @@
     <h1 class="titulo-vista">Aparcamientos en mi ruta</h1>
     <details class="desc-guia apc-guia"><summary><svg class="icono p" aria-hidden="true"><use href="#i-pregunta"/></svg><span>Cómo se usa (guía rápida)</span></summary><label class="desc-idioma apc-guia-idioma"><svg class="icono p" aria-hidden="true"><use href="#i-idioma"/></svg><span>Idioma de la guía · Language</span><select id="apc-guia-idioma" aria-label="Idioma de la guía · Language"></select></label><p class="msg" id="apc-guia-msg" role="status"></p><div id="apc-guia-cuerpo" class="gan-guia-cuerpo"></div></details>
     <div id="apc-preparar">
+      <div id="apc-recupera"></div>
       <p class="intro-vista">Pon adónde vas y te calculo una ruta para tu camión. Mientras conduces, te enseño los aparcamientos que tienes por delante y si estarán abiertos cuando llegues.</p>
       <form class="panel apc-form" id="apc-form" autocomplete="off">
         <div class="apc-sitio">
@@ -392,6 +395,7 @@
           <p class="apc-nota">Los que has añadido tú en el mapa con «Añadir aparcamiento». Se guardan en este móvil y salen en el mapa y en la ruta con un pin azul.</p>
           <p class="msg" id="apc-mios-msg" role="status" aria-live="polite"></p>
           <div id="apc-mios-lista"></div>
+          <div id="apc-recupera-mios"></div>
           <div class="apc-mios-copia">
             <button type="button" class="btn sec" id="apc-mios-copia"><svg class="icono p" aria-hidden="true"><use href="#i-descargar"/></svg>Guardar copia en PDF</button>
             <label class="btn sec" for="apc-mios-recupera"><svg class="icono p" aria-hidden="true"><use href="#i-subir"/></svg>Recuperar una copia</label>
@@ -523,13 +527,13 @@
 <div class="barra-acciones" id="barra-acciones"></div>
 <button class="arriba-btn" id="arriba" type="button" aria-label="Volver arriba" title="Volver arriba"><svg class="arriba-aro" viewBox="0 0 52 52" aria-hidden="true"><circle class="aro-fondo" cx="26" cy="26" r="23"/><circle class="aro-prog" cx="26" cy="26" r="23" pathLength="100"/></svg><span data-i="arriba"></span></button>
 
-<script src="lib/supabase.js?v=148"></script>
-<script src="iconos.js?v=148"></script>
-<script src="config.js?v=148"></script>
-<script src="render.js?v=148"></script>
-<script src="app.js?v=148"></script>
-<script src="descansos.js?v=148"></script>
-<script src="ganancias.js?v=148"></script>
-<script src="aparcar.js?v=148"></script>
+<script src="lib/supabase.js?v=157"></script>
+<script src="iconos.js?v=157"></script>
+<script src="config.js?v=157"></script>
+<script src="render.js?v=157"></script>
+<script src="app.js?v=157"></script>
+<script src="descansos.js?v=157"></script>
+<script src="ganancias.js?v=157"></script>
+<script src="aparcar.js?v=157"></script>
 </body>
 </html>

@@ -1192,6 +1192,12 @@
         <div class="apc-mio-acc"><button type="button" class="btn sec" data-mio-ver="${esc(m.id)}">${icono("lugar", "p")}Ver en el mapa</button>${llevarHref(m) ? `<a class="btn sec apc-llevar" href="${esc(llevarHref(m))}">Llevarme aquí</a>` : ""}</div>
         ${accionesMio(m.id)}</li>`).join("")}</ul>`
       : `<p class="apc-nota">Todavía no has añadido ninguno. Abre el mapa y toca «Añadir aparcamiento».</p>`;
+    // v151: vacío → cuadro arriba para recuperar lo de la app antigua; dentro de «Mis aparcamientos», siempre (y «Guardar mi copia ahora» si hay)
+    if (typeof cajaRecuperar === "function") {
+      const paso3 = "Entra en «Aparcamientos en mi ruta» > «Mis aparcamientos» y toca «Guardar copia en PDF».";
+      const ar = $("apc-recupera"); if (ar) ar.innerHTML = MIOS.length ? "" : cajaRecuperar({ entrada: "apc-mios-recupera", paso3, arriba: true, clave: "aparcar" });
+      const dm = $("apc-recupera-mios"); if (dm) { const ab = !!dm.querySelector("details")?.open; dm.innerHTML = (MIOS.length ? botonCopiaAhora({ copia: "apc-mios-copia" }) : "") + cajaRecuperar({ entrada: "apc-mios-recupera", paso3 }); if (ab) dm.querySelector("details").open = true; }
+    }
   }
   // Copia en PDF de «Mis aparcamientos» (v108): la lista legible y, dentro, los datos para recuperarlos en otro móvil
   const MARCA_MIOS = "%CCOO-APARCAMIENTOS:";

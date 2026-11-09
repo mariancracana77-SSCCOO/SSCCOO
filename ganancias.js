@@ -200,6 +200,12 @@
     const inst = typeof INSTALADA === "function" && INSTALADA();
     $("gan-app").innerHTML = `<details class="desc-mini"><summary>${icono(inst ? "alerta" : "movil", "p")}<span>${esc(inst ? T("Para no perder lo apuntado") : T("Instala la app para no perder lo apuntado"))}</span></summary><div><p>${esc(T("Se guarda solo en este móvil (no en internet). Se pierde si borras los datos de la app o del navegador, si usas una pestaña de incógnito o si cambias de móvil. Guarda de vez en cuando la copia en PDF (en «Ajustes»)."))}</p>${inst ? "" : `<button class="btn" id="gan-instalar">${icono("descargar", "p")}${esc(T("Instalar la app"))}</button>`}</div></details>`;
     if ($("gan-instalar")) $("gan-instalar").onclick = () => instalar();
+    // v151: vacío → cuadro para recuperar lo de la app antigua; con datos → «Guardar mi copia ahora» si hace 7 días o más
+    if (typeof cajaRecuperar === "function") {
+      const vacio = !Object.keys(DATOS.dias).length, paso3 = T("Entra en «Mis incentivos» > «Ajustes» y toca «Copia de todo (PDF)».");
+      $("gan-app").insertAdjacentHTML("afterbegin", vacio ? cajaRecuperar({ entrada: "gan-recupera", paso3, arriba: true, clave: "ganancias", T }) : botonCopiaAhora({ copia: "gan-copia", T }));
+      const aj = $("gan-recupera-aj"); if (aj) { const ab = !!aj.querySelector("details")?.open; aj.innerHTML = cajaRecuperar({ entrada: "gan-recupera", paso3, T }) + (vacio ? "" : botonCopiaAhora({ copia: "gan-copia", T, siempre: true })); if (ab) aj.querySelector("details").open = true; }
+    }
     if (!TARIFAS.length) { ["gan-dia", "gan-semana", "gan-mes"].forEach(id => $(id).innerHTML = `<p class="desc-vacio">${esc(T("Cargando los importes… Si no salen, comprueba la conexión."))}</p>`); $("gan-tira").innerHTML = ""; pintaAjustes(); return; }
     const c = calcula();
     pintaTira(c);
@@ -209,6 +215,24 @@
     if (TAB === "ajustes") pintaAjustes();
   }
 
+  // v155–v156 (petición 25 del padre, opción C): cuadro plegable «Cuándo se cobra cada parte de la dieta internacional» arriba del Día,
+  // con la tabla de horarios y la regla del festivo. Si el padre escribe el texto en el panel (Textos → «Horarios de la dieta»,
+  // paginas.horarios_dieta), sale ese en lugar de la tabla. En la v156 el padre pidió quitar el ayudante «¿Qué me toca?».
+  let horAbierto = false;
+  const HORARIOS = () => [
+    [T("Dormir"), T("Sales antes de las 4:00 o llegas a partir de las 00:01.")],
+    [T("Desayuno"), T("Sales antes de las 10:00 y llegas a partir de las 4:00. Si llegas antes de las 4:00 y cierras la jornada, no toca: solo dormir.")],
+    [T("Comida"), T("Sales antes de las 15:00 y llegas a partir de las 13:00.")],
+    [T("Cena"), T("Sales antes de las 22:00 y llegas a partir de las 20:00.")],
+  ];
+  function horariosDieta() {
+    if (!TARIFAS.some(t => /dieta/i.test(t.grupo + " " + t.concepto))) return "";
+    const propio = String((typeof D !== "undefined" && D.paginas?.horarios_dieta) || "").trim();
+    const tabla = propio ? `<div class="gan-hor-txt">${textoHTML(propio)}</div>`
+      : `<table class="gan-hor-tabla"><tbody>${HORARIOS().map(([p, x]) => `<tr><th scope="row">${esc(p)}</th><td>${esc(x)}</td></tr>`).join("")}</tbody></table>
+        <p class="gan-hor-fest">${SELLO_FEST}<span><b>${esc(T("Festivo al 100 %"))}</b> ${esc(T("si pasas de las 12:00 del mediodía trabajando o tienes más de 5 horas de conducción. Si no, se cobra al 50 %."))}</span></p>`;
+    return `<details class="gan-horarios" id="gan-horarios"${horAbierto ? " open" : ""}><summary>${icono("reloj", "p")}<span>${esc(T("Cuándo se cobra cada parte de la dieta internacional"))}</span>${icono("der", "p")}</summary>${tabla}</details>`;
+  }
   function pintaDia(c) {
     const f = DATOS.dia || hoy(), dia = DATOS.dias[f] || {}, r = c[f] || { total: 0, lineas: [] };
     const lista = variables().filter(t => !DATOS.oculto[t.id]);
@@ -240,6 +264,7 @@
       ${(() => { const k = cuentasMes(c, f.slice(0, 7)); return `<button type="button" class="gan-mini-mes" data-ir-mes><span>${esc(T("Nómina de {mes}", { mes: fMes(f.slice(0, 7)) }))} <b>${esc(eur(k.nomina))}</b></span> <span>${esc(T("Cobro semanal del mes"))} <b>${esc(eur(k.semanal))}</b></span>${icono("der", "p")}</button>`; })()}
       ${DATOS.libres[f] ? `<div class="gan-libre-aviso">${icono("check", "p")}<span>${esc(T("Día libre: este día no has trabajado."))}</span><button type="button" class="btn sec" id="gan-libre">${esc(T("Quitar «libre»"))}</button></div>`
         : `<button type="button" class="btn sec gan-libre-btn" id="gan-libre">${icono("calendario", "p")}${esc(T("Marcar este día como libre (no he trabajado)"))}</button>`}
+      ${horariosDieta()}
       ${doble ? `<p class="desc-alerta">${icono("alerta", "p")}<span>${esc(T("Has marcado la dieta completa y también partes de la dieta. Normalmente se cobra una cosa o la otra: revísalo."))}</span></p>` : ""}
       ${grupos.map(g => `<section class="gan-grupo ${zonaTxt(g.n) ? "z-" + zonaTxt(g.n) : ""}${/festiv/i.test(g.n || "") ? " festiva" : ""}">${g.n ? `<h3>${/festiv/i.test(g.n) ? SELLO_FEST : ""}${esc(TD(g.n))}</h3>` : ""}<ul>${g.ts.map(fila).join("")}</ul></section>`).join("")}
       ${lista.length < variables().length ? `<p class="ayuda">${esc(T("Hay conceptos escondidos. Los vuelves a sacar en «Ajustes»."))}</p>` : ""}
@@ -247,6 +272,7 @@
         ${Object.keys(dia).length ? `<button class="btn sec" id="gan-vaciar">${icono("borrar", "p")}${esc(T("Vaciar este día"))}</button>` : ""}</div>`;
     pulsa("#gan-dia .gan-total b, #gan-dia .gan-mini-mes b", antes);
     const v = $("gan-dia"), pon = (id, n, prec = 100) => { const d = { ...(DATOS.dias[f] || {}) }; if (n > 0) d[id] = Math.round(n * prec) / prec; else delete d[id]; if (Object.keys(d).length) DATOS.dias[f] = d; else delete DATOS.dias[f]; guarda(); };
+    $("gan-horarios")?.addEventListener("toggle", (e) => { horAbierto = e.target.open; });
     v.querySelectorAll("[data-dia]").forEach(b => b.onclick = () => { DATOS.dia = suma(f, +b.dataset.dia); guarda(); pinta(); });
     v.querySelector("[data-ir-mes]").onclick = () => { DATOS.mes = f.slice(0, 7); DATOS.tab = "mes"; guarda(); pinta(); };
     $("gan-libre").onclick = () => { if (DATOS.libres[f]) delete DATOS.libres[f]; else DATOS.libres[f] = true; guarda(); pinta(); }; // v102: día libre (lo pidió el padre)
@@ -372,8 +398,25 @@
       ${r.por.length ? `<h3 class="gan-sub">${esc(T("Por conceptos"))}</h3>${desglose(r)}` : `<p class="desc-vacio">${esc(T("Esta semana todavía no has apuntado ningún día. Toca un día para apuntar."))}</p>`}
       <p class="ayuda">${esc(T("Cobro semanal: dietas, suplementos, cargas, kilómetros, festivos, ADR por minuto y horas sindicales (te los pagan por semanas). En la nómina: nocturnidad y el ADR fijo (van con el salario a fin de mes, en «Mes»)."))}</p>
       <div class="gan-hoja" id="gan-hoja"></div>
-      <div class="botones"><button class="btn sec" id="gan-pdf-semana">${icono("descargar", "p")}${esc(T("Descargar esta semana (PDF)"))}</button>${botonEnviar("gan-env-semana")}</div>`;
+      <div class="botones"><button class="btn sec" id="gan-pdf-semana">${icono("descargar", "p")}${esc(T("Descargar esta semana (PDF)"))}</button>${botonEnviar("gan-env-semana")}</div>
+      <div class="borra-sem" id="gan-borra-sem"></div>`;
     const v = $("gan-semana"); pintaHoja(w);
+    // v152 (lo pidió Lorena): «Borrar toda la semana» con dos pasos en la página y «Deshacer» unos segundos.
+    // Borra solo esos 7 días: lo apuntado (DATOS.dias), los días libres (DATOS.libres) y las fotos de la hoja de esa semana.
+    (async () => {
+      const caja = $("gan-borra-sem"); if (!caja || typeof pintaBorrarSemana !== "function") return;
+      const hay = dias.some(f => DATOS.dias[f] || DATOS.libres[f]) || (await hojaLee(w)).length > 0;
+      if (!hay || $("gan-borra-sem") !== caja) return;
+      pintaBorrarSemana(caja, { fechas: T("{a} al {b}", { a: fDia(dias[0]), b: fDia(dias[6]) }), copia: "gan-copia", T, hecho: () => pinta(),
+        borrar: async () => {
+          const antes = { dias: {}, libres: {} };
+          dias.forEach(f => { if (DATOS.dias[f]) antes.dias[f] = DATOS.dias[f]; if (DATOS.libres[f]) antes.libres[f] = DATOS.libres[f]; });
+          const hoja = await hojaLee(w);
+          dias.forEach(f => { delete DATOS.dias[f]; delete DATOS.libres[f]; }); guarda();
+          if (hoja.length) { try { await hojaGuarda(w, []); } catch (_) { /* si falla la foto, lo demás ya está borrado: sigue saliendo «Deshacer» */ } }
+          return async () => { Object.assign(DATOS.dias, antes.dias); Object.assign(DATOS.libres, antes.libres); guarda(); if (hoja.length) await hojaGuarda(w, hoja); pinta(); };
+        } });
+    })();
     // v142 (petición n.º 13): la semana con la hoja de trabajo detrás, y pregunta dónde guardarlo
     $("gan-pdf-semana").onclick = async () => { const nom = "mis-incentivos-" + nombreSem(l) + ".pdf"; let pdf; try { pdf = await pdfSemana(dias, l); } catch (_) { pdf = hazPDF(dias); } preguntaDonde(pdf, nom); };
     if ($("gan-env-semana")) $("gan-env-semana").onclick = async () => {
