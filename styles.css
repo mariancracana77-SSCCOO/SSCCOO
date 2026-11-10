@@ -2521,3 +2521,88 @@ details.recupera-caja > div { padding: 0 14px 14px; }
   .barra-acciones { position: static; }
   body.publica, body.publica.con-aviso-priv { padding-bottom: 0; }
 }
+
+/* ==========================================================
+   v163 (lo pidió Lorena, 10/11/2026)
+   1) Móvil, «Señales»: «Ir a» como paneles oscuros con borde de color (rojo = la sección, azul = Zona Conductores,
+      gris = documentación) y los 4 más usados en grande; «Lo último» con barra de color por tipo; la app en pastilla.
+   2) Ordenador (desde 1000 px): portada de web de verdad, sin iconos (destacado, noticias en columnas, agenda,
+      tabla de actas y documentos, banda de Zona Conductores, mapa de enlaces), pie en columnas y miga de pan.
+   La cabecera no se toca.
+   ========================================================== */
+/* --- 1) Móvil: «Ir a» --- */
+.accesos-tablon a { --g: #e0262a; --gs: rgba(224, 38, 42, .5); }
+.accesos-tablon a.g-cond { --g: #3d8bff; --gs: rgba(61, 139, 255, .5); }
+.accesos-tablon a.g-doc { --g: #c9ced4; --gs: rgba(201, 206, 212, .3); }
+:root:root body.publica .accesos-tablon a { min-height: 50px; flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; padding: 10px 12px; border-radius: 12px;
+  background: #15191e; border: 1.5px solid var(--g); box-shadow: 0 0 12px -3px var(--gs); color: #fff; }
+:root:root body.publica .accesos-tablon a:hover, :root:root body.publica .accesos-tablon a:focus-visible { box-shadow: 0 0 0 1px var(--g), 0 0 20px 0 var(--gs); }
+:root:root body.publica .accesos-tablon a:last-child { grid-column: auto; }
+:root:root body.publica .accesos-tablon b { font-family: var(--texto); text-transform: none; letter-spacing: 0; font-size: 1rem; line-height: 1.15; color: #fff; }
+:root:root body.publica .accesos-tablon .icono { flex: none; width: 22px; height: 22px; padding: 0; background: none; border-radius: 0; color: var(--g); filter: drop-shadow(0 0 4px var(--gs)); }
+:root:root body.publica .accesos-tablon a.grande { min-height: 108px; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 14px; }
+:root:root body.publica .accesos-tablon a.grande b { font-family: var(--cond); text-transform: uppercase; letter-spacing: .04em; font-size: 1.45rem; }
+:root:root body.publica .accesos-tablon a.grande .icono { width: 34px; height: 34px; }
+.accesos-tablon { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* --- 1) Móvil: «Lo último» --- */
+.item-tablon { --t: #e0262a; }
+.item-tablon.k-fecha { --t: #3d8bff; }
+.item-tablon.k-acta, .item-tablon.k-doc { --t: #9aa1a9; }
+#inicio-feed .item-tablon, #inicio-feed .item-tablon.es-nuevo { border: 1px solid var(--linea); border-left: 6px solid var(--t); border-radius: 14px; box-shadow: 0 2px 10px rgba(21, 25, 30, .06); }
+#inicio-feed .item-tablon .ic:not(.foto) { width: 48px; height: 48px; border-radius: 12px; background: #15191e; color: #fff; }
+#inicio-feed .item-tablon b { font-size: 1.18rem; }
+#inicio-feed .marca-nuevo { background: #c41d20; color: #fff !important; }
+.grupo-tablon { display: flex; align-items: center; gap: 10px; color: var(--tinta); margin: 22px 0 10px; }
+.grupo-tablon::after { content: ""; flex: 1; height: 2px; background: currentColor; opacity: .25; }
+/* --- 1) Móvil: «Tenla como una app» en pastilla --- */
+:root:root .banda-instalar { display: flex; align-items: center; gap: 10px; border-radius: 99px; padding: 6px 6px 6px 16px; font-size: .95rem; background: #15191e; color: #fff; border: 1.5px solid #e0262a; box-shadow: 0 0 12px -3px rgba(224, 38, 42, .6); }
+:root:root .banda-instalar * { color: #fff; }
+:root:root .banda-instalar .ic { display: none; }
+:root:root .banda-instalar .btn { margin-left: auto; border-radius: 99px; background: #c41d20; border-color: #c41d20; min-height: 44px; }
+
+/* --- 2) Ordenador --- */
+.web-mapa, .pie-web { display: none; }
+.miga[hidden] { display: none; }
+@media (max-width: 999.98px) { .miga { display: none; } }
+@media (min-width: 1000px) {
+  body.publica { padding-bottom: 0; }
+  .barra-acciones { display: none; }
+  /* v163, opción B «Institucional»: se queda el bloque oscuro de autopista (rótulo de luces, cuenta atrás, novedades,
+     buscador) y «Próximas paradas» como en la v160; «Ir a» con iconos pasa a listas de enlaces de texto en la columna. */
+  .ir-a, .portada .intro-tablon { display: none; }
+  .web-mapa { display: block; }
+  #lo-ultimo .item-tablon .ic { display: none; }
+  .w-sec { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; font-family: var(--cond); font-weight: 700; font-size: 1.75rem; text-transform: uppercase; letter-spacing: .02em; margin: 0 0 16px; padding-bottom: 8px; border-bottom: 3px solid var(--tinta); }
+  .w-sec a { font-family: var(--texto); font-size: 1rem; text-transform: none; letter-spacing: 0; color: var(--rojo-ic); font-weight: 700; }
+
+  .web-mapa { margin-top: 26px; }
+  .web-mapa .w-sec { font-size: 1.2rem; border-bottom-width: 2px; }
+  .w-cols { display: grid; gap: 18px; }
+  .w-cols h3 { font-size: .85rem; letter-spacing: .1em; text-transform: uppercase; color: var(--suave); margin: 0 0 6px; }
+  .w-cols ul { list-style: none; margin: 0; padding: 0; }
+  .w-cols a { display: inline-flex; align-items: center; min-height: 40px; color: var(--tinta); text-decoration: none; font-size: 1.08rem; }
+  .w-cols a:hover, .w-cols a:focus-visible { text-decoration: underline; text-underline-offset: 3px; color: var(--rojo-ic); }
+
+  /* Miga de pan en las páginas de dentro */
+  .miga { max-width: 1100px; margin: 0 auto 10px; font-size: .95rem; }
+  .miga ol { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; color: var(--suave); }
+  .miga li + li::before { content: "›"; margin-right: 6px; }
+  .miga a { color: var(--rojo-ic); text-decoration: underline; text-underline-offset: 3px; }
+
+  /* Pie en columnas: lo que no está en el mapa (contacto, «Afíliate» y lo legal) */
+  .pie { text-align: left; margin-top: 56px; padding: 36px 32px 18px; background: #15191e; color: #c9ced4; border-radius: 8px 8px 0 0; }
+  .pie-web { display: grid; grid-template-columns: auto minmax(0, 1.4fr) minmax(0, 1fr); gap: 40px; align-items: start; padding-bottom: 22px; margin-bottom: 12px; border-bottom: 1px solid #2c333c; font-size: 1rem; }
+  .pie-marca { display: flex; align-items: center; gap: 12px; }
+  .pie-marca img { width: 52px; height: 52px; border-radius: 50%; background: #fff; }
+  .pie-marca b { font-family: var(--cond); font-size: 1.35rem; text-transform: uppercase; color: #fff; }
+  .pie-col p { margin: 0 0 12px; max-width: 60ch; }
+  .pie-col h2 { font-family: var(--cond); font-size: 1.2rem; text-transform: uppercase; letter-spacing: .04em; color: #fff; margin: 0 0 6px; }
+  .pie .pie-col a, .pie .pie-enlace { display: flex; align-items: center; min-height: 40px; padding: 0; font-size: 1rem; color: #fff; text-decoration: none; background: none; border: 0; font: inherit; cursor: pointer; }
+  .pie .pie-col a:hover, .pie .pie-enlace:hover { text-decoration: underline; }
+  .pie .pie-col a.pie-btn { display: inline-flex; background: #c41d20; padding: 0 18px; border-radius: 4px; font-weight: 700; }
+  .pie .pie-largo { display: none; }
+  .pie > a, #version-web { color: #c9ced4; }
+}
+:root[data-theme="dark"] .pie-web { border-bottom-color: #2c333c; }
+@media (min-width: 1000px) { :root[data-theme="dark"] .pie { background: #0b0e11; border: 1px solid #2c333c; border-bottom: 0; } }
+@media (min-width: 1000px) and (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pie { background: #0b0e11; border: 1px solid #2c333c; border-bottom: 0; } }

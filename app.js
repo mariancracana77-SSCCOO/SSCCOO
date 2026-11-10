@@ -126,6 +126,7 @@ function centraPestana(b) {
 }
 function marcaPestanas(clave) {
   const g = GRUPO_DE[clave], arriba = g ? g.clave : clave;
+  pintaMiga(clave);
   document.querySelectorAll(".pestanas-web a").forEach(b => {
     const on = b.dataset.v === arriba; b.classList.toggle("activa", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current");
     if (on) centraPestana(b);
@@ -337,7 +338,7 @@ function pintaInicio() {
     if (gr !== g) { html += `<h3 class="grupo-tablon">${gr}</h3>`; g = gr; }
     const [icDef, cl] = ICONOS[x.k], ic = x.ic || icDef;
     const attrs = x.url ? `href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener" data-abre="documentos:${x.id}"` : `href="${x.h}"${x.dia ? ` data-dia="${x.dia}"` : ""}`;
-    html += `<a class="item-tablon ${esDesdeUltima(x.f) ? "es-nuevo" : ""}" ${attrs} data-reg="${x.reg}">
+    html += `<a class="item-tablon k-${x.k} ${esDesdeUltima(x.f) ? "es-nuevo" : ""}" ${attrs} data-reg="${x.reg}">
       ${x.foto ? `<span class="ic foto"><img src="${esc(urlSegura(x.foto.url))}" alt="" loading="lazy"></span>` : `<span class="ic ${cl}">${icono(ic, "p")}</span>`}
       <span class="txt"><small>${esDesdeUltima(x.f) ? '<span class="marca-nuevo">Nuevo</span>' : ""}<span>${esc(x.que)} · ${haceTxt(x.f)}</span></small>
         <b data-campo="${x.ct || "titulo"}" data-plano>${esc(x.t || "Sin título")}</b>${x.s ? `<span class="res"${x.cs ? ` data-campo="${x.cs}" ${x.rs ? `data-resumen="${x.rs}"` : "data-plano"}` : ""}>${esc(x.s)}</span>` : ""}${x.adj ? `<span class="res adj">${icono("clip", "p")} ${x.adj} archivo(s)</span>` : ""}</span>
@@ -352,9 +353,13 @@ function pintaInicio() {
   const IC_FIJO = { descansos: "reloj", ganancias: "euro", aparcar: "lugar", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta" };
   const acc = GRUPOS.flatMap(g => g.miembros).filter(m => m.clave !== "inicio" && m.clave !== "info")
     .map(m => [m.clave, IC_FIJO[m.clave] || D.apartados.find(a => "ap-" + a.slug === m.clave)?.icono || "carpeta", m.titulo]);
+  // v163 (lo pidió Lorena): los 4 más usados primero y en grande; color por grupo (azul = Zona Conductores, gris = documentación)
+  const PRIMEROS = ["avisos", "calendario", "ap-" + APARTADO_CONDUCTORES, "actas"];
+  acc.sort((x, y) => (PRIMEROS.includes(x[0]) ? PRIMEROS.indexOf(x[0]) : 99) - (PRIMEROS.includes(y[0]) ? PRIMEROS.indexOf(y[0]) : 99));
   $("inicio-accesos").innerHTML = `<h2 class="tit-seccion">Ir a</h2><nav class="accesos-tablon" aria-label="Accesos rápidos">${acc.map(([v, ic, t]) =>
-    `<a href="#${esc(v)}">${icono(esc(ic))}<b>${esc(t)}</b></a>`).join("")}</nav>`;
+    `<a href="#${esc(v)}" class="${[PRIMEROS.includes(v) ? "grande" : "", "g-" + grupoMapa(v)].join(" ").trim()}">${icono(esc(ic))}<b>${esc(t)}</b></a>`).join("")}</nav>`;
   pintaCuentaAtras(urg ? null : prox.find(x => !esFestivo(x)) || prox[0]);
+  pintaInicioWeb();
   pintaSabias();
   document.querySelectorAll("#v-inicio [data-dia]").forEach(l => l.onclick = () => irADia(l.dataset.dia));
 }
@@ -433,6 +438,35 @@ function animaPortada() {
     requestAnimationFrame(paso);
   });
   if (document.querySelector("#inicio-novedades .n")) setTimeout(sacudeCampana, 900);
+}
+
+// ---------- v163: Inicio en el ordenador, opción B «Institucional» (lo eligió Lorena) ----------
+// Solo desde 1000 px (styles.css): se queda la señal de autopista y «Próximas paradas»; «Ir a» con iconos pasa a
+// «Todo lo que hay en la web» en texto. Cada enlace sale una sola vez: el mapa aquí; contacto, «Afíliate» y lo legal, en el pie.
+function grupoMapa(clave) {
+  const g = GRUPO_DE[clave], k = g ? g.clave : clave;
+  if (k === "ap-" + APARTADO_CONDUCTORES) return "cond";
+  if (k === "documentos" || ["convenio", "calcula"].includes(clave) || /prl|ley|convenio|document|normat|decret/i.test(k)) return "doc";
+  return "sec";
+}
+function pintaInicioWeb() {
+  const MAPA = [["sec", "La sección"], ["cond", "Zona de conductores"], ["doc", "Documentación"]];
+  const enl = GRUPOS.filter(g => g.clave !== "inicio" && g.clave !== "ap-" + APARTADO_AFILIATE).flatMap(g => g.miembros.length > 1 ? g.miembros : [{ clave: g.miembros[0].clave, titulo: g.titulo }]);
+  $("web-mapa").innerHTML = `<h2 class="w-sec">Todo lo que hay en la web</h2><div class="w-cols">${MAPA.map(([k, t]) => { const l = enl.filter(m => grupoMapa(m.clave) === k);
+    return l.length ? `<div><h3>${t}</h3><ul>${l.map(m => `<li><a href="#${esc(m.clave)}">${esc(m.titulo)}</a></li>`).join("")}</ul></div>` : ""; }).join("")}</div>`;
+  // Pie: texto de bienvenida y «Afíliate» (único sitio en el ordenador)
+  if (D.paginas.inicio) $("pie-web-txt").textContent = D.paginas.inicio;
+  const af = D.apartados.find(a => a.slug === APARTADO_AFILIATE);
+  $("pie-afiliate").innerHTML = af ? `<a class="pie-btn" href="#ap-${esc(af.slug)}">${esc(af.titulo)}</a>` : "";
+}
+function pintaMiga(clave) {
+  const m = $("miga"); if (!m) return;
+  const g = GRUPO_DE[clave];
+  if (!clave || clave === "inicio" || !g) { m.hidden = true; m.innerHTML = ""; return; }
+  const yo = g.miembros.find(x => x.clave === clave), partes = [`<a href="#inicio">Inicio</a>`];
+  if (yo && g.miembros.length > 1 && g.miembros[0].clave !== clave) partes.push(`<a href="#${esc(g.miembros[0].clave)}">${esc(g.titulo)}</a>`, `<span aria-current="page">${esc(yo.titulo)}</span>`);
+  else partes.push(`<span aria-current="page">${esc(yo ? (g.miembros.length > 1 ? g.titulo : yo.titulo) : g.titulo)}</span>`);
+  m.innerHTML = `<ol>${partes.map(p => `<li>${p}</li>`).join("")}</ol>`; m.hidden = false;
 }
 
 // «Sabías que…»: un apartado del convenio distinto cada día (el mismo para todos ese día)
@@ -1309,6 +1343,8 @@ function pintaBanda() {
       <span class="txt"><b>Tenla como una app</b> con su icono en el móvil.</span>
       <button class="btn peq" data-acc="instalar">Instalar</button></div>`;
   $("banda-app").innerHTML = banda;
+  // v163: en el pie del ordenador, «Avisos al móvil» (el mismo botón que la campana de abajo)
+  $("pie-avisos").innerHTML = suscrito ? `<button type="button" class="pie-enlace" data-acc="estado">Avisos activados</button>` : `<button type="button" class="pie-enlace" data-acc="${iosSinInstalar ? "instalar" : "activar"}">Avisos al móvil</button>`;
   // En «Nosotros», el estado completo
   $("banda-app-info").innerHTML = `<div class="panel banda ${suscrito ? "avisos-on" : ""}"><span class="ic">${icono(suscrito ? "check" : "campana")}</span>
       <div class="txt"><b>${suscrito ? "Avisos activados en este móvil" : "Avisos en el móvil"}</b><p>${suscrito ? "Te llegará una notificación con cada novedad." : "Actívalos para enterarte al momento de cada aviso."}</p>${suscrito ? selectIdiomaAvisos("info-idioma") : ""}</div>
@@ -1344,6 +1380,7 @@ function pintaCanales() {
   const tgUrl = tg.startsWith("@") ? "https://t.me/" + tg.slice(1) : (tg.startsWith("https://t.me/") ? tg : "");
   $("canales").innerHTML = (tgUrl ? `<a class="canal tg" href="${esc(tgUrl)}" target="_blank" rel="noopener">${icono("telegram", "p")}Canal de Telegram</a>` : "") +
     (/^https:\/\/(chat\.)?whatsapp\.com\//.test(wa) ? `<a class="canal wa" href="${esc(wa)}" target="_blank" rel="noopener">${icono("whatsapp", "p")}Canal de WhatsApp</a>` : "");
+  $("pie-tg").innerHTML = tgUrl ? `<a href="${esc(tgUrl)}" target="_blank" rel="noopener">Canal de Telegram</a>` : "";
 }
 
 // ---------- Traducir ----------
