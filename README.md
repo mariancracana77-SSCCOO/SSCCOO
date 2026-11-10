@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 164: «Restricciones en mi ruta» en Zona Conductores
+Pestaña nueva (petición 33 del panel): pones de dónde sales y adónde llegas y calcula la ruta para tu camión (la misma que «Aparcamientos en mi ruta», gratis), pero solo enseña las prohibiciones de circular según la hora de salida, los cortes y avisos de tráfico, otras rutas y las carreteras, con los enlaces oficiales de restricciones por país debajo. Avisa de que no todos los límites de altura y peso de puentes y calles están en el mapa.
+
 ## Versión 163: Inicio en el ordenador, opción B «Institucional»
 
 Lo eligió Lorena. Solo en el ordenador (desde 1000 px): se queda el bloque oscuro de Inicio como señal de autopista (aviso urgente con el rótulo de luces, cuenta atrás, novedades y buscador) y «Próximas paradas», como en la v160. «Lo último» sin iconos, una noticia debajo de otra. A la derecha, «Sabías que…» y «Todo lo que hay en la web» como listas de enlaces de texto (en vez de los botones con iconos de «Ir a»). Pie oscuro en columnas (contacto, «Afíliate» y lo legal), miga de pan en las páginas de dentro y sin barra roja abajo. En el móvil, «Ir a» con paneles oscuros con borde de color y los 4 más usados en grande, «Lo último» con barra de color y la app en pastilla («Señales»). La cabecera no cambia.

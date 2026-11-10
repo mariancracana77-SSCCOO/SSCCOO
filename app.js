@@ -15,7 +15,7 @@ $("version-web").textContent = "Versión " + VERSION_WEB;
 document.querySelector(".contacto-btn").innerHTML = icono("correo", "p") + "Escribir a la Sección Sindical";
 
 // ---------- Navegación ----------
-const VISTAS = ["inicio", "avisos", "calendario", "convenio", "calcula", "actas", "documentos", "preguntas", "info", "buscar", "legal", "descansos", "ganancias", "aparcar"];
+const VISTAS = ["inicio", "avisos", "calendario", "convenio", "calcula", "actas", "documentos", "preguntas", "info", "buscar", "legal", "descansos", "ganancias", "aparcar", "restricciones"];
 // Título de la pestaña del navegador según la sección (se ve en el historial, al compartir y con lector de pantalla)
 const TITULO_WEB = document.title;
 const ponTitulo = (nombre) => { document.title = nombre ? nombre + " · CCOO Calsina Carré" : TITULO_WEB; };
@@ -44,9 +44,13 @@ function irA() {
   const orden = ordenVistas(), clave = ap ? "ap-" + ap : v;
   const iAntes = orden.indexOf(irA.antes), iAhora = orden.indexOf(clave), lado = iAntes < 0 || iAhora < 0 || iAntes === iAhora ? "" : iAhora > iAntes ? "desde-der" : "desde-izq";
   const cambia = irA.antes !== undefined && irA.antes !== clave; irA.antes = clave;
-  document.querySelectorAll(".vista").forEach(s => { s.classList.toggle("activa", s.id === "v-" + v); s.classList.remove("desde-der", "desde-izq"); });
-  document.body.dataset.vista = v; // v87: el pie largo solo en Inicio (CSS)
-  if (lado && cambia) $("v-" + v)?.classList.add(lado);
+  // v164: «Restricciones en mi ruta» usa la misma pantalla que «Aparcamientos en mi ruta» (la misma ruta para camión), pero solo enseña prohibiciones y cortes
+  const vv = v === "restricciones" ? "aparcar" : v, soloRestr = v === "restricciones";
+  document.body.classList.toggle("solo-restr", soloRestr);
+  if (soloRestr) pintaRestrEnlaces();
+  document.querySelectorAll(".vista").forEach(s => { s.classList.toggle("activa", s.id === "v-" + vv); s.classList.remove("desde-der", "desde-izq"); });
+  document.body.dataset.vista = vv; // v87: el pie largo solo en Inicio (CSS)
+  if (lado && cambia) $("v-" + vv)?.classList.add(lado);
   if (v === "inicio" && cambia) animaPortada();
   marcaPestanas(clave);
   ponTitulo(v === "inicio" ? "" : ap ? D.apartados.find(x => x.slug === ap)?.titulo : v === "buscar" ? "Buscar" : legal ? (legal === "privacidad" ? "Privacidad" : "Aviso legal") : NOMBRE_FIJO[v]);
@@ -87,9 +91,9 @@ document.querySelector("[data-saltar]").addEventListener("click", (ev) => { ev.p
 // Arriba solo salen los apartados principales; lo que va dentro (Actas en «Comité de empresa», los subapartados
 // que crea el admin…) sale en una segunda fila (#subpestanas). Las direcciones de siempre (#actas, #ap-…) siguen valiendo.
 // Si falta el apartado de arriba (borrado u oculto), lo de dentro vuelve a salir arriba.
-const DENTRO_DE = { actas: "comite", convenio: "convenio-y-leyes", calcula: "convenio-y-leyes", descansos: "zona-conductores", ganancias: "zona-conductores", aparcar: "zona-conductores", preguntas: "@info" };
+const DENTRO_DE = { actas: "comite", convenio: "convenio-y-leyes", calcula: "convenio-y-leyes", descansos: "zona-conductores", ganancias: "zona-conductores", aparcar: "zona-conductores", restricciones: "zona-conductores", preguntas: "@info" };
 const APARTADO_AFILIATE = "afiliate"; // va el último, al lado de «Nosotros», para animar a afiliarse
-const NOMBRE_FIJO = { inicio: "Inicio", avisos: "Avisos", calendario: "Calendario", actas: "Actas", documentos: "Documentos", convenio: "Convenio", calcula: "Calcula", preguntas: "Dudas", info: "Nosotros", descansos: "Mis descansos", ganancias: "Mis incentivos", aparcar: "Aparcamientos en mi ruta" };
+const NOMBRE_FIJO = { inicio: "Inicio", avisos: "Avisos", calendario: "Calendario", actas: "Actas", documentos: "Documentos", convenio: "Convenio", calcula: "Calcula", preguntas: "Dudas", info: "Nosotros", descansos: "Mis descansos", ganancias: "Mis incentivos", aparcar: "Aparcamientos en mi ruta", restricciones: "Restricciones en mi ruta" };
 let GRUPOS = [], GRUPO_DE = {};
 const padreValido = (a) => !!a.padre_id && D.apartados.some(p => p.id === a.padre_id && !p.padre_id);
 function montaGrupos() {
@@ -350,7 +354,7 @@ function pintaInicio() {
   if ($("ver-mas")) $("ver-mas").onclick = () => { estado.feedMax = max + 20; pintaInicio(); };
   if (aparece) $("inicio-feed").querySelectorAll(".item-tablon").forEach(el => { if (el.getBoundingClientRect().top > innerHeight) { el.classList.add("por-ver"); aparece.observe(el); } });
   // Accesos
-  const IC_FIJO = { descansos: "reloj", ganancias: "euro", aparcar: "lugar", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta" };
+  const IC_FIJO = { descansos: "reloj", ganancias: "euro", aparcar: "lugar", restricciones: "alerta", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta" };
   const acc = GRUPOS.flatMap(g => g.miembros).filter(m => m.clave !== "inicio" && m.clave !== "info")
     .map(m => [m.clave, IC_FIJO[m.clave] || D.apartados.find(a => "ap-" + a.slug === m.clave)?.icono || "carpeta", m.titulo]);
   // v163 (lo pidió Lorena): los 4 más usados primero y en grande; color por grupo (azul = Zona Conductores, gris = documentación)
@@ -657,6 +661,8 @@ const RESTRICCIONES_RESERVA = [
   { pais: "Portugal", fuente: "Infraestruturas de Portugal: camiones en la VCI de Oporto", idioma: "En portugués", url: "https://www.infraestruturasdeportugal.pt/pt-pt/regime-circulacao-VCI-isencao-pagamento-taxas-portagem-CREP" },
   { pais: "Rumanía", fuente: "Policía Rumana: avisos de tráfico y restricciones para pesados", idioma: "En rumano", url: "https://politiaromana.ro/ro/info-trafic" },
 ];
+// v164: enlaces oficiales debajo de «Restricciones en mi ruta» (al abrirla y otra vez al llegar los datos; con setTimeout porque irA corre antes de que se definan las listas)
+function pintaRestrEnlaces() { setTimeout(() => { const c = $("apc-restr-enlaces"); if (c) c.innerHTML = restriccionesHTML(); }, 0); }
 function restriccionesHTML() {
   const lista = D.restricciones || RESTRICCIONES_RESERVA;
   if (!lista.length) return "";
@@ -676,7 +682,7 @@ function pintaApartado() {
   $("ap-titulo").textContent = a.titulo;
   if (location.hash === "#ap-" + a.slug) ponTitulo(a.titulo); // al entrar por enlace directo, el nombre llega al cargar
   $("ap-desc").textContent = a.descripcion || "";
-  $("ap-extra").innerHTML = a.slug === APARTADO_CONDUCTORES ? `<a class="panel desc-promo cond" href="#descansos">${icono("reloj")}<span><b>Mis descansos</b><small>Tu descanso diario y semanal: cuándo te toca, si puede ser reducido y qué tienes que compensar. Con avisos al móvil.</small></span>${icono("der", "p")}</a><a class="panel desc-promo cond" href="#ganancias">${icono("euro")}<span><b>Mis incentivos</b><small>Lo que ganas cada día, semana y mes: dietas, suplementos, pluses y kilómetros.</small></span>${icono("der", "p")}</a><a class="panel desc-promo cond" href="#aparcar">${icono("lugar")}<span><b>Aparcamientos en mi ruta </b><small>Ruta para tu camión y, mientras conduces, los aparcamientos que tienes por delante, cortes y dónde te toca parar.</small></span>${icono("der", "p")}</a>` + restriccionesHTML() : "";
+  $("ap-extra").innerHTML = a.slug === APARTADO_CONDUCTORES ? `<a class="panel desc-promo cond" href="#descansos">${icono("reloj")}<span><b>Mis descansos</b><small>Tu descanso diario y semanal: cuándo te toca, si puede ser reducido y qué tienes que compensar. Con avisos al móvil.</small></span>${icono("der", "p")}</a><a class="panel desc-promo cond" href="#ganancias">${icono("euro")}<span><b>Mis incentivos</b><small>Lo que ganas cada día, semana y mes: dietas, suplementos, pluses y kilómetros.</small></span>${icono("der", "p")}</a><a class="panel desc-promo cond" href="#aparcar">${icono("lugar")}<span><b>Aparcamientos en mi ruta </b><small>Ruta para tu camión y, mientras conduces, los aparcamientos que tienes por delante, cortes y dónde te toca parar.</small></span>${icono("der", "p")}</a><a class="panel desc-promo cond" href="#restricciones">${icono("alerta")}<span><b>Restricciones en mi ruta</b><small>Pon de dónde sales y adónde llegas y te digo si en esa ruta hay prohibiciones de circular para camiones o cortes. Gratis.</small></span>${icono("der", "p")}</a>` + restriccionesHTML() : "";
   const todas = D.publicaciones.filter(x => x.apartado_id === a.id);
   pintaFechas("fechas-ap", "ap", todas, x => x.fecha, () => pintaApartado());
   const qr = $("buscar-ap").value.trim(), q = normal(qr);
@@ -916,6 +922,7 @@ async function cargar(idNuevo) {
   D.apartados = (aps.data || []).filter(x => x.visible !== false);
   D.publicaciones = (pubs.data || []).filter(x => x.publicado !== false && D.apartados.some(ap => ap.id === x.apartado_id)); cargar.listo = true;
   D.restricciones = rs.error ? null : (rs.data || []).filter(x => x.visible !== false); // null: se usa la lista de reserva
+  if (location.hash === "#restricciones") pintaRestrEnlaces();
   D.encuestas = (enc.data || []).filter(x => x.publicada !== false);
   D.votos = {}; (vot.data || []).forEach(v => { (D.votos[v.encuesta_id] = D.votos[v.encuesta_id] || {})[v.opcion] = v.n; });
   D.calc = { permisos: cp.data || [], categorias: cc.data || [], ajustes: Object.fromEntries((ca.data || []).map(x => [x.clave, x.valor])) };
@@ -1545,6 +1552,7 @@ const PALABRAS_VISTA = { inicio: "inicio portada principal", avisos: "avisos com
   calendario: "calendario fechas asambleas reuniones festivos eventos citas", documentos: "documentos archivos pdf fotos impresos formularios",
   convenio: "convenio colectivo articulos salario nomina vacaciones permisos licencias", calcula: "calculadora calcular vacaciones permisos horas extra",
   descansos: "descansos descanso semanal diario tacografo conduccion pausas jornada horas 561",
+  restricciones: "restricciones restriccion prohibiciones prohibicion prohibido circular camiones camion ruta festivos fin de semana cortes carretera cortada trafico",
   aparcar: "aparcar aparcamiento aparcamientos parking parquing camion camiones area de servicio area de descanso dormir pernoctar plaza plazas cerca de mi donde aparco",
   ganancias: "incentivos ganancias dinero cobrar sueldo salario dietas dieta suplementos pluses kilometros km nocturnidad adr carga descarga festivo fin de semana calculadora euros", actas: "actas reuniones comite acuerdos",
   preguntas: "dudas preguntas frecuentes", info: "nosotros delegados contacto telefono buzon sugerencias quienes somos" };
@@ -1589,7 +1597,7 @@ function buscarTodo() {
   const sitiosExtra = sitiosWeb().filter(x => !vistas.includes(x.h));
   const secciones = [...lista(sitiosExtra, x => ({ n: nota(x.t, x.p), h: x.h, t: x.t, donde: x.donde, ic: "lugar", sinEnlace: !x.h })), ...lista(vistas, c => {
     const ap = c.startsWith("ap-") ? D.apartados.find(a => "ap-" + a.slug === c) : null;
-    return { n: nota(nomVista(c), ap?.descripcion, PALABRAS_VISTA[c], GRUPO_DE[c]?.titulo), h: c, t: nomVista(c), s: ap?.descripcion || "", donde: rutaDe(c), ic: ap?.icono || { descansos: "reloj", ganancias: "euro", aparcar: "lugar", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta", info: "grupo", inicio: "inicio" }[c] || "carpeta" };
+    return { n: nota(nomVista(c), ap?.descripcion, PALABRAS_VISTA[c], GRUPO_DE[c]?.titulo), h: c, t: nomVista(c), s: ap?.descripcion || "", donde: rutaDe(c), ic: ap?.icono || { descansos: "reloj", ganancias: "euro", aparcar: "lugar", restricciones: "alerta", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta", info: "grupo", inicio: "inicio" }[c] || "carpeta" };
   })].sort((a, b) => b.n - a.n);
   // Archivos: los de Documentos y los adjuntos de avisos, actas y publicaciones
   const arch = [];

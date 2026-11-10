@@ -25,9 +25,9 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="fuentes.css?v=163">
-<script src="lectura.js?v=163"></script>
-<link rel="stylesheet" href="styles.css?v=163">
+<link rel="stylesheet" href="fuentes.css?v=164">
+<script src="lectura.js?v=164"></script>
+<link rel="stylesheet" href="styles.css?v=164">
 </head>
 <body class="publica">
 
@@ -359,11 +359,12 @@
 
   <!-- APARCAMIENTOS EN MI RUTA (Zona Conductores): ruta para camión y aparcamientos por delante mientras conduces (aparcar.js) -->
   <section class="vista" id="v-aparcar">
-    <h1 class="titulo-vista">Aparcamientos en mi ruta</h1>
+    <h1 class="titulo-vista"><span class="no-restr">Aparcamientos en mi ruta</span><span class="si-restr">Restricciones en mi ruta</span></h1>
     <details class="desc-guia apc-guia"><summary><svg class="icono p" aria-hidden="true"><use href="#i-pregunta"/></svg><span>Cómo se usa (guía rápida)</span></summary><label class="desc-idioma apc-guia-idioma"><svg class="icono p" aria-hidden="true"><use href="#i-idioma"/></svg><span>Idioma de la guía · Language</span><select id="apc-guia-idioma" aria-label="Idioma de la guía · Language"></select></label><p class="msg" id="apc-guia-msg" role="status"></p><div id="apc-guia-cuerpo" class="gan-guia-cuerpo"></div></details>
     <div id="apc-preparar">
       <div id="apc-recupera"></div>
-      <p class="intro-vista">Pon adónde vas y te calculo una ruta para tu camión. Mientras conduces, te enseño los aparcamientos que tienes por delante y si estarán abiertos cuando llegues.</p>
+      <div class="si-restr intro-vista apc-restr-intro"><p>Pon de dónde sales y adónde llegas y te calculo una ruta para tu camión. Te digo si en esa ruta hay prohibiciones de circular para camiones (fines de semana, festivos, verano…) según la hora de salida, y si hay cortes o avisos de tráfico.</p><p class="apc-nota">Es gratis. La ruta tiene en cuenta el alto y el peso de tu camión cuando el mapa los tiene apuntados, pero no todos los puentes ni calles con límite de altura o peso están en el mapa: haz caso siempre a las señales.</p></div>
+      <p class="intro-vista no-restr">Pon adónde vas y te calculo una ruta para tu camión. Mientras conduces, te enseño los aparcamientos que tienes por delante y si estarán abiertos cuando llegues.</p>
       <form class="panel apc-form" id="apc-form" autocomplete="off">
         <div class="apc-sitio">
           <label>Desde<input id="apc-desde" placeholder="Vacío = donde estás ahora" enterkeyhint="next"></label>
@@ -409,6 +410,7 @@
       </section>
       <p class="msg" id="apc-estado" role="status" aria-live="polite"></p>
       <div id="apc-ruta"></div>
+      <div id="apc-restr-enlaces" class="si-restr"></div>
       <p class="aviso-oficial apc-aviso"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Los aparcamientos salen de OpenStreetMap, el mapa libre que hace la gente, y se renuevan cada mes; también salen los que añaden los compañeros (sin revisar antes: si ves uno mal, avisa con «¿Algo está mal?»); puede faltar alguno, haber cambiado o estar en el otro sentido de la autopista. «Abierto» sale del horario, no de si hay plazas libres. «Cerrado» sale del horario apuntado; si un aparcamiento no tiene horario, sale como «Sin horario». Para calcular la ruta, el origen y el destino pasan por el servidor de la sección sin guardarse; mientras conduces, tu ubicación no sale del móvil. El modo «Mapa» descarga el mapa de OpenStreetMap: su servidor ve la zona que miras, como cualquier mapa.</span></p>
     </div>
     <div id="apc-viaje" hidden>
@@ -536,13 +538,13 @@
 <div class="barra-acciones" id="barra-acciones"></div>
 <button class="arriba-btn" id="arriba" type="button" aria-label="Volver arriba" title="Volver arriba"><svg class="arriba-aro" viewBox="0 0 52 52" aria-hidden="true"><circle class="aro-fondo" cx="26" cy="26" r="23"/><circle class="aro-prog" cx="26" cy="26" r="23" pathLength="100"/></svg><span data-i="arriba"></span></button>
 
-<script src="lib/supabase.js?v=163"></script>
-<script src="iconos.js?v=163"></script>
-<script src="config.js?v=163"></script>
-<script src="render.js?v=163"></script>
-<script src="app.js?v=163"></script>
-<script src="descansos.js?v=163"></script>
-<script src="ganancias.js?v=163"></script>
-<script src="aparcar.js?v=163"></script>
+<script src="lib/supabase.js?v=164"></script>
+<script src="iconos.js?v=164"></script>
+<script src="config.js?v=164"></script>
+<script src="render.js?v=164"></script>
+<script src="app.js?v=164"></script>
+<script src="descansos.js?v=164"></script>
+<script src="ganancias.js?v=164"></script>
+<script src="aparcar.js?v=164"></script>
 </body>
 </html>

@@ -2606,3 +2606,24 @@ details.recupera-caja > div { padding: 0 14px 14px; }
 :root[data-theme="dark"] .pie-web { border-bottom-color: #2c333c; }
 @media (min-width: 1000px) { :root[data-theme="dark"] .pie { background: #0b0e11; border: 1px solid #2c333c; border-bottom: 0; } }
 @media (min-width: 1000px) and (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pie { background: #0b0e11; border: 1px solid #2c333c; border-bottom: 0; } }
+
+/* v164: «Restricciones en mi ruta» (petición 33): la misma pantalla que «Aparcamientos en mi ruta», solo con prohibiciones, cortes y otras rutas */
+.si-restr { display: none; }
+body.solo-restr .si-restr { display: block; }
+body.solo-restr h1 .si-restr { display: inline; }
+body.solo-restr .no-restr,
+body.solo-restr #v-aparcar .apc-guia,
+body.solo-restr #apc-recupera,
+body.solo-restr #apc-sin-destino,
+body.solo-restr .apc-mapa-libre,
+body.solo-restr #apc-empezar,
+body.solo-restr #apc-empezar + .apc-nota,
+body.solo-restr #apc-sec-paradas,
+body.solo-restr #apc-sec-aparc,
+body.solo-restr #apc-sec-peajes,
+body.solo-restr [data-salto="apc-sec-paradas"],
+body.solo-restr [data-salto="apc-sec-aparc"],
+body.solo-restr [data-salto="apc-sec-peajes"] { display: none !important; }
+.apc-restr-intro { display: none; }
+body.solo-restr .apc-restr-intro { display: grid; gap: 8px; }
+body.solo-restr #apc-restr-enlaces { margin-top: 20px; }
