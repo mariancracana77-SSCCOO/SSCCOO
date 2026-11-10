@@ -642,6 +642,36 @@
     return res;
   }
   const fechaHora = (t) => new Date(t).toLocaleString("es-ES", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+  // v165 (petición 34): todas las prohibiciones apuntadas en el panel, por país, sin tener que calcular una ruta (en «Restricciones en mi ruta»)
+  const DIA_NOM = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  const MES_NOM = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+  const hhmm = (h) => String(h || "").slice(0, 5);
+  function horarioProhib(x) {
+    if (x.tipo === "fecha") {
+      const a = Date.parse(x.inicio), b = Date.parse(x.fin);
+      return a && b ? `Del ${fechaHora(a)} al ${fechaHora(b)}` : "Fecha sin poner";
+    }
+    const dias = x.dia_desde == null ? `Todos los días, de ${hhmm(x.hora_desde)} a ${hhmm(x.hora_hasta)}`
+      : x.dia_hasta == null || x.dia_hasta === x.dia_desde ? `${DIA_NOM[x.dia_desde]}, de ${hhmm(x.hora_desde)} a ${hhmm(x.hora_hasta)}`
+      : `Del ${DIA_NOM[x.dia_desde].toLowerCase()} a las ${hhmm(x.hora_desde)} al ${DIA_NOM[x.dia_hasta].toLowerCase()} a las ${hhmm(x.hora_hasta)}`;
+    const meses = x.mes_desde ? ` (de ${MES_NOM[x.mes_desde - 1]} a ${MES_NOM[(x.mes_hasta || x.mes_desde) - 1]})` : "";
+    return dias + meses;
+  }
+  async function pintaTodasProhib() {
+    const caja = $("apc-prohib-todas"); if (!caja) return;
+    const l = await cargaProhibiciones(), ahora = Date.now();
+    // Las de fecha que ya han pasado no se enseñan
+    const vale = l.filter(x => x.tipo !== "fecha" || !Date.parse(x.fin) || Date.parse(x.fin) > ahora);
+    const paises = [...new Set(vale.map(x => x.pais))].sort((a, b) => (PAIS_NOMBRE[a] || a).localeCompare(PAIS_NOMBRE[b] || b, "es"));
+    caja.innerHTML = `<section class="apc-prohib-todas" aria-labelledby="apc-prohib-todas-tit">
+      <h2 class="tit-seccion" id="apc-prohib-todas-tit">Prohibiciones de circular apuntadas por la sección</h2>
+      ${vale.length ? `<p class="apc-nota">Todas las que tiene apuntadas la sección, por país. Con una ruta calculada, arriba te digo cuáles te pillan por el camino según la hora de salida.</p>
+      ${paises.map(p => `<details class="panel apc-prohib-pais"${vale.filter(x => x.pais === p).some(x => periodos(x, ahora, ahora + 60000).length) ? " open" : ""}><summary><b>${esc(PAIS_NOMBRE[p] || p)}</b> <small>(${vale.filter(x => x.pais === p).length})</small></summary>
+        <ul class="apc-lista">${vale.filter(x => x.pais === p).map(x => { const ya = periodos(x, ahora, ahora + 60000).length > 0; return `<li class="apc apc-prohib-una${ya ? " ahora" : ""}"><b class="apc-nom">${esc(x.motivo || "Prohibición")}</b>${ya ? ` <span class="apc-ahora">Ahora en vigor</span>` : ""}
+          <p>${esc(horarioProhib(x))}</p>${x.nota ? `<p class="apc-nota">${esc(x.nota)}</p>` : ""}${x.url ? `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener">Ver la web oficial</a>` : ""}</li>`; }).join("")}</ul></details>`).join("")}`
+      : `<p>La sección todavía no tiene apuntada ninguna prohibición.</p>`}
+      <p class="apc-nota">Orientativo: puede haber festivos locales o restricciones que no están apuntados. Compruébalo en las webs oficiales de abajo.</p></section>`;
+  }
   function prohibicionesRuta() {
     if (!RUTA?.tramosPais || !PROHIB.length) return [];
     const t0 = horaSalida(), res = [];
@@ -1451,6 +1481,8 @@
   }
 
   function prepara() {
+    if (location.hash === "#restricciones") pintaTodasProhib();
+    addEventListener("hashchange", () => { if (location.hash === "#restricciones") pintaTodasProhib(); });
     pintaFormulario();
     pintaGuiaApc();
     if ($("apc-guia-idioma")) $("apc-guia-idioma").onchange = () => ponMiIdioma($("apc-guia-idioma").value);

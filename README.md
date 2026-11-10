@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 165: todas las prohibiciones de circular en la web
+Petición 34 del panel: las prohibiciones que se apuntan en el panel solo salían dentro de una ruta calculada y solo si te pillaban por el camino. Ahora «Restricciones en mi ruta» enseña la lista completa por país (días, horas, meses y fechas), sin tener que calcular ruta, y marca «Ahora en vigor» las que tocan en ese momento.
+
 ## Versión 164: «Restricciones en mi ruta» en Zona Conductores
 Pestaña nueva (petición 33 del panel): pones de dónde sales y adónde llegas y calcula la ruta para tu camión (la misma que «Aparcamientos en mi ruta», gratis), pero solo enseña las prohibiciones de circular según la hora de salida, los cortes y avisos de tráfico, otras rutas y las carreteras, con los enlaces oficiales de restricciones por país debajo. Avisa de que no todos los límites de altura y peso de puentes y calles están en el mapa.
 

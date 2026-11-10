@@ -2627,3 +2627,10 @@ body.solo-restr [data-salto="apc-sec-peajes"] { display: none !important; }
 .apc-restr-intro { display: none; }
 body.solo-restr .apc-restr-intro { display: grid; gap: 8px; }
 body.solo-restr #apc-restr-enlaces { margin-top: 20px; }
+/* v165 (petición 34): todas las prohibiciones por país en «Restricciones en mi ruta» */
+body.solo-restr #apc-prohib-todas { margin-top: 20px; }
+.apc-prohib-todas { display: grid; gap: 12px; }
+.apc-prohib-pais summary { cursor: pointer; font-size: 1.05em; }
+.apc-prohib-pais .apc-lista { margin-top: 10px; }
+.apc-prohib-una.ahora { border-left: 4px solid var(--rojo, #AB1012); }
+.apc-ahora { display: inline-block; width: fit-content; justify-self: start; align-self: start; font-size: .8em; font-weight: 700; color: #fff; background: var(--rojo, #AB1012); border-radius: 99px; padding: 1px 8px; }
