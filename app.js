@@ -662,20 +662,13 @@ const RESTRICCIONES_RESERVA = [
   { pais: "Rumanía", fuente: "Policía Rumana: avisos de tráfico y restricciones para pesados", idioma: "En rumano", url: "https://politiaromana.ro/ro/info-trafic" },
 ];
 // v164: enlaces oficiales debajo de «Restricciones en mi ruta» (al abrirla y otra vez al llegar los datos; con setTimeout porque irA corre antes de que se definan las listas)
-function pintaRestrEnlaces() { setTimeout(() => { const c = $("apc-restr-enlaces"); if (c) c.innerHTML = restriccionesHTML(); }, 0); }
-function restriccionesHTML() {
+// v166 (lo pidió Lorena): los enlaces ya no salen aparte: van dentro de cada país en la lista de aparcar.js (pintaTodasProhib)
+function pintaRestrEnlaces() { setTimeout(() => { const c = $("apc-restr-enlaces"); if (c) c.innerHTML = ""; window.__pintaProhibTodas?.(); }, 0); }
+window.restrInfo = () => {
   const lista = D.restricciones || RESTRICCIONES_RESERVA;
-  if (!lista.length) return "";
   const f = String(D.paginas.restricciones_revisado || "").trim();
-  const revisado = fechaLarga((/^\d{4}-\d{2}-\d{2}$/.test(f) ? f : RESTRICCIONES_REVISADO) + "T12:00:00");
-  return `<section class="restricciones" aria-labelledby="tit-restr">
-    <h2 class="tit-seccion" id="tit-restr">Restricciones de circulación para camiones</h2>
-    <p class="aviso-oficial">${icono("alerta", "p")}<span>Estos enlaces llevan a páginas oficiales. Antes de salir, comprueba la información en la fuente oficial. Revisado por última vez: ${esc(revisado)}.${lista.some(restrTraducida) ? " Las páginas en otro idioma se pueden traducir al abrirlas: en Android, toca «Traducir» o los tres puntos y «Traducir»; en iPhone, el botón «aA» y «Traducir». Es una traducción automática: ante la duda, fíjate en las fechas y horas de la original." : ""}</span></p>
-    <p class="restr-intro">Días y horas en que los camiones no pueden circular en cada país. Ábrelo antes de un viaje para planificar la ruta.</p>
-    <div class="lista-restr">${lista.map(restriccionHTML).join("")}</div>
-  </section>`;
-}
-
+  return { lista, revisado: fechaLarga((/^\d{4}-\d{2}-\d{2}$/.test(f) ? f : RESTRICCIONES_REVISADO) + "T12:00:00"), trad: lista.some(restrTraducida) };
+};
 function pintaApartado() {
   const a = D.apartados.find(x => x.slug === estado.ap);
   if (!a) { $("ap-extra").innerHTML = ""; $("ap-titulo").textContent = D.apartados.length || !cargar.listo ? "Cargando…" : "Apartado no encontrado"; $("lista-ap").innerHTML = ""; $("ap-desc").textContent = ""; $("fechas-ap").innerHTML = ""; return; }

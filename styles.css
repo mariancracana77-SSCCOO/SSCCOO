@@ -534,12 +534,14 @@ body.publica .pie { padding-bottom: 20px; }
 :root[data-theme="dark"] .pestanas-web a.activa { color: #fff; border-bottom-color: var(--rojo-luz); }
 
 /* ====== Ajustes de lectura (botón Aa) ====== */
+/* v166 (lo pidió Lorena): letra más pequeña que la normal (14 px); las reglas de «letra grande» de abajo no se le aplican */
+html[data-letra="pequena"] { font-size: 87.5%; }
 html[data-letra="grande"] { font-size: 112.5%; }
 html[data-letra="muy-grande"] { font-size: 127%; }
 html[data-letra="grande"] .icono, html[data-letra="muy-grande"] .icono { width: 1.4rem; height: 1.4rem; }
 @media (max-width: 999px) {
-  html[data-letra] .nav button { font-size: 11.5px; padding-left: 0; padding-right: 0; }
-  html[data-letra] .nav .icono { width: 24px; height: 24px; }
+  html:is([data-letra="grande"], [data-letra="muy-grande"]) .nav button { font-size: 11.5px; padding-left: 0; padding-right: 0; }
+  html:is([data-letra="grande"], [data-letra="muy-grande"]) .nav .icono { width: 24px; height: 24px; }
 }
 html[data-letra="grande"] .btn, html[data-letra="muy-grande"] .btn, html[data-letra="grande"] .accion, html[data-letra="muy-grande"] .accion { min-height: 48px; }
 html[data-contraste="alto"] { --suave: #2f3946; --linea: #8a96a6; --sombra: none; }
@@ -551,6 +553,8 @@ html[data-contraste="alto"] .etq { outline: 1px solid currentColor; }
 html[data-contraste="alto"][data-theme="dark"] { --suave: #c9d1dc; --linea: #6b7a8c; --tinta: #ffffff; }
 .lectura h3 { font-size: 1.1rem; margin: 16px 0 8px; }
 .opciones-lectura { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.opciones-lectura.letra4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 400px) { .opciones-lectura.letra4 { grid-template-columns: 1fr 1fr; } }
 .opciones-lectura button { border: 2px solid var(--linea); background: var(--tarjeta); color: var(--tinta); border-radius: 12px; padding: 12px 6px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .opciones-lectura button.activa { border-color: var(--rojo); background: var(--rojo-suave); }
 .opciones-lectura .muestra { font-family: var(--cond); line-height: 1; }
@@ -562,7 +566,7 @@ html[data-contraste="alto"][data-theme="dark"] { --suave: #c9d1dc; --linea: #6b7
 .tarjeta-urgente, .tarjeta-urgente * { color: #fff; }
 .accion-baja:not(.principal):not(.on), .accion-baja:not(.principal):not(.on) * { color: var(--tinta); }
 .accion-baja.principal, .accion-baja.principal * { color: var(--tarjeta); }
-html[data-letra] .pestanas-web a { font-size: .95rem; }
+html:is([data-letra="grande"], [data-letra="muy-grande"]) .pestanas-web a { font-size: .95rem; }
 .pestanas-web a:not(.activa) { color: var(--suave); }
 
 /* Ventanas: botón principal a lo ancho y acción secundaria discreta */
@@ -621,7 +625,7 @@ h1, h2, h3 { letter-spacing: .01em; }
 .cab-tablon .pestanas-web a:not(.activa):hover { color: #fff; }
 .cab-tablon .pestanas-web a.activa, :root[data-theme="dark"] .cab-tablon .pestanas-web a.activa { color: #fff; border-bottom-color: var(--ambar-rotulo); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cab-tablon .pestanas-web a.activa { color: #fff; border-bottom-color: var(--ambar-rotulo); } }
-html[data-letra] .cab-tablon .pestanas-web a { font-size: 1.12rem; }
+html:is([data-letra="grande"], [data-letra="muy-grande"]) .cab-tablon .pestanas-web a { font-size: 1.12rem; }
 /* Flechas de la barra de pestañas: en cualquier pantalla, pero solo si no caben todas y solo hacia
    donde hay más secciones escondidas (con 12 pestañas ya no caben ni en un portátil). */
 .pestanas-caja { position: relative; max-width: 1100px; margin: 0 auto; }
@@ -1407,7 +1411,7 @@ html[data-contraste="alto"] .cita-panel b { color: #ffc233; text-shadow: none; }
 .subpestanas a .cuenta-pestana { background: #fff; color: #ab1012; }
 .pest-flecha.sub { border: 2px solid #fff; }
 .subpestanas a.activa .cuenta-pestana { display: none; }
-html[data-letra] .subpestanas a { font-size: .92rem; }
+html:is([data-letra="grande"], [data-letra="muy-grande"]) .subpestanas a { font-size: .92rem; }
 
 /* v52: «Mis descansos» (Zona Conductores) */
 .desc-promo { display: flex; gap: 14px; align-items: center; text-decoration: none; color: var(--tinta); margin-bottom: 18px; border-left: 5px solid var(--rojo); }
@@ -2490,6 +2494,23 @@ details.recupera-caja > div { padding: 0 14px 14px; }
 :root .dia .punto.bandera { width: 16px; height: 11px; border-radius: 2px; box-shadow: 0 0 0 1px rgb(0 0 0 / .3); }
 :root .dia .punto.b-es { background: linear-gradient(#aa151b 0 25%, #f1bf00 25% 75%, #aa151b 75%); }
 :root .dia .punto.b-cat { background: linear-gradient(#fcdd09 0 11.11%, #da121a 11.11% 22.22%, #fcdd09 22.22% 33.33%, #da121a 33.33% 44.44%, #fcdd09 44.44% 55.55%, #da121a 55.55% 66.66%, #fcdd09 66.66% 77.77%, #da121a 77.77% 88.88%, #fcdd09 88.88%); }
+/* v166 (lo pidió Lorena): banderas de los países de Zona Conductores (banderaPais en config.js). Colores fijos en los dos temas */
+.b-fr { background: linear-gradient(90deg, #0055a4 0 33.33%, #fff 33.33% 66.66%, #ef4135 66.66%); }
+.b-it { background: linear-gradient(90deg, #009246 0 33.33%, #fff 33.33% 66.66%, #ce2b37 66.66%); }
+.b-be { background: linear-gradient(90deg, #000 0 33.33%, #fdda24 33.33% 66.66%, #ef3340 66.66%); }
+.b-ie { background: linear-gradient(90deg, #169b62 0 33.33%, #fff 33.33% 66.66%, #ff883e 66.66%); }
+.b-ro { background: linear-gradient(90deg, #002b7f 0 33.33%, #fcd116 33.33% 66.66%, #ce1126 66.66%); }
+.b-ad { background: linear-gradient(90deg, #10069f 0 33.33%, #fedd00 33.33% 66.66%, #d50032 66.66%); }
+.b-de { background: linear-gradient(#000 0 33.33%, #dd0000 33.33% 66.66%, #ffce00 66.66%); }
+.b-nl { background: linear-gradient(#ae1c28 0 33.33%, #fff 33.33% 66.66%, #21468b 66.66%); }
+.b-lu { background: linear-gradient(#ed2939 0 33.33%, #fff 33.33% 66.66%, #00a1de 66.66%); }
+.b-at { background: linear-gradient(#c8102e 0 33.33%, #fff 33.33% 66.66%, #c8102e 66.66%); }
+.b-pl { background: linear-gradient(#fff 0 50%, #dc143c 50%); }
+.b-pt { background: linear-gradient(90deg, #046a38 0 40%, #da291c 40%); }
+.b-ch { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 20' preserveAspectRatio='none'%3E%3Crect width='30' height='20' fill='%23DA291C'/%3E%3Cpath d='M13 4h4v4.2h4.2v4H17V16h-4v-3.8H8.8v-4H13z' fill='%23fff'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
+.b-gb { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 20' preserveAspectRatio='none'%3E%3Crect width='30' height='20' fill='%23012169'/%3E%3Cpath d='M0 0L30 20M30 0L0 20' stroke='%23fff' stroke-width='4'/%3E%3Cpath d='M0 0L30 20M30 0L0 20' stroke='%23C8102E' stroke-width='1.6'/%3E%3Cpath d='M15 0V20M0 10H30' stroke='%23fff' stroke-width='6'/%3E%3Cpath d='M15 0V20M0 10H30' stroke='%23C8102E' stroke-width='3.4'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
+.b-ma { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 20' preserveAspectRatio='none'%3E%3Crect width='30' height='20' fill='%23C1272D'/%3E%3Cpath d='M15 5.2L17.7 13.6L10.6 8.4H19.4L12.3 13.6Z' fill='none' stroke='%23006233' stroke-width='1.1' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
+.bandera.b-pais { margin-right: 6px; vertical-align: -.12em; }
 .t-tipo .bandera { width: 1.4em; height: .95em; margin-left: 8px; vertical-align: -1px; }
 
 /* ---- Revisión de accesibilidad (9/11/2026) ---- */
@@ -2632,5 +2653,8 @@ body.solo-restr #apc-prohib-todas { margin-top: 20px; }
 .apc-prohib-todas { display: grid; gap: 12px; }
 .apc-prohib-pais summary { cursor: pointer; font-size: 1.05em; }
 .apc-prohib-pais .apc-lista { margin-top: 10px; }
+.apc-pais-webs { margin-top: 10px; }
+.apc-pais-webs .bandera { display: none; } /* la bandera ya sale en el título del país */
+.apc-prohib-todas .aviso-oficial { margin: 0; }
 .apc-prohib-una.ahora { border-left: 4px solid var(--rojo, #AB1012); }
 .apc-ahora { display: inline-block; width: fit-content; justify-self: start; align-self: start; font-size: .8em; font-weight: 700; color: #fff; background: var(--rojo, #AB1012); border-radius: 99px; padding: 1px 8px; }

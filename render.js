@@ -236,7 +236,7 @@ window.restriccionHTML = (r) => {
   let dom = ""; try { dom = new URL(r.url).hostname.replace(/^www\./, ""); } catch (_) {}
   const trad = restrTraducida(r);
   return `<a class="panel enlace-util" href="${esc(urlSegura(r.url))}" target="_blank" rel="noopener">
-    <span class="ic">${icono(trad ? "idioma" : "lugar", "p")}</span><span class="txt"><b>${esc(r.pais || "País")}</b>${r.fuente ? `<small>${esc(r.fuente)}</small>` : ""}<span class="dom">${[r.idioma, dom].filter(Boolean).map(esc).join(" · ")}</span>${trad ? `<span class="restr-trad">Al abrirla, tu móvil te ofrece traducirla al español.</span>` : ""}</span>${icono("der", "p")}</a>`;
+    <span class="ic">${icono(trad ? "idioma" : "lugar", "p")}</span><span class="txt"><b>${banderaPais(r.pais, "b-pais")}${esc(r.pais || "País")}</b>${r.fuente ? `<small>${esc(r.fuente)}</small>` : ""}<span class="dom">${[r.idioma, dom].filter(Boolean).map(esc).join(" · ")}</span>${trad ? `<span class="restr-trad">Al abrirla, tu móvil te ofrece traducirla al español.</span>` : ""}</span>${icono("der", "p")}</a>`;
 };
 window.enlaceHTML = (e) => {
   let dom = ""; try { dom = new URL(e.url).hostname.replace(/^www\./, ""); } catch (_) {}

@@ -454,7 +454,7 @@
     return `<section class="apc-peajes apc-sec" id="apc-sec-peajes" aria-labelledby="apc-peajes-tit"><h2 id="apc-peajes-tit">Peajes aproximados</h2>
       <p class="apc-peaje-total"><b>${c.total > 0 ? "≈ " + euros(c.total) : "0 €"}</b><span>camión de 5 ejes, 40 t, Euro 6${c.faltan ? ` · falta el precio de ${c.faltan === 1 ? "1 país" : c.faltan + " países"}` : ""}</span></p>
       <details class="apc-peajes-paises"><summary>Ver por países</summary><div class="tabla-scroll"><table class="apc-peajes-tabla"><thead><tr><th scope="col">País</th><th scope="col">Se paga</th><th scope="col">Precio</th></tr></thead><tbody>
-      ${c.filas.map(f => `<tr><th scope="row">${esc(f.nombre)}<small>${Math.round(f.km)} km en total</small></th>
+      ${c.filas.map(f => `<tr><th scope="row">${banderaPais(f.pais, "b-pais")}${esc(f.nombre)}<small>${Math.round(f.km)} km en total</small></th>
         <td>${f.cobra === "nada" || !f.cobra ? esc(COBRA_TXT.nada) : `${Math.round(f.kmPago)} ${esc(COBRA_TXT[f.cobra])}`}</td>
         <td>${f.sinDato ? "Sin precio" : f.euros ? "≈ " + euros(f.euros) : "0 €"}</td></tr>`).join("")}</tbody></table></div></details>
       <details class="apc-peajes-notas"><summary>De dónde salen estos precios</summary><ul>${c.filas.filter(f => f.nota).map(f => `<li><b>${esc(f.nombre)}:</b> ${esc(f.nota)}</li>`).join("")}</ul></details>
@@ -657,21 +657,35 @@
     const meses = x.mes_desde ? ` (de ${MES_NOM[x.mes_desde - 1]} a ${MES_NOM[(x.mes_hasta || x.mes_desde) - 1]})` : "";
     return dias + meses;
   }
+  // v166 (lo pidió Lorena): una sola lista por país, con su bandera; dentro, sus prohibiciones y su web oficial
+  // (la tabla «restricciones» del panel, que antes salía aparte debajo). España y Cataluña primero, aunque no tengan prohibiciones.
   async function pintaTodasProhib() {
     const caja = $("apc-prohib-todas"); if (!caja) return;
     const l = await cargaProhibiciones(), ahora = Date.now();
     // Las de fecha que ya han pasado no se enseñan
     const vale = l.filter(x => x.tipo !== "fecha" || !Date.parse(x.fin) || Date.parse(x.fin) > ahora);
-    const paises = [...new Set(vale.map(x => x.pais))].sort((a, b) => (PAIS_NOMBRE[a] || a).localeCompare(PAIS_NOMBRE[b] || b, "es"));
+    const info = window.restrInfo ? window.restrInfo() : { lista: [], revisado: "", trad: false };
+    const clave = (p) => (codigoPais(p) || String(p || "").trim().toLowerCase()).toUpperCase();
+    const paises = new Map();
+    const pais = (k, nombre) => { if (!paises.has(k)) paises.set(k, { nombre, prohib: [], enlaces: [] }); return paises.get(k); };
+    for (const x of vale) pais(clave(x.pais), PAIS_NOMBRE[x.pais] || BANDERAS[codigoPais(x.pais)] || x.pais).prohib.push(x);
+    for (const r of info.lista) pais(clave(r.pais), BANDERAS[codigoPais(r.pais)] || r.pais || "País").enlaces.push(r);
+    const primero = { ES: 0, CAT: 1 };
+    const orden = [...paises.entries()].sort(([a, x], [b, y]) => (primero[a] ?? 9) - (primero[b] ?? 9) || x.nombre.localeCompare(y.nombre, "es"));
+    const cuenta = (o) => [o.prohib.length ? (o.prohib.length === 1 ? "1 prohibición" : o.prohib.length + " prohibiciones") : "", o.enlaces.length ? "web oficial" : ""].filter(Boolean).join(" · ");
     caja.innerHTML = `<section class="apc-prohib-todas" aria-labelledby="apc-prohib-todas-tit">
-      <h2 class="tit-seccion" id="apc-prohib-todas-tit">Prohibiciones de circular apuntadas por la sección</h2>
-      ${vale.length ? `<p class="apc-nota">Todas las que tiene apuntadas la sección, por país. Con una ruta calculada, arriba te digo cuáles te pillan por el camino según la hora de salida.</p>
-      ${paises.map(p => `<details class="panel apc-prohib-pais"${vale.filter(x => x.pais === p).some(x => periodos(x, ahora, ahora + 60000).length) ? " open" : ""}><summary><b>${esc(PAIS_NOMBRE[p] || p)}</b> <small>(${vale.filter(x => x.pais === p).length})</small></summary>
-        <ul class="apc-lista">${vale.filter(x => x.pais === p).map(x => { const ya = periodos(x, ahora, ahora + 60000).length > 0; return `<li class="apc apc-prohib-una${ya ? " ahora" : ""}"><b class="apc-nom">${esc(x.motivo || "Prohibición")}</b>${ya ? ` <span class="apc-ahora">Ahora en vigor</span>` : ""}
-          <p>${esc(horarioProhib(x))}</p>${x.nota ? `<p class="apc-nota">${esc(x.nota)}</p>` : ""}${x.url ? `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener">Ver la web oficial</a>` : ""}</li>`; }).join("")}</ul></details>`).join("")}`
+      <h2 class="tit-seccion" id="apc-prohib-todas-tit">Prohibiciones y restricciones por país</h2>
+      ${orden.length ? `<p class="apc-nota">Las prohibiciones que tiene apuntadas la sección y la web oficial de cada país. Con una ruta calculada, arriba te digo cuáles te pillan por el camino según la hora de salida.</p>
+      ${info.lista.length ? `<p class="aviso-oficial">${icono("alerta", "p")}<span>Orientativo: antes de salir, compruébalo en la web oficial. Revisado por última vez: ${esc(info.revisado)}.${info.trad ? " Las páginas en otro idioma se pueden traducir al abrirlas: en Android, toca «Traducir» o los tres puntos y «Traducir»; en iPhone, el botón «aA» y «Traducir»." : ""}</span></p>` : ""}
+      ${orden.map(([k, o]) => `<details class="panel apc-prohib-pais"${o.prohib.some(x => periodos(x, ahora, ahora + 60000).length) ? " open" : ""}><summary><b>${banderaPais(k, "b-pais")}${esc(o.nombre)}</b> <small>(${esc(cuenta(o))})</small></summary>
+        ${o.prohib.length ? `<ul class="apc-lista">${o.prohib.map(x => { const ya = periodos(x, ahora, ahora + 60000).length > 0; return `<li class="apc apc-prohib-una${ya ? " ahora" : ""}"><b class="apc-nom">${esc(x.motivo || "Prohibición")}</b>${ya ? ` <span class="apc-ahora">Ahora en vigor</span>` : ""}
+          <p>${esc(horarioProhib(x))}</p>${x.nota ? `<p class="apc-nota">${esc(x.nota)}</p>` : ""}${x.url ? `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener">Ver la web oficial</a>` : ""}</li>`; }).join("")}</ul>`
+        : `<p class="apc-nota">La sección no tiene apuntadas prohibiciones de este país: mira su web oficial.</p>`}
+        ${o.enlaces.length ? `<div class="lista-restr apc-pais-webs">${o.enlaces.map(restriccionHTML).join("")}</div>` : ""}</details>`).join("")}`
       : `<p>La sección todavía no tiene apuntada ninguna prohibición.</p>`}
-      <p class="apc-nota">Orientativo: puede haber festivos locales o restricciones que no están apuntados. Compruébalo en las webs oficiales de abajo.</p></section>`;
+      <p class="apc-nota">Orientativo: puede haber festivos locales o restricciones que no están apuntados. Compruébalo en las webs oficiales.</p></section>`;
   }
+  window.__pintaProhibTodas = pintaTodasProhib;
   function prohibicionesRuta() {
     if (!RUTA?.tramosPais || !PROHIB.length) return [];
     const t0 = horaSalida(), res = [];
@@ -686,7 +700,7 @@
     const conReglas = paises.filter(p => PROHIB.some(x => x.pais === p));
     return `<section class="apc-prohib apc-sec${l.length ? " hay" : ""}" id="apc-sec-prohib" aria-labelledby="apc-prohib-tit">
       <h2 id="apc-prohib-tit">Prohibiciones de circular</h2>
-      ${l.length ? `<ul class="apc-lista">${l.map(o => `<li class="apc apc-prohib-una"><b class="apc-nom">${esc(PAIS_NOMBRE[o.x.pais] || o.x.pais)}: ${esc(o.x.motivo)}</b>
+      ${l.length ? `<ul class="apc-lista">${l.map(o => `<li class="apc apc-prohib-una"><b class="apc-nom">${banderaPais(o.x.pais, "b-pais")}${esc(PAIS_NOMBRE[o.x.pais] || o.x.pais)}: ${esc(o.x.motivo)}</b>
           <p>Prohibido de ${esc(fechaHora(o.pa))} a ${esc(fechaHora(o.pb))}. Según la hora de salida, pasas por ${esc(PAIS_NOMBRE[o.tr.pais] || o.tr.pais)} entre el km ${Math.round(o.tr.kmDesde)} y el ${Math.round(o.tr.kmHasta)} (${esc(hora(new Date(o.entra)))}–${esc(hora(new Date(o.sale)))}).</p>
           ${o.x.nota ? `<p class="apc-nota">${esc(o.x.nota)}</p>` : ""}${o.x.url ? `<a href="${esc(urlSegura(o.x.url))}" target="_blank" rel="noopener">Ver la web oficial</a>` : ""}</li>`).join("")}</ul>`
         : `<p>${conReglas.length ? "Con la hora de salida que has puesto, no te pilla ninguna prohibición de las que tiene apuntadas la sección." : "La sección no tiene apuntadas prohibiciones para los países de esta ruta."}</p>`}

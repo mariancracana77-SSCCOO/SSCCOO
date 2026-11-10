@@ -3,7 +3,7 @@
 window.SUPABASE_URL = "https://kdfedwcskymaitvpryvg.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_RLt0HuAMskXkKl2hxhUF2w_sCexGznp";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "165"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "166"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/SSCCOO/";
 // Clave pública de las notificaciones (la privada solo está en el servidor)
 window.VAPID_PUBLICA = "BMMdZjehtNipsScHJ__kzOIn9XCgIpya3UDDRlexxOAWJU-J6ZICDlf72ItPOebzl-SfzoU234pd82Chp87Vm1w";
@@ -75,6 +75,21 @@ window.bandera = (e, extra) => {
   const b = banderaDe(e), nom = b === "es" ? "Festivo en España" : "Festivo en Cataluña";
   return b ? `<span class="bandera b-${b} ${extra || ""}" role="img" aria-label="${esc(nom)}" title="${esc(nom)}"></span>` : "";
 };
+// v166 (lo pidió Lorena): bandera de cada país en Zona Conductores (restricciones, prohibiciones y peajes). Vale el código
+// (ES, FR…) o el nombre («Francia», «Cataluña»). Dibujadas con CSS (.bandera.b-xx en styles.css), sin emojis; si no la hay, nada.
+window.BANDERAS = { es: "España", cat: "Cataluña", fr: "Francia", it: "Italia", pt: "Portugal", ad: "Andorra", de: "Alemania", ch: "Suiza", be: "Bélgica", nl: "Países Bajos", lu: "Luxemburgo", at: "Austria", gb: "Reino Unido", ie: "Irlanda", ro: "Rumanía", pl: "Polonia", ma: "Marruecos" };
+window.codigoPais = (p) => {
+  const t = String(p || "").trim(); if (!t) return "";
+  if (/^[a-z]{2,3}$/i.test(t) && BANDERAS[t.toLowerCase()]) return t.toLowerCase();
+  const n = t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  if (/catal/.test(n)) return "cat";
+  for (const [k, v] of Object.entries(BANDERAS)) if (n === v.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()) return k;
+  return { "reino unido": "gb", "gran bretana": "gb", "inglaterra": "gb", "holanda": "nl", "rumania": "ro" }[n] || "";
+};
+window.banderaPais = (p, extra) => {
+  const c = codigoPais(p);
+  return c ? `<span class="bandera b-${c} ${extra || ""}" role="img" aria-label="${esc("Bandera de " + BANDERAS[c])}"></span>` : "";
+};
 window.cartel = (iso, tipo, lista) => {
   const d = fechaDia(iso);
   return `<div class="cartel ${claseTipo(tipo, lista)}"><b>${d.getDate()}</b><span>${d.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}</span></div>`;
@@ -124,7 +139,8 @@ window.abrirLectura = () => {
   const v = document.createElement("div"); v.className = "modal-velo";
   v.innerHTML = `<div class="modal lectura" role="dialog" aria-modal="true" aria-label="Ajustes de lectura"><h2>Ajustes de lectura</h2>
     <p class="fecha-txt" style="margin:0">Solo cambian en este móvil u ordenador.</p>
-    <h3>Tamaño de letra</h3><div class="opciones-lectura">
+    <h3>Tamaño de letra</h3><div class="opciones-lectura letra4">
+      ${op("letra", "pequena", "Pequeña", '<span class="muestra" style="font-size:.9rem">Aa</span>')}
       ${op("letra", "normal", "Normal", '<span class="muestra" style="font-size:1.1rem">Aa</span>')}
       ${op("letra", "grande", "Grande", '<span class="muestra" style="font-size:1.45rem">Aa</span>')}
       ${op("letra", "muy-grande", "Muy grande", '<span class="muestra" style="font-size:1.8rem">Aa</span>')}</div>

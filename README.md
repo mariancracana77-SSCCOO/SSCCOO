@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 166: banderas de los países y letra más pequeña
+Lo pidió Lorena: en Zona Conductores cada país sale con su bandera (restricciones para camiones, prohibiciones de circular de «Restricciones en mi ruta» y la tabla de peajes por países), dibujada en la propia web, sin emojis. En «Restricciones en mi ruta» ya no hay dos listas separadas: una sola por país (España y Cataluña primero) y, dentro de cada uno, sus prohibiciones y su web oficial. Y en «Lectura» (el botón Aa) hay una opción nueva de letra «Pequeña», más pequeña que la normal; se recuerda en ese móvil como las demás.
+
 ## Versión 165: todas las prohibiciones de circular en la web
 Petición 34 del panel: las prohibiciones que se apuntan en el panel solo salían dentro de una ruta calculada y solo si te pillaban por el camino. Ahora «Restricciones en mi ruta» enseña la lista completa por país (días, horas, meses y fechas), sin tener que calcular ruta, y marca «Ahora en vigor» las que tocan en ese momento. Además, los enlaces oficiales de restricciones ya no salen al abrir Zona Conductores (lo pidió el padre): solo dentro de «Restricciones en mi ruta».
 
