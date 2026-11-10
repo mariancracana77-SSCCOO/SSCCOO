@@ -13,9 +13,14 @@
   const DEF = () => ({ dias: {}, libres: {}, salario: "", precio: {}, oculto: {}, fijo: {}, tab: "dia", dia: "", semana: "", mes: "", inicio: "" });
   const lee = () => { try { const d = JSON.parse(localStorage.getItem(CLAVE) || "null"); if (d && typeof d.dias === "object") { const x = { ...DEF(), ...d }; if (!x.precio || typeof x.precio !== "object") x.precio = {}; if (!x.libres || typeof x.libres !== "object") x.libres = {}; return x; } } catch (_) {} return DEF(); };
   let DATOS = lee();
+  // v167: con datosMovil (config.js) una ventana vieja de la app ya no pisa lo guardado en otra
+  const lleno = (o) => !!o && typeof o === "object" && Object.keys(o).length > 0;
+  const MOVIL = datosMovil(CLAVE, { vista: "v-ganancias", nombre: "Mis incentivos",
+    vacio: (d) => !d || (!lleno(d.dias) && !lleno(d.libres) && !d.salario && !lleno(d.precio)),
+    recarga: () => { DATOS = lee(); if ($("v-ganancias")?.classList.contains("activa")) pinta(); },
+    aviso: (t, bien) => msg(T(t), !bien) });
   const guarda = () => {
-    try { localStorage.setItem(CLAVE, JSON.stringify(DATOS)); } catch (_) { msg(T("No se ha podido guardar en este móvil (¿modo incógnito?). Haz una copia."), true); }
-    try { navigator.storage?.persist?.(); } catch (_) {}
+    try { MOVIL.guarda(DATOS); } catch (_) { msg(T("No se ha podido guardar en este móvil (¿modo incógnito?). Haz una copia."), true); }
   };
   const msg = (t, mal) => { const m = $("gan-msg"); if (m) { m.textContent = t; m.className = "msg " + (mal ? "err" : "ok"); } };
   let TARIFAS = (() => { try { return JSON.parse(localStorage.getItem(CACHE_TARIFAS) || "[]"); } catch (_) { return []; } })();
@@ -658,6 +663,7 @@
         const dias = {};
         Object.entries(d.dias).forEach(([k, x]) => { if (/^\d{4}-\d\d-\d\d$/.test(k) && x && typeof x === "object") { const y = {}; Object.entries(x).forEach(([id, n]) => { if (/^\d+$/.test(id) && num(n)) y[id] = num(n); }); if (Object.keys(y).length) dias[k] = y; } });
         // Se añaden a lo que ya hay (los mismos días se sustituyen): así sirven también los PDF de una semana
+        MOVIL.al();
         if (!confirm(T("La copia tiene {n} días apuntados. Se añaden a lo que tienes en este móvil (si un día ya está, se cambia por el de la copia). ¿Seguir?", { n: Object.keys(dias).length }))) return;
         const limpio = (o) => Object.fromEntries(Object.entries(o && typeof o === "object" ? o : {}).filter(([k]) => /^\d+$/.test(k)).map(([k, v]) => [k, !!v]));
         const precios = Object.fromEntries(Object.entries(d.precio && typeof d.precio === "object" ? d.precio : {}).filter(([k, v]) => /^\d+$/.test(k) && Number.isFinite(+v) && +v >= 0 && +v < 100000).map(([k, v]) => [k, +v]));
@@ -668,6 +674,7 @@
     };
     $("gan-borrar").onclick = () => {
       if (!confirm(T("¿Borrar todo lo apuntado en este móvil? Si no tienes copia, no se podrá recuperar."))) return;
+      MOVIL.al();
       DATOS = { ...DEF(), tab: "dia" }; guarda(); pinta(); msg(T("Borrado."));
     };
     $("gan-idioma").onchange = () => ponMiIdioma($("gan-idioma").value);

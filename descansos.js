@@ -15,9 +15,13 @@
   const completa = (d) => { const b = DEF(); return { ...b, ...d, jornadas: Array.isArray(d.jornadas) ? d.jornadas : [], ver: { ...b.ver, ...(d.ver || {}) }, aviso: { ...b.aviso, ...(d.aviso || {}) } }; };
   const lee = () => { try { const d = JSON.parse(localStorage.getItem(CLAVE) || "null"); if (d && Array.isArray(d.lista)) return completa(d); } catch (_) {} return DEF(); };
   let DATOS = lee();
+  // v167: con datosMovil (config.js) una ventana vieja de la app ya no pisa lo guardado en otra
+  const MOVIL = datosMovil(CLAVE, { vista: "v-descansos", nombre: "Mis descansos",
+    vacio: (d) => !d || ((!Array.isArray(d.lista) || !d.lista.length) && (!Array.isArray(d.jornadas) || !d.jornadas.length) && !d.hoy),
+    recarga: () => { DATOS = lee(); if ($("v-descansos")?.classList.contains("activa")) pinta(); },
+    aviso: (t, bien) => (bien ? ok : aviso)(T(t)) });
   const guarda = () => {
-    try { localStorage.setItem(CLAVE, JSON.stringify(DATOS)); } catch (_) { aviso(T("No se ha podido guardar en este móvil (¿modo incógnito?). Haz una copia.")); }
-    try { navigator.storage?.persist?.(); } catch (_) {} // que el navegador no lo borre solo si le falta espacio
+    try { MOVIL.guarda(DATOS); } catch (_) { aviso(T("No se ha podido guardar en este móvil (¿modo incógnito?). Haz una copia.")); }
   };
   const aviso = (t) => { const m = $("desc-msg"); if (m) { m.textContent = t; m.className = "msg err"; } };
   const ok = (t) => { const m = $("desc-msg"); if (m) { m.textContent = t; m.className = "msg ok"; } };
@@ -651,6 +655,7 @@
         const jornadas = (Array.isArray(d.jornadas) ? d.jornadas : []).filter(j => j && typeof j.id === "string" && Number.isFinite(j.ini) && Number.isFinite(j.fin))
           .map(j => ({ id: j.id, ini: j.ini, fin: j.fin, cond: Number.isFinite(+j.cond) ? +j.cond : 0, doble: !!j.doble, partido: !!j.partido, ferry: !!j.ferry }));
         // v151: ya no se sustituye lo que hay: se añaden los apuntes que no estén en el móvil (mismo id = el mismo apunte, se queda el del móvil)
+        MOVIL.al();
         const vacio = !DATOS.lista.length && !DATOS.jornadas.length;
         const nl = lista.filter(x => !DATOS.lista.some(y => y.id === x.id)), nj = jornadas.filter(j => !DATOS.jornadas.some(y => y.id === j.id));
         if (!nl.length && !nj.length) { aviso(T("Esa copia no tiene apuntes nuevos: ya los tienes todos en este móvil.")); return; }
@@ -664,6 +669,7 @@
     };
     $("desc-borrar").onclick = () => {
       if (!confirm(T("¿Borrar todos tus descansos de este móvil? Si no tienes copia, no se podrán recuperar."))) return;
+      MOVIL.al();
       DATOS = completa({ lista: [], jornadas: [], hoy: null, internacional: DATOS.internacional, doble: DATOS.doble, avisos: DATOS.avisos, ver: DATOS.ver, aviso: DATOS.aviso }); guarda();
       const ep = endpoint(); if (ep) sb.rpc("programar_descanso", { p_endpoint: ep, p_avisos: [] }).then(() => {}, () => {});
       pinta();

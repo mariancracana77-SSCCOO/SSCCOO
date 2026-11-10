@@ -2438,6 +2438,8 @@ p.desc-tipo { margin: 6px 0 0; }
 .ds-banda-cab b, .ds-cab > b { white-space: nowrap; }
 
 /* v151: recuperar los datos de la app antigua y «Guardar mi copia ahora» (Mis descansos, Mis incentivos, Aparcamientos) */
+/* v167: copia de seguridad automática de los datos del conductor (datosMovil en config.js) */
+.seguridad-caja .botones { margin-top: 10px; }
 .recupera-caja { margin: 0 0 12px; padding: 14px 16px; border-radius: 14px; background: var(--rojo-suave); border: 2px solid var(--rojo-ic); }
 .recupera-caja h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; font-size: 1.15rem; line-height: 1.3; }
 .recupera-caja h2 .icono, .recupera-caja summary .icono { color: var(--rojo-ic); flex: none; }

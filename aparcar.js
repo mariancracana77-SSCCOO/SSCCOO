@@ -22,15 +22,21 @@
     if (avisaNoGuarda.ya) return; avisaNoGuarda.ya = true;
     const m = document.getElementById("apc-estado"); if (m) { m.textContent = NO_GUARDA; m.classList.add("err"); }
   };
-  const guarda = () => { try { localStorage.setItem(CLAVE, JSON.stringify(AJ)); } catch (_) { avisaNoGuarda(); } };
+  // v167: con datosMovil (config.js) una ventana vieja de la app ya no pisa lo guardado en otra (los ajustes no llevan copia de seguridad)
+  const avisoApc = (t) => { const m = document.getElementById("apc-mios-msg") || document.getElementById("apc-estado"); if (m) { m.textContent = t; m.classList.remove("err"); } };
+  const MOVIL_AJ = datosMovil(CLAVE, { vista: "v-aparcar", nombre: "Aparcamientos", vacio: () => true, recarga: () => { AJ = lee(); }, aviso: avisoApc });
+  const guarda = () => { try { MOVIL_AJ.guarda(AJ); } catch (_) { avisaNoGuarda(); } };
 
   // ---------- Mis aparcamientos (v106, lo pidió el padre) ----------
   // El conductor añade en el mapa los aparcamientos que encuentra. Se guardan en este móvil («ccoo-aparcar-mios») y, si quiere,
   // se proponen a la sección (RPC anónima proponer_aparcamiento). Desde la v111 salen a todos enseguida (estado «aprobado»); el padre puede quitarlos en el panel (tabla aparcamientos_compas).
   const CLAVE_MIOS = "ccoo-aparcar-mios";
-  let MIOS = (() => { try { const l = JSON.parse(localStorage.getItem(CLAVE_MIOS) || "[]"); return Array.isArray(l) ? l.filter(x => x && x.id && Number.isFinite(+x.lat) && Number.isFinite(+x.lon)) : []; } catch (_) { return []; } })();
+  const leeMios = () => { try { const l = JSON.parse(localStorage.getItem(CLAVE_MIOS) || "[]"); return Array.isArray(l) ? l.filter(x => x && x.id && Number.isFinite(+x.lat) && Number.isFinite(+x.lon)) : []; } catch (_) { return []; } };
+  let MIOS = leeMios();
+  const MOVIL_MIOS = datosMovil(CLAVE_MIOS, { vista: "v-aparcar", nombre: "Mis aparcamientos", vacio: (l) => !Array.isArray(l) || !l.length,
+    recarga: () => { MIOS = leeMios(); try { pintaMios(); } catch (_) {} }, aviso: avisoApc });
   const guardaMios = () => {
-    try { localStorage.setItem(CLAVE_MIOS, JSON.stringify(MIOS)); guardaMios.fallo = false; }
+    try { MOVIL_MIOS.guarda(MIOS); guardaMios.fallo = false; }
     catch (_) { guardaMios.fallo = true; const p = $("apc-mios-msg"); if (p) { p.textContent = NO_GUARDA; p.classList.add("err"); } avisaNoGuarda(); }
   };
   let COMPAS = null;
@@ -1215,7 +1221,7 @@
       try { x.propuesto = await proponer(x); aviso = x.propuesto === "ya" ? "Guardado. Otro compañero ya había propuesto este sitio." : "Guardado. Ya sale en el mapa de todos."; }
       catch (e) { f.querySelector("[type=submit]").disabled = false; msgAnadir(id, e.message, true); if (!/conexión/.test(e.message)) return; aviso = e.message; }
     }
-    MIOS.push(x); guardaMios();
+    MOVIL_MIOS.al(); MIOS.push(x); guardaMios();
     terminaAnadir(id);
     await refrescaMios();
     if (!MAPAS[id]?.ultZona && id === "apc-mapa-libre") muestraZona(id, x.lat, x.lon, x.nombre);
@@ -1279,6 +1285,7 @@
   async function recuperaMios(f) {
     try {
       const d = leePDFSencillo(await f.text(), MARCA_MIOS);
+      MOVIL_MIOS.al();
       if (d?.app !== "ccoo-aparcamientos" || !Array.isArray(d.mios)) throw 0;
       const txt = (v, n) => String(v ?? "").slice(0, n);
       const nuevos = d.mios.filter(m => m && Number.isFinite(+m.lat) && Number.isFinite(+m.lon) && +m.lat >= 34 && +m.lat <= 72 && +m.lon >= -25 && +m.lon <= 45 && String(m.nombre || "").trim())
@@ -1311,7 +1318,7 @@
         try { const { error } = await sb.rpc("quitar_mi_aparcamiento", { p_id: m.co.id, p_llave: m.co.llave }); if (error) throw new Error(error.message); COMPAS = null; }
         catch (er) { b.disabled = false; const t = errRed(er); const p = $("apc-mios-msg"); if (p) { p.textContent = t; p.classList.add("err"); } estado(t, true); return; }
       }
-      MIOS = MIOS.filter(z => z.id !== idm); guardaMios(); await refrescaMios(); avisoMios(todos ? "Borrado de tu móvil y del mapa de todos." : "Borrado de tu móvil."); return;
+      MOVIL_MIOS.al(); MIOS = MIOS.filter(z => z.id !== idm); guardaMios(); await refrescaMios(); avisoMios(todos ? "Borrado de tu móvil y del mapa de todos." : "Borrado de tu móvil."); return;
     }
     b.disabled = true;
     try { m.propuesto = await proponer(m); guardaMios(); await refrescaMios(); avisoMios(m.propuesto === "ya" ? "Otro compañero ya había propuesto este sitio." : "Enviado. Ya sale en el mapa de todos."); }

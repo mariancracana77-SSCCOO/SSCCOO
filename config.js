@@ -3,7 +3,7 @@
 window.SUPABASE_URL = "https://kdfedwcskymaitvpryvg.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_RLt0HuAMskXkKl2hxhUF2w_sCexGznp";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "166"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "167"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/SSCCOO/";
 // Clave pública de las notificaciones (la privada solo está en el servidor)
 window.VAPID_PUBLICA = "BMMdZjehtNipsScHJ__kzOIn9XCgIpya3UDDRlexxOAWJU-J6ZICDlf72ItPOebzl-SfzoU234pd82Chp87Vm1w";
@@ -89,6 +89,60 @@ window.codigoPais = (p) => {
 window.banderaPais = (p, extra) => {
   const c = codigoPais(p);
   return c ? `<span class="bandera b-${c} ${extra || ""}" role="img" aria-label="${esc("Bandera de " + BANDERAS[c])}"></span>` : "";
+};
+// v167 (lo pidió Lorena: al padre se le borraban los datos recuperados). Lo que apuntan los conductores (Mis descansos,
+// Mis incentivos, Mis aparcamientos) se guarda en el móvil. Si la app estaba abierta dos veces (la instalada en segundo plano
+// y una pestaña), la ventana vieja guardaba su memoria vacía encima. Ahora: (1) si otra ventana cambia los datos, esta los
+// vuelve a leer (evento storage y al volver a la app) y avisa; (2) antes de guardar se mira si lo guardado sigue siendo lo que
+// esta ventana leyó: si no, no se guarda, se relee y se avisa; (3) cada vez que se guarda algo con datos, una copia de seguridad
+// en otra clave del móvil («ccoo-seguridad-…»), y si la herramienta está vacía y hay copia, un cuadro para recuperarla;
+// (4) se pide almacenamiento persistente. No cambia ni mueve las claves de siempre.
+window.datosMovil = (clave, o) => {
+  const crudo = () => { try { return localStorage.getItem(clave); } catch (_) { return null; } };
+  const SEG = "ccoo-seguridad-" + clave.replace(/^ccoo-/, ""), NO = "ccoo-seguridad-no-" + clave.replace(/^ccoo-/, "");
+  let ultimo = crudo();
+  const avisa = () => o.aviso && o.aviso("Tus datos se han cambiado en otra ventana de la app y los he vuelto a cargar aquí. Si estabas apuntando algo, repítelo.");
+  const seguridad = () => { try { const c = JSON.parse(localStorage.getItem(SEG) || "null"); return c && typeof c.d === "string" && c.t ? c : null; } catch (_) { return null; } };
+  const vacioGuardado = () => { try { return o.vacio(JSON.parse(crudo() || "null")); } catch (_) { return true; } };
+  const caja = () => {
+    const v = document.getElementById(o.vista); if (!v) return;
+    let el = v.querySelector(`.seguridad-caja[data-clave="${clave}"]`);
+    const c = seguridad(); let no = ""; try { no = localStorage.getItem(NO) || ""; } catch (_) {}
+    if (!c || !vacioGuardado() || no === String(c.t)) { el?.remove(); return; }
+    if (!el) { el = document.createElement("div"); el.className = "recupera-caja seguridad-caja"; el.dataset.clave = clave; v.prepend(el); }
+    el.innerHTML = `<h2>${icono("alerta")}<span>Hay una copia de seguridad en este móvil</span></h2>
+      <p>${esc(o.nombre)} está vacío, pero este móvil guardó una copia de lo que tenías apuntado el ${esc(new Date(c.t).toLocaleString("es-ES", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }))}.</p>
+      <p class="botones"><button type="button" class="btn" data-seg-recupera="${esc(clave)}">Recuperarla</button> <button type="button" class="btn sec" data-seg-no="${esc(clave)}">No, gracias</button></p>`;
+  };
+  const recarga = () => { ultimo = crudo(); o.recarga(); caja(); };
+  const mira = () => { if (crudo() !== ultimo) { recarga(); avisa(); return true; } return false; };
+  addEventListener("storage", (e) => { if ((e.key === clave || e.key === null) && (!e.storageArea || e.storageArea === localStorage)) mira(); });
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") mira(); });
+  addEventListener("pageshow", mira);
+  // Antes de que cualquier botón de la herramienta cambie algo, que la memoria esté al día (fase de captura: va antes que los botones)
+  const antes = (e) => { if (e.target.closest?.("#" + o.vista)) mira(); };
+  document.addEventListener("pointerdown", antes, true); document.addEventListener("keydown", antes, true);
+  document.addEventListener("click", (e) => {
+    const r = e.target.closest(`[data-seg-recupera="${clave}"]`), n = e.target.closest(`[data-seg-no="${clave}"]`);
+    if (r) { const c = seguridad(); if (!c) return; try { localStorage.setItem(clave, c.d); } catch (_) { return; } recarga(); o.aviso && o.aviso("Copia de seguridad recuperada.", true); }
+    if (n) { const c = seguridad(); try { if (c) localStorage.setItem(NO, String(c.t)); } catch (_) {} caja(); }
+  });
+  try { if (!vacioGuardado()) navigator.storage?.persist?.().catch(() => {}); } catch (_) {}
+  setTimeout(caja, 0);
+  return {
+    // Antes de cambiar algo a partir de lo que hay (recuperar una copia, borrar): que la memoria esté al día
+    al: () => { if (crudo() !== ultimo) recarga(); },
+    // false: no se ha guardado porque otra ventana había cambiado los datos (ya se han releído). Lanza si el móvil no deja guardar.
+    guarda: (datos) => {
+      if (mira()) return false;
+      const t = JSON.stringify(datos); localStorage.setItem(clave, t); ultimo = t;
+      if (!o.vacio(datos)) {
+        try { localStorage.setItem(SEG, JSON.stringify({ t: Date.now(), d: t })); } catch (_) {}
+        try { navigator.storage?.persist?.().catch(() => {}); } catch (_) {}
+      }
+      caja(); return true;
+    },
+  };
 };
 window.cartel = (iso, tipo, lista) => {
   const d = fechaDia(iso);
