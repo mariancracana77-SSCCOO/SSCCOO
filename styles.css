@@ -2521,3 +2521,143 @@ details.recupera-caja > div { padding: 0 14px 14px; }
   .barra-acciones { position: static; }
   body.publica, body.publica.con-aviso-priv { padding-bottom: 0; }
 }
+
+/* ==========================================================
+   v161 (lo pidió Lorena, 10/11/2026)
+   1) Móvil, «Señales»: «Ir a» como paneles oscuros con borde de color (rojo = la sección, azul = Zona Conductores,
+      gris = documentación) y los 4 más usados en grande; «Lo último» con barra de color por tipo; la app en pastilla.
+   2) Ordenador (desde 1000 px): portada de web de verdad, sin iconos (destacado, noticias en columnas, agenda,
+      tabla de actas y documentos, banda de Zona Conductores, mapa de enlaces), pie en columnas y miga de pan.
+   La cabecera no se toca.
+   ========================================================== */
+/* --- 1) Móvil: «Ir a» --- */
+.accesos-tablon a { --g: #e0262a; --gs: rgba(224, 38, 42, .5); }
+.accesos-tablon a.g-cond { --g: #3d8bff; --gs: rgba(61, 139, 255, .5); }
+.accesos-tablon a.g-doc { --g: #c9ced4; --gs: rgba(201, 206, 212, .3); }
+:root:root body.publica .accesos-tablon a { min-height: 50px; flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; padding: 10px 12px; border-radius: 12px;
+  background: #15191e; border: 1.5px solid var(--g); box-shadow: 0 0 12px -3px var(--gs); color: #fff; }
+:root:root body.publica .accesos-tablon a:hover, :root:root body.publica .accesos-tablon a:focus-visible { box-shadow: 0 0 0 1px var(--g), 0 0 20px 0 var(--gs); }
+:root:root body.publica .accesos-tablon a:last-child { grid-column: auto; }
+:root:root body.publica .accesos-tablon b { font-family: var(--texto); text-transform: none; letter-spacing: 0; font-size: 1rem; line-height: 1.15; color: #fff; }
+:root:root body.publica .accesos-tablon .icono { flex: none; width: 22px; height: 22px; padding: 0; background: none; border-radius: 0; color: var(--g); filter: drop-shadow(0 0 4px var(--gs)); }
+:root:root body.publica .accesos-tablon a.grande { min-height: 108px; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 14px; }
+:root:root body.publica .accesos-tablon a.grande b { font-family: var(--cond); text-transform: uppercase; letter-spacing: .04em; font-size: 1.45rem; }
+:root:root body.publica .accesos-tablon a.grande .icono { width: 34px; height: 34px; }
+.accesos-tablon { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* --- 1) Móvil: «Lo último» --- */
+.item-tablon { --t: #e0262a; }
+.item-tablon.k-fecha { --t: #3d8bff; }
+.item-tablon.k-acta, .item-tablon.k-doc { --t: #9aa1a9; }
+#inicio-feed .item-tablon, #inicio-feed .item-tablon.es-nuevo { border: 1px solid var(--linea); border-left: 6px solid var(--t); border-radius: 14px; box-shadow: 0 2px 10px rgba(21, 25, 30, .06); }
+#inicio-feed .item-tablon .ic:not(.foto) { width: 48px; height: 48px; border-radius: 12px; background: #15191e; color: #fff; }
+#inicio-feed .item-tablon b { font-size: 1.18rem; }
+#inicio-feed .marca-nuevo { background: #c41d20; color: #fff !important; }
+.grupo-tablon { display: flex; align-items: center; gap: 10px; color: var(--tinta); margin: 22px 0 10px; }
+.grupo-tablon::after { content: ""; flex: 1; height: 2px; background: currentColor; opacity: .25; }
+/* --- 1) Móvil: «Tenla como una app» en pastilla --- */
+:root:root .banda-instalar { display: flex; align-items: center; gap: 10px; border-radius: 99px; padding: 6px 6px 6px 16px; font-size: .95rem; background: #15191e; color: #fff; border: 1.5px solid #e0262a; box-shadow: 0 0 12px -3px rgba(224, 38, 42, .6); }
+:root:root .banda-instalar * { color: #fff; }
+:root:root .banda-instalar .ic { display: none; }
+:root:root .banda-instalar .btn { margin-left: auto; border-radius: 99px; background: #c41d20; border-color: #c41d20; min-height: 44px; }
+
+/* --- 2) Ordenador --- */
+.web-hero, .web-noticias, .web-dos, .web-zona, .web-mapa, .pie-web { display: none; }
+.miga[hidden] { display: none; }
+@media (max-width: 999.98px) { .miga { display: none; } }
+@media (min-width: 1000px) {
+  body.publica { padding-bottom: 0; }
+  .barra-acciones { display: none; }
+  body.publica #v-inicio { max-width: 1180px; margin: 0 auto; }
+  .portada, :root .portada { display: flex; flex-direction: column; align-items: stretch; }
+  .portada > .web-hero, .portada > .web-noticias, .portada > .web-dos, .portada > .web-mapa, .portada > .web-zona { width: 100%; }
+  .buscar-portada { max-width: 560px; }
+  .zona-rotulo, .portada-lateral, :root .portada-lateral { display: contents; }
+  #inicio-rotulo, #cuenta-atras, #inicio-novedades, .portada .paradas, .lo-ultimo, .ir-a, .intro-tablon { display: none; }
+  .web-hero, .web-noticias, .web-dos, .web-zona, .web-mapa { display: block; }
+  .web-hero { order: 1; } .buscar-portada { order: 2; } #inicio-encuesta { order: 3; } .web-noticias { order: 4; } .web-dos { order: 5; }
+  .sabias { order: 6; } .web-zona { order: 7; } .web-mapa { order: 8; } .banda-app { order: 9; }
+  .buscar-portada { margin: 0 0 8px; }
+  .sabias { max-width: 760px; margin-top: 40px; }
+  .banda-app:not(:empty) { max-width: 520px; margin-top: 30px; }
+
+  .w-kick { margin: 0; font-size: .8rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--rojo-ic); }
+  .w-fecha { font-size: .92rem; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--suave); }
+  .w-tit { font-family: var(--cond); font-weight: 700; line-height: 1.05; margin: 6px 0 8px; }
+  .w-tit a { color: var(--tinta); text-decoration: none; }
+  .w-tit a:hover, .w-tit a:focus-visible { text-decoration: underline; text-underline-offset: 4px; }
+  .w-ext { margin: 0; color: var(--suave); line-height: 1.55; max-width: 70ch; }
+  .w-foto { display: block; overflow: hidden; border-radius: 6px; background: var(--linea); }
+  .w-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .w-sec { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; font-family: var(--cond); font-weight: 700; font-size: 1.75rem; text-transform: uppercase; letter-spacing: .02em; margin: 0 0 16px; padding-bottom: 8px; border-bottom: 3px solid var(--tinta); }
+  .w-sec a { font-family: var(--texto); font-size: 1rem; text-transform: none; letter-spacing: 0; color: var(--rojo-ic); font-weight: 700; }
+
+  .w-hero { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 34px; align-items: center; padding: 30px 0 32px; border-bottom: 1px solid var(--linea); margin-bottom: 22px; }
+  .w-hero .w-foto { aspect-ratio: 16 / 10; }
+  .w-hero.sin-foto { grid-template-columns: minmax(0, 1fr); border-top: 6px solid var(--rojo); padding-top: 24px; }
+  .w-hero .w-tit { font-size: 3.2rem; text-wrap: balance; }
+  .w-hero.sin-foto .w-tit { font-size: 3.6rem; max-width: 22ch; }
+  .w-hero .w-ext { font-size: 1.18rem; }
+  .w-acc { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin: 16px 0 0; }
+  .w-mas { font-weight: 700; color: var(--rojo-ic); text-decoration: underline; text-underline-offset: 4px; display: inline-flex; align-items: center; min-height: 44px; }
+  .w-acc .traducir { position: relative; }
+
+  .web-noticias { margin-top: 40px; }
+  .w-rej { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px 28px; }
+  .w-not { border-top: 4px solid var(--t, var(--rojo)); padding-top: 12px; }
+  .w-not.k-fecha { --t: #1e4f9c; } .w-not.k-acta, .w-not.k-doc { --t: #6b7178; }
+  .w-not .w-foto { aspect-ratio: 16 / 9; margin-bottom: 12px; }
+  .w-not .w-tit { font-size: 1.6rem; }
+  .w-not .w-ext { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+  .web-dos { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 44px; margin-top: 48px; }
+  .w-agenda { list-style: none; margin: 0; padding: 0; }
+  .w-agenda a { display: grid; grid-template-columns: 76px 1fr; gap: 16px; align-items: start; padding: 14px 0; border-bottom: 1px solid var(--linea); color: var(--tinta); text-decoration: none; }
+  .w-agenda a:hover strong, .w-agenda a:focus-visible strong { text-decoration: underline; text-underline-offset: 3px; }
+  .w-dia { text-align: center; border-top: 4px solid var(--rojo); padding-top: 4px; }
+  .w-dia b { display: block; font-family: var(--cond); font-size: 2.5rem; line-height: 1; }
+  .w-dia small { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--suave); }
+  .w-agenda strong { display: block; font-size: 1.15rem; line-height: 1.25; }
+  .w-tabla { width: 100%; border-collapse: collapse; }
+  .w-tabla td { padding: 12px 8px; border-bottom: 1px solid var(--linea); vertical-align: top; }
+  .w-tabla td:first-child { width: 118px; color: var(--suave); white-space: nowrap; }
+  .w-tabla td:last-child { text-align: right; white-space: nowrap; }
+  .w-tabla a { color: var(--rojo-ic); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+
+  .w-zona { display: grid; grid-template-columns: minmax(0, 1fr) 320px; align-items: center; gap: 32px; margin: 50px 0 0; padding: 30px 36px; border-radius: 8px; background: #1e4f9c; color: #fff; }
+  .w-zona .w-kick { color: #cfe0ff; }
+  .w-zona h2 { font-family: var(--cond); font-size: 2.4rem; text-transform: uppercase; margin: 4px 0 8px; color: #fff; }
+  .w-zona p { margin: 0; color: #e3ecfa; max-width: 62ch; }
+  .w-zona ul { list-style: none; padding: 0; margin: 16px 0 0; display: flex; gap: 8px 26px; flex-wrap: wrap; }
+  .w-zona a { color: #fff; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; display: inline-flex; align-items: center; min-height: 44px; }
+  .w-zona img { width: 100%; height: auto; }
+
+  .web-mapa { margin-top: 50px; }
+  .w-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px; }
+  .w-cols h3 { font-size: .85rem; letter-spacing: .1em; text-transform: uppercase; color: var(--suave); margin: 0 0 6px; }
+  .w-cols ul { list-style: none; margin: 0; padding: 0; }
+  .w-cols a { display: inline-flex; align-items: center; min-height: 40px; color: var(--tinta); text-decoration: none; font-size: 1.08rem; }
+  .w-cols a:hover, .w-cols a:focus-visible { text-decoration: underline; text-underline-offset: 3px; color: var(--rojo-ic); }
+
+  /* Miga de pan en las páginas de dentro */
+  .miga { max-width: 1100px; margin: 0 auto 10px; font-size: .95rem; }
+  .miga ol { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; color: var(--suave); }
+  .miga li + li::before { content: "›"; margin-right: 6px; }
+  .miga a { color: var(--rojo-ic); text-decoration: underline; text-underline-offset: 3px; }
+
+  /* Pie en columnas: lo que no está en el mapa (contacto, «Afíliate» y lo legal) */
+  .pie { text-align: left; margin-top: 56px; padding: 36px 32px 18px; background: #15191e; color: #c9ced4; border-radius: 8px 8px 0 0; }
+  .pie-web { display: grid; grid-template-columns: auto minmax(0, 1.4fr) minmax(0, 1fr); gap: 40px; align-items: start; padding-bottom: 22px; margin-bottom: 12px; border-bottom: 1px solid #2c333c; font-size: 1rem; }
+  .pie-marca { display: flex; align-items: center; gap: 12px; }
+  .pie-marca img { width: 52px; height: 52px; border-radius: 50%; background: #fff; }
+  .pie-marca b { font-family: var(--cond); font-size: 1.35rem; text-transform: uppercase; color: #fff; }
+  .pie-col p { margin: 0 0 12px; max-width: 60ch; }
+  .pie-col h2 { font-family: var(--cond); font-size: 1.2rem; text-transform: uppercase; letter-spacing: .04em; color: #fff; margin: 0 0 6px; }
+  .pie .pie-col a, .pie .pie-enlace { display: flex; align-items: center; min-height: 40px; padding: 0; font-size: 1rem; color: #fff; text-decoration: none; background: none; border: 0; font: inherit; cursor: pointer; }
+  .pie .pie-col a:hover, .pie .pie-enlace:hover { text-decoration: underline; }
+  .pie .pie-col a.pie-btn { display: inline-flex; background: #c41d20; padding: 0 18px; border-radius: 4px; font-weight: 700; }
+  .pie .pie-largo { display: none; }
+  .pie > a, #version-web { color: #c9ced4; }
+}
+:root[data-theme="dark"] .pie-web { border-bottom-color: #2c333c; }
+@media (min-width: 1000px) { :root[data-theme="dark"] .pie { background: #0b0e11; border: 1px solid #2c333c; border-bottom: 0; } }
+@media (min-width: 1000px) and (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pie { background: #0b0e11; border: 1px solid #2c333c; border-bottom: 0; } }
