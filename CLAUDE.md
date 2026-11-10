@@ -7,7 +7,7 @@ Web/app (PWA) gratuita y solo informativa para la plantilla de Calsina Carré: a
 
 - Web pública: https://mariancracana77-ssccoo.github.io/SSCCOO/  (repo GitHub `SSCCOO`, público; GitHub Pages desde `main`, carpeta raíz). Desde la v65 se publica con Jekyll (sin `.nojekyll`) solo para que `_config.yml` deje fuera de la web CLAUDE.md, README.md, `herramientas/` y `pruebas/`; los demás archivos no llevan cabecera `---` y salen idénticos. Si se añade algo que no deba verse en la web, añadirlo a `exclude`. Ojo: el repositorio es público, así que en github.com se sigue viendo todo
 - Panel: `admin.html` (email + contraseña de Supabase)
-- Versión actual: **158**
+- Versión actual: **159**
 - **Vuelta a la cuenta de siempre** (9/11/2026, lo pidió Lorena): GitHub devolvió la cuenta `mariancracana77-SSCCOO`. Desde la v157 se publica otra vez aquí, con la marca CCOO / Calsina Carré de la v148 y la dirección de siempre. La copia de la cuenta nueva (`sindicatocc20-gif/sindicatocc`) se queda como respaldo y ya no se actualiza. Siguen las normas de «menos actividad en GitHub» y de la opción A (sin PR buzón ni comentarios automáticos).
 
 ## Reglas del proyecto (no negociables)
