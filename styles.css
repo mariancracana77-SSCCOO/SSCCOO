@@ -1580,9 +1580,9 @@ html[data-letra] .subpestanas a { font-size: .92rem; }
 .desc-tabs button { display: grid; justify-items: center; gap: 2px; min-height: 52px; padding: 6px 2px; border: 0; border-radius: 10px; background: none; color: var(--suave); font: inherit; font-size: .82rem; font-weight: 700; cursor: pointer; text-align: center; line-height: 1.15; }
 .desc-tabs button .icono { width: 20px; height: 20px; }
 .desc-tabs button.activa { background: var(--rojo); color: #fff; }
-/* Mis incentivos: la barra Día · Semana · Mes · Ajustes con un fondo rojo suave (lo pidió el padre, petición 31). */
-#v-ganancias .desc-tabs { background: #f5e1e1; background: color-mix(in srgb, var(--rojo) 12%, var(--tarjeta)); border-color: color-mix(in srgb, var(--rojo) 30%, var(--linea)); }
-#v-ganancias .desc-tabs button:not(.activa) { color: var(--tinta); }
+/* Mis descansos y Mis incentivos: la barra de pestañas con un fondo rojo suave (lo pidió el padre, peticiones 31 y 32). */
+.desc-tabs { background: #f5e1e1; background: color-mix(in srgb, var(--rojo) 12%, var(--tarjeta)); border-color: color-mix(in srgb, var(--rojo) 30%, var(--linea)); }
+.desc-tabs button:not(.activa) { color: var(--tinta); }
 .desc-tit { display: flex; align-items: center; gap: 8px; margin: 0; font-family: var(--cond); font-size: 1.35rem; }
 .desc-tit .icono { color: var(--rojo-ic); width: 22px; height: 22px; }
 .desc-hoy, .desc-estado { box-shadow: none; }
