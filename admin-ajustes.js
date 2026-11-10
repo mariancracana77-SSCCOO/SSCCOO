@@ -431,7 +431,7 @@ async function prepararPlantillas() {
 // ---------- Copia de seguridad y archivo ----------
 const TABLAS_COPIA = ["comunicados", "eventos", "convenio_secciones", "actas", "documentos", "preguntas", "plantillas", "apartados", "publicaciones", "buzon", "avisos_recurrentes", "calc_permisos", "calc_categorias", "calc_ajustes", "restricciones", "tarifas_conductor", "paginas", "opciones", "admins",
   // v116: lo que se añadió después y no entraba en la copia
-  "delegados", "enlaces", "encuestas", "encuesta_votos", "peajes_paises", "prohibiciones_camion", "aparcamientos_compas", "aparcamientos_correcciones", "aparcamientos_opiniones", "peticiones_claude"];
+  "delegados", "enlaces", "encuestas", "encuesta_votos", "peajes_paises", "prohibiciones_camion", "normas_pais", "aparcamientos_compas", "aparcamientos_correcciones", "aparcamientos_opiniones", "peticiones_claude"];
 // Tablas sin columna id: se ordenan por su clave para poder ir de 1000 en 1000.
 const ORDEN_COPIA = { paginas: ["slug"], calc_ajustes: ["clave"], admins: ["email"], encuesta_votos: ["encuesta_id", "opcion"] };
 async function prepararCopiaYArchivo() {

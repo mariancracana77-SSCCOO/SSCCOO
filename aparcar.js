@@ -611,6 +611,56 @@
   // o con fecha (festivos). Se mira a qué hora pasas por cada país (con las pausas) y si coincide con alguna.
   let PROHIB = [];
   const PAIS_NOMBRE = { ES: "España", FR: "Francia", IT: "Italia", PT: "Portugal", AD: "Andorra", DE: "Alemania", CH: "Suiza", BE: "Bélgica", NL: "Países Bajos", LU: "Luxemburgo", AT: "Austria", GB: "Reino Unido" };
+  // v168 (encargo de Lorena, 10/11): ficha de cada país con tarjetas por tema (peaje, invierno, prohibiciones).
+  // Tabla «normas_pais» (la edita el padre en el panel). Solo se enseñan las comprobadas (visible),
+  // y cada una lleva su fuente oficial y la fecha en que se revisó.
+  async function cargaNormas() {
+    try {
+      const { data, error } = await sb.from("normas_pais").select("pais,tema,titulo,texto,peso,vigencia,fechas,fuente,url,revisado,visible").order("orden");
+      if (error) throw error;
+      const l = (data || []).filter(x => x.visible === true);
+      try { localStorage.setItem("ccoo-normas", JSON.stringify(l)); } catch (_) {}
+      return l;
+    } catch (_) { try { return JSON.parse(localStorage.getItem("ccoo-normas") || "[]"); } catch (_) { return []; } }
+  }
+  const TEMAS = [["peaje", "Peajes"], ["invierno", "Cadenas e invierno"], ["prohibicion", "Prohibiciones y festivos"]];
+  const VIGENCIA = { todo: "Obligatorio todo el año", fechas: "Por fechas", situacional: "Según la situación" };
+  const normal = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const fechaRev = (d) => { const t = Date.parse(d + "T12:00:00"); return Number.isFinite(t) ? new Date(t).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" }) : ""; };
+  const normaHTML = (n) => `<li class="apc-norma" data-buscar="${esc(normal([n.titulo, n.texto, n.peso, n.fechas, n.fuente].join(" ")))}">
+      <b class="apc-nom">${esc(n.titulo || "")}</b>
+      <span class="apc-etqs">${n.peso ? `<span class="apc-etq peso">${esc(n.peso)}</span>` : ""}${VIGENCIA[n.vigencia] ? `<span class="apc-etq vig-${esc(n.vigencia)}">${esc(VIGENCIA[n.vigencia])}</span>` : ""}${n.fechas ? `<span class="apc-etq">${esc(n.fechas)}</span>` : ""}</span>
+      ${n.texto ? `<p>${esc(n.texto)}</p>` : ""}
+      <p class="apc-nota">${n.url ? `Fuente: <a href="${esc(urlSegura(n.url))}" target="_blank" rel="noopener">${esc(n.fuente || "web oficial")}</a>` : esc(n.fuente || "")}${n.revisado ? ` · revisado el ${esc(fechaRev(n.revisado))}` : ""}</p></li>`;
+  // Filtro por tema y buscador (3PMSF, cadenas, Suiza…): solo esconde, no vuelve a pintar
+  function filtraNormas() {
+    const caja = $("apc-prohib-todas"); if (!caja) return;
+    const tema = caja.querySelector(".apc-temas .filtro.activo")?.dataset.tema || "", q = normal($("apc-normas-q")?.value.trim());
+    let hay = 0;
+    caja.querySelectorAll("details.apc-prohib-pais").forEach(d => {
+      const pais = q && normal(d.dataset.nombre).includes(q);
+      let algo = false;
+      d.querySelectorAll(".apc-tema").forEach(t => {
+        const deTema = !tema || t.dataset.tema === tema;
+        let enTema = false;
+        t.querySelectorAll("li").forEach(li => { const v = deTema && (!q || pais || (li.dataset.buscar || normal(li.textContent)).includes(q)); li.hidden = !v; if (v) enTema = true; });
+        t.hidden = !enTema; if (enTema) algo = true;
+      });
+      const webs = d.querySelector(".apc-pais-webs"); if (webs) webs.hidden = !!tema || (!!q && !pais);
+      const vacio = d.querySelector(".apc-pais-vacio"); if (vacio) vacio.hidden = !!tema || !!q;
+      d.hidden = (tema || q) ? !(algo || pais) : false;
+      if (q && !d.hidden) d.open = true;
+      if (!d.hidden) hay++;
+    });
+    const n = $("apc-normas-n"); if (n) n.textContent = (tema || q) ? (hay ? (hay === 1 ? "1 país" : hay + " países") : "Ningún país con eso.") : "";
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("#apc-prohib-todas .apc-temas .filtro"); if (!b) return;
+    b.parentNode.querySelectorAll(".filtro").forEach(x => { x.classList.toggle("activo", x === b); x.setAttribute("aria-pressed", x === b); });
+    filtraNormas();
+  });
+  document.addEventListener("input", (e) => { if (e.target.id === "apc-normas-q") filtraNormas(); });
+
   async function cargaProhibiciones() {
     try {
       const { data, error } = await sb.from("prohibiciones_camion").select("pais,motivo,tipo,dia_desde,hora_desde,dia_hasta,hora_hasta,mes_desde,mes_hasta,inicio,fin,nota,url,visible").order("orden");
@@ -667,26 +717,33 @@
   // (la tabla «restricciones» del panel, que antes salía aparte debajo). España y Cataluña primero, aunque no tengan prohibiciones.
   async function pintaTodasProhib() {
     const caja = $("apc-prohib-todas"); if (!caja) return;
-    const l = await cargaProhibiciones(), ahora = Date.now();
+    const [l, normas] = await Promise.all([cargaProhibiciones(), cargaNormas()]), ahora = Date.now();
     // Las de fecha que ya han pasado no se enseñan
     const vale = l.filter(x => x.tipo !== "fecha" || !Date.parse(x.fin) || Date.parse(x.fin) > ahora);
     const info = window.restrInfo ? window.restrInfo() : { lista: [], revisado: "", trad: false };
     const clave = (p) => (codigoPais(p) || String(p || "").trim().toLowerCase()).toUpperCase();
     const paises = new Map();
-    const pais = (k, nombre) => { if (!paises.has(k)) paises.set(k, { nombre, prohib: [], enlaces: [] }); return paises.get(k); };
+    const pais = (k, nombre) => { if (!paises.has(k)) paises.set(k, { nombre, prohib: [], enlaces: [], normas: [] }); return paises.get(k); };
+    for (const n of normas) pais(clave(n.pais), PAIS_NOMBRE[n.pais] || BANDERAS[codigoPais(n.pais)] || n.pais).normas.push(n);
     for (const x of vale) pais(clave(x.pais), PAIS_NOMBRE[x.pais] || BANDERAS[codigoPais(x.pais)] || x.pais).prohib.push(x);
     for (const r of info.lista) pais(clave(r.pais), BANDERAS[codigoPais(r.pais)] || r.pais || "País").enlaces.push(r);
     const primero = { ES: 0, CAT: 1 };
     const orden = [...paises.entries()].sort(([a, x], [b, y]) => (primero[a] ?? 9) - (primero[b] ?? 9) || x.nombre.localeCompare(y.nombre, "es"));
-    const cuenta = (o) => [o.prohib.length ? (o.prohib.length === 1 ? "1 prohibición" : o.prohib.length + " prohibiciones") : "", o.enlaces.length ? "web oficial" : ""].filter(Boolean).join(" · ");
+    const cuenta = (o) => [o.normas.length ? (o.normas.length === 1 ? "1 norma" : o.normas.length + " normas") : "", o.prohib.length ? (o.prohib.length === 1 ? "1 prohibición" : o.prohib.length + " prohibiciones") : "", o.enlaces.length ? "web oficial" : ""].filter(Boolean).join(" · ");
     caja.innerHTML = `<section class="apc-prohib-todas" aria-labelledby="apc-prohib-todas-tit">
       <h2 class="tit-seccion" id="apc-prohib-todas-tit">Prohibiciones y restricciones por país</h2>
       ${orden.length ? `<p class="apc-nota">Las prohibiciones que tiene apuntadas la sección y la web oficial de cada país. Con una ruta calculada, arriba te digo cuáles te pillan por el camino según la hora de salida.</p>
       ${info.lista.length ? `<p class="aviso-oficial">${icono("alerta", "p")}<span>Orientativo: antes de salir, compruébalo en la web oficial. Revisado por última vez: ${esc(info.revisado)}.${info.trad ? " Las páginas en otro idioma se pueden traducir al abrirlas: en Android, toca «Traducir» o los tres puntos y «Traducir»; en iPhone, el botón «aA» y «Traducir»." : ""}</span></p>` : ""}
-      ${orden.map(([k, o]) => `<details class="panel apc-prohib-pais"${o.prohib.some(x => periodos(x, ahora, ahora + 60000).length) ? " open" : ""}><summary><b>${banderaPais(k, "b-pais")}${esc(o.nombre)}</b> <small>(${esc(cuenta(o))})</small></summary>
-        ${o.prohib.length ? `<ul class="apc-lista">${o.prohib.map(x => { const ya = periodos(x, ahora, ahora + 60000).length > 0; return `<li class="apc apc-prohib-una${ya ? " ahora" : ""}"><b class="apc-nom">${esc(x.motivo || "Prohibición")}</b>${ya ? ` <span class="apc-ahora">Ahora en vigor</span>` : ""}
-          <p>${esc(horarioProhib(x))}</p>${x.nota ? `<p class="apc-nota">${esc(x.nota)}</p>` : ""}${x.url ? `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener">Ver la web oficial</a>` : ""}</li>`; }).join("")}</ul>`
-        : `<p class="apc-nota">La sección no tiene apuntadas prohibiciones de este país: mira su web oficial.</p>`}
+      ${normas.length ? `<div class="apc-normas-filtro"><div class="filtros apc-temas" role="group" aria-label="Tema"><button type="button" class="filtro activo" data-tema="" aria-pressed="true">Todo</button>${TEMAS.map(([t, n]) => `<button type="button" class="filtro" data-tema="${t}" aria-pressed="false">${esc(n)}</button>`).join("")}</div>
+        <label class="apc-normas-buscar"><span class="sr-only">Buscar</span><input type="search" id="apc-normas-q" placeholder="Buscar: país, cadenas, 3PMSF, peaje…" autocomplete="off"></label><p class="apc-nota" id="apc-normas-n" aria-live="polite"></p></div>` : ""}
+      ${orden.map(([k, o]) => `<details class="panel apc-prohib-pais" data-nombre="${esc(o.nombre)}"${o.prohib.some(x => periodos(x, ahora, ahora + 60000).length) ? " open" : ""}><summary><b>${banderaPais(k, "b-pais")}${esc(o.nombre)}</b> <small>${esc(cuenta(o))}</small></summary>
+        ${TEMAS.map(([t, tn]) => {
+          const ns = o.normas.filter(n => n.tema === t), ps = t === "prohibicion" ? o.prohib : [];
+          if (!ns.length && !ps.length) return "";
+          return `<section class="apc-tema" data-tema="${t}"><h3>${esc(tn)}</h3><ul class="apc-lista">${ns.map(normaHTML).join("")}${ps.map(x => { const ya = periodos(x, ahora, ahora + 60000).length > 0; return `<li class="apc apc-prohib-una${ya ? " ahora" : ""}"><b class="apc-nom">${esc(x.motivo || "Prohibición")}</b>${ya ? ` <span class="apc-ahora">Ahora en vigor</span>` : ""}
+          <p>${esc(horarioProhib(x))}</p>${x.nota ? `<p class="apc-nota">${esc(x.nota)}</p>` : ""}${x.url ? `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener">Ver la web oficial</a>` : ""}</li>`; }).join("")}</ul></section>`;
+        }).join("")}
+        ${!o.prohib.length && !o.normas.length ? `<p class="apc-nota apc-pais-vacio">La sección no tiene apuntadas normas de este país: mira su web oficial.</p>` : ""}
         ${o.enlaces.length ? `<div class="lista-restr apc-pais-webs">${o.enlaces.map(restriccionHTML).join("")}</div>` : ""}</details>`).join("")}`
       : `<p>La sección todavía no tiene apuntada ninguna prohibición.</p>`}
       <p class="apc-nota">Orientativo: puede haber festivos locales o restricciones que no están apuntados. Compruébalo en las webs oficiales.</p></section>`;

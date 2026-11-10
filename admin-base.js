@@ -379,6 +379,28 @@ SECCIONES.restricciones = {
   extracto: (x) => x.fuente, chips: (x) => [x.visible === false && "Oculto en la web", x.idioma, x.url && x.url.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]], fechas: (x) => [null, x.actualizado],
 };
 
+// Normas por país (v168): ficha de cada país en «Restricciones en mi ruta» (peajes, invierno, prohibiciones).
+// Se editan en la página «Restricciones camiones». Solo sale en la web lo que tenga «Comprobado» marcado.
+const TEMAS_NORMA = [["peaje", "Peajes"], ["invierno", "Cadenas e invierno"], ["prohibicion", "Prohibiciones y festivos"]];
+const VIG_NORMA = [["", "Sin indicar"], ["todo", "Obligatorio todo el año"], ["fechas", "Por fechas"], ["situacional", "Según la situación"]];
+SECCIONES.normas = {
+  nombre: "Normas por país", icono: "lugar", tabla: "normas_pais", orden: ["orden", true], uno: "norma", nuevo: "Añadir norma", lista: "aviso", campoColor: "_", oculta: true, volver: "camiones",
+  intro: "", tituloDe: (x) => `${PAISES_PROH[x.pais] || x.pais || "País"}: ${x.titulo || ""}`,
+  campos: [
+    { fila: [{ k: "pais", l: "País", t: "select", ops: Object.entries(PAISES_PROH), def: "FR" }, { k: "tema", l: "Tema", t: "select", ops: TEMAS_NORMA, def: "peaje" }] },
+    { k: "titulo", l: "Título", t: "text", req: true, ph: "Ej: Peaje por kilómetro (Toll Collect)" },
+    { k: "texto", l: "Qué tiene que saber el conductor", t: "textarea", req: true, corto: true, ph: "Explícalo corto y claro" },
+    { fila: [{ k: "peso", l: "Para camiones de", t: "text", opc: true, ph: "Ej: más de 7,5 t" }, { k: "vigencia", l: "Cuándo", t: "select", ops: VIG_NORMA, opc: true }] },
+    { k: "fechas", l: "Fechas", t: "text", opc: true, ph: "Ej: del 1 de noviembre al 15 de abril", ayuda: "Solo si en «Cuándo» has puesto «Por fechas»." },
+    { k: "fuente", l: "Quién lo publica", t: "text", req: true, ph: "Ej: BALM (Gobierno de Alemania)" },
+    { k: "url", l: "Página oficial donde lo has comprobado", t: "url", req: true, ph: "https://…", ayuda: "Solo páginas oficiales (gobierno, tráfico, autopistas)." },
+    { fila: [{ k: "revisado", l: "Comprobado el", t: "date", opc: true }, { k: "orden", l: "Posición", t: "number" }] },
+    { checks: [{ k: "visible", l: "Comprobado: que se vea en la web (márcalo solo si lo has visto en la página oficial)", def: false }] },
+  ],
+  previa: (x) => `<div class="panel calc"><div class="resultado-calc"><span class="rc-tit">${esc(PAISES_PROH[x.pais] || x.pais || "")}: ${esc(x.titulo || "")}</span>${x.texto ? `<span class="rc-sub">${esc(x.texto)}</span>` : ""}</div></div>`,
+  extracto: (x) => x.texto, chips: (x) => [x.visible === true ? null : "Sin comprobar: no se ve", (TEMAS_NORMA.find(t => t[0] === x.tema) || [])[1], x.peso], fechas: (x) => [null, x.actualizado],
+};
+
 // Una sección del panel por cada apartado
 const seccionApartado = (a) => ({
   slug: a.slug, nombre: a.titulo, icono: a.icono || "carpeta", tabla: "publicaciones", filtro: { apartado_id: a.id }, orden: ["fecha", false], uno: "publicación", nuevo: "Publicar en " + a.titulo, lista: "aviso", campoColor: "_",

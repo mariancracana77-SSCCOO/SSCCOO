@@ -353,7 +353,7 @@ $("ed-guardar").onclick = async () => {
   const decVacio = camposPlanos(s).find(c => c.t === "number" && c.dec && !c.opc && $("f-" + c.k) && !String($("f-" + c.k).value).trim());
   if (decVacio && !confirm(`«${decVacio.l}» está vacío y se guardará como 0. ¿Guardar igualmente?`)) return marcaFalta("f-" + decVacio.k, "Rellena: " + decVacio.l.toLowerCase() + ".");
   if (!(await revisarOrtografia(s, fila))) return;
-  if (["enlaces", "restricciones", "prohibiciones"].includes(ED.k) && fila.url && !/^https?:\/\//.test(fila.url)) fila.url = "https://" + fila.url;
+  if (["enlaces", "restricciones", "prohibiciones", "normas"].includes(ED.k) && fila.url && !/^https?:\/\//.test(fila.url)) fila.url = "https://" + fila.url;
   if (s.filtro) Object.assign(fila, s.filtro);
   if ((fila.publicado === false || fila.publicada === false) && !ED.orig) fila.notificar = false;
   if (ED.k === "apartados") {

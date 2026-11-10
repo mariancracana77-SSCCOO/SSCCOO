@@ -2653,9 +2653,41 @@ body.solo-restr #apc-restr-enlaces { margin-top: 20px; }
 /* v165 (petición 34): todas las prohibiciones por país en «Restricciones en mi ruta» */
 body.solo-restr #apc-prohib-todas { margin-top: 20px; }
 .apc-prohib-todas { display: grid; gap: 12px; }
-.apc-prohib-pais summary { cursor: pointer; font-size: 1.05em; }
+.apc-prohib-pais { padding: 0; overflow: hidden; }
+.apc-prohib-pais summary { cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; padding: 14px 16px; font-size: 1.1em; list-style: none; }
+.apc-prohib-pais summary::-webkit-details-marker { display: none; }
+.apc-prohib-pais summary::after { content: ""; margin-left: auto; width: 10px; height: 10px; border-right: 3px solid var(--azul); border-bottom: 3px solid var(--azul); transform: rotate(45deg); transition: transform .2s; flex: none; }
+.apc-prohib-pais[open] summary::after { transform: rotate(-135deg); }
+.apc-prohib-pais summary small { flex-basis: 100%; order: 3; color: var(--suave); font-size: .82em; font-weight: 600; }
+.apc-prohib-pais[open] summary { border-bottom: 1px solid var(--linea); background: var(--azul-suave); }
+.apc-prohib-pais > :not(summary) { margin-left: 14px; margin-right: 14px; }
+.apc-prohib-pais > :last-child:not(summary) { margin-bottom: 14px; }
 .apc-prohib-pais .apc-lista { margin-top: 10px; }
 .apc-pais-webs { margin-top: 10px; }
+/* Maqueta (encargo de Lorena, 10/11): normas por país en tarjetas por tema, con etiquetas, filtro y buscador. Azul de Zona Conductores */
+.apc-prohib-todas [hidden] { display: none !important; }
+.apc-normas-filtro { display: grid; gap: 8px; }
+.apc-normas-filtro .filtros { margin-bottom: 0; }
+.apc-temas { flex-wrap: wrap; overflow: visible; }
+.apc-temas .filtro { flex: 1 1 auto; }
+.apc-temas .filtro.activo { background: var(--azul); border-color: var(--azul); color: var(--tarjeta); }
+.apc-normas-buscar input { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--linea); border-radius: 12px; background: var(--tarjeta); color: var(--tinta); font: inherit; }
+.apc-normas-filtro #apc-normas-n:empty { display: none; }
+.apc-tema { margin-top: 12px; }
+.apc-tema h3 { font-family: var(--cond); text-transform: uppercase; letter-spacing: .03em; font-size: 1rem; color: var(--azul); border-bottom: 2px solid var(--azul-suave); padding-bottom: 4px; margin: 0 0 10px; }
+.apc-prohib-todas .apc-prohib-una:not(.ahora) { border-left: 4px solid var(--azul); }
+.apc-norma .apc-nom { display: block; }
+.apc-norma .apc-nota { color: var(--suave); font-size: .88rem; }
+.apc-prohib-todas .apc-norma a, .apc-prohib-todas .apc-prohib-una a { color: var(--azul); }
+.apc-norma { list-style: none; padding: 12px 14px; border: 1px solid var(--linea); border-left: 4px solid var(--azul); border-radius: 12px; background: var(--tarjeta); overflow-wrap: anywhere; }
+.apc-norma + .apc-norma, .apc-norma + .apc { margin-top: 8px; }
+.apc-norma p { margin: 6px 0 0; }
+.apc-etqs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.apc-etq { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: .82rem; font-weight: 700; background: var(--azul-suave); color: var(--tinta); }
+.apc-etq.peso { background: var(--azul); color: var(--tarjeta); }
+.apc-etq.vig-todo { background: var(--rojo-suave); }
+.apc-etq.vig-situacional { background: var(--ambar-suave, var(--azul-suave)); }
+
 .apc-pais-webs .bandera { display: none; } /* la bandera ya sale en el título del país */
 .apc-prohib-todas .aviso-oficial { margin: 0; }
 .apc-prohib-una.ahora { border-left: 4px solid var(--rojo, #AB1012); }

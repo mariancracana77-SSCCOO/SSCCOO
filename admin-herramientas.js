@@ -6,13 +6,13 @@
 const NOMBRE_TABLA = { comunicados: "el aviso", eventos: "la fecha", convenio_secciones: "el apartado del convenio", actas: "el acta", documentos: "el documento",
   preguntas: "la pregunta frecuente", plantillas: "la plantilla", delegados: "el delegado", enlaces: "el enlace", apartados: "el apartado de la web",
   publicaciones: "la publicación", opciones: "la opción de lista", calc_permisos: "el permiso de la calculadora", calc_categorias: "el precio de horas extra",
-  avisos_recurrentes: "el aviso que se repite", buzon: "el mensaje del buzón", paginas: "el texto", calc_ajustes: "el ajuste de la calculadora", admins: "el administrador", restricciones: "el país de restricciones para camiones", tarifas_conductor: "el importe de «Mis incentivos»", peajes_paises: "el precio de peaje de un país", aparcamientos_compas: "el aparcamiento propuesto", aparcamientos_correcciones: "el aviso de un aparcamiento", prohibiciones_camion: "la prohibición de circular" };
+  avisos_recurrentes: "el aviso que se repite", buzon: "el mensaje del buzón", paginas: "el texto", calc_ajustes: "el ajuste de la calculadora", admins: "el administrador", restricciones: "el país de restricciones para camiones", tarifas_conductor: "el importe de «Mis incentivos»", peajes_paises: "el precio de peaje de un país", aparcamientos_compas: "el aparcamiento propuesto", aparcamientos_correcciones: "el aviso de un aparcamiento", prohibiciones_camion: "la prohibición de circular", normas_pais: "la norma de un país" };
 const VERBO = { crear: "creó", cambiar: "cambió", borrar: "borró" };
 const BOTON_DESHACER = { borrar: "Recuperar", cambiar: "Volver a como estaba", crear: "Deshacer (quitarlo)" };
 const CAMPOS_NOMBRE = { titulo: "Título", contenido: "Texto", categoria: "Categoría", urgente: "Urgente", fijado: "Fijado", adjuntos: "Archivos", fecha: "Fecha", hora: "Hora", hora_fin: "Hora de fin",
   lugar: "Lugar", descripcion: "Descripción", tipo: "Tipo", resumen: "Resumen", acuerdos: "Acuerdos", pregunta: "Pregunta", respuesta: "Respuesta", nombre: "Nombre", cargo: "Cargo",
   telefono: "Teléfono", email: "Email", url: "Dirección", orden: "Posición", visible: "Se ve en la web", publicado: "Publicado", publicar_en: "Programado", importante: "Importante",
-  leido: "Leído", archivado: "Archivado", valor: "Valor", dias: "Días", unidad: "Unidad", precio_extra: "Precio hora extra", precio_extra_festiva: "Precio festivo", activo: "Activo", pais: "País", fuente: "Quién lo publica", idioma: "Idioma" };
+  leido: "Leído", archivado: "Archivado", valor: "Valor", dias: "Días", unidad: "Unidad", precio_extra: "Precio hora extra", precio_extra_festiva: "Precio festivo", activo: "Activo", pais: "País", fuente: "Quién lo publica", idioma: "Idioma", texto: "Texto", tema: "Tema", peso: "Peso", vigencia: "Cuándo", fechas: "Fechas", revisado: "Comprobado el" };
 const nombreDe = (r) => r && (r.titulo || r.nombre || r.pais || r.pregunta || (r.texto && r.texto.slice(0, 60)) || r.slug || r.clave || r.email || r.id);
 const valorTxt = (v) => v == null || v === "" ? "(vacío)" : Array.isArray(v) ? v.length + (v.length === 1 ? " archivo" : " archivos") : typeof v === "boolean" ? (v ? "Sí" : "No") : String(v).length > 140 ? String(v).slice(0, 139) + "…" : String(v);
 const FILTRO_HIST = { tabla: "", accion: "", max: 60 };
@@ -293,11 +293,12 @@ async function pintaCamiones() {
       <p class="ayuda">Sale en la web. Cámbiala cuando compruebes que los enlaces siguen funcionando. Si la dejas vacía, sale el 17 de octubre de 2026.</p>
       <div class="botones"><button class="btn sec" id="rv-hoy">${icono("calendario", "p")}Poner hoy</button><button class="btn" id="rv-guardar">${icono("check", "p")}Guardar fecha</button></div><p class="msg" id="rv-msg"></p></section>
     <section class="panel tarjeta-ajuste"><div class="sec-cab" style="margin:0 0 10px"><div><h2>Países</h2><p>Toca un país para cambiarlo, ocultarlo o borrarlo.</p></div><button class="btn" data-nuevo="restricciones">${icono("mas", "p")}Añadir país</button></div><div class="lista-adm" id="lista-restricciones"><p class="fecha-txt">Cargando…</p></div></section>
+    <section class="panel tarjeta-ajuste"><div class="sec-cab" style="margin:0 0 10px"><div><h2>Normas por país</h2><p>Lo que sale en la ficha de cada país (peajes, cadenas e invierno, prohibiciones). Las que pone «Sin comprobar» no se ven en la web: ábrelas, compruébalas en la página oficial y marca «Comprobado».</p></div><button class="btn" data-nuevo="normas">${icono("mas", "p")}Añadir norma</button></div><div class="lista-adm" id="lista-normas"><p class="fecha-txt">Cargando…</p></div></section>
     ${SECCIONES[Object.keys(SECCIONES).find(k => SECCIONES[k].slug === "zona-conductores")] ? "" : `<p class="msg err">No hay ningún apartado «Zona Conductores» en la web, así que esta lista no se ve. Créalo en «Apartados de la web».</p>`}`;
-  $("zona").querySelector("[data-nuevo]").onclick = () => abrirEditor("restricciones");
+  $("zona").querySelectorAll("[data-nuevo]").forEach(b => { b.onclick = () => abrirEditor(b.dataset.nuevo); });
   $("rv-hoy").onclick = () => { $("rv-fecha").value = hoyISO(); };
   try {
-    const [pg] = await Promise.all([sb.from("paginas").select("contenido").eq("slug", "restricciones_revisado").maybeSingle(), cargarDatos("restricciones")]);
+    const [pg] = await Promise.all([sb.from("paginas").select("contenido").eq("slug", "restricciones_revisado").maybeSingle(), cargarDatos("restricciones"), cargarDatos("normas")]);
     $("rv-fecha").value = /^\d{4}-\d{2}-\d{2}$/.test(pg.data?.contenido || "") ? pg.data.contenido : "";
   } catch (e) { $("lista-restricciones").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(errTxt(e))}</p>`; return; }
   $("rv-guardar").onclick = async () => {
@@ -308,6 +309,10 @@ async function pintaCamiones() {
   $("lista-restricciones").innerHTML = l.length ? l.map(x => filaOrden("restricciones", x)).join("") : `<div class="panel vacio">${icono("lugar")}No hay ningún país. Pulsa «Añadir país». Sin países, el bloque no sale en la web.</div>`;
   enlazarItems($("lista-restricciones"));
   if (l.length > 1) hacerOrdenable($("lista-restricciones"), "restricciones");
+  const n = datos.normas;
+  $("lista-normas").innerHTML = n.length ? n.map(x => filaOrden("normas", x)).join("") : `<div class="panel vacio">${icono("lugar")}No hay ninguna norma. Pulsa «Añadir norma».</div>`;
+  enlazarItems($("lista-normas"));
+  if (n.length > 1) hacerOrdenable($("lista-normas"), "normas");
 }
 
 // ---------- Importes de «Mis incentivos» (Zona Conductores, v81) ----------

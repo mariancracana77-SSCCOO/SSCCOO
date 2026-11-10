@@ -17,7 +17,7 @@
     paginas: [{ slug: "inicio", contenido: "Bienvenida de prueba." }, { slug: "quienes", contenido: "Somos la sección sindical." }],
     preguntas: [{ id: 1, pregunta: "¿Cuántos días de vacaciones tengo?", respuesta: "Los que marca el convenio.", categoria: "General", orden: 1 }],
     delegados: [{ id: 1, nombre: "Delegado de prueba", cargo: "Secretario", orden: 1 }],
-    enlaces: [], plantillas: [], restricciones: [], encuestas: [], encuesta_votos: [], opciones: [],
+    enlaces: [], plantillas: [], restricciones: [], normas_pais: [{ id: 1, pais: "DE", tema: "prohibicion", titulo: "Domingos y festivos", texto: "Prohibido de 0 a 22 h.", peso: "Más de 7,5 t", vigencia: "todo", fechas: "", fuente: "BALM", url: "https://www.balm.bund.de/", revisado: "2026-11-10", orden: 1, visible: true }, { id: 2, pais: "FR", tema: "invierno", titulo: "Sin comprobar", texto: "x", orden: 2, visible: false }], encuestas: [], encuesta_votos: [], opciones: [],
     apartados: [
       { id: 1, slug: "comite", titulo: "Comité", descripcion: "", icono: "", orden: 1, visible: true, padre_id: null },
       { id: 2, slug: "zona-conductores", titulo: "Zona Conductores", descripcion: "", icono: "", orden: 2, visible: true, padre_id: null },
