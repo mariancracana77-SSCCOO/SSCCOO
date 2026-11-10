@@ -77,10 +77,6 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
-## Versión 161: portada nueva en el ordenador y «Ir a» con colores en el móvil
-
-En el ordenador (desde 1000 px), la portada pasa a ser una web de verdad sin botones con iconos: aviso destacado grande, las últimas noticias en tres columnas, próximas fechas como agenda, actas y documentos en tabla, banda azul de Zona Conductores, «Todo lo que hay en la web» con todos los enlaces y un pie en columnas (contacto, «Afíliate» y lo legal). En las páginas de dentro sale la miga de pan («Inicio › Avisos»). La barra roja de abajo no sale en el ordenador. En el móvil, «Ir a» con paneles oscuros con borde de color (rojo la sección, azul Zona Conductores, gris documentación) y los 4 más usados en grande; «Lo último» con barra de color por tipo; la app en pastilla. La cabecera no cambia.
-
 ## Versión 160: Mis descansos: el mismo fondo rojo suave en su barra de pestañas que Mis incentivos (lo pidió el padre, petición 32).
 ## Versión 159: Mis incentivos: fondo rojo suave en la barra Día · Semana · Mes · Ajustes, de día y de noche (lo pidió el padre, petición 31).
 ## Versión 158: revisión a fondo (pantallas, panel, código, seguridad y legal). El archivo de «Añadir al calendario» sale con horas válidas. Mejor accesibilidad: zoom al 400 %, foco visible, teclado en el calendario, Traducir y ventanas, contrastes y botones de 44 px. El panel ya no deja textos vacíos ni dice «sin permiso» cuando falla la red. Telegram y la copia de seguridad avisan si algo falla, y la copia va de 1000 en 1000. sw.js: solo borra sus cachés (antes también las del Comité), espera 4 s a la red y luego enseña lo guardado. Aparcamientos avisa si el móvil no deja guardar. Se escapa lo que llega de fuera en mapas, tarjetas e iconos. El panel no funciona dentro de otra web. Las peticiones ya no prometen «al momento» y no pierden lo escrito. «Avisar a Lorena» es solo para emergencias. Pruebas nuevas: `pruebas/estatica.cjs` y `pruebas/navegador.cjs`.
@@ -801,4 +797,8 @@ En «Hoy» se puede poner la hora real a la que empezaste (si te acuerdas tarde)
 ### Cierre de la versión 19
 - Versión subida en los 3 sitios (`?v=19` en los HTML, `VERSION_WEB` en `config.js`, `VERSION` en `sw.js`).
 - **Pendiente de revisar antes de usarlo con la plantilla**: los valores de «Calcula» son los mínimos del Estatuto de los Trabajadores, no los del convenio de Girona. Revisarlos en el panel, en «Calculadoras». Los precios de las horas extra están vacíos: hasta que se pongan, esa calculadora no sale.
-- Sigue pendiente completar la entidad de CCOO responsable y su NIF en Textos > Aviso legal y Privacidad.
+- Sigue pendiente completar la entidad de CCOO responsable y su NIF en Textos > Aviso legal y Privacidad.## Versión 162: vuelta al diseño de la v160
+
+Lo pidió Lorena: se quita el rediseño de la v161 (portada de ordenador estilo periódico y estilos nuevos del móvil) y la web vuelve a verse como en la v160 mientras se prepara la opción B «Institucional».
+
+

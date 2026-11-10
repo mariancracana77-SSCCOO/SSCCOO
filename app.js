@@ -126,7 +126,6 @@ function centraPestana(b) {
 }
 function marcaPestanas(clave) {
   const g = GRUPO_DE[clave], arriba = g ? g.clave : clave;
-  pintaMiga(clave);
   document.querySelectorAll(".pestanas-web a").forEach(b => {
     const on = b.dataset.v === arriba; b.classList.toggle("activa", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current");
     if (on) centraPestana(b);
@@ -338,7 +337,7 @@ function pintaInicio() {
     if (gr !== g) { html += `<h3 class="grupo-tablon">${gr}</h3>`; g = gr; }
     const [icDef, cl] = ICONOS[x.k], ic = x.ic || icDef;
     const attrs = x.url ? `href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener" data-abre="documentos:${x.id}"` : `href="${x.h}"${x.dia ? ` data-dia="${x.dia}"` : ""}`;
-    html += `<a class="item-tablon k-${x.k} ${esDesdeUltima(x.f) ? "es-nuevo" : ""}" ${attrs} data-reg="${x.reg}">
+    html += `<a class="item-tablon ${esDesdeUltima(x.f) ? "es-nuevo" : ""}" ${attrs} data-reg="${x.reg}">
       ${x.foto ? `<span class="ic foto"><img src="${esc(urlSegura(x.foto.url))}" alt="" loading="lazy"></span>` : `<span class="ic ${cl}">${icono(ic, "p")}</span>`}
       <span class="txt"><small>${esDesdeUltima(x.f) ? '<span class="marca-nuevo">Nuevo</span>' : ""}<span>${esc(x.que)} · ${haceTxt(x.f)}</span></small>
         <b data-campo="${x.ct || "titulo"}" data-plano>${esc(x.t || "Sin título")}</b>${x.s ? `<span class="res"${x.cs ? ` data-campo="${x.cs}" ${x.rs ? `data-resumen="${x.rs}"` : "data-plano"}` : ""}>${esc(x.s)}</span>` : ""}${x.adj ? `<span class="res adj">${icono("clip", "p")} ${x.adj} archivo(s)</span>` : ""}</span>
@@ -353,13 +352,9 @@ function pintaInicio() {
   const IC_FIJO = { descansos: "reloj", ganancias: "euro", aparcar: "lugar", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta" };
   const acc = GRUPOS.flatMap(g => g.miembros).filter(m => m.clave !== "inicio" && m.clave !== "info")
     .map(m => [m.clave, IC_FIJO[m.clave] || D.apartados.find(a => "ap-" + a.slug === m.clave)?.icono || "carpeta", m.titulo]);
-  // v161 (lo pidió Lorena): los 4 más usados primero y en grande; color por grupo (azul = Zona Conductores, gris = documentación)
-  const PRIMEROS = ["avisos", "calendario", "ap-" + APARTADO_CONDUCTORES, "actas"];
-  acc.sort((x, y) => (PRIMEROS.includes(x[0]) ? PRIMEROS.indexOf(x[0]) : 99) - (PRIMEROS.includes(y[0]) ? PRIMEROS.indexOf(y[0]) : 99));
   $("inicio-accesos").innerHTML = `<h2 class="tit-seccion">Ir a</h2><nav class="accesos-tablon" aria-label="Accesos rápidos">${acc.map(([v, ic, t]) =>
-    `<a href="#${esc(v)}" class="${[PRIMEROS.includes(v) ? "grande" : "", "g-" + grupoMapa(v)].join(" ").trim()}">${icono(esc(ic))}<b>${esc(t)}</b></a>`).join("")}</nav>`;
+    `<a href="#${esc(v)}">${icono(esc(ic))}<b>${esc(t)}</b></a>`).join("")}</nav>`;
   pintaCuentaAtras(urg ? null : prox.find(x => !esFestivo(x)) || prox[0]);
-  pintaInicioWeb(urg, prox, items);
   pintaSabias();
   document.querySelectorAll("#v-inicio [data-dia]").forEach(l => l.onclick = () => irADia(l.dataset.dia));
 }
@@ -441,72 +436,6 @@ function animaPortada() {
 }
 
 // «Sabías que…»: un apartado del convenio distinto cada día (el mismo para todos ese día)
-// ---------- v161: portada de ordenador (lo pidió Lorena: «que parezca una web de verdad») ----------
-// Solo se ve desde 1000 px (styles.css); en el móvil se queda la portada de siempre. Sin iconos: destacado grande,
-// noticias en columnas, agenda, actas y documentos en tabla, banda de Zona Conductores y todos los enlaces en listas.
-// Cada enlace sale una sola vez: el mapa de enlaces aquí; contacto, «Afíliate» y lo legal, en el pie.
-const isoWeb = (f) => (partesFecha(f) || {}).iso || "";
-const fechaLarga = (f) => isoWeb(f) ? fechaDia(isoWeb(f)).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" }) : "";
-function grupoMapa(clave) {
-  const g = GRUPO_DE[clave], k = g ? g.clave : clave;
-  if (k === "ap-" + APARTADO_CONDUCTORES) return "cond";
-  if (k === "documentos" || ["convenio", "calcula"].includes(clave) || /prl|ley|convenio|document|normat|decret/i.test(k)) return "doc";
-  return "sec";
-}
-function pintaInicioWeb(urg, prox, items) {
-  const avisos = ordenAvisos(D.avisos), h = urg || avisos.find(a => a.fijado) || avisos[0];
-  const fotoDe = (adj) => (adj || []).find(esImagen);
-  if (h) { const f = fotoDe(h.adjuntos);
-    $("web-hero").innerHTML = `<article class="w-hero${f ? "" : " sin-foto"}" data-reg="comunicados:${h.id}">${f ? `<a class="w-foto" href="#aviso-${h.id}" tabindex="-1" aria-hidden="true"><img src="${esc(urlSegura(f.url))}" alt="" loading="lazy"></a>` : ""}
-      <div class="w-txt"><p class="w-kick">${h.urgente ? "Urgente · " : h.fijado ? "Fijado · " : ""}Aviso${h.categoria ? " · " + esc(h.categoria) : ""} <span class="w-fecha">· ${esc(fechaLarga(h.fecha))}</span></p>
-      <h2 class="w-tit"><a href="#aviso-${h.id}" data-campo="titulo" data-plano>${esc(h.titulo)}</a></h2>
-      <p class="w-ext" data-campo="contenido" data-resumen="260">${esc(resumenPlano(h.contenido, 260))}</p>
-      <p class="w-acc"><a class="w-mas" href="#aviso-${h.id}">Leer el aviso completo</a>${botonTraducir("lista")}</p></div></article>`;
-  } else $("web-hero").innerHTML = "";
-  reaplicaIdioma($("web-hero"), "web-hero");
-  // Noticias: lo último menos el destacado, de 3 en 3
-  const nots = items.filter(x => !(h && x.reg === "comunicados:" + h.id)).slice(0, 6);
-  $("web-noticias").innerHTML = nots.length ? `<h2 class="w-sec">Lo último <a href="#avisos">Ver todos los avisos</a></h2><div class="w-rej">${nots.map(x => {
-    const ir = x.url ? `href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener" data-abre="documentos:${x.id}"` : `href="${x.h}"${x.dia ? ` data-dia="${x.dia}"` : ""}`;
-    return `<article class="w-not k-${x.k}" data-reg="${x.reg}">${x.foto ? `<a class="w-foto" ${ir} tabindex="-1" aria-hidden="true"><img src="${esc(urlSegura(x.foto.url))}" alt="" loading="lazy"></a>` : ""}
-      <p class="w-kick">${esc(x.que)} <span class="w-fecha">· ${esc(fechaLarga(x.f))}</span></p>
-      <h3 class="w-tit"><a ${ir} data-campo="${x.ct || "titulo"}" data-plano>${esc(x.t || "Sin título")}</a></h3>
-      ${x.s ? `<p class="w-ext"${x.cs ? ` data-campo="${x.cs}" ${x.rs ? `data-resumen="${x.rs}"` : "data-plano"}` : ""}>${esc(x.s)}</p>` : ""}</article>`; }).join("")}</div>` : "";
-  reaplicaIdioma($("web-noticias"), "web-noticias");
-  // Próximas fechas y actas/documentos
-  const agenda = prox.slice(0, 4).map(e => { const d = fechaDia(e.fecha);
-    return `<li><a href="#calendario" data-dia="${e.fecha}"><span class="w-dia"><b>${d.getDate()}</b><small>${MES_CORTO[d.getMonth()]} · ${DIA_CORTO[d.getDay()]}</small></span>
-      <span><strong>${esc(e.titulo)}</strong><span class="w-fecha">${esc([esTodoElDia(e) || !e.hora ? "Todo el día" : horaEvento(e), e.lugar].filter(Boolean).join(" · "))}</span></span></a></li>`; }).join("");
-  const docs = [...D.actas.map(a => ({ f: a.fecha || a.creado, t: a.titulo, tipo: "Acta", h: "#acta-" + a.id })),
-    ...D.docs.map(d => ({ f: d.fecha, t: d.titulo, tipo: "Documento · " + tipoArchivo(d.tipo_archivo, d.nombre_archivo).txt, url: d.url, id: d.id }))]
-    .filter(x => x.f).sort((a, b) => new Date(b.f) - new Date(a.f)).slice(0, 5);
-  $("web-dos").innerHTML = `<section><h2 class="w-sec">Próximas fechas <a href="#calendario">Ver el calendario</a></h2>${agenda ? `<ul class="w-agenda">${agenda}</ul>` : `<p class="w-fecha">No hay fechas próximas.</p>`}</section>
-    <section><h2 class="w-sec">Actas y documentos <a href="#documentos">Ver todos</a></h2>${docs.length ? `<table class="w-tabla"><tbody>${docs.map(x => `<tr><td>${esc(isoWeb(x.f) ? fechaDia(isoWeb(x.f)).toLocaleDateString("es-ES") : "")}</td>
-      <td>${esc(x.t)}<br><span class="w-fecha">${esc(x.tipo)}</span></td><td>${x.url ? `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener" data-abre="documentos:${x.id}">Descargar<span class="sr-only">: ${esc(x.t)}</span></a>` : `<a href="${x.h}">Leer<span class="sr-only">: ${esc(x.t)}</span></a>`}</td></tr>`).join("")}</tbody></table>` : `<p class="w-fecha">Todavía no hay actas ni documentos.</p>`}</section>`;
-  // Zona Conductores: banda azul con el camión
-  const gc = GRUPO_DE["ap-" + APARTADO_CONDUCTORES], apc = D.apartados.find(a => a.slug === APARTADO_CONDUCTORES);
-  $("web-zona").innerHTML = gc ? `<section class="w-zona"><div><p class="w-kick">Zona Conductores</p><h2>${esc(gc.titulo)}</h2><p>${esc(apc?.descripcion || "Tus descansos con avisos al móvil, lo que ganas cada día y los aparcamientos que tienes por delante en tu ruta.")}</p>
-    <ul>${gc.miembros.map(m => `<li><a href="#${esc(m.clave)}">${esc(m.titulo)}</a></li>`).join("")}</ul></div><img src="camion.webp" alt="" width="700" height="358" loading="lazy"></section>` : "";
-  // Todos los enlaces, una sola vez, en tres listas
-  const MAPA = [["sec", "La sección"], ["cond", "Zona de conductores"], ["doc", "Documentación"]];
-  const enl = GRUPOS.filter(g => g.clave !== "inicio" && g.clave !== "ap-" + APARTADO_AFILIATE).flatMap(g => g.miembros.length > 1 ? g.miembros : [{ clave: g.miembros[0].clave, titulo: g.titulo }]);
-  $("web-mapa").innerHTML = `<h2 class="w-sec">Todo lo que hay en la web</h2><div class="w-cols">${MAPA.map(([k, t]) => { const l = enl.filter(m => grupoMapa(m.clave) === k);
-    return l.length ? `<div><h3>${t}</h3><ul>${l.map(m => `<li><a href="#${esc(m.clave)}">${esc(m.titulo)}</a></li>`).join("")}</ul></div>` : ""; }).join("")}</div>`;
-  // Pie: texto de bienvenida, «Afíliate» (único sitio en el ordenador)
-  if (D.paginas.inicio) $("pie-web-txt").textContent = D.paginas.inicio;
-  const af = D.apartados.find(a => a.slug === APARTADO_AFILIATE);
-  $("pie-afiliate").innerHTML = af ? `<a class="pie-btn" href="#ap-${esc(af.slug)}">${esc(af.titulo)}</a>` : "";
-}
-function pintaMiga(clave) {
-  const m = $("miga"); if (!m) return;
-  const g = GRUPO_DE[clave];
-  if (!clave || clave === "inicio" || !g) { m.hidden = true; m.innerHTML = ""; return; }
-  const yo = g.miembros.find(x => x.clave === clave), partes = [`<a href="#inicio">Inicio</a>`];
-  if (yo && g.miembros.length > 1 && g.miembros[0].clave !== clave) partes.push(`<a href="#${esc(g.miembros[0].clave)}">${esc(g.titulo)}</a>`, `<span aria-current="page">${esc(yo.titulo)}</span>`);
-  else partes.push(`<span aria-current="page">${esc(yo ? (g.miembros.length > 1 ? g.titulo : yo.titulo) : g.titulo)}</span>`);
-  m.innerHTML = `<ol>${partes.map(p => `<li>${p}</li>`).join("")}</ol>`; m.hidden = false;
-}
-
 function pintaSabias() {
   const l = D.convenio.filter(c => c.titulo && (c.resumen || c.contenido));
   if (!l.length) { $("sabias-que").innerHTML = ""; return; }
@@ -1380,8 +1309,6 @@ function pintaBanda() {
       <span class="txt"><b>Tenla como una app</b> con su icono en el móvil.</span>
       <button class="btn peq" data-acc="instalar">Instalar</button></div>`;
   $("banda-app").innerHTML = banda;
-  // v161: en el pie del ordenador, «Avisos al móvil» (el mismo botón que la campana de abajo)
-  $("pie-avisos").innerHTML = suscrito ? `<button type="button" class="pie-enlace" data-acc="estado">Avisos activados</button>` : `<button type="button" class="pie-enlace" data-acc="${iosSinInstalar ? "instalar" : "activar"}">Avisos al móvil</button>`;
   // En «Nosotros», el estado completo
   $("banda-app-info").innerHTML = `<div class="panel banda ${suscrito ? "avisos-on" : ""}"><span class="ic">${icono(suscrito ? "check" : "campana")}</span>
       <div class="txt"><b>${suscrito ? "Avisos activados en este móvil" : "Avisos en el móvil"}</b><p>${suscrito ? "Te llegará una notificación con cada novedad." : "Actívalos para enterarte al momento de cada aviso."}</p>${suscrito ? selectIdiomaAvisos("info-idioma") : ""}</div>
@@ -1417,7 +1344,6 @@ function pintaCanales() {
   const tgUrl = tg.startsWith("@") ? "https://t.me/" + tg.slice(1) : (tg.startsWith("https://t.me/") ? tg : "");
   $("canales").innerHTML = (tgUrl ? `<a class="canal tg" href="${esc(tgUrl)}" target="_blank" rel="noopener">${icono("telegram", "p")}Canal de Telegram</a>` : "") +
     (/^https:\/\/(chat\.)?whatsapp\.com\//.test(wa) ? `<a class="canal wa" href="${esc(wa)}" target="_blank" rel="noopener">${icono("whatsapp", "p")}Canal de WhatsApp</a>` : "");
-  $("pie-tg").innerHTML = tgUrl ? `<a href="${esc(tgUrl)}" target="_blank" rel="noopener">Canal de Telegram</a>` : "";
 }
 
 // ---------- Traducir ----------
