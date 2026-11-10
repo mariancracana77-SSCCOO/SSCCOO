@@ -2488,3 +2488,33 @@ details.recupera-caja > div { padding: 0 14px 14px; }
 :root .dia .punto.b-es { background: linear-gradient(#aa151b 0 25%, #f1bf00 25% 75%, #aa151b 75%); }
 :root .dia .punto.b-cat { background: linear-gradient(#fcdd09 0 11.11%, #da121a 11.11% 22.22%, #fcdd09 22.22% 33.33%, #da121a 33.33% 44.44%, #fcdd09 44.44% 55.55%, #da121a 55.55% 66.66%, #fcdd09 66.66% 77.77%, #da121a 77.77% 88.88%, #fcdd09 88.88%); }
 .t-tipo .bandera { width: 1.4em; height: .95em; margin-left: 8px; vertical-align: -1px; }
+
+/* ---- Revisión de accesibilidad (9/11/2026) ---- */
+/* Títulos que pasaron de h3 a h2 (orden de encabezados) o de h1 a h2 (un solo h1 por vista): se ven igual que antes */
+.lateral h2.h3 { font-size: 1.2rem; margin-bottom: 10px; }
+.texto-legal h2.h1 { font-size: 1.6rem; margin-bottom: 10px; }
+/* Aro de foco visible sobre fondos oscuros (el rojo sobre negro no llegaba a 3:1) */
+.cab-tablon :focus-visible { outline-color: #fff; outline-offset: 3px; }
+.rotulo :focus-visible, .cuenta-atras:focus-visible, .novedades-tira:focus-visible, .barra-acciones :focus-visible { outline-color: #fff; }
+/* Contraste AA de textos pequeños */
+.etq.nuevo { color: #14693a; }
+:root[data-theme="dark"] .etq.nuevo { color: #4cd486; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .etq.nuevo { color: #4cd486; } }
+.accion.wa { color: #0f7a41; }
+.accion.wa:hover { border-color: #0f7a41; }
+:root[data-theme="dark"] .accion.wa { color: #4cd486; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .accion.wa { color: #4cd486; } }
+.pub-fecha { color: #fff; border-top: 3px solid var(--rojo); }
+.dia.fuera .n { opacity: .75; }
+/* Objetivos táctiles de 44 px como mínimo */
+.cab-tablon .pestanas-web a { min-width: 44px; text-align: center; }
+.subpestanas a { min-height: 44px; }
+.desc-guia-pasos .guia-ir, .btn.peq { min-height: 44px; }
+.pest-flecha.sub { width: 44px; height: 44px; margin-top: -22px; }
+/* Zoom grande (400 %) o letra muy grande en pantallas bajas: la cabecera y la barra de abajo dejan de estar fijas
+   para que quede sitio para leer */
+@media (max-height: 520px) {
+  .cab-tablon { position: static; }
+  .barra-acciones { position: static; }
+  body.publica, body.publica.con-aviso-priv { padding-bottom: 0; }
+}

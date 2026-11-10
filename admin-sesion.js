@@ -29,13 +29,19 @@ async function iniciar() {
   await iniciarPanel();
 }
 const factorTotp = async () => { const { data } = await sb.auth.mfa.listFactors(); return (data?.totp || []).find(f => f.status === "verified"); };
+let verificando = false; // al escribir la 6.ª cifra se comprueba solo: que Enter justo después no lo compruebe otra vez
 $("b-codigo").onclick = async () => {
   const c = $("codigo").value.replace(/\D/g, "");
   if (c.length !== 6) return msg("m-codigo", "Escribe las 6 cifras que salen en la app.");
+  if (verificando) return;
+  verificando = true;
   msg("m-codigo", "Comprobando…", true);
-  const f = await factorTotp();
-  if (!f) return iniciarPanel();
-  const { error } = await sb.auth.mfa.challengeAndVerify({ factorId: f.id, code: c });
+  let f, error;
+  try { f = await factorTotp(); if (f) ({ error } = await sb.auth.mfa.challengeAndVerify({ factorId: f.id, code: c })); }
+  catch (e) { error = e; }
+  finally { verificando = false; }
+  if (!f && !error) return iniciarPanel();
+  if (error && /failed to fetch|network|load failed/i.test(String(error.message || error))) return msg("m-codigo", errTxt(error));
   if (error) { $("codigo").select(); return msg("m-codigo", /rate|too many/i.test(error.message) ? "Demasiados intentos. Espera un minuto." : "Código incorrecto o caducado. Escribe el que sale ahora en la app."); }
   msg("m-codigo", "", true); iniciarPanel();
 };
@@ -44,11 +50,19 @@ $("codigo").oninput = () => { if ($("codigo").value.replace(/\D/g, "").length ==
 $("b-codigo-salir").onclick = async () => { await sb.auth.signOut(); location.replace(aqui); };
 async function iniciarPanel() {
   mostrar("s-panel");
-  const { data } = await sb.rpc("is_admin");
-  window.ES_ADMIN = !!data;
-  await cargarOpciones();
-  await cargarApartados();
-  await contarBuzon();
+  try {
+    const { data, error } = await sb.rpc("is_admin");
+    if (error) throw error;
+    window.ES_ADMIN = !!data;
+    await cargarOpciones();
+    await cargarApartados();
+    await contarBuzon();
+  } catch (e) {
+    // Sin conexión no se sabe si la cuenta tiene permiso: no decir «no tienes permiso», sino que no se ha podido comprobar
+    $("zona").innerHTML = `<div class="panel vacio">${icono("alerta")}<p><b>No se ha podido abrir el panel.</b> ${esc(errTxt(e))} Puede que no haya conexión en este momento.</p><div class="botones"><button class="btn" type="button" id="b-reintentar-panel">Probar otra vez</button></div></div>`;
+    $("b-reintentar-panel").onclick = iniciarPanel;
+    return;
+  }
   pintaNav();
   const h = location.hash.slice(1);
   abrir(PAGINAS[h] || h === "archivos" ? h : "resumen");
@@ -65,6 +79,7 @@ $("b-entrar").onclick = async () => {
     : "Email o contraseña incorrectos. Si no la recuerdas, pulsa «He olvidado la contraseña» una sola vez.");
 };
 $("pass").onkeydown = (e) => { if (e.key === "Enter") $("b-entrar").click(); };
+$("email").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); $("pass").value ? $("b-entrar").click() : $("pass").focus(); } });
 // Contraseña segura: 10 caracteres o más, con letras y números, y que no sea de las típicas
 const DEBILES = ["1234567890", "contraseña", "contrasena", "password12", "qwertyuiop", "ccoo123456", "calsina123"];
 const fallaPass = (p) => p.length < 10 ? "La contraseña debe tener al menos 10 caracteres."

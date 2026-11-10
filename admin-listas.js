@@ -61,7 +61,8 @@ function hacerOrdenable(cont, k) {
     if (!cambios.length) return;
     const r = await Promise.all(cambios), e = r.find(x => x.error);
     datos[k].sort((a, b) => a.orden - b.orden);
-    aviso(e ? "No se ha podido guardar el orden: " + errTxt(e.error) : "Orden guardado. Ya se ve así en la web.", !!e);
+    aviso(e ? "No se ha podido guardar el orden: " + errTxt(e.error) + " Se vuelve a enseñar el orden que hay guardado." : "Orden guardado. Ya se ve así en la web.", !!e);
+    if (e) setTimeout(() => abrir(actual), 1200); // la lista vuelve a leer el orden del servidor (no se queda con uno que no se guardó)
   };
   filas().forEach(f => {
     const asa = f.querySelector(".asa");
@@ -210,7 +211,18 @@ async function reducirFoto(file) {
   try {
     const img = await createImageBitmap(file), r = Math.min(1, 2000 / Math.max(img.width, img.height));
     const cv = document.createElement("canvas"); cv.width = Math.round(img.width * r); cv.height = Math.round(img.height * r);
-    const cx = cv.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(img, 0, 0, cv.width, cv.height);
+    const cx = cv.getContext("2d");
+    // Un PNG con partes transparentes (logos, carteles recortados) se queda en PNG: en JPEG saldría con el fondo blanco
+    if (mimeDe(file) === "image/png") {
+      cx.drawImage(img, 0, 0, cv.width, cv.height);
+      const px = cx.getImageData(0, 0, cv.width, cv.height).data;
+      let transparente = false; for (let i = 3; i < px.length; i += 4) if (px[i] < 255) { transparente = true; break; }
+      if (transparente) {
+        const png = await new Promise(ok => cv.toBlob(ok, "image/png"));
+        return png && png.size < file.size ? new File([png], file.name, { type: "image/png" }) : file;
+      }
+    }
+    cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(img, 0, 0, cv.width, cv.height);
     const blob = await new Promise(ok => cv.toBlob(ok, "image/jpeg", 0.85));
     if (!blob || blob.size >= file.size) return file;
     return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });

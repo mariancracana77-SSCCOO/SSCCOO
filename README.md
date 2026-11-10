@@ -24,6 +24,8 @@ Para dar formato al texto: línea en blanco entre párrafos; `- ` al principio d
 ## Archivos (no hace falta tocarlos)
 `index.html`, `app.js` (web) · `cartel.html` (cartel QR) · `qr.js` (códigos QR, librería qrcode-generator, licencia MIT) · `admin.html`, `admin-*.js` (7 partes), `admin.css` (panel) · `render.js` (piezas comunes) · `styles.css` · `config.js` (conexión con Supabase) · `iconos.js` · `manifest.json`, `sw.js` (para instalarla como app) · `logo.png`, `icon-*.png` · `_config.yml` (deja fuera de la web la documentación)
 
+Nota para leer el historial de abajo: lo más nuevo está en «Versión 157» y siguientes, después de «Novedades de la versión 9». Los apuntes antiguos hablan de `admin.js`: ese archivo ya no existe; desde la versión 67 el panel está repartido en los 7 archivos `admin-*.js`. Pruebas: `pruebas/humo.cjs` (prueba rápida), `pruebas/estatica.cjs` (sin navegador: archivos, versiones y nada en línea) y `pruebas/navegador.cjs` (calendario .ics, zona horaria y service worker sin conexión).
+
 ## Ajustes (todo desde el panel, sin tocar código)
 En la pestaña **Ajustes** del panel se pueden añadir, renombrar, ordenar, cambiar de color y quitar las categorías y tipos de todas las secciones (filtros de avisos, tipos de acta, tipos del calendario, categorías del convenio y de documentos).
 
@@ -74,6 +76,8 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Duplicar**: al editar algo, «Duplicar» crea una copia para cambiar solo lo necesario (por ejemplo, la fecha).
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
+
+## Versión 158: revisión a fondo (pantallas, panel, código, seguridad y legal). El archivo de «Añadir al calendario» sale con horas válidas. Mejor accesibilidad: zoom al 400 %, foco visible, teclado en el calendario, Traducir y ventanas, contrastes y botones de 44 px. El panel ya no deja textos vacíos ni dice «sin permiso» cuando falla la red. Telegram y la copia de seguridad avisan si algo falla, y la copia va de 1000 en 1000. sw.js: solo borra sus cachés (antes también las del Comité), espera 4 s a la red y luego enseña lo guardado. Aparcamientos avisa si el móvil no deja guardar. Se escapa lo que llega de fuera en mapas, tarjetas e iconos. El panel no funciona dentro de otra web. Las peticiones ya no prometen «al momento» y no pierden lo escrito. «Avisar a Lorena» es solo para emergencias. Pruebas nuevas: `pruebas/estatica.cjs` y `pruebas/navegador.cjs`.
 
 ## Versión 157: vuelta a la dirección de siempre (mariancracana77-ssccoo.github.io/SSCCOO) con la marca de antes: nombre «Sección Sindical CCOO Calsina Carré», el logo con CCOO, iconos, cartel, manifest y vista previa al compartir como en la v148. Todo lo nuevo de las versiones 149 a 156 se queda igual.
 

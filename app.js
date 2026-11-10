@@ -51,6 +51,8 @@ function irA() {
   marcaPestanas(clave);
   ponTitulo(v === "inicio" ? "" : ap ? D.apartados.find(x => x.slug === ap)?.titulo : v === "buscar" ? "Buscar" : legal ? (legal === "privacidad" ? "Privacidad" : "Aviso legal") : NOMBRE_FIJO[v]);
   if (!avisoDirecto && !legal && !aDelegados && !aBuzon && !aEncuesta) window.scrollTo(0, 0);
+  // Con teclado, al cambiar de sección el foco pasa al contenido (como «Saltar al contenido»): no hay que recorrer todas las pestañas
+  if (cambia && irA.teclado && v !== "buscar") $("principal").focus({ preventScroll: true });
   const sec = ap ? "ap-" + ap : v;
   if (sec !== "inicio") { marcaVisto(sec); if (cargar.listo) pintaContadores(); }
   contarUnaVez("s:" + sec, () => sb.rpc("contar_seccion", { p_seccion: sec }));
@@ -58,6 +60,16 @@ function irA() {
 }
 
 window.addEventListener("hashchange", irA);
+// ¿Se está usando el teclado? (para mover el foco al cambiar de sección solo en ese caso; con el dedo no hace falta)
+document.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " " || e.key === "Tab") irA.teclado = true; }, true);
+document.addEventListener("pointerdown", () => { irA.teclado = false; }, true);
+// Pestañas (role="tablist": Calcula, Mis descansos, Mis incentivos): con las flechas se pasa a la de al lado
+document.addEventListener("keydown", (e) => {
+  const tab = e.target.closest?.('[role="tablist"] [role="tab"]'); if (!tab || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
+  const tabs = [...tab.closest('[role="tablist"]').querySelectorAll('[role="tab"]')].filter(t => t.offsetParent !== null), i = tabs.indexOf(tab);
+  const n = e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 : (i + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+  e.preventDefault(); tabs[n].focus(); tabs[n].click();
+});
 
 // Calendario para suscribirse (v70): la función «calendario» de Supabase da las fechas en formato .ics y el móvil la vuelve a pedir solo
 const CAL_SUSCRIBIR = window.SUPABASE_URL + "/functions/v1/calendario";
@@ -301,7 +313,7 @@ function pintaInicio() {
     ...D.eventos.filter(e => e.fecha >= hoy && !esFestivo(e)).map(e => ({ reg: "eventos:" + e.id, cs: "lugar", f: e.creado, k: "fecha", que: "Fecha · " + cuandoEvento(e), t: e.titulo, s: e.lugar || "", h: "#calendario", dia: e.fecha })),
     ...D.actas.map(a => ({ reg: "actas:" + a.id, cs: a.acuerdos ? "" : "resumen", rs: 90, f: a.creado, k: "acta", que: "Acta" + (a.fecha ? " · " + fechaDia(a.fecha).toLocaleDateString("es-ES", { day: "numeric", month: "long" }) : ""), t: a.titulo, s: a.acuerdos ? (a.acuerdos.split("\n").filter(l => l.trim()).length + " acuerdo(s)") : resumenPlano(a.resumen, 90), h: "#actas" })),
     ...D.docs.map(d => ({ reg: "documentos:" + d.id, cs: "descripcion", f: d.fecha, k: "doc", que: "Documento · " + tipoArchivo(d.tipo_archivo, d.nombre_archivo).txt, t: d.titulo, s: d.descripcion || "", url: d.url, id: d.id })),
-    ...D.publicaciones.map(x => { const ap = D.apartados.find(y => y.id === x.apartado_id); return ap && { reg: "publicaciones:" + x.id, cs: (x.adjuntos || []).length ? "" : "contenido", rs: 90, f: x.creado, k: "pub", ic: ap.icono, foto: (x.adjuntos || []).find(esImagen), que: ap.titulo, t: x.titulo, s: (x.adjuntos || []).length ? (x.adjuntos.length + " archivo(s)") : resumenPlano(x.contenido, 90), h: "#ap-" + ap.slug }; }).filter(Boolean),
+    ...D.publicaciones.map(x => { const ap = D.apartados.find(y => y.id === x.apartado_id); return ap && { reg: "publicaciones:" + x.id, cs: (x.adjuntos || []).length ? "" : "contenido", rs: 90, f: x.creado, k: "pub", ic: esc(ap.icono || ""), foto: (x.adjuntos || []).find(esImagen), que: ap.titulo, t: x.titulo, s: (x.adjuntos || []).length ? (x.adjuntos.length + " archivo(s)") : resumenPlano(x.contenido, 90), h: "#ap-" + ap.slug }; }).filter(Boolean),
     ...D.convenio.filter(c => ahora - new Date(c.actualizado) < 30 * DIA).map(c => ({ reg: "convenio_secciones:" + c.id, cs: "resumen", f: c.actualizado, k: "conv", que: "Convenio · actualizado", t: c.titulo, s: c.resumen || "", h: "#convenio" })),
     ...D.preguntas.filter(q => ahora - new Date(q.creado) < 30 * DIA).map(q => ({ reg: "preguntas:" + q.id, ct: "pregunta", f: q.creado, k: "preg", que: "Pregunta frecuente", t: q.pregunta, s: "", h: "#preguntas" })),
   ].filter(x => x.f).sort((a, b) => new Date(b.f) - new Date(a.f));
@@ -395,7 +407,10 @@ $("inicio-encuesta").addEventListener("click", async (ev) => {
   const t = (D.votos[id] = D.votos[id] || {}); t[op] = (+t[op] || 0) + 1;
   pintaEncuestas(id);
   const nueva = document.querySelector(`.encuesta[data-enc="${id}"] h3`);
-  if (nueva) nueva.insertAdjacentHTML("afterend", `<p class="enc-gracias"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m7 12.5 3.2 3.2L17 9"/></svg>Gracias por participar</p>`);
+  if (nueva) {
+    nueva.insertAdjacentHTML("afterend", `<p class="enc-gracias" role="status" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m7 12.5 3.2 3.2L17 9"/></svg>Gracias por participar. Ya puedes ver los resultados.</p>`);
+    nueva.parentElement.querySelector(".enc-gracias")?.focus({ preventScroll: true }); // el foco no se pierde al repintar
+  }
   try { navigator.vibrate?.(30); } catch (_) {}
 });
 
@@ -481,7 +496,7 @@ function pintaCalendario() {
     // v84: al principio de cada fila, el número de la semana del año (ISO), como en los calendarios de pared
     if (i % 7 === 0) { const s = semanaISO(d); html += `<span class="cal-sem ${semanaISO(fechaDia(hoy)).n === s.n && semanaISO(fechaDia(hoy)).a === s.a ? "actual" : ""}" title="${esc("Semana " + s.n + " del año")}" aria-label="${esc("Semana " + s.n)}">${s.n}</span>`; }
     html += `<button class="dia ${d.getMonth() !== m.getMonth() ? "fuera" : ""} ${iso === hoy ? "hoy" : ""} ${iso === estado.diaSel ? "sel" : ""} ${dow === 0 || dow === 6 ? "finde" : ""} ${evs.length ? "con-ev " + claseTipo(evs[0].tipo, "evento") : ""}"
-      data-d="${iso}" aria-label="${d.toLocaleDateString("es-ES", { day: "numeric", month: "long" })}${evs.length ? ", " + evs.length + " evento(s)" : ""}">
+      data-d="${iso}" aria-pressed="${iso === estado.diaSel}"${iso === hoy ? ' aria-current="date"' : ""} aria-label="${d.toLocaleDateString("es-ES", { day: "numeric", month: "long" })}${evs.length ? ", " + evs.length + " evento(s)" : ""}">
       <span class="n">${d.getDate()}</span>
       <span class="puntos">${evs.slice(0, 4).map(e => banderaDe(e) ? `<span class="punto bandera b-${banderaDe(e)}"></span>` : `<span class="punto ${claseTipo(e.tipo, "evento")}"></span>`).join("")}</span></button>`;
   }
@@ -492,6 +507,7 @@ function pintaCalendario() {
     const d = fechaDia(b.dataset.d);
     if (d.getMonth() !== estado.mes.getMonth()) estado.mes = new Date(d.getFullYear(), d.getMonth(), 1);
     pintaCalendario();
+    $("cal-dias").querySelector(`[data-d="${b.dataset.d}"]`)?.focus({ preventScroll: true }); // el foco sigue en el día elegido (teclado)
     if (innerWidth < 900) $("cal-detalle").scrollIntoView({ behavior: "smooth", block: "nearest" });
   });
   $("cal-leyenda").innerHTML = tipos.length < 2 ? "" : `<span class="leyenda-tit">Ver:</span><button type="button" class="filtro-cal ${estado.tipoCal ? "" : "activo"}" data-tipo-cal="" aria-pressed="${!estado.tipoCal}">Todo</button>` +
@@ -632,7 +648,7 @@ function pintaApartado() {
   const qr = $("buscar-ap").value.trim(), q = normal(qr);
   const l = todas.filter(x => pasaFecha("ap", x.fecha) && (!q || coincide(x.titulo + " " + x.contenido + " " + (x.adjuntos || []).map(j => j.nombre).join(" ") + " " + textoFecha(x.fecha), q)));
   $("lista-ap").innerHTML = l.length ? porMeses(l, x => x.fecha, x => (a.slug === APARTADO_ACTAS_PRL ? actaPubHTML : publicacionHTML)(x, qr))
-    : vacio(a.icono || "carpeta", q || hayFecha("ap") ? "No hay nada que coincida con la búsqueda o la fecha." : "Todavía no hay nada publicado en este apartado.");
+    : vacio(esc(a.icono || "carpeta"), q || hayFecha("ap") ? "No hay nada que coincida con la búsqueda o la fecha." : "Todavía no hay nada publicado en este apartado.");
 }
 $("buscar-ap").oninput = () => pintaApartado();
 
@@ -755,13 +771,15 @@ function pintaCalcula() {
 // Se envía con una función de la base de datos que comprueba el texto y pone un límite diario.
 // No se guarda nada del móvil: ni IP, ni identificadores, ni la hora (solo el día).
 const PARECE_DATO = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}|(\+?\d[ .-]?){9,}/i;
-$("buzon-texto").oninput = () => { $("buzon-cuenta").textContent = $("buzon-texto").value.length; msg2("buzon-msg", ""); };
+$("buzon-texto").oninput = () => { $("buzon-cuenta").textContent = $("buzon-texto").value.length; msg2("buzon-msg", ""); $("buzon-texto").removeAttribute("aria-invalid"); };
+// Error en el texto del mensaje: se marca el campo (el lector de pantalla lo dice) y se deja el foco en él
+const errBuzonTexto = (t) => { $("buzon-texto").setAttribute("aria-invalid", "true"); $("buzon-texto").focus(); msg2("buzon-msg", t); };
 function msg2(id, t, ok) { const el = $(id); el.textContent = t; el.className = "msg " + (t ? (ok ? "ok" : "err") : ""); }
 $("buzon-enviar").onclick = async () => {
   const texto = $("buzon-texto").value.trim(), tipo = document.querySelector('input[name="buzon-tipo"]:checked')?.value || "Pregunta";
   if ($("buzon-web").value) { $("buzon-texto").value = ""; return msg2("buzon-msg", "Enviado. Gracias.", true); } // relleno por un programa automático
-  if (texto.length < 5) return msg2("buzon-msg", "Escribe un poco más para que se entienda.");
-  if (PARECE_DATO.test(texto)) return msg2("buzon-msg", "Quita el email o el teléfono: el buzón es anónimo.");
+  if (texto.length < 5) return errBuzonTexto("Escribe un poco más para que se entienda.");
+  if (PARECE_DATO.test(texto)) return errBuzonTexto("Quita el email o el teléfono: el buzón es anónimo.");
   if (!$("buzon-acepto").checked) { $("buzon-acepto").focus(); return msg2("buzon-msg", "Para enviarlo, marca la casilla de la política de privacidad."); }
   const clave = "ccoo-buzon-" + hoyISO(); let n = 0;
   try { n = +localStorage.getItem(clave) || 0; } catch (_) {}
@@ -773,6 +791,7 @@ $("buzon-enviar").onclick = async () => {
   try { Object.keys(localStorage).filter(k => k.startsWith("ccoo-buzon-") && k !== clave).forEach(k => localStorage.removeItem(k)); localStorage.setItem(clave, String(n + 1)); } catch (_) {}
   $("buzon-texto").value = ""; $("buzon-cuenta").textContent = "0"; $("buzon-acepto").checked = false;
   msg2("buzon-msg", "Enviado. Gracias. Lo leerá la Sección Sindical.", true);
+  $("buzon-texto").focus({ preventScroll: true }); // el foco no se pierde: se queda en el cuadro, listo para otro mensaje
 };
 
 // ---------- Nosotros ----------
@@ -803,10 +822,12 @@ function sinRed(on, desde) {
   }
 }
 addEventListener("offline", () => sinRed(true, leeCopia()?.t));
-addEventListener("online", () => { cargar().then(() => sinRed(false), () => {}); });
+addEventListener("online", () => { cargar().then(ok => { if (ok) sinRed(false); }, () => {}); });
 
 // ---------- Carga de datos ----------
+// Devuelve true si ha llegado todo de internet y false si no hay conexión (entonces se enseña la copia de este móvil)
 async function cargar(idNuevo) {
+  let ok = true;
   await cargarOpciones();
   let [a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs, enc, vot] = await Promise.all([
     sb.from("comunicados").select("*").order("fecha", { ascending: false }).limit(200),
@@ -834,9 +855,10 @@ async function cargar(idNuevo) {
     if (!copia) {
       document.querySelectorAll("#inicio-rotulo, #lista-avisos").forEach(el =>
         el.innerHTML = vacio("alerta", "No se ha podido conectar. En cuanto vuelva la conexión se cargará sola."));
-      return;
+      return false;
     }
-    if (cargar.listo) return; // ya hay datos en pantalla: se quedan
+    if (cargar.listo) return false; // ya hay datos en pantalla: se quedan
+    ok = false;
     [a, e, c, d, ac, p, pr, dl, en, aps, pubs, cp, cc, ca, rs, enc, vot] = copia.r.map(x => ({ data: x, error: null }));
   } else {
     // Si falla alguna consulta suelta, esa parte sale de la copia anterior en vez de quedarse vacía
@@ -867,6 +889,7 @@ async function cargar(idNuevo) {
   pintaPestanas(); pintaApartado();
   pintaInicio(); pintaEncuestas(); pintaAvisos(idNuevo); pintaCalendario(); pintaConvenio(); pintaActas(); pintaDocumentos(); pintaPreguntas(); pintaInfo(); pintaCanales(); pintaContadores();
   if (/^#aviso-\d+$/.test(location.hash) && !cargar.hecho) { cargar.hecho = true; irA(); }
+  return ok;
 }
 // Pantalla de bienvenida: dura lo que tarda el camión en formar el logo (4,3 s) y se quita al terminar de cargar.
 // Tocarla la salta. Sale aunque el móvil tenga «quitar animaciones» (muchos lo activan solos con el ahorro de batería).
@@ -950,6 +973,8 @@ function avisar(texto, hash) {
   toast.innerHTML = icono("campana", "p") + esc(texto);
   toast.classList.add("ver");
   toast.onclick = () => { location.hash = hash; toast.classList.remove("ver"); };
+  toast.tabIndex = 0; toast.setAttribute("aria-label", texto + ". Pulsa para verlo");
+  toast.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toast.onclick(); } };
   clearTimeout(avisar.t); avisar.t = setTimeout(() => toast.classList.remove("ver"), 9000);
 }
 // Lo nuevo que llega mientras la web está abierta no se pinta de golpe (no salta nada en la pantalla):
@@ -1019,7 +1044,7 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden && Da
     if (y0 == null) return; y0 = null;
     if (dy <= UMBRAL) { quitar(); return; }
     ocupado = true; ind.classList.add("cargando"); txt.textContent = "Actualizando…";
-    try { await cargar(); txt.textContent = "Actualizado"; } catch (_) { txt.textContent = "No se ha podido actualizar"; }
+    try { txt.textContent = (await cargar()) ? "Actualizado" : "Sin conexión: no se ha podido actualizar"; } catch (_) { txt.textContent = "No se ha podido actualizar"; }
     setTimeout(() => { quitar(); ocupado = false; }, 800);
   });
 })();
@@ -1050,7 +1075,7 @@ $("cab-logo").addEventListener("click", () => {
 // ---------- v151: recuperar los datos de la app antigua y guardar copia (Mis descansos, Mis incentivos, Aparcamientos) ----------
 // Lo que apuntan los conductores se guarda solo en el móvil y va unido a la dirección de la web: lo de la app antigua no se ve aquí.
 // Este cuadro explica cómo sacarlo con la copia en PDF de la app antigua y meterlo aquí con «Recuperar una copia».
-// Los botones son los de cada herramienta (label for= su <input type=file>, data-pulsa= su botón de copia): no hay otra forma de importar.
+// Los botones pulsan los de cada herramienta (data-pulsa= su <input type=file> o su botón de copia; un botón y no un <label> para que vaya con teclado).
 const COPIA_CLAVE = { "desc-copia": "ccoo-copia-descansos", "gan-copia": "ccoo-copia-ganancias", "apc-mios-copia": "ccoo-copia-aparcar" };
 const T_ES = (s, v) => String(s).replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m);
 document.addEventListener("click", (ev) => {
@@ -1070,7 +1095,7 @@ function cajaRecuperar(o) {
   const pasos = [T("Pon el móvil en modo avión."), T("Abre la app antigua (o la web antigua en el navegador)."), o.paso3, T("Quita el modo avión."), T("Vuelve aquí, toca «Recuperar una copia» y elige ese PDF.")];
   const tit = esc(T("¿Usabas la app antigua? Recupera tus datos"));
   const cuerpo = `<ol class="recupera-pasos">${pasos.map(p => `<li>${esc(p)}</li>`).join("")}</ol>
-    <label class="btn grande recupera-btn" for="${esc(o.entrada)}">${icono("subir")}<span>${esc(T("Recuperar una copia"))}</span></label>
+    <button type="button" class="btn grande recupera-btn" data-pulsa="${esc(o.entrada)}">${icono("subir")}<span>${esc(T("Recuperar una copia"))}</span></button>
     <p class="ayuda">${esc(T("Antes de cambiar nada te pregunta. Lo de la copia se añade a lo que ya tengas aquí."))}</p>
     ${o.arriba ? `<button type="button" class="btn-txt" data-oculta-recupera="${esc(o.clave)}">${esc(T("No lo necesito: ocultar"))}</button>` : ""}`;
   return o.arriba ? `<section class="recupera-caja"><h2>${icono("subir")}<span>${tit}</span></h2>${cuerpo}</section>`
@@ -1337,7 +1362,22 @@ function menuIdiomas(caja, btn) {
   const lista = Object.entries(IDIOMAS).sort((x, y) => (y[0] === ult) - (x[0] === ult));
   caja.insertAdjacentHTML("beforeend", `<div class="menu-idiomas" role="menu"><p class="menu-aviso">Traducción automática con IA: puede tener errores. Si hay dudas, vale el texto en español.</p>${lista.map(([k, n]) => `<button role="menuitem" data-idioma="${k}" class="${k === ult ? "activo" : ""}" ${k === "ar" ? 'dir="rtl"' : ""}>${n}</button>`).join("")}</div>`);
   colocaMenuIdiomas(caja.querySelector(".menu-idiomas"), btn);
+  btn.setAttribute("aria-expanded", "true");
+  caja.querySelector(".menu-idiomas [role=menuitem]")?.focus();
 }
+// Menú de idiomas con teclado: flechas para moverse, Escape para cerrarlo (el foco vuelve al botón «Traducir»)
+document.addEventListener("keydown", (ev) => {
+  const menu = ev.target.closest?.(".menu-idiomas"); if (!menu) return;
+  const ops = [...menu.querySelectorAll("[role=menuitem]")], i = ops.indexOf(ev.target);
+  const ir = (n) => { ev.preventDefault(); ops[(n + ops.length) % ops.length]?.focus(); };
+  if (ev.key === "ArrowDown") ir(i + 1); else if (ev.key === "ArrowUp") ir(i - 1);
+  else if (ev.key === "Home") ir(0); else if (ev.key === "End") ir(ops.length - 1);
+  else if (ev.key === "Escape" || ev.key === "Tab") {
+    const btn = menu.parentElement?.querySelector("[data-traducir]");
+    if (ev.key === "Escape") { ev.preventDefault(); ev.stopPropagation(); }
+    menu.remove(); btn?.setAttribute("aria-expanded", "false"); if (ev.key === "Escape") btn?.focus();
+  }
+});
 document.addEventListener("click", async (ev) => {
   const btn = ev.target.closest("[data-traducir]");
   const opc = ev.target.closest("[data-idioma]");
@@ -1358,7 +1398,7 @@ document.addEventListener("click", async (ev) => {
   if (opc && opc.closest(".traducir")) {
     ev.preventDefault(); ev.stopPropagation();
     const idioma = opc.dataset.idioma, boton = opc.closest(".traducir").querySelector("[data-traducir]");
-    opc.closest(".menu-idiomas").remove();
+    opc.closest(".menu-idiomas").remove(); boton.setAttribute("aria-expanded", "false"); boton.focus({ preventScroll: true });
     try { localStorage.setItem("ccoo-ultimo-idioma", idioma); } catch (_) {}
     try {
       if (boton.dataset.traducir === "lista") await traduceLista(boton.closest("[data-reg-lista]"), idioma);

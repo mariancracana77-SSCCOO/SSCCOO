@@ -2,6 +2,7 @@
   "name": "Sección Sindical CCOO Calsina Carré",
   "short_name": "CCOO Calsina",
   "description": "Comunicados, convenio y calendario de la Sección Sindical CCOO Calsina Carré",
+  "id": "./index.html",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

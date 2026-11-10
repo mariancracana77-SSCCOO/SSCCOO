@@ -13,10 +13,10 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="fuentes.css?v=157">
-<script src="lectura.js?v=157"></script>
-<link rel="stylesheet" href="styles.css?v=157">
-<link rel="stylesheet" href="admin.css?v=157">
+<link rel="stylesheet" href="fuentes.css?v=158">
+<script src="lectura.js?v=158"></script>
+<link rel="stylesheet" href="styles.css?v=158">
+<link rel="stylesheet" href="admin.css?v=158">
 </head>
 <body class="admin">
 <header class="cabecera">
@@ -35,7 +35,7 @@
     <label for="email">Email</label><input id="email" type="email" value="ssccoo.calsinacarre@gmail.com" autocomplete="username">
     <label for="pass">Contraseña</label><input id="pass" type="password" autocomplete="current-password">
     <div class="botones"><button class="btn" id="b-entrar" style="flex:1">Entrar</button></div>
-    <div class="msg" id="m-login"></div>
+    <div class="msg" id="m-login" role="status" aria-live="polite"></div>
     <details class="problemas-entrar" id="problemas-entrar">
       <summary>¿Problemas para entrar?</summary>
       <div class="enlaces-login">
@@ -61,7 +61,7 @@
     <div class="botones"><button class="btn" id="b-olvido-guardar" style="flex:1">Guardar y entrar</button></div>
     <div class="enlaces-login"><button id="b-olvido-volver">Volver</button><button id="b-olvido-otro">Enviar otro email</button></div>
     <p class="ayuda">Si el email no trae código sino un botón, púlsalo: también sirve. Solo vale el último email que te llegue.</p>
-    <div class="msg" id="m-olvido"></div>
+    <div class="msg" id="m-olvido" role="status" aria-live="polite"></div>
   </section>
 </main>
 
@@ -78,7 +78,7 @@
     <input id="resc-repite" type="password" autocomplete="new-password">
     <div class="botones"><button class="btn" id="b-resc-guardar" style="flex:1">Guardar y entrar</button></div>
     <div class="enlaces-login"><button id="b-resc-volver">Volver</button></div>
-    <div class="msg" id="m-rescate"></div>
+    <div class="msg" id="m-rescate" role="status" aria-live="polite"></div>
   </section>
 </main>
 
@@ -88,7 +88,7 @@
     <label for="nueva">Escribe la nueva contraseña <small>(10 o más, con letras y números)</small></label>
     <input id="nueva" type="password" autocomplete="new-password">
     <div class="botones"><button class="btn" id="b-nueva">Guardar contraseña</button></div>
-    <div class="msg" id="m-rec"></div>
+    <div class="msg" id="m-rec" role="status" aria-live="polite"></div>
   </section>
 </main>
 
@@ -100,7 +100,7 @@
     <input id="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" class="codigo-2p">
     <div class="botones"><button class="btn" id="b-codigo" style="flex:1">Entrar</button></div>
     <div class="enlaces-login"><button id="b-codigo-salir">Salir y entrar con otra cuenta</button></div>
-    <div class="msg" id="m-codigo"></div>
+    <div class="msg" id="m-codigo" role="status" aria-live="polite"></div>
   </section>
 </main>
 
@@ -137,22 +137,22 @@
   <div class="ed-pie">
     <button class="btn peligro" id="ed-borrar"></button>
     <button class="btn sec" id="ed-duplicar"></button>
-    <span class="msg" id="ed-msg"></span>
+    <span class="msg" id="ed-msg" role="status" aria-live="polite"></span>
     <button class="btn sec" id="ed-cancelar">Cancelar</button>
     <button class="btn" id="ed-guardar"></button>
   </div>
 </section>
 
-<script src="lib/supabase.js?v=157"></script>
-<script src="iconos.js?v=157"></script>
-<script src="config.js?v=157"></script>
-<script src="render.js?v=157"></script>
-<script src="admin-base.js?v=157"></script>
-<script src="admin-sesion.js?v=157"></script>
-<script src="admin-listas.js?v=157"></script>
-<script src="admin-editor.js?v=157"></script>
-<script src="admin-herramientas.js?v=157"></script>
-<script src="admin-ajustes.js?v=157"></script>
-<script src="admin-calendario.js?v=157"></script>
+<script src="lib/supabase.js?v=158"></script>
+<script src="iconos.js?v=158"></script>
+<script src="config.js?v=158"></script>
+<script src="render.js?v=158"></script>
+<script src="admin-base.js?v=158"></script>
+<script src="admin-sesion.js?v=158"></script>
+<script src="admin-listas.js?v=158"></script>
+<script src="admin-editor.js?v=158"></script>
+<script src="admin-herramientas.js?v=158"></script>
+<script src="admin-ajustes.js?v=158"></script>
+<script src="admin-calendario.js?v=158"></script>
 </body>
 </html>

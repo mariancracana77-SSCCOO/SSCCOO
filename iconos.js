@@ -65,5 +65,6 @@
   const svg = '<svg xmlns="http://www.w3.org/2000/svg" style="display:none">' +
     Object.entries(p).map(([k, v]) => `<symbol id="i-${k}" viewBox="0 0 24 24">${v}</symbol>`).join("") + "</svg>";
   document.body.insertAdjacentHTML("afterbegin", svg);
-  window.icono = (n, cls = "") => `<svg class="icono ${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+  // El nombre y la clase solo pueden llevar letras, números, guiones y espacios (el icono de un apartado lo escribe el panel)
+  window.icono = (n, cls = "") => `<svg class="icono ${String(cls).replace(/[^\w -]/g, "")}" aria-hidden="true"><use href="#i-${String(n).replace(/[^\w-]/g, "")}"/></svg>`;
 })();

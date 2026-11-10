@@ -30,8 +30,8 @@ window.adjuntosHTML = (lista) => {
   return `<div class="adjuntos">${lista.map(a => {
     const t = tipoArchivo(a.tipo, a.nombre), esImg = (a.tipo || "").startsWith("image/") && !/hei[cf]/.test(a.tipo);
     return `<a class="adjunto" href="${esc(urlSegura(a.url))}" target="_blank" rel="noopener">
-      ${esImg ? `<img src="${esc(a.url)}" alt="" loading="lazy">` : `<span class="ic">${icono(t.ic, "p")}</span>`}
-      <span class="txt"><b>${esc(a.nombre || "Archivo")}</b><small>${t.txt}${a.tamano ? " · " + tamanoTxt(a.tamano) : ""}</small></span></a>`;
+      ${esImg ? `<img src="${esc(fotoSrc(a.url))}" alt="" loading="lazy">` : `<span class="ic">${icono(t.ic, "p")}</span>`}
+      <span class="txt"><b>${esc(a.nombre || "Archivo")}</b><small>${esc(t.txt)}${a.tamano ? " · " + tamanoTxt(a.tamano) : ""}</small></span></a>`;
   }).join("")}</div>`;
 };
 
@@ -127,7 +127,7 @@ window.docHTML = (d) => {
       <span class="cab"><span class="etq tipo ${claseTipo(d.categoria, "documento")}">${esc(d.categoria)}</span>${etqNuevo(d.fecha)}</span>
       <b>${esc(d.titulo || "Sin título")}</b>
       ${d.descripcion ? `<span class="desc">${esc(d.descripcion)}</span>` : ""}
-      <small>${t.txt}${d.tamano ? " · " + tamanoTxt(d.tamano) : ""} · Subido ${haceTxt(d.fecha)}</small>
+      <small>${esc(t.txt)}${d.tamano ? " · " + tamanoTxt(d.tamano) : ""} · Subido ${haceTxt(d.fecha)}</small>
     </span>
     <span class="abrir">${icono("pdf", "p")}<span>Abrir</span></span>
   </a>`;

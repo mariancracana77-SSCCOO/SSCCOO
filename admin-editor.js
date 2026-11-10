@@ -349,6 +349,9 @@ $("ed-guardar").onclick = async () => {
   if (ED.k === "encuestas" && ED.orig && !opcionesSeguras(ED.orig, fila)
     && !confirm("Esta encuesta ya tiene votos y has quitado o cambiado de sitio alguna opción. Los votos van por posición: pasarían a la opción que ahora ocupa ese lugar.\n\nSi solo has corregido una falta, puedes guardar. ¿Guardar igualmente?")) return marcaFalta("f-opciones", "Deja las opciones con votos en su sitio; las nuevas, al final.");
   if (s.valida) { const m = s.valida(fila); if (m) return marcaFalta("f-" + m[0], m[1]); }
+  // Un importe o una coordenada vacíos se guardarían como 0 sin avisar: se pregunta antes
+  const decVacio = camposPlanos(s).find(c => c.t === "number" && c.dec && !c.opc && $("f-" + c.k) && !String($("f-" + c.k).value).trim());
+  if (decVacio && !confirm(`«${decVacio.l}» está vacío y se guardará como 0. ¿Guardar igualmente?`)) return marcaFalta("f-" + decVacio.k, "Rellena: " + decVacio.l.toLowerCase() + ".");
   if (!(await revisarOrtografia(s, fila))) return;
   if (["enlaces", "restricciones", "prohibiciones"].includes(ED.k) && fila.url && !/^https?:\/\//.test(fila.url)) fila.url = "https://" + fila.url;
   if (s.filtro) Object.assign(fila, s.filtro);
@@ -385,7 +388,13 @@ $("ed-guardar").onclick = async () => {
     const q = ED.orig ? sb.from(s.tabla).update(fila).eq("id", ED.orig.id).select("*").single() : sb.from(s.tabla).insert(fila).select("*").single();
     const { data: guardado, error } = await q;
     if (error) throw error;
-    if (ED.k === "preguntas" && BUZON_A_PREGUNTA) { await sb.from("buzon").update({ archivado: true, leido: true }).eq("id", BUZON_A_PREGUNTA); BUZON_A_PREGUNTA = null; contarBuzon().then(pintaNav); }
+    subidos.length = 0; // ya están en la fila guardada: si algo falla después, no hay que borrarlos
+    let avisoBuzon = "";
+    if (ED.k === "preguntas" && BUZON_A_PREGUNTA) {
+      const { error: eb } = await sb.from("buzon").update({ archivado: true, leido: true }).eq("id", BUZON_A_PREGUNTA);
+      if (eb) avisoBuzon = " Pero el mensaje del buzón no se ha podido archivar: archívalo a mano en «Buzón».";
+      BUZON_A_PREGUNTA = null; contarBuzon().then(pintaNav);
+    }
     // Los archivos quitados se conservan: así se pueden recuperar desde el Historial. Se limpian en Ajustes.
     const editado = !!ED.orig, k = ED.k;
     quitarBorrador(); ED.sucio = false; await cerrarEditor();
@@ -396,6 +405,7 @@ $("ed-guardar").onclick = async () => {
     }
     RESALTAR = { k, id: guardado.id };
     abrir(["resumen", "calendario"].includes(actual) ? actual : (s.volver || k));
+    if (avisoBuzon) setTimeout(() => aviso(avisoBuzon.trim(), true), 4300); // después del aviso de «Guardado»
     if (fila.publicado === false || fila.publicada === false || (k === "convenio" && fila.visible === false)) return aviso(editado ? "Cambios guardados. Está oculto: no se ve en la web." : "Guardado sin publicar: no se ve en la web y no se ha avisado a nadie. Para publicarlo, ábrelo y marca «Se ve en la web».");
     if (reavisar) {
       const r = await sb.functions.invoke("notificar", { body: { modo: "publicado", tabla: s.tabla, id: guardado.id, cambio: true } }).catch(() => null);
@@ -492,10 +502,10 @@ function asistenteHTML() {
     </div>
     <div class="archivos" id="lista-ia"></div>
     <details class="nota-ia"><summary>Añadir una nota escrita (opcional)</summary>
-      <textarea id="notas-ia" placeholder="Algo que no esté en los archivos: quién asistió, la fecha…"></textarea></details>
+      <textarea id="notas-ia" aria-label="Notas para el asistente" placeholder="Algo que no esté en los archivos: quién asistió, la fecha…"></textarea></details>
     <details class="nota-ia"><summary>Nombres que se tapan siempre</summary>
       <p class="ayuda">Uno por línea: compañeros, jefes, clientes… Se guardan solo en este dispositivo. Los nombres de los delegados se tapan solos.</p>
-      <textarea id="tapar-ia" placeholder="Juan Pérez García&#10;Transportes Ejemplo"></textarea></details>
+      <textarea id="tapar-ia" aria-label="Nombres que hay que tapar, uno por línea" placeholder="Juan Pérez García&#10;Transportes Ejemplo"></textarea></details>
     <p class="ayuda"><b>Importante:</b> lo que se envía va a la IA gratuita de Google (Gemini), que puede usarlo para mejorar sus productos. Por eso se tapa antes lo importante.</p>
     <div class="botones" style="margin-top:12px"><button class="btn azul" id="b-ia" disabled>${icono("magia", "p")}Preparar y revisar</button></div>
     <div id="ia-revision" hidden></div>

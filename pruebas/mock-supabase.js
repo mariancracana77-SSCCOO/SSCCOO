@@ -8,7 +8,7 @@
       { id: 2, titulo: "Calendario de vacaciones", contenido: "Ya está disponible el calendario.", fecha: new Date(hoy - 864e5 * 3).toISOString(), categoria: "General", adjuntos: [] },
     ],
     eventos: [
-      { id: 1, titulo: "Reunión con la empresa", fecha: dia(5), hora: "10:00", lugar: "Sala de juntas", tipo: "Reunión", importante: true },
+      { id: 1, titulo: "Reunión con la empresa", fecha: dia(5), hora: "10:00:00", lugar: "Sala de juntas", tipo: "Reunión", importante: true },
       { id: 2, titulo: "Festivo local", fecha: dia(12), hora: "00:00", tipo: "Festivo" },
     ],
     convenio_secciones: [{ id: 1, titulo: "Vacaciones", contenido: "23 días laborables.", categoria: "Vacaciones", articulo: "28", orden: 1, visible: true, adjuntos: [] }],

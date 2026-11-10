@@ -5,7 +5,17 @@
 // ===== Panel de publicación · Sección Sindical CCOO Calsina Carré =====
 const $ = (id) => document.getElementById(id);
 const aqui = location.origin + location.pathname;
-const msg = (id, t, ok) => { const el = $(id); if (!el) return; el.textContent = t; el.className = "msg " + (ok ? "ok" : "err"); };
+// El panel no se enseña dentro de un marco de otra página (para que nadie pueda hacer que se pulse algo sin querer).
+// lectura.js ya intenta abrirlo aparte; si el navegador no le deja, aquí se tapa todo y se deja un enlace para abrirlo bien.
+if (window.top !== window.self) {
+  document.body.style.display = "none"; document.documentElement.style.display = "";
+  const aviso = document.createElement("div");
+  aviso.setAttribute("role", "alert");
+  aviso.style.cssText = "font: 18px/1.5 system-ui, sans-serif; padding: 24px; max-width: 560px; margin: 40px auto; color: #111; background: #fff;";
+  aviso.innerHTML = `<p><b>Por seguridad, el panel no se puede usar dentro de otra página.</b></p><p><a href="${esc(urlSegura(aqui))}" target="_blank" rel="noopener">Abrir el panel aparte</a></p>`;
+  document.documentElement.appendChild(aviso);
+}
+const msg = (id, t, ok) => { const el = $(id); if (!el) return; if (!el.hasAttribute("role")) { el.setAttribute("role", "status"); el.setAttribute("aria-live", "polite"); } el.textContent = t; el.className = "msg " + (ok ? "ok" : "err"); };
 const MAX_MB = 20;
 // Guía del panel (página aparte con capturas): sale en el menú como «Guía del panel»
 const GUIA_URL = "https://claude.ai/artifact/92KXfVBJpw9ri9FzDnnduu";

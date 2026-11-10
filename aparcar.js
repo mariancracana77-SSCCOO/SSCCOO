@@ -16,14 +16,23 @@
   const DEF = () => ({ camion: { alto: "4", ancho: "2,55", largo: "16,5", peso: "40", adr: false }, voz: false, cerrados: false, desde: "", hasta: "", cpDesde: "", cpHasta: "", vista: "lista" });
   const lee = () => { try { const d = JSON.parse(localStorage.getItem(CLAVE) || "null") || {}; return { ...DEF(), ...d, camion: { ...DEF().camion, ...(d.camion || {}) } }; } catch (_) { return DEF(); } };
   let AJ = lee();
-  const guarda = () => { try { localStorage.setItem(CLAVE, JSON.stringify(AJ)); } catch (_) {} };
+  // Si el móvil no deja guardar (modo incógnito, memoria llena), se avisa una vez, como en Mis descansos y Mis incentivos
+  const NO_GUARDA = "No se ha podido guardar en este móvil (¿modo incógnito?). Haz una copia.";
+  const avisaNoGuarda = () => {
+    if (avisaNoGuarda.ya) return; avisaNoGuarda.ya = true;
+    const m = document.getElementById("apc-estado"); if (m) { m.textContent = NO_GUARDA; m.classList.add("err"); }
+  };
+  const guarda = () => { try { localStorage.setItem(CLAVE, JSON.stringify(AJ)); } catch (_) { avisaNoGuarda(); } };
 
   // ---------- Mis aparcamientos (v106, lo pidió el padre) ----------
   // El conductor añade en el mapa los aparcamientos que encuentra. Se guardan en este móvil («ccoo-aparcar-mios») y, si quiere,
   // se proponen a la sección (RPC anónima proponer_aparcamiento). Desde la v111 salen a todos enseguida (estado «aprobado»); el padre puede quitarlos en el panel (tabla aparcamientos_compas).
   const CLAVE_MIOS = "ccoo-aparcar-mios";
   let MIOS = (() => { try { const l = JSON.parse(localStorage.getItem(CLAVE_MIOS) || "[]"); return Array.isArray(l) ? l.filter(x => x && x.id && Number.isFinite(+x.lat) && Number.isFinite(+x.lon)) : []; } catch (_) { return []; } })();
-  const guardaMios = () => { try { localStorage.setItem(CLAVE_MIOS, JSON.stringify(MIOS)); } catch (_) {} };
+  const guardaMios = () => {
+    try { localStorage.setItem(CLAVE_MIOS, JSON.stringify(MIOS)); guardaMios.fallo = false; }
+    catch (_) { guardaMios.fallo = true; const p = $("apc-mios-msg"); if (p) { p.textContent = NO_GUARDA; p.classList.add("err"); } avisaNoGuarda(); }
+  };
   let COMPAS = null;
   async function cargaCompas() {
     if (COMPAS) return COMPAS;
@@ -687,7 +696,6 @@
   const llegaA = (t0, minRuta) => new Date(t0 + (minRuta + retraso(minRuta)) * 60000);
   const diaHora = (d) => { const hoy = new Date(); hoy.setHours(0, 0, 0, 0); const dd = new Date(d); dd.setHours(0, 0, 0, 0); const dif = Math.round((dd - hoy) / 864e5);
     return (dif === 0 ? "hoy" : dif === 1 ? "mañana" : d.toLocaleDateString("es-ES", { weekday: "long", day: "numeric" })) + " a las " + hora(d); };
-  const hmTxt = (m) => durTxt(m);
   const campoHM = (k, txt) => { const v = +AJ[k] || 0; return `<label class="apc-hm-campo"><span>${txt}</span><span class="apc-hm"><input inputmode="numeric" maxlength="2" data-hm="${k}" data-p="h" value="${Math.floor(v / 60) || ""}" placeholder="0" aria-label="${txt}: horas"><small>h</small><input inputmode="numeric" maxlength="2" data-hm="${k}" data-p="m" value="${v % 60 || ""}" placeholder="0" aria-label="${txt}: minutos"><small>min</small></span></label>`; };
   function pintaParadas() {
     const caja = $("apc-sec-paradas"); if (!caja || !RUTA) return;
@@ -904,7 +912,7 @@
     m.capa.clearLayers();
     for (const y of items) {
       const e = estadoA(y.x, y.llega), cls = (e === "no" ? "no" : e === "nose" ? "nose" : "si") + (y.x.mio ? " mio" : "");
-      const icon = L.divIcon({ className: "apc-pin " + cls, html: `<span>${y.x.plazas ? y.x.plazas : "P"}</span>`, iconSize: [36, 36], iconAnchor: [18, 18], popupAnchor: [0, -16] });
+      const icon = L.divIcon({ className: "apc-pin " + cls, html: `<span>${y.x.plazas ? esc(String(y.x.plazas)) : "P"}</span>`, iconSize: [36, 36], iconAnchor: [18, 18], popupAnchor: [0, -16] });
       L.marker([y.x.lat, y.x.lon], { icon, title: nombre(y.x) + (y.x.plazas ? `, ${y.x.plazas} plazas` : "") })
         .bindPopup(`<ul class="apc-lista apc-popup">${tarjeta(y.x, y.falta ?? y.x.kmRuta, y.llega)}</ul>`, POPUP_OP()).addTo(m.capa);
     }
@@ -939,10 +947,10 @@
     const L = window.L, lista = await cargaPaises(paisesDe([[la, lo]]));
     const cerca = lista.map(x => ({ x, d: km(la, lo, x.lat, x.lon) })).filter(y => y.d <= 30).sort((a, b) => a.d - b.d);
     m.zona.clearLayers();
-    L.marker([la, lo], { icon: L.divIcon({ className: "apc-pin-sitio", html: "<span></span>", iconSize: [22, 22], iconAnchor: [11, 11] }), title: etiqueta }).bindTooltip(etiqueta).addTo(m.zona);
+    L.marker([la, lo], { icon: L.divIcon({ className: "apc-pin-sitio", html: "<span></span>", iconSize: [22, 22], iconAnchor: [11, 11] }), title: etiqueta }).bindTooltip(esc(etiqueta)).addTo(m.zona); // el nombre viene del buscador o del conductor: Leaflet lo mete como HTML
     for (const { x, d } of cerca) {
       const e = estadoA(x, new Date()), cls = (e === "no" ? "no" : e === "nose" ? "nose" : "si") + (x.mio ? " mio" : "");
-      L.marker([x.lat, x.lon], { icon: L.divIcon({ className: "apc-pin " + cls, html: `<span>${x.plazas ? x.plazas : "P"}</span>`, iconSize: [36, 36], iconAnchor: [18, 18], popupAnchor: [0, -16] }), title: nombre(x) })
+      L.marker([x.lat, x.lon], { icon: L.divIcon({ className: "apc-pin " + cls, html: `<span>${x.plazas ? esc(String(x.plazas)) : "P"}</span>`, iconSize: [36, 36], iconAnchor: [18, 18], popupAnchor: [0, -16] }), title: nombre(x) })
         .bindPopup(`<ul class="apc-lista apc-popup">${tarjeta(x, d, null)}</ul>`, POPUP_OP()).addTo(m.zona);
     }
     const c = document.querySelector(`.apc-busca-res[data-mapa="${id}"]`);
@@ -1169,7 +1177,10 @@
     if (!MAPAS[id]?.ultZona && id === "apc-mapa-libre") muestraZona(id, x.lat, x.lon, x.nombre);
     avisoMios(aviso);
   }
-  function avisoMios(t) { const p = $("apc-mios-msg"); if (p) { p.textContent = t; p.classList.remove("err"); } estado(t); }
+  function avisoMios(t) {
+    if (guardaMios.fallo) t = t + " " + NO_GUARDA; // que el aviso de que no se ha guardado no lo tape el de «añadido»
+    const p = $("apc-mios-msg"); if (p) { p.textContent = t; p.classList.toggle("err", !!guardaMios.fallo); } estado(t, !!guardaMios.fallo);
+  }
   // Vuelve a pintar todo lo que enseña aparcamientos
   async function refrescaMios() {
     pintaMios(); CERCA = [];

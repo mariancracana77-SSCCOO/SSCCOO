@@ -365,14 +365,18 @@ async function cargarCanales() {
     const r = await sb.functions.invoke("notificar", { body: { modo: "telegram_config", token: $("tg-token").value.trim(), chat } });
     let err = r.error ? ((await r.error.context?.json?.().catch(() => null))?.error || "No se ha podido conectar.") : null;
     if (err) return msg("m-tg", err);
-    if (chat.startsWith("@")) await sb.from("paginas").upsert({ slug: "telegram", contenido: chat, actualizado: new Date().toISOString() });
+    if (chat.startsWith("@")) {
+      const { error } = await sb.from("paginas").upsert({ slug: "telegram", contenido: chat, actualizado: new Date().toISOString() });
+      if (error) { cargarCanales(); return aviso("Telegram está conectado, pero no se ha podido poner el enlace del canal en la web: " + errTxt(error), true); }
+    }
     aviso("Telegram conectado. Mira tu canal: ha llegado un mensaje de prueba."); cargarCanales();
   };
   if ($("b-tg-quitar")) $("b-tg-quitar").onclick = async () => {
     if (!confirm("¿Desconectar Telegram? Los avisos dejarán de publicarse en el canal.")) return;
-    await sb.functions.invoke("notificar", { body: { modo: "telegram_quitar" } });
-    await sb.from("paginas").upsert({ slug: "telegram", contenido: "", actualizado: new Date().toISOString() });
-    aviso("Telegram desconectado."); cargarCanales();
+    const r = await sb.functions.invoke("notificar", { body: { modo: "telegram_quitar" } }).catch(e => ({ error: e }));
+    if (r?.error) { const det = (await r.error.context?.json?.().catch(() => null))?.error; return aviso("No se ha podido desconectar Telegram: los avisos se siguen publicando en el canal. " + (det || errTxt(r.error)), true); }
+    const { error } = await sb.from("paginas").upsert({ slug: "telegram", contenido: "", actualizado: new Date().toISOString() });
+    aviso(error ? "Telegram desconectado, pero el enlace del canal sigue en la web: " + errTxt(error) : "Telegram desconectado.", !!error); cargarCanales();
   };
   $("b-wa").onclick = async () => {
     const v = $("wa-enlace").value.trim();
@@ -428,6 +432,8 @@ async function prepararPlantillas() {
 const TABLAS_COPIA = ["comunicados", "eventos", "convenio_secciones", "actas", "documentos", "preguntas", "plantillas", "apartados", "publicaciones", "buzon", "avisos_recurrentes", "calc_permisos", "calc_categorias", "calc_ajustes", "restricciones", "tarifas_conductor", "paginas", "opciones", "admins",
   // v116: lo que se añadió después y no entraba en la copia
   "delegados", "enlaces", "encuestas", "encuesta_votos", "peajes_paises", "prohibiciones_camion", "aparcamientos_compas", "aparcamientos_correcciones", "aparcamientos_opiniones", "peticiones_claude"];
+// Tablas sin columna id: se ordenan por su clave para poder ir de 1000 en 1000.
+const ORDEN_COPIA = { paginas: ["slug"], calc_ajustes: ["clave"], admins: ["email"], encuesta_votos: ["encuesta_id", "opcion"] };
 async function prepararCopiaYArchivo() {
   const { data } = await sb.from("paginas").select("slug, contenido, actualizado").in("slug", ["archivo_meses", "ultima_copia"]);
   const p = Object.fromEntries((data || []).map(x => [x.slug, x]));
@@ -450,7 +456,19 @@ async function hacerCopia(conArchivos) {
   try {
     msg("m-copia", "Reuniendo los datos…", true);
     const copia = { creada: new Date().toISOString(), web: WEB_URL, tablas: {} };
-    for (const t of TABLAS_COPIA) { const { data, error } = await sb.from(t).select("*"); if (error) throw error; copia.tablas[t] = data; }
+    // El servidor da como mucho 1000 filas de cada vez: si una tabla llega a 1000, se vuelve a leer entera de 1000 en 1000
+    for (const t of TABLAS_COPIA) {
+      let { data, error } = await sb.from(t).select("*"); if (error) throw error;
+      if ((data || []).length >= 1000) {
+        data = [];
+        for (let i = 0; ; i += 1000) {
+          msg("m-copia", `Reuniendo los datos (${t}: ${i + 1000})…`, true);
+          let q = sb.from(t).select("*"); for (const c of (ORDEN_COPIA[t] || ["id"])) q = q.order(c); const r = await q.range(i, i + 999); if (r.error) throw r.error;
+          data.push(...(r.data || [])); if ((r.data || []).length < 1000) break;
+        }
+      }
+      copia.tablas[t] = data;
+    }
     const fecha = hoyISO(), nombre = `copia-ccoo-calsina-${fecha}`;
     let blob;
     if (!conArchivos) blob = new Blob([JSON.stringify(copia, null, 2)], { type: "application/json" });
@@ -474,9 +492,10 @@ async function hacerCopia(conArchivos) {
     }
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nombre + (conArchivos ? ".zip" : ".json");
     document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
-    await sb.from("paginas").upsert({ slug: "ultima_copia", contenido: new Date().toISOString(), actualizado: new Date().toISOString() });
-    msg("m-copia", `Copia descargada (${tamanoTxt(blob.size)}). Guárdala en un sitio seguro.`, true);
-    $("ultima-copia").innerHTML = "Última copia: <b>ahora mismo</b>.";
+    // El archivo ya está descargado: si no se puede apuntar la fecha, se avisa, pero la copia vale
+    const { error: eu } = await sb.from("paginas").upsert({ slug: "ultima_copia", contenido: new Date().toISOString(), actualizado: new Date().toISOString() });
+    msg("m-copia", `Copia descargada (${tamanoTxt(blob.size)}). Guárdala en un sitio seguro.` + (eu ? " No se ha podido apuntar la fecha de la copia en el panel, pero el archivo está bien." : ""), true);
+    if (!eu) $("ultima-copia").innerHTML = "Última copia: <b>ahora mismo</b>.";
   } catch (e) { msg("m-copia", "No se ha podido hacer la copia: " + errTxt(e)); }
   b1.disabled = b2.disabled = false;
 }

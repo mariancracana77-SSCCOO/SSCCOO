@@ -264,12 +264,14 @@ async function pintaCalculadoras() {
   $("zona").querySelectorAll("[data-nuevo]").forEach(b => b.onclick = () => abrirEditor(b.dataset.nuevo));
   const [aj] = await Promise.all([sb.from("calc_ajustes").select("*"), cargarDatos("permisos"), cargarDatos("categorias")]);
   const A = Object.fromEntries((aj.data || []).map(x => [x.clave, x.valor]));
-  $("calc-ajustes").innerHTML = AJUSTES_CALC.map(([k, l, t]) => t === "unidad"
+  // Sin los valores cargados, no se pinta el formulario: al guardar se pondrían en blanco los que no se tocaran
+  if (aj.error) { $("calc-ajustes").innerHTML = `<p class="msg err">No se han podido cargar los valores (${esc(errTxt(aj.error))}). Recarga la página antes de cambiar nada.</p><div class="botones"><button class="btn sec" type="button" id="ca-reintentar">Probar otra vez</button></div>`; $("ca-reintentar").onclick = pintaCalculadoras; }
+  else $("calc-ajustes").innerHTML = AJUSTES_CALC.map(([k, l, t]) => t === "unidad"
       ? `<label for="ca-${k}">${l}</label><select id="ca-${k}">${["días naturales", "días laborables", "días"].map(u => `<option ${u === A[k] ? "selected" : ""}>${u}</option>`).join("")}</select>`
       : t === "number" ? `<label for="ca-${k}">${l}</label><input id="ca-${k}" type="number" step="0.5" min="0" inputmode="decimal" value="${esc(A[k] || "")}">`
       : `<label for="ca-${k}">${l}</label><textarea id="ca-${k}" maxlength="400" style="min-height:76px">${esc(A[k] || "")}</textarea>`).join("") +
     `<div class="botones"><button class="btn" id="ca-guardar">${icono("check", "p")}Guardar</button></div><p class="msg" id="ca-msg"></p>`;
-  $("ca-guardar").onclick = async () => {
+  if ($("ca-guardar")) $("ca-guardar").onclick = async () => {
     const filas = AJUSTES_CALC.map(([k]) => ({ clave: k, valor: String($("ca-" + k).value).trim().slice(0, 400), actualizado: new Date().toISOString() }));
     const dias = parseFloat(filas[0].valor.replace(",", "."));
     if (isNaN(dias) || dias < 0 || dias > 60) return msg("ca-msg", "Pon un número de días entre 0 y 60.");
@@ -426,7 +428,9 @@ const TEXTOS = [
 ];
 async function pintaTextos() {
   $("zona").innerHTML = `<div class="sec-cab"><div><h1>Textos</h1><p>Los textos fijos de la web, que cambian poco.</p></div></div><div id="textos"><p class="fecha-txt">Cargando…</p></div>`;
-  const { data } = await sb.from("paginas").select("*");
+  const { data, error } = await sb.from("paginas").select("*");
+  // Si no se han podido leer, no se pinta el formulario: saldría vacío y, al guardar, se pisarían los textos de verdad
+  if (error) { $("textos").innerHTML = `<div class="panel vacio">${icono("alerta")}<p>No se han podido cargar los textos (${esc(errTxt(error))}). No escribas nada hasta que carguen.</p><button class="btn" type="button" id="t-reintentar">Probar otra vez</button></div>`; $("t-reintentar").onclick = pintaTextos; return; }
   const p = Object.fromEntries((data || []).map(x => [x.slug, x]));
   $("textos").innerHTML = `<div class="panel tarjeta-ajuste" style="max-width:780px">
     <p class="ayuda">La lista de países y la fecha de las restricciones para camiones se cambian en <a href="#camiones" id="t-ir-camiones">Restricciones camiones</a>.</p>
@@ -526,7 +530,7 @@ const horaPet = (t) => new Date(t).toLocaleString("es-ES", { day: "numeric", mon
 const PET_ANADE = {}; // archivos elegidos para añadir a cada petición (por id)
 async function pintaPeticiones() {
   PET_ARCH = [];
-  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Pedir un cambio a Claude</h1><p>Escribe lo que quieres cambiar o añadir en la web o en el panel. Para no escribir, toca el micrófono del teclado del móvil y dilo en voz alta. Puedes añadir fotos, capturas de pantalla y vídeos cortos. Al enviarlo, Claude se entera al momento, lo prepara y avisa a Lorena: no se publica nada sin que ella lo diga.</p></div></div>
+  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Pedir un cambio a Claude</h1><p>Escribe lo que quieres cambiar o añadir en la web o en el panel. Para no escribir, toca el micrófono del teclado del móvil y dilo en voz alta. Puedes añadir fotos, capturas de pantalla y vídeos cortos. Al enviarlo, Claude lo mira en menos de una hora (de 8 a 22 h), lo prepara y avisa a Lorena: no se publica nada sin que ella lo diga.</p></div></div>
     <div class="panel pet-avisos" id="pet-avisos" hidden>
       <p class="pet-avisos-tit">${icono("campana", "p")}<b>Avisos en este móvil</b></p>
       <p class="ayuda" id="pet-avisos-txt">Te llega un aviso al móvil cuando Claude te contesta o te toca decidir algo. Solo a ti: no les llega a los trabajadores.</p>
@@ -571,15 +575,19 @@ async function pintaPeticiones() {
       const { data: nueva, error } = await sb.from("peticiones_claude").insert({ texto, adjuntos: subidos }).select("id").single();
       if (error) throw error;
       t.value = ""; PET_ARCH = []; lista();
-      // v117: el timbre lo toca el panel solo (comentario corto en GitHub, función «timbre»): Claude se entera al momento
-      msg("pet-msg", "Enviada. Avisando a Claude…", true);
-      const r = await sb.functions.invoke("timbre", { body: { id: nueva?.id } }).catch(() => null);
-      msg("pet-msg", !$("pet-pausa")?.hidden ? "Enviada. Claude está en pausa: la verá cuando Lorena lo vuelva a encender." : r?.data?.ok ? "Enviada. Claude ya está avisado y se pone con ello. Lorena recibirá un aviso cuando esté listo." : "Enviada. Claude la mirará en la próxima revisión (cada hora, de 8 a 22).", true);
+      // Desde el 7/11/2026 (opción A) la función «timbre» ya no avisa a nadie al momento: Claude mira las peticiones cada hora,
+      // de 8 a 22 h. Se sigue llamando (comprueba la petición), pero el texto no depende de lo que conteste.
+      msg("pet-msg", "Enviada…", true);
+      await sb.functions.invoke("timbre", { body: { id: nueva?.id } }).catch(() => null);
+      msg("pet-msg", !$("pet-pausa")?.hidden ? "Enviada. Claude está en pausa: la verá cuando Lorena lo vuelva a encender." : "Enviada. Claude la mirará en menos de una hora (de 8 a 22 h) y te avisaremos aquí y en el móvil.", true);
       pintaHechas();
     } catch (er) { msg("pet-msg", errTxt(er)); }
     b.disabled = false;
   };
   pintaHechas();
+  // Si hay algo escrito sin enviar (la petición nueva o «Añadir algo»), se pregunta antes de ir a otra parte del panel
+  PENDIENTE = () => ($("pet-texto")?.value.trim() || PET_ARCH.length || [...document.querySelectorAll("form[data-anade] textarea")].some(x => x.value.trim()) || Object.values(PET_ANADE).some(a => a.length))
+    ? "Has escrito una petición o has elegido fotos y todavía no lo has enviado. ¿Salir sin enviarlo?" : "";
   // v121: si Claude está en pausa (lo enciende o apaga Lorena desde su app; Claude lo copia en peticiones_estado), se avisa arriba
   sb.from("peticiones_estado").select("pausa").eq("id", 1).maybeSingle().then(({ data }) => { const a = $("pet-pausa"); if (a) a.hidden = !data?.pausa; }, () => {});
   pintaAvisosPanel();
@@ -635,7 +643,7 @@ async function pintaAvisosPanel() {
     btn.disabled = true;
     try {
       if (activo) {
-        if (sub) await sb.rpc("desuscribir_push_admin", { p_endpoint: sub.endpoint });
+        if (sub) { const { error: ed } = await sb.rpc("desuscribir_push_admin", { p_endpoint: sub.endpoint }); if (ed) throw ed; } // si falla, los avisos seguirían llegando: no decir que ya no
         // Si la web no usa esta dirección para los avisos de los trabajadores (ccoo-push), se apaga también en el móvil
         let web = ""; try { web = localStorage.getItem("ccoo-push") || ""; localStorage.removeItem("ccoo-push-panel"); } catch { /* sin almacenamiento */ }
         if (sub && web !== sub.endpoint) await sub.unsubscribe().catch(() => {});
@@ -661,6 +669,9 @@ async function pintaAvisosPanel() {
 }
 async function pintaHechas() {
   const z = $("pet-hechas"); if (!z) return;
+  // Lo que se está escribiendo en «Añadir algo a esta petición» no se pierde al volver a pintar la lista
+  const borradores = {};
+  z.querySelectorAll("form[data-anade]").forEach(f => { const v = f.querySelector("textarea")?.value || ""; if (v.trim() || !f.hidden) borradores[f.dataset.anade] = { texto: v, abierto: !f.hidden }; });
   const { data, error } = await sb.from("peticiones_claude").select("id,creado,texto,adjuntos,estado,respuesta,mensajes,deshacer,version,propuesta,decision,ficha,pasada_lorena,oculta_padre,hecha_lorena").order("id", { ascending: false }).limit(PET_LIMITE);
   if (!$("pet-hechas")) return;
   if (error) { z.innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(errTxt(error))}</p>`; return; }
@@ -694,7 +705,7 @@ async function pintaHechas() {
         <p class="msg" role="status" aria-live="polite" id="pet-decide-msg-${esc(x.id)}"></p>
       </div>` : ""}
       ${x.estado === "lista" && x.decision === "publicar" ? `<p class="aviso-pausa">${icono("reloj", "p")}<span>Hecho: en unos minutos lo verás en la web.</span></p>` : ""}
-      ${grupo === "lorena" || grupo === "confirmadas" ? "" : `<div class="pet-lorena"><p class="ayuda">${["no_hecha", "descartada"].includes(x.estado) ? "Si no estás de acuerdo, avisa a Lorena: le llega un aviso al móvil y lo mira ella." : "¿Quieres que lo mire Lorena? Le llega un aviso al móvil."}</p><button type="button" class="btn${["no_hecha", "descartada"].includes(x.estado) ? "" : " sec"}" data-avisa-lorena="${esc(x.id)}">${icono("campana", "p")}Avisar a Lorena</button><p class="msg" role="status" aria-live="polite" id="pet-lorena-msg-${esc(x.id)}"></p></div>`}
+      ${grupo === "lorena" || grupo === "confirmadas" ? "" : `<div class="pet-lorena"><p class="ayuda"><b>Solo para emergencias: fallo o cambio inmediato.</b> ${["no_hecha", "descartada"].includes(x.estado) ? "Si es urgente y no estás de acuerdo, avisa a Lorena: le llega un aviso al móvil al momento." : "Le llega un aviso al móvil al momento. Para lo demás no hace falta: Claude lo mira cada hora."}</p><button type="button" class="btn${["no_hecha", "descartada"].includes(x.estado) ? "" : " sec"}" data-avisa-lorena="${esc(x.id)}">${icono("campana", "p")}Avisar a Lorena</button><p class="msg" role="status" aria-live="polite" id="pet-lorena-msg-${esc(x.id)}"></p></div>`}
       ${x.estado === "publicada" ? (x.deshacer ? `<p class="aviso-pausa">${icono("reloj", "p")}<span>Has pedido volver a como estaba antes. Claude lo deshace y avisa a Lorena.</span></p>` : `<div class="pet-lorena"><p class="ayuda">¿No te gusta cómo ha quedado o algo ha salido mal? La web vuelve a estar como antes de esta petición.</p><button type="button" class="btn sec" data-deshacer="${esc(x.id)}">${icono("cerrar", "p")}No me gusta, quitarlo</button><div class="pet-confirma" data-deshacer-confirma="${esc(x.id)}" hidden><p>¿Quitarlo y dejar la web como estaba antes?</p><button type="button" class="btn" data-deshacer-si="${esc(x.id)}">${icono("check", "p")}Sí, quitarlo</button><button type="button" class="btn sec" data-deshacer-no="${esc(x.id)}">No, dejarlo</button></div><p class="msg" role="status" aria-live="polite" id="pet-deshacer-msg-${esc(x.id)}"></p></div>`) : ""}
       ${grupo === "marcha" || grupo === "hechas" ? `<div class="pet-lorena pet-pasar"><p class="ayuda">¿Te parece complicada? Pásasela a Lorena: le llega un aviso y la sigue ella. Sale de tu lista, pero no se pierde nada.</p><button type="button" class="btn pet-pasar-btn" data-pasar="${esc(x.id)}">${icono("grupo", "p")}Que lo siga Lorena</button><div class="pet-confirma" data-pasar-confirma="${esc(x.id)}" hidden><p>¿Se la pasas a Lorena? Ya no tendrás que hacer nada con ella.</p><button type="button" class="btn" data-pasar-si="${esc(x.id)}">${icono("check", "p")}Sí, que la siga Lorena</button><button type="button" class="btn sec" data-pasar-no="${esc(x.id)}">No, volver</button></div><p class="msg" role="status" aria-live="polite" id="pet-pasar-msg-${esc(x.id)}"></p></div>` : ""}
       <button type="button" class="btn sec pet-anade-abre" data-anade-abre="${esc(x.id)}" aria-expanded="false">${icono("mas", "p")}Añadir algo a esta petición</button>
@@ -773,9 +784,9 @@ async function pintaHechas() {
       if (error) throw error;
       if (r === "ya") { msg(mid, "Ya la avisaste hace poco. Si no contesta, vuelve a probar dentro de media hora.", true); return; }
       if (r !== "ok") throw new Error("No se ha podido avisar. Prueba otra vez.");
-      const tr = await sb.functions.invoke("timbre", { body: { id, avisar: true } }).catch(() => null);
+      await sb.functions.invoke("timbre", { body: { id, avisar: true } }).catch(() => null);
       await pintaHechas();
-      msg(mid, tr?.data?.ok ? "Avisada. Le llegará un aviso al móvil." : "Apuntado. Lorena lo verá cuando mire las peticiones.", true);
+      msg(mid, "Avisada. Le llega un aviso al móvil (si lo tiene activado) y lo verá en sus peticiones.", true);
     } catch (er) { msg(mid, errTxt(er)); b.disabled = false; }
   });
   // v122: volver a como estaba antes de una petición ya publicada (Claude lo deshace con la copia de antes)
@@ -814,10 +825,17 @@ async function pintaHechas() {
   z.querySelectorAll("form[data-anade]").forEach(f => {
     const id = Number(f.dataset.anade), t = f.querySelector("textarea"), m = f.querySelector(".msg"), ul = f.querySelector("[data-anade-lista]");
     m.id = `pet-anade-msg-${id}`;
-    const arch = PET_ANADE[id] = [];
+    const arch = PET_ANADE[id] = PET_ANADE[id] || []; // las fotos ya elegidas se mantienen al volver a pintar
     const lista = () => { ul.innerHTML = arch.map((a, i) => `<li><span>${esc(a.name)} <small>${esc(tamanoTxt(a.size))}</small></span><button type="button" class="btn-txt" data-quita="${i}">Quitar</button></li>`).join("");
       ul.querySelectorAll("[data-quita]").forEach(q => q.onclick = () => { arch.splice(+q.dataset.quita, 1); lista(); }); };
     t.addEventListener("input", () => creceTexto?.(t));
+    const bo = borradores[id];
+    if (bo || arch.length) { // se vuelve a dejar como estaba: abierto, con su texto y sus fotos
+      if (bo) t.value = bo.texto;
+      f.hidden = false; z.querySelector(`[data-anade-abre="${id}"]`)?.setAttribute("aria-expanded", "true");
+      const d = f.closest("details.pet-item"); if (d) d.open = true;
+      lista(); creceTexto?.(t);
+    }
     f.querySelector("[data-anade-arch]").onchange = (e) => { const malos = eligePet(e.target, arch); lista(); if (malos.length) msg(m.id, malos.join(". ")); else m.textContent = ""; };
     f.onsubmit = async (e) => {
       e.preventDefault();
@@ -830,11 +848,12 @@ async function pintaHechas() {
         const { data: r, error } = await sb.rpc("anadir_a_peticion", { p_id: id, p_texto: texto, p_adjuntos: subidos });
         if (error) throw error;
         if (r !== "ok") throw new Error(r === "largo" ? "Es demasiado largo: pártelo en dos." : "No se ha podido añadir. Prueba otra vez.");
-        msg(m.id, "Añadido. Avisando a Claude…", true);
-        const tr = await sb.functions.invoke("timbre", { body: { id, anadido: true } }).catch(() => null);
+        msg(m.id, "Añadido…", true);
+        t.value = ""; arch.length = 0; // ya enviado: que no vuelva a salir como borrador
+        await sb.functions.invoke("timbre", { body: { id, anadido: true } }).catch(() => null);
         await pintaHechas();
         const nuevo = $(`pet-anade-msg-${id}`);
-        if (nuevo) { nuevo.closest("form").hidden = false; msg(nuevo.id, tr?.data?.ok ? "Añadido a la petición. Claude ya está avisado." : "Añadido a la petición. Claude lo verá cuando la mire.", true); }
+        if (nuevo) { nuevo.closest("form").hidden = false; msg(nuevo.id, "Añadido a la petición. Claude lo mirará en menos de una hora (de 8 a 22 h).", true); }
       } catch (er) { msg(m.id, errTxt(er)); b.disabled = false; }
     };
   });

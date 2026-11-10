@@ -3,7 +3,7 @@
 window.SUPABASE_URL = "https://kdfedwcskymaitvpryvg.supabase.co";
 window.SUPABASE_KEY = "sb_publishable_RLt0HuAMskXkKl2hxhUF2w_sCexGznp";
 window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-window.VERSION_WEB = "157"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
+window.VERSION_WEB = "158"; // cambiar junto con ?v= en los HTML y VERSION en sw.js
 window.WEB_URL = "https://mariancracana77-ssccoo.github.io/SSCCOO/";
 // Clave pública de las notificaciones (la privada solo está en el servidor)
 window.VAPID_PUBLICA = "BMMdZjehtNipsScHJ__kzOIn9XCgIpya3UDDRlexxOAWJU-J6ZICDlf72ItPOebzl-SfzoU234pd82Chp87Vm1w";
@@ -38,7 +38,7 @@ window.textoHTML = (s, resaltar) => {
   const linea = (t) => {
     let h = esc(t)
       .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-      .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+      .replace(/(https?:\/\/(?:(?!&quot;|&#39;)[^\s<])*(?:(?!&quot;|&#39;)[^\s<.,;:!?)&]))/g, '<a href="$1" target="_blank" rel="noopener">$1</a>'); // sin el punto, la coma o el paréntesis del final
     if (resaltar) {
       const r = resaltar.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       h = h.replace(new RegExp(`(?![^<]*>)(${r})`, "gi"), "<mark>$1</mark>");
@@ -62,7 +62,7 @@ window.fechaDia = (iso) => new Date(iso + "T12:00:00");
 window.hoyISO = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
 window.claseTipo = (t, lista) => {
   const o = lista && (OPC[lista] || []).find(x => x[0] === t);
-  return "c-" + (o ? o[1] : colorDe(t));
+  return "c-" + String(o ? o[1] : colorDe(t)).replace(/[^\w-]/g, ""); // el color sale de la tabla «opciones»: solo letras
 };
 // v154 (petición 24): los festivos con lugar «España» llevan su bandera y los de «Cataluña»/«Catalunya», la senyera
 // (dibujadas con CSS en styles.css, .bandera). Solo mira el tipo y el lugar que pone el padre en el panel.
@@ -91,10 +91,13 @@ window.compartir = async (titulo, texto) => {
 // Archivo .ics para añadir una fecha al calendario del móvil
 window.descargarICS = (e) => {
   const d = e.fecha.replace(/-/g, ""), ahora = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
-  const hm = (h) => (h || "").replace(":", "").padEnd(4, "0") + "00";
+  // Postgres da las horas como «10:00:00»; el panel, a veces, «10:00». Se queda solo con horas y minutos (HHMM00).
+  const hm = (h) => { const [a, b] = String(h || "0:0").split(":"); return String(+a || 0).padStart(2, "0") + String(+b || 0).padStart(2, "0") + "00"; };
+  // Sin hora de fin: una hora después (y como mucho a las 23:59 del mismo día)
+  const finPorDefecto = (h) => { const [a, b] = String(h).split(":"); const n = (+a || 0) + 1; return n > 23 ? "23:59" : String(n).padStart(2, "0") + ":" + String(+b || 0).padStart(2, "0"); };
   const escI = (t) => String(t || "").replace(/([,;\\])/g, "\\$1").replace(/\n/g, "\\n");
   let ini, fin;
-  if (e.hora && !window.esTodoElDia?.(e)) { ini = `DTSTART;TZID=Europe/Madrid:${d}T${hm(e.hora)}`; fin = `DTEND;TZID=Europe/Madrid:${d}T${hm(e.hora_fin || (String(+e.hora.slice(0, 2) + 1).padStart(2, "0") + e.hora.slice(2)))}`; }
+  if (e.hora && !window.esTodoElDia?.(e)) { ini = `DTSTART;TZID=Europe/Madrid:${d}T${hm(e.hora)}`; fin = `DTEND;TZID=Europe/Madrid:${d}T${hm(e.hora_fin || finPorDefecto(e.hora))}`; }
   else { const sig = new Date(fechaDia(e.fecha).getTime() + 86400000); ini = `DTSTART;VALUE=DATE:${d}`; fin = `DTEND;VALUE=DATE:${sig.getFullYear()}${String(sig.getMonth() + 1).padStart(2, "0")}${String(sig.getDate()).padStart(2, "0")}`; }
   // Avisos del calendario del móvil: el día antes y 2 horas antes (si es de todo el día, la tarde anterior a las 18:00)
   const alarma = (t, txt) => ["BEGIN:VALARM", "TRIGGER:" + t, "ACTION:DISPLAY", "DESCRIPTION:" + escI(txt), "END:VALARM"];
@@ -115,10 +118,9 @@ window.aplicarLectura = () => {
   L.letra && L.letra !== "normal" ? h.setAttribute("data-letra", L.letra) : h.removeAttribute("data-letra");
   L.contraste === "alto" ? h.setAttribute("data-contraste", "alto") : h.removeAttribute("data-contraste");
   L.tema && L.tema !== "auto" ? h.setAttribute("data-theme", L.tema) : h.removeAttribute("data-theme");
-  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = "#c4122f";
 };
 window.abrirLectura = () => {
-  const L = window.LECTURA, op = (grupo, val, txt, muestra) => `<button data-g="${grupo}" data-v="${val}" class="${(L[grupo] || (grupo === "letra" ? "normal" : grupo === "tema" ? "auto" : "normal")) === val ? "activa" : ""}">${muestra || ""}<span>${txt}</span></button>`;
+  const L = window.LECTURA, op = (grupo, val, txt, muestra) => `<button data-g="${grupo}" data-v="${val}" class="${(L[grupo] || (grupo === "letra" ? "normal" : grupo === "tema" ? "auto" : "normal")) === val ? "activa" : ""}" aria-pressed="${(L[grupo] || (grupo === "letra" ? "normal" : grupo === "tema" ? "auto" : "normal")) === val}">${muestra || ""}<span>${txt}</span></button>`;
   const v = document.createElement("div"); v.className = "modal-velo";
   v.innerHTML = `<div class="modal lectura" role="dialog" aria-modal="true" aria-label="Ajustes de lectura"><h2>Ajustes de lectura</h2>
     <p class="fecha-txt" style="margin:0">Solo cambian en este móvil u ordenador.</p>
@@ -140,7 +142,7 @@ window.abrirLectura = () => {
         h.style.setProperty("--vt-x", (r.left + r.width / 2) + "px"); h.style.setProperty("--vt-y", (r.top + r.height / 2) + "px");
         document.startViewTransition(() => aplicarLectura());
       } else aplicarLectura();
-      v.querySelectorAll(`[data-g="${b.dataset.g}"]`).forEach(x => x.classList.toggle("activa", x === b)); return; }
+      v.querySelectorAll(`[data-g="${b.dataset.g}"]`).forEach(x => { x.classList.toggle("activa", x === b); x.setAttribute("aria-pressed", String(x === b)); }); return; }
     if (e.target === v || e.target.closest("[data-cerrar]")) v.remove();
   };
   document.body.appendChild(v); v.querySelector(".activa")?.focus();
@@ -279,9 +281,13 @@ window.coincide = (texto, q) => {
   let n = 0;
   const FOCO = "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])";
   const ultima = () => { const vs = document.querySelectorAll(".modal-velo"); return vs[vs.length - 1] || null; };
+  // Último sitio con foco fuera de las ventanas: algunas ventanas meten el foco dentro antes de que se vean aquí
+  let ultimoFuera = null;
+  document.addEventListener("focusin", (e) => { if (e.target instanceof Element && !e.target.closest(".modal-velo")) ultimoFuera = e.target; }, true);
   const preparar = (v) => {
     const m = v.querySelector("[role=dialog], .modal"); if (!m) return;
-    v._antes = document.activeElement;
+    const act = document.activeElement;
+    v._antes = act && act !== document.body && !act.closest?.(".modal-velo") ? act : ultimoFuera;
     m.setAttribute("role", "dialog"); m.setAttribute("aria-modal", "true");
     const h = m.querySelector("h2, h3");
     if (h && !m.hasAttribute("aria-labelledby")) { h.id = h.id || "ventana-tit-" + (++n); m.setAttribute("aria-labelledby", h.id); }
@@ -292,7 +298,8 @@ window.coincide = (texto, q) => {
     r.addedNodes.forEach(el => { if (el.nodeType === 1 && el.classList.contains("modal-velo")) preparar(el); });
     r.removedNodes.forEach(el => {
       if (el.nodeType !== 1 || !el.classList.contains("modal-velo")) return;
-      const a = el._antes; if (a && a.isConnected && !ultima() && (document.activeElement === document.body || !document.activeElement)) a.focus({ preventScroll: true });
+      const a = el._antes, act = document.activeElement;
+      if (a && a.isConnected && !ultima() && (!act || act === document.body || !act.isConnected)) a.focus({ preventScroll: true });
     });
   })).observe(document.body, { childList: true });
   document.addEventListener("keydown", (e) => {
