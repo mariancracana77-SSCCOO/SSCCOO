@@ -178,6 +178,10 @@
     return f ? `<span class="gan-zonas">${zh}<span class="gan-fest-etq">${icono("calendario", "p")}${esc(T("Festivo"))}</span></span>` : zh; };
   const SELLO_FEST = `<span class="gan-fest-sello" aria-hidden="true">${icono("calendario")}</span>`; // GB-CG-MA: solo las tres banderas (el texto no cabe)
   // v109 (lo pidió el padre): la Plaça destaca como una plaza de aparcamiento (señal azul con la P y fila de asfalto con las rayas blancas)
+  // v171 (petición n.º 36): «Km Catalunya»: km que se apuntan a 0 € para llevar la cuenta; no suman dinero. Salen de otro color
+  // (la senyera) debajo de «Kilómetros», y en los totales de km se separan los pagados y los de Catalunya.
+  const kmCat = (t) => t.unidad === "km" && /catalu/i.test(t.concepto || "");
+  const nombreCat = () => TD((TARIFAS.find(kmCat) || {}).concepto || "Km Catalunya");
   const esPlaza = (t) => /^pla[cçz]a\b/i.test(t.concepto || "");
   const SENAL_P = '<span class="gan-p" aria-hidden="true">P</span>';
   const nombreC = (t) => { const z = zona(t); return t.concepto + (z && zonaTxt(t.concepto) !== z ? " (" + { nac: "nacional", int: "internacional", gb: "GB-CG-MA" }[z] + ")" : ""); };
@@ -255,7 +259,7 @@
         // v89: si el precio va a cambiar después de este día, se avisa («Desde el 1 de enero de 2027: 50,82 €»)
         t.nuevo != null && t.desde && f < t.desde && !esPropio(t, t.desde) ? T("Desde el {d}: {p}", { d: deIso(t.desde).toLocaleDateString(LOC, { day: "numeric", month: "long", year: "numeric" }), p: precio(t.nuevo) }) : "", t.sin_pagar ? (t.sin_pagar === 1 ? T("La primera de cada día no se paga.") : T("Las primeras {n} de cada día no se pagan.", { n: t.sin_pagar })) : "", t.max_mes != null ? T("Como mucho {n} al mes.", { n: t.max_mes }) : ""].filter(Boolean);
       const unicos = [...new Set(nota)];
-      return `<li class="gan-fila ${l ? "con" : ""} ${zonaHTML(t) ? "con-zona" : ""} ${zona(t) && !zonaTxt(t.grupo) ? "fila-z-" + zona(t) : ""}${esPlaza(t) ? " gan-placa" : ""}${esFest(t) ? " gan-festiva" : ""}">${zonaHTML(t)}<label for="gan-c${t.id}"><b>${esPlaza(t) ? SENAL_P : ""}${esc(TD(t.concepto))}</b><small>${imp(t, f) ? `${t.unidad === "minuto" ? esc(T("{h} por hora · {m} por minuto", { h: eur(imp(t, f) * 60), m: precio(imp(t, f)) })) : `${esc(precio(imp(t, f)))} ${esc(UNIDAD()[t.unidad])}`}${esPropio(t, f) ? " · " + esc(T("el tuyo")) : ""}` : `<span class="gan-tope">${esc(T("Pon tu precio en «Ajustes»"))}</span>`}${t.pago === "Mensual" ? " · " + esc(T("en la nómina")) : " · " + esc(T("cobro semanal"))}</small>${unicos.map(x => `<small class="gan-nota">${esc(x)}</small>`).join("")}${l?.tope ? `<small class="gan-tope">${esc(T("Ya llevas el máximo de este mes: este no suma."))}</small>` : ""}</label>
+      return `<li class="gan-fila ${l ? "con" : ""} ${zonaHTML(t) ? "con-zona" : ""} ${zona(t) && !zonaTxt(t.grupo) ? "fila-z-" + zona(t) : ""}${esPlaza(t) ? " gan-placa" : ""}${esFest(t) ? " gan-festiva" : ""}${kmCat(t) ? " gan-km-cat" : ""}">${zonaHTML(t)}<label for="gan-c${t.id}"><b>${esPlaza(t) ? SENAL_P : ""}${esc(TD(t.concepto))}</b><small>${kmCat(t) && !imp(t, f) ? esc(T("0 € por km · no suma dinero: solo para llevar la cuenta")) : imp(t, f) ? `${t.unidad === "minuto" ? esc(T("{h} por hora · {m} por minuto", { h: eur(imp(t, f) * 60), m: precio(imp(t, f)) })) : `${esc(precio(imp(t, f)))} ${esc(UNIDAD()[t.unidad])}`}${esPropio(t, f) ? " · " + esc(T("el tuyo")) : ""}` : `<span class="gan-tope">${esc(T("Pon tu precio en «Ajustes»"))}</span>`}${kmCat(t) && !imp(t, f) ? "" : t.pago === "Mensual" ? " · " + esc(T("en la nómina")) : " · " + esc(T("cobro semanal"))}</small>${unicos.map(x => `<small class="gan-nota">${esc(x)}</small>`).join("")}${kmCat(t) ? (() => { const tot = kmDe([f]), cat = kmDe([f], "cat"); return tot ? `<small class="gan-km-suma">${esc(T("Este día: {p} pagados + {c} = {t}", { p: kmTxt(kmDe([f], "pag")), c: kmTxt(cat), t: kmTxt(tot) }))}</small>` : ""; })() : ""}${l?.tope ? `<small class="gan-tope">${esc(T("Ya llevas el máximo de este mes: este no suma."))}</small>` : ""}</label>
         <div class="gan-ctrl">${control(t)}</div><span class="gan-imp">${l ? esc(eur(l.imp)) : ""}</span></li>`; };
     // ¿Dieta completa y partes el mismo día? Normalmente es una u otra
     const lleva = (p) => r.lineas.some(l => /dieta/i.test(l.t.grupo + " " + l.t.concepto) && p(l.t));
@@ -390,7 +394,7 @@
     $("gan-semana").innerHTML = `<div class="gan-nav"><button type="button" class="btn-ic" data-sem="-7" aria-label="${esc(T("Semana anterior"))}">${icono("izq")}</button>
         <b class="gan-fecha"><span>${esc(T("Semana {n}", { n: w.n }))}${l === esta ? ` · ${esc(T("esta semana"))}` : ""}</span><small>${esc(T("Del {a} al {b}", { a: fDia(dias[0]), b: fDia(dias[6]) }))}${w.a !== +l.slice(0, 4) ? " · " + w.a : ""}</small></b>
         <button type="button" class="btn-ic" data-sem="7" aria-label="${esc(T("Semana siguiente"))}">${icono("der")}</button></div>
-      <div class="gan-total"><span>${esc(T("Esta semana"))}</span><b>${esc(eur(r.total))}</b></div>${(() => { const km = kmDe(dias); return km ? `<div class="desc-cifras gan-cifras gan-km-arriba"><div class="gan-km-mes"><b>${esc(kmTxt(km))}</b><span>${esc(T("Kilómetros de esta semana"))}</span></div></div>` : ""; })()}${reparto(r)}
+      <div class="gan-total"><span>${esc(T("Esta semana"))}</span><b>${esc(eur(r.total))}</b></div>${(() => { const km = kmCaja(dias, T("Kilómetros de esta semana"), T("Km en total esta semana")); return km ? `<div class="desc-cifras gan-cifras gan-km-arriba">${km}</div>` : ""; })()}${reparto(r)}
       <ul class="gan-dias">${(() => dias.map(f => { const x = c[f]; // v102: sin los km de cada día (cargaba mucho la lista); el total de la semana va arriba
         return `<li><button type="button" data-ir-dia="${f}" class="${f === hoy() ? "hoy" : ""}"><span>${esc(fDia(f))}</span><b>${x && x.lineas.length ? esc(eur(x.total)) : `${DATOS.libres[f] ? `<small class="gan-libre-etq">${esc(T("Libre"))}</small>` : `<small>${esc(T("Sin apuntar"))}</small>`}`}</b>${icono("der", "p")}</button></li>`; }).join(""))()}</ul>
       <details class="gan-ir-caja"><summary>${icono("calendario", "p")}<span>${esc(T("Ir a otra semana"))}</span></summary>
@@ -440,8 +444,13 @@
   }
 
   // v99: kilómetros apuntados en esos días (conceptos «por km» que se usan), para «Mes» y su PDF (lo pidió el padre)
-  const kmDe = (ds) => { const ids = TARIFAS.filter(t => t.unidad === "km" && !DATOS.oculto[t.id]).map(t => t.id); return Math.round(ds.reduce((s, f) => s + ids.reduce((x, id) => x + num((DATOS.dias[f] || {})[id]), 0), 0) * 100) / 100; };
+  // v171 (petición n.º 36): «cual» = "cat" solo los km a 0 € (Km Catalunya), "pag" solo los pagados; sin nada, todos.
+  const kmDe = (ds, cual) => { const ids = TARIFAS.filter(t => t.unidad === "km" && !DATOS.oculto[t.id] && (!cual || kmCat(t) === (cual === "cat"))).map(t => t.id); return Math.round(ds.reduce((s, f) => s + ids.reduce((x, id) => x + num((DATOS.dias[f] || {})[id]), 0), 0) * 100) / 100; };
   const kmTxt = (n) => n.toLocaleString(LOC, { maximumFractionDigits: 1 }) + " km";
+  // v171: las cajas de kilómetros. Sin km Catalunya, como siempre (una cifra); con ellos, pagados, Catalunya y la suma.
+  const kmCaja = (ds, txtTodo, txtSuma) => { const tot = kmDe(ds), cat = kmDe(ds, "cat"); if (!tot) return "";
+    if (!cat) return `<div class="gan-km-mes"><b>${esc(kmTxt(tot))}</b><span>${esc(txtTodo)}</span></div>`;
+    return `<div class="gan-km-mes"><b>${esc(kmTxt(kmDe(ds, "pag")))}</b><span>${esc(T("Km pagados"))}</span></div><div class="gan-km-mes gan-km-cat"><b>${esc(kmTxt(cat))}</b><span>${esc(T("{c} (a 0 €)", { c: nombreCat() }))}</span></div><div class="gan-km-mes gan-km-suma-c"><b>${esc(kmTxt(tot))}</b><span>${esc(txtSuma)}</span></div>`; };
   function pintaMes(c) {
     const m = DATOS.mes || (DATOS.dia || hoy()).slice(0, 7), [a, mm] = m.split("-").map(Number), k = cuentasMes(c, m), r = k.r;
     const otroMes = (x) => iso(new Date(a, mm - 1 + x, 1)).slice(0, 7);
@@ -453,11 +462,11 @@
       <div class="desc-cifras gan-cifras">
         <div><b>${esc(eur(k.nomina))}</b><span>${esc(T("En la nómina de fin de mes: salario y lo que se paga con la nómina (nocturnidad, ADR fijo)"))}</span></div>
         <div><b>${esc(eur(k.semanal))}</b><span>${esc(T("Cobro semanal: dietas, suplementos, cargas, kilómetros, festivos, ADR por minuto y horas sindicales de {n} días apuntados (te los pagan por semanas)", { n: r.apuntados }))}</span></div>
-        ${(() => { const km = kmDe(Array.from({ length: new Date(a, mm, 0).getDate() }, (_, i) => `${m}-${String(i + 1).padStart(2, "0")}`)); return km ? `<div class="gan-km-mes"><b>${esc(kmTxt(km))}</b><span>${esc(T("Kilómetros del mes: la suma de todas las semanas"))}</span></div>` : ""; })()}
+        ${kmCaja(Array.from({ length: new Date(a, mm, 0).getDate() }, (_, i) => `${m}-${String(i + 1).padStart(2, "0")}`), T("Kilómetros del mes: la suma de todas las semanas"), T("Km en total del mes"))}
       </div>
       ${(() => { const ult = `${m}-${String(new Date(a, mm, 0).getDate()).padStart(2, "0")}`, sems = []; for (let l = lunesDe(m + "-01"); l <= ult; l = suma(l, 7)) sems.push(l);
-        const filas = sems.map(l => { const todos = diasDe(l), ds = todos.filter(f => f.slice(0, 7) === m), x = resumen(c, ds), w = semDe(l); return { l, ds, x, w, km: kmDe(ds), parte: ds.length < 7 }; }).filter(f => f.x.apuntados);
-        return filas.length ? `<h3 class="gan-sub">${esc(T("Por semanas"))}</h3><ul class="gan-dias gan-semanas">${filas.map(f => `<li><button type="button" data-ir-sem="${f.l}"><span>${esc(T("Semana {n}", { n: f.w.n }))}<small>${esc(T("Del {a} al {b}", { a: fDia(f.ds[0]), b: fDia(f.ds[f.ds.length - 1]) }))}${f.parte ? " · " + esc(T("solo los días de este mes")) : ""}</small>${f.km ? `<small class="gan-km">${esc(kmTxt(f.km))}</small>` : ""}</span><b>${esc(eur(f.x.total))}</b>${icono("der", "p")}</button></li>`).join("")}</ul>` : ""; })()}
+        const filas = sems.map(l => { const todos = diasDe(l), ds = todos.filter(f => f.slice(0, 7) === m), x = resumen(c, ds), w = semDe(l); return { l, ds, x, w, km: kmDe(ds), cat: kmDe(ds, "cat"), parte: ds.length < 7 }; }).filter(f => f.x.apuntados);
+        return filas.length ? `<h3 class="gan-sub">${esc(T("Por semanas"))}</h3><ul class="gan-dias gan-semanas">${filas.map(f => `<li><button type="button" data-ir-sem="${f.l}"><span>${esc(T("Semana {n}", { n: f.w.n }))}<small>${esc(T("Del {a} al {b}", { a: fDia(f.ds[0]), b: fDia(f.ds[f.ds.length - 1]) }))}${f.parte ? " · " + esc(T("solo los días de este mes")) : ""}</small>${f.km ? `<small class="gan-km">${esc(kmTxt(f.km))}${f.cat ? ` <span class="gan-km-cat-txt">${esc(T("({c} a 0 €)", { c: kmTxt(f.cat) }))}</span>` : ""}</small>` : ""}</span><b>${esc(eur(f.x.total))}</b>${icono("der", "p")}</button></li>`).join("")}</ul>` : ""; })()}
       <h3 class="gan-sub">${esc(T("En la nómina"))}</h3>
       <ul class="gan-desglose">${k.fijos.map(x => `<li><span>${esc(TD(x.t.concepto))}${esPropio(x.t) ? ` <small>${esc(T("el tuyo, de «Ajustes»"))}</small>` : ""}</span><b>${esc(eur(x.imp))}</b></li>`).join("")}</ul>
       ${desglose({ por: enNomina })}
@@ -585,7 +594,8 @@
       if (op.mes) { // v88: el mes entero con la nómina (salario y fijos) y lo semanal
         const k = cuentasMes(c, op.mes);
         L.push(["Cuentas del mes", 15, true], ["Cobro semanal del mes: " + eur(k.semanal), 11, true, 6, C_SEM]);
-        { const kmM = kmDe(Object.keys(DATOS.dias).filter(f => f.slice(0, 7) === op.mes)); if (kmM) L.push(["Kilómetros del mes: " + kmM.toLocaleString("es-ES", { maximumFractionDigits: 1 }) + " km", 11, true, 6]); }
+        { const dm = Object.keys(DATOS.dias).filter(f => f.slice(0, 7) === op.mes), kmM = kmDe(dm), kmC = kmDe(dm, "cat"), k1 = (n) => n.toLocaleString("es-ES", { maximumFractionDigits: 1 }) + " km";
+          if (kmM) L.push(["Kilómetros del mes: " + k1(kmM) + (kmC ? " (" + k1(kmDe(dm, "pag")) + " pagados y " + k1(kmC) + " de " + ((TARIFAS.find(kmCat) || {}).concepto || "Km Catalunya") + " a 0 €)" : ""), 11, true, 6]); }
         k.fijos.forEach(x => L.push([x.t.concepto + ": " + eur(x.imp), 9, false, 14, C_NOM]));
         L.push(["Lo que va con la nómina de estos días (nocturnidad, ADR fijo…): " + eur(k.r.mensual), 9, false, 14, C_NOM], ["En la nómina de fin de mes: " + eur(k.nomina), 11, true, 6, C_NOM], ["Total del mes (bruto): " + eur(k.total), 15, true, 6, C_TOT], [""]);
       }

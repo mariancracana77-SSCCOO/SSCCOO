@@ -2703,3 +2703,15 @@ body.solo-restr #apc-prohib-todas { margin-top: 20px; }
 .apc-prohib-todas[dir="rtl"] .apc-norma, .apc-prohib-todas[dir="rtl"] .apc-prohib-una { border-left-width: 1px; border-right: 4px solid var(--azul); }
 .apc-prohib-todas[dir="rtl"] .apc-prohib-una.ahora { border-right-color: var(--rojo, #AB1012); }
 .apc-prohib-todas[dir="rtl"] .apc-prohib-pais summary::after { margin-left: 0; margin-right: auto; }
+
+/* v171 (petición n.º 36): «Km Catalunya», km a 0 € con los colores de la senyera para distinguirlos de los km pagados */
+:root { --cat-tinta: #8a5a00; --cat-fondo: color-mix(in srgb, #FCDD09 20%, var(--tarjeta)); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cat-tinta: #FCDD09; --cat-fondo: color-mix(in srgb, #FCDD09 12%, var(--tarjeta)); } }
+:root[data-theme="dark"] { --cat-tinta: #FCDD09; --cat-fondo: color-mix(in srgb, #FCDD09 12%, var(--tarjeta)); }
+.gan-fila.gan-km-cat, .gan-fila.gan-km-cat.con { border-left-color: transparent; border-radius: 8px; padding-left: 16px; background: repeating-linear-gradient(#FCDD09 0 11.11%, #DA121A 11.11% 22.22%) left / 7px 100% no-repeat, #fbf3cc; background: repeating-linear-gradient(#FCDD09 0 11.11%, #DA121A 11.11% 22.22%) left / 7px 100% no-repeat, var(--cat-fondo); }
+[dir="rtl"] .gan-fila.gan-km-cat, [dir="rtl"] .gan-fila.gan-km-cat.con { border-right-color: transparent; background-position: right; padding: 10px 16px 10px 0; }
+.gan-fila.gan-km-cat > label b, .gan-fila.gan-km-cat .gan-imp { color: var(--cat-tinta); }
+.gan-fila .gan-km-suma { font-style: normal; font-weight: 700; color: var(--tinta); }
+.desc-cifras > div.gan-km-cat { background: repeating-linear-gradient(#FCDD09 0 11.11%, #DA121A 11.11% 22.22%) left / 6px 100% no-repeat, #fbf3cc; background: repeating-linear-gradient(#FCDD09 0 11.11%, #DA121A 11.11% 22.22%) left / 6px 100% no-repeat, var(--cat-fondo); padding-left: 16px; }
+.desc-cifras > div.gan-km-cat b { color: var(--cat-tinta); }
+.gan-semanas .gan-km-cat-txt { color: var(--cat-tinta); }

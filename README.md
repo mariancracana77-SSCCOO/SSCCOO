@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 171: «Km Catalunya» a 0 € en Mis incentivos
+Lo pidió el padre (petición n.º 36): un concepto nuevo «Km Catalunya» en Mis incentivos, en la tabla de importes (panel > «Importes conductores», como los demás). Se apunta en km igual que «Kilómetros» pero a 0 €: no suma dinero, sirve para llevar la cuenta. En «Día» sale justo debajo de «Kilómetros» con los colores de la senyera y la suma del día («100 km pagados + 40 km = 140 km»). En «Semana», «Mes» y el PDF del mes, los kilómetros se separan en pagados, Km Catalunya y la suma de los dos. Lo que ya tenían apuntado los conductores no cambia.
+
 ## Versión 170: la ficha de normas por país, traducida
 Lo pidió Lorena: la ficha por país de «Restricciones en mi ruta» se traduce al idioma del conductor, como la guía y «Mis descansos». Arriba de la ficha hay un selector de idioma (es el mismo idioma de toda la Zona Conductores). Se traducen los títulos, botones, etiquetas y avisos, el texto de cada norma y el nombre y la nota de las prohibiciones que escribe el padre en el panel (la función `traducir`, grupo «aparcar», los añade a la lista; solo lo que se ve en la web). Los nombres de los países, los días y los meses los pone el propio móvil en su idioma. En árabe la ficha va de derecha a izquierda.
 

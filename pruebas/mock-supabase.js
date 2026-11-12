@@ -89,6 +89,7 @@
       { id: 26, grupo: "Otros pluses", concepto: "Horas sindicales", importe: 0, unidad: "hora", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "Cada persona cobra distinto: pon tu precio por hora en «Ajustes» > «Lo que cobras tú».", orden: 245, visible: true },
       { id: 19, grupo: "Otros pluses", concepto: "Festivo", importe: 50, unidad: "dia", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "", orden: 190, visible: true },
       { id: 25, grupo: "Otros pluses", concepto: "Kilómetros", importe: 0.037, unidad: "km", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "", orden: 250, visible: true },
+      { id: 33, grupo: "Otros pluses", concepto: "Km Catalunya", importe: 0, unidad: "km", pago: "Semanal", sin_pagar: 0, max_mes: null, nota: "", orden: 251, visible: true },
     ],
   };
   window.__LLAMADAS = []; // lo que la web ha pedido (para comprobar que no recarga de más)
