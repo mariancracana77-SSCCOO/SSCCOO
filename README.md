@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 169: «Todas las semanas» con fondo rojo suave
+Lo pidió el padre (petición n.º 35): en Mis incentivos, la caja «Todas las semanas» (pestaña Semana) tiene ahora el mismo fondo rojo suave y el mismo borde que la barra de pestañas Día · Semana · Mes · Ajustes. Solo cambia el color; en modo oscuro se ve igual de suave.
+
 ## Versión 168: ficha de normas por país en «Restricciones en mi ruta»
 Lo pidió Lorena: cada país de «Restricciones en mi ruta» tiene ahora su ficha con tarjetas por tema (Peajes, Cadenas e invierno, Prohibiciones y festivos), cada una con etiquetas de peso (más de 3,5 t, más de 7,5 t) y de cuándo vale (todo el año, por fechas, según la situación), su fuente oficial y el día en que se comprobó. Arriba, botones para ver un solo tema y un buscador (país, cadenas, 3PMSF, peaje…). Las normas están en la tabla nueva `normas_pais` y el padre las edita en el panel, en «Restricciones camiones» > «Normas por país». Solo salen en la web las marcadas como «Comprobado»: se han puesto visibles las 5 confirmadas en la web oficial el 10/11/2026 (España: restricciones de la DGT; Alemania: peaje y prohibiciones de domingo y de sábados de verano; Austria: GO-Maut). Las de Francia, Suiza, Italia y el invierno de Alemania y Austria quedan ocultas («Sin comprobar») para que el padre las revise.
 

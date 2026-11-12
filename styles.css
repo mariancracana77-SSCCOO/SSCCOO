@@ -2393,6 +2393,8 @@ p.desc-tipo { margin: 6px 0 0; }
 
 /* v148 (petición n.º 19): fondo suave para distinguir «Todas las semanas» */
 .gan-caja-sem { display: flex; flex-direction: column; gap: 6px; margin: 4px -6px 0; padding: 10px 12px 12px; border-radius: var(--radio-g); background: var(--fondo); border: 1px solid var(--linea); }
+/* v169 (petición n.º 35): el mismo fondo rojo suave y borde que la barra de pestañas Día · Semana · Mes · Ajustes (.desc-tabs). */
+.gan-caja-sem { background: #f5e1e1; background: color-mix(in srgb, var(--rojo) 12%, var(--tarjeta)); border-color: color-mix(in srgb, var(--rojo) 30%, var(--linea)); }
 .gan-caja-sem .gan-sub { margin-top: 0; }
 .gan-caja-sem .gan-dias button:hover { background: var(--tarjeta); }
 /* v149 (petición n.º 18 del padre, propuesta E «Por semanas»): «Lo apuntado» agrupado por semanas */
