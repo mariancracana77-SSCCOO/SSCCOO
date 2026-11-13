@@ -186,7 +186,8 @@
   const SENAL_P = '<span class="gan-p" aria-hidden="true">P</span>';
   const nombreC = (t) => { const z = zona(t); return t.concepto + (z && zonaTxt(t.concepto) !== z ? " (" + { nac: "nacional", int: "internacional", gb: "GB-CG-MA" }[z] + ")" : ""); };
   const desglose = (r) => r.por.length ? `<ul class="gan-desglose">${r.por.map(p => `<li><span>${esc(TD(p.t.concepto))}${p.t.grupo && !p.t.concepto.includes(p.t.grupo) ? ` <small>· ${esc(TD(p.t.grupo))}</small>` : ""}${p.n && cantidadTxt(p.t, p.n) ? ` <small>${esc(cantidadTxt(p.t, p.n))}</small>` : ""}${p.tope ? ` <small class="gan-tope">${esc(p.n ? T("con tope al mes") : T("no suma: ya estaba el máximo del mes"))}</small>` : ""}</span><b>${esc(eur(p.imp))}</b></li>`).join("")}</ul>` : "";
-  const reparto = (r) => r.semanal && r.mensual ? `<p class="gan-reparto"><span>${esc(T("Cobro semanal"))}: <b>${esc(eur(r.semanal))}</b></span><span>${esc(T("En la nómina de fin de mes"))}: <b>${esc(eur(r.mensual))}</b></span></p>` : "";
+  // v172 (petición n.º 37): en «Semana» la cifra grande es solo el cobro semanal; debajo «Cobro semanal» y, en azul, lo que va con la nómina (no se suma)
+  const nominaAparte = (r) => r.mensual ? `<div class="gan-reparto"><p>${esc(T("Cobro semanal"))}: <b>${esc(eur(r.semanal))}</b></p><p class="gan-nomina-aparte">${esc(T("En la nómina de fin de mes"))}: <b>${esc(eur(r.mensual))}</b><small>${esc(T("No se suma aquí: este dinero lo verás en la nómina de final de mes, no en el cobro semanal."))}</small></p></div>` : "";
 
   // ---------- Pintar ----------
   // Las cifras que cambian dan un pequeño «salto» (clase gan-pulsa): se compara el texto de antes con el de después
@@ -382,7 +383,7 @@
     if (!lunes.length) return "";
     const anio = +hoy().slice(0, 4);
     const fila = (l) => { const ds = diasDe(l), x = resumen(c, ds), w = semDe(l);
-      return `<li><button type="button" data-ir-sem="${l}" class="${l === actual ? "hoy" : ""}" ${l === actual ? 'aria-current="true"' : ""}><span>${esc(T("Semana {n}", { n: w.n }))}${w.a !== anio ? " · " + w.a : ""}<small>${esc(T("Del {a} al {b}", { a: fDia(ds[0]), b: fDia(ds[6]) }))}</small><small>${esc(x.apuntados === 1 ? T("1 día apuntado") : T("{n} días apuntados", { n: x.apuntados }))}</small></span><b>${esc(eur(x.total))}</b>${icono("der", "p")}</button></li>`; };
+      return `<li><button type="button" data-ir-sem="${l}" class="${l === actual ? "hoy" : ""}" ${l === actual ? 'aria-current="true"' : ""}><span>${esc(T("Semana {n}", { n: w.n }))}${w.a !== anio ? " · " + w.a : ""}<small>${esc(T("Del {a} al {b}", { a: fDia(ds[0]), b: fDia(ds[6]) }))}</small><small>${esc(x.apuntados === 1 ? T("1 día apuntado") : T("{n} días apuntados", { n: x.apuntados }))}</small></span><b>${esc(eur(x.semanal))}</b>${icono("der", "p")}</button></li>`; };
     const PRIMERAS = 8, resto = lunes.slice(PRIMERAS);
     return `<h3 class="gan-sub" id="gan-todas-sem">${esc(T("Todas las semanas"))}</h3>
       <ul class="gan-dias gan-semanas gan-todas">${lunes.slice(0, PRIMERAS).map(fila).join("")}</ul>
@@ -394,15 +395,15 @@
     $("gan-semana").innerHTML = `<div class="gan-nav"><button type="button" class="btn-ic" data-sem="-7" aria-label="${esc(T("Semana anterior"))}">${icono("izq")}</button>
         <b class="gan-fecha"><span>${esc(T("Semana {n}", { n: w.n }))}${l === esta ? ` · ${esc(T("esta semana"))}` : ""}</span><small>${esc(T("Del {a} al {b}", { a: fDia(dias[0]), b: fDia(dias[6]) }))}${w.a !== +l.slice(0, 4) ? " · " + w.a : ""}</small></b>
         <button type="button" class="btn-ic" data-sem="7" aria-label="${esc(T("Semana siguiente"))}">${icono("der")}</button></div>
-      <div class="gan-total"><span>${esc(T("Esta semana"))}</span><b>${esc(eur(r.total))}</b></div>${(() => { const km = kmCaja(dias, T("Kilómetros de esta semana"), T("Km en total esta semana")); return km ? `<div class="desc-cifras gan-cifras gan-km-arriba">${km}</div>` : ""; })()}${reparto(r)}
+      <div class="gan-total"><span>${esc(T("Esta semana"))}</span><b>${esc(eur(r.semanal))}</b></div>${(() => { const km = kmCaja(dias, T("Kilómetros de esta semana"), T("Km en total esta semana")); return km ? `<div class="desc-cifras gan-cifras gan-km-arriba">${km}</div>` : ""; })()}${nominaAparte(r)}
       <ul class="gan-dias">${(() => dias.map(f => { const x = c[f]; // v102: sin los km de cada día (cargaba mucho la lista); el total de la semana va arriba
-        return `<li><button type="button" data-ir-dia="${f}" class="${f === hoy() ? "hoy" : ""}"><span>${esc(fDia(f))}</span><b>${x && x.lineas.length ? esc(eur(x.total)) : `${DATOS.libres[f] ? `<small class="gan-libre-etq">${esc(T("Libre"))}</small>` : `<small>${esc(T("Sin apuntar"))}</small>`}`}</b>${icono("der", "p")}</button></li>`; }).join(""))()}</ul>
+        return `<li><button type="button" data-ir-dia="${f}" class="${f === hoy() ? "hoy" : ""}"><span>${esc(fDia(f))}</span><b>${x && x.lineas.length ? esc(eur(x.semanal)) : `${DATOS.libres[f] ? `<small class="gan-libre-etq">${esc(T("Libre"))}</small>` : `<small>${esc(T("Sin apuntar"))}</small>`}`}</b>${icono("der", "p")}</button></li>`; }).join(""))()}</ul>
       <details class="gan-ir-caja"><summary>${icono("calendario", "p")}<span>${esc(T("Ir a otra semana"))}</span></summary>
         <form class="gan-ir-sem" id="gan-ir-sem"><label><span>${esc(T("Semana número"))}</span><input type="number" id="gan-sem-n" min="1" max="53" inputmode="numeric" value="${w.n}" aria-label="${esc(T("Número de semana"))}"></label>
         <label><span>${esc(T("del año"))}</span><input type="number" id="gan-sem-a" min="2020" max="2100" inputmode="numeric" value="${w.a}" aria-label="${esc(T("Año"))}"></label>
         <button class="btn sec">${esc(T("Ir"))}</button>${l !== esta ? `<button type="button" class="btn sec" data-sem="hoy">${esc(T("Esta semana"))}</button>` : ""}</form></details>
       ${(() => { // v148 (petición n.º 19): «Todas las semanas» y la comparación con la pasada, en una caja con fondo suave
-        const dentro = todasSemanas(c, l) + (pasada.apuntados ? `<p class="gan-compara">${esc(T("La semana pasada (semana {n}): {total}", { n: wp.n, total: eur(pasada.total) }))}${r.apuntados ? ` · <b class="${r.total >= pasada.total ? "mas" : "menos"}">${r.total >= pasada.total ? "+" : "−"}${esc(eur(Math.abs(r.total - pasada.total)))}</b>` : ""}</p>` : "");
+        const dentro = todasSemanas(c, l) + (pasada.apuntados ? `<p class="gan-compara">${esc(T("La semana pasada (semana {n}): {total}", { n: wp.n, total: eur(pasada.semanal) }))}${r.apuntados ? ` · <b class="${r.semanal >= pasada.semanal ? "mas" : "menos"}">${r.semanal >= pasada.semanal ? "+" : "−"}${esc(eur(Math.abs(r.semanal - pasada.semanal)))}</b>` : ""}</p>` : "");
         return dentro ? `<div class="gan-caja-sem">${dentro}</div>` : ""; })()}
       ${r.por.length ? `<h3 class="gan-sub">${esc(T("Por conceptos"))}</h3>${desglose(r)}` : `<p class="desc-vacio">${esc(T("Esta semana todavía no has apuntado ningún día. Toca un día para apuntar."))}</p>`}
       <p class="ayuda">${esc(T("Cobro semanal: dietas, suplementos, cargas, kilómetros, festivos, ADR por minuto y horas sindicales (te los pagan por semanas). En la nómina: nocturnidad y el ADR fijo (van con el salario a fin de mes, en «Mes»)."))}</p>

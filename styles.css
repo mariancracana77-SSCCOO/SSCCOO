@@ -1714,8 +1714,6 @@ b.gan-fecha { cursor: default; }
 .gan-desglose li span { min-width: 0; }
 .gan-desglose small { color: var(--suave); }
 .gan-desglose b { white-space: nowrap; }
-.gan-reparto { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; font-size: .95rem; color: var(--suave); }
-.gan-reparto b { color: var(--tinta); }
 /* v88: los colores (verde total, azul semanal) van solo en el PDF; Lorena no quiso cambiar la web */
 .gan-cifras b { font-size: 1.5rem; }
 .gan-checks { border: 1px solid var(--linea); border-radius: var(--radio); padding: 10px 14px; margin: 0; display: grid; gap: 8px; min-width: 0; }
@@ -2715,3 +2713,11 @@ body.solo-restr #apc-prohib-todas { margin-top: 20px; }
 .desc-cifras > div.gan-km-cat { background: repeating-linear-gradient(#FCDD09 0 11.11%, #DA121A 11.11% 22.22%) left / 6px 100% no-repeat, #fbf3cc; background: repeating-linear-gradient(#FCDD09 0 11.11%, #DA121A 11.11% 22.22%) left / 6px 100% no-repeat, var(--cat-fondo); padding-left: 16px; }
 .desc-cifras > div.gan-km-cat b { color: var(--cat-tinta); }
 .gan-semanas .gan-km-cat-txt { color: var(--cat-tinta); }
+
+/* v172 (petición n.º 37): debajo del total de la semana, «Cobro semanal» y, en azul, lo de la nómina (no se suma) */
+.gan-reparto { display: flex; flex-direction: column; gap: 6px; font-size: .95rem; color: var(--suave); }
+.gan-reparto p { margin: 0; }
+.gan-reparto b { color: var(--tinta); }
+.gan-reparto .gan-nomina-aparte { color: var(--azul); }
+.gan-reparto .gan-nomina-aparte b { color: var(--azul); }
+.gan-reparto .gan-nomina-aparte small { display: block; margin-top: 2px; font-size: .85rem; line-height: 1.35; }

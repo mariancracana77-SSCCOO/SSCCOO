@@ -77,6 +77,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 172: lo de la nómina no suma en el cobro de la semana
+
+- Petición n.º 37 del panel. En Mis incentivos > «Semana», la cifra grande «Esta semana» es solo el cobro semanal; debajo sigue «Cobro semanal» y, en azul, lo que va con la nómina (nocturnidad, ADR fijo), con «No se suma aquí: este dinero lo verás en la nómina de final de mes, no en el cobro semanal». Los días de la lista, «Todas las semanas» y la comparación con la semana pasada también cuentan solo lo semanal. «Día», «Mes» y el PDF no cambian, ni lo que se guarda en el móvil.
+
 ## Versión 171: «Km Catalunya» a 0 € en Mis incentivos
 Lo pidió el padre (petición n.º 36): un concepto nuevo «Km Catalunya» en Mis incentivos, en la tabla de importes (panel > «Importes conductores», como los demás). Se apunta en km igual que «Kilómetros» pero a 0 €: no suma dinero, sirve para llevar la cuenta. En «Día» sale justo debajo de «Kilómetros» con los colores de la senyera y la suma del día («100 km pagados + 40 km = 140 km»). En «Semana», «Mes» y el PDF del mes, los kilómetros se separan en pagados, Km Catalunya y la suma de los dos. Lo que ya tenían apuntado los conductores no cambia.
 
