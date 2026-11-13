@@ -623,15 +623,21 @@
       return l;
     } catch (_) { try { return JSON.parse(localStorage.getItem("ccoo-normas") || "[]"); } catch (_) { return []; } }
   }
-  const TEMAS = [["peaje", "Peajes"], ["invierno", "Cadenas e invierno"], ["prohibicion", "Prohibiciones y festivos"]];
-  const VIGENCIA = { todo: "Obligatorio todo el año", fechas: "Por fechas", situacional: "Según la situación" };
+  // Textos de la ficha con T("…") (se traducen con la guía: función traducir, grupo «aparcar»). Se leen al pintar, no al cargar,
+  // porque T está definido más abajo. Lo que escribe el padre (normas y prohibiciones) también lo traduce esa función.
+  const TEMAS = () => [["peaje", T("Peajes")], ["invierno", T("Cadenas e invierno")], ["prohibicion", T("Prohibiciones y festivos")]];
+  const VIGENCIA = () => ({ todo: T("Obligatorio todo el año"), fechas: T("Por fechas"), situacional: T("Según la situación") });
+  const LOC = () => miIdioma() || "es-ES";
+  // Nombre del país en el idioma del conductor (lo da el propio navegador); Cataluña y lo que no tenga código, con T
+  const nomPais = (k, nombre) => { const i = miIdioma(); if (!i || !/^[A-Z]{2}$/.test(k)) return T(nombre); try { return new Intl.DisplayNames([i], { type: "region" }).of(k) || nombre; } catch (_) { return nombre; } };
   const normal = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  const fechaRev = (d) => { const t = Date.parse(d + "T12:00:00"); return Number.isFinite(t) ? new Date(t).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" }) : ""; };
-  const normaHTML = (n) => `<li class="apc-norma" data-buscar="${esc(normal([n.titulo, n.texto, n.peso, n.fechas, n.fuente].join(" ")))}">
-      <b class="apc-nom">${esc(n.titulo || "")}</b>
-      <span class="apc-etqs">${n.peso ? `<span class="apc-etq peso">${esc(n.peso)}</span>` : ""}${VIGENCIA[n.vigencia] ? `<span class="apc-etq vig-${esc(n.vigencia)}">${esc(VIGENCIA[n.vigencia])}</span>` : ""}${n.fechas ? `<span class="apc-etq">${esc(n.fechas)}</span>` : ""}</span>
-      ${n.texto ? `<p>${esc(n.texto)}</p>` : ""}
-      <p class="apc-nota">${n.url ? `Fuente: <a href="${esc(urlSegura(n.url))}" target="_blank" rel="noopener">${esc(n.fuente || "web oficial")}</a>` : esc(n.fuente || "")}${n.revisado ? ` · revisado el ${esc(fechaRev(n.revisado))}` : ""}</p></li>`;
+  const fechaRev = (d) => { const t = Date.parse(d + "T12:00:00"); return Number.isFinite(t) ? new Date(t).toLocaleDateString(LOC(), { day: "numeric", month: "long", year: "numeric" }) : ""; };
+  const tx = (s) => s ? T(s) : "";
+  const normaHTML = (n) => { const vig = VIGENCIA()[n.vigencia]; return `<li class="apc-norma" data-buscar="${esc(normal([n.titulo, n.texto, n.peso, n.fechas, n.fuente, tx(n.titulo), tx(n.texto), tx(n.peso), tx(n.fechas)].join(" ")))}">
+      <b class="apc-nom">${esc(tx(n.titulo))}</b>
+      <span class="apc-etqs">${n.peso ? `<span class="apc-etq peso">${esc(tx(n.peso))}</span>` : ""}${vig ? `<span class="apc-etq vig-${esc(n.vigencia)}">${esc(vig)}</span>` : ""}${n.fechas ? `<span class="apc-etq">${esc(tx(n.fechas))}</span>` : ""}</span>
+      ${n.texto ? `<p>${esc(tx(n.texto))}</p>` : ""}
+      <p class="apc-nota">${n.url ? `${esc(T("Fuente:"))} <a href="${esc(urlSegura(n.url))}" target="_blank" rel="noopener">${esc(n.fuente || T("web oficial"))}</a>` : esc(n.fuente || "")}${n.revisado ? ` · ${esc(T("revisado el {fecha}", { fecha: fechaRev(n.revisado) }))}` : ""}</p></li>`; };
   // Filtro por tema y buscador (3PMSF, cadenas, Suiza…): solo esconde, no vuelve a pintar
   function filtraNormas() {
     const caja = $("apc-prohib-todas"); if (!caja) return;
@@ -652,7 +658,7 @@
       if (q && !d.hidden) d.open = true;
       if (!d.hidden) hay++;
     });
-    const n = $("apc-normas-n"); if (n) n.textContent = (tema || q) ? (hay ? (hay === 1 ? "1 país" : hay + " países") : "Ningún país con eso.") : "";
+    const n = $("apc-normas-n"); if (n) n.textContent = (tema || q) ? (hay ? (hay === 1 ? T("1 país") : T("{n} países", { n: hay })) : T("Ningún país con eso.")) : "";
   }
   document.addEventListener("click", (e) => {
     const b = e.target.closest("#apc-prohib-todas .apc-temas .filtro"); if (!b) return;
@@ -660,6 +666,7 @@
     filtraNormas();
   });
   document.addEventListener("input", (e) => { if (e.target.id === "apc-normas-q") filtraNormas(); });
+  document.addEventListener("change", (e) => { if (e.target.id === "apc-normas-idioma") { const m = $("apc-normas-trad"); if (m) { m.textContent = e.target.value ? "…" : ""; m.className = "msg"; } ponMiIdioma(e.target.value); } });
 
   async function cargaProhibiciones() {
     try {
@@ -697,20 +704,23 @@
     }
     return res;
   }
-  const fechaHora = (t) => new Date(t).toLocaleString("es-ES", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+  const fechaHora = (t) => new Date(t).toLocaleString(LOC(), { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
   // v165 (petición 34): todas las prohibiciones apuntadas en el panel, por país, sin tener que calcular una ruta (en «Restricciones en mi ruta»)
-  const DIA_NOM = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-  const MES_NOM = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+  // Días y meses en el idioma del conductor (los da el navegador): 4/1/1970 fue domingo
+  const DIA_TAL = new Proxy([], { get: (_, i) => /^\d$/.test(String(i)) ? new Date(1970, 0, 4 + +i).toLocaleDateString(LOC(), { weekday: "long" }) : undefined });
+  const DIA_NOM = new Proxy([], { get: (_, i) => /^\d$/.test(String(i)) ? (s => s.charAt(0).toUpperCase() + s.slice(1))(DIA_TAL[i]) : undefined });
+  const MES_NOM = new Proxy([], { get: (_, i) => /^\d+$/.test(String(i)) ? new Date(2026, +i, 1).toLocaleDateString(LOC(), { month: "long" }) : undefined });
   const hhmm = (h) => String(h || "").slice(0, 5);
   function horarioProhib(x) {
     if (x.tipo === "fecha") {
       const a = Date.parse(x.inicio), b = Date.parse(x.fin);
-      return a && b ? `Del ${fechaHora(a)} al ${fechaHora(b)}` : "Fecha sin poner";
+      return a && b ? T("Del {a} al {b}", { a: fechaHora(a), b: fechaHora(b) }) : T("Fecha sin poner");
     }
-    const dias = x.dia_desde == null ? `Todos los días, de ${hhmm(x.hora_desde)} a ${hhmm(x.hora_hasta)}`
-      : x.dia_hasta == null || x.dia_hasta === x.dia_desde ? `${DIA_NOM[x.dia_desde]}, de ${hhmm(x.hora_desde)} a ${hhmm(x.hora_hasta)}`
-      : `Del ${DIA_NOM[x.dia_desde].toLowerCase()} a las ${hhmm(x.hora_desde)} al ${DIA_NOM[x.dia_hasta].toLowerCase()} a las ${hhmm(x.hora_hasta)}`;
-    const meses = x.mes_desde ? ` (de ${MES_NOM[x.mes_desde - 1]} a ${MES_NOM[(x.mes_hasta || x.mes_desde) - 1]})` : "";
+    const h1 = hhmm(x.hora_desde), h2 = hhmm(x.hora_hasta);
+    const dias = x.dia_desde == null ? T("Todos los días, de {h1} a {h2}", { h1, h2 })
+      : x.dia_hasta == null || x.dia_hasta === x.dia_desde ? T("{dia}, de {h1} a {h2}", { dia: DIA_NOM[x.dia_desde], h1, h2 })
+      : T("Del {dia1} a las {h1} al {dia2} a las {h2}", { dia1: DIA_TAL[x.dia_desde], h1, dia2: DIA_TAL[x.dia_hasta], h2 });
+    const meses = x.mes_desde ? " " + T("(de {m1} a {m2})", { m1: MES_NOM[x.mes_desde - 1], m2: MES_NOM[(x.mes_hasta || x.mes_desde) - 1] }) : "";
     return dias + meses;
   }
   // v166 (lo pidió Lorena): una sola lista por país, con su bandera; dentro, sus prohibiciones y su web oficial
@@ -729,24 +739,29 @@
     for (const r of info.lista) pais(clave(r.pais), BANDERAS[codigoPais(r.pais)] || r.pais || "País").enlaces.push(r);
     const primero = { ES: 0, CAT: 1 };
     const orden = [...paises.entries()].sort(([a, x], [b, y]) => (primero[a] ?? 9) - (primero[b] ?? 9) || x.nombre.localeCompare(y.nombre, "es"));
-    const cuenta = (o) => [o.normas.length ? (o.normas.length === 1 ? "1 norma" : o.normas.length + " normas") : "", o.prohib.length ? (o.prohib.length === 1 ? "1 prohibición" : o.prohib.length + " prohibiciones") : "", o.enlaces.length ? "web oficial" : ""].filter(Boolean).join(" · ");
-    caja.innerHTML = `<section class="apc-prohib-todas" aria-labelledby="apc-prohib-todas-tit">
-      <h2 class="tit-seccion" id="apc-prohib-todas-tit">Prohibiciones y restricciones por país</h2>
-      ${orden.length ? `<p class="apc-nota">Las prohibiciones que tiene apuntadas la sección y la web oficial de cada país. Con una ruta calculada, arriba te digo cuáles te pillan por el camino según la hora de salida.</p>
-      ${info.lista.length ? `<p class="aviso-oficial">${icono("alerta", "p")}<span>Orientativo: antes de salir, compruébalo en la web oficial. Revisado por última vez: ${esc(info.revisado)}.${info.trad ? " Las páginas en otro idioma se pueden traducir al abrirlas: en Android, toca «Traducir» o los tres puntos y «Traducir»; en iPhone, el botón «aA» y «Traducir»." : ""}</span></p>` : ""}
-      ${normas.length ? `<div class="apc-normas-filtro"><div class="filtros apc-temas" role="group" aria-label="Tema"><button type="button" class="filtro activo" data-tema="" aria-pressed="true">Todo</button>${TEMAS.map(([t, n]) => `<button type="button" class="filtro" data-tema="${t}" aria-pressed="false">${esc(n)}</button>`).join("")}</div>
-        <label class="apc-normas-buscar"><span class="sr-only">Buscar</span><input type="search" id="apc-normas-q" placeholder="Buscar: país, cadenas, 3PMSF, peaje…" autocomplete="off"></label><p class="apc-nota" id="apc-normas-n" aria-live="polite"></p></div>` : ""}
-      ${orden.map(([k, o]) => `<details class="panel apc-prohib-pais" data-nombre="${esc(o.nombre)}"${o.prohib.some(x => periodos(x, ahora, ahora + 60000).length) ? " open" : ""}><summary><b>${banderaPais(k, "b-pais")}${esc(o.nombre)}</b> <small>${esc(cuenta(o))}</small></summary>
-        ${TEMAS.map(([t, tn]) => {
+    const cuenta = (o) => [o.normas.length ? (o.normas.length === 1 ? T("1 norma") : T("{n} normas", { n: o.normas.length })) : "", o.prohib.length ? (o.prohib.length === 1 ? T("1 prohibición") : T("{n} prohibiciones", { n: o.prohib.length })) : "", o.enlaces.length ? T("web oficial") : ""].filter(Boolean).join(" · ");
+    const idi = miIdioma();
+    const nomIdi = idi ? nomPais : (k, n) => n;
+    caja.innerHTML = `<section class="apc-prohib-todas" aria-labelledby="apc-prohib-todas-tit" lang="${esc(idi || "es")}" dir="${idi === "ar" ? "rtl" : "ltr"}">
+      <div class="apc-normas-cab"><h2 class="tit-seccion" id="apc-prohib-todas-tit">${esc(T("Prohibiciones y restricciones por país"))}</h2>
+      <label class="apc-normas-idioma">${icono("idioma", "p")}<span class="sr-only">Idioma</span><select id="apc-normas-idioma"><option value="">Español</option>${Object.entries(IDIOMAS).map(([c, n]) => `<option value="${esc(c)}"${c === idi ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></label></div>
+      <p class="msg" id="apc-normas-trad" aria-live="polite"></p>
+      ${orden.length ? `<p class="apc-nota">${esc(T("Las prohibiciones que tiene apuntadas la sección y la web oficial de cada país. Con una ruta calculada, arriba te digo cuáles te pillan por el camino según la hora de salida."))}</p>
+      ${info.lista.length ? `<p class="aviso-oficial">${icono("alerta", "p")}<span>${esc(T("Orientativo: antes de salir, compruébalo en la web oficial. Revisado por última vez: {fecha}.", { fecha: info.revisado }))}${info.trad ? " " + esc(T("Las páginas en otro idioma se pueden traducir al abrirlas: en Android, toca «Traducir» o los tres puntos y «Traducir»; en iPhone, el botón «aA» y «Traducir».")) : ""}</span></p>` : ""}
+      ${normas.length ? `<div class="apc-normas-filtro"><div class="filtros apc-temas" role="group" aria-label="${esc(T("Tema"))}"><button type="button" class="filtro activo" data-tema="" aria-pressed="true">${esc(T("Todo"))}</button>${TEMAS().map(([t, n]) => `<button type="button" class="filtro" data-tema="${t}" aria-pressed="false">${esc(n)}</button>`).join("")}</div>
+        <label class="apc-normas-buscar"><span class="sr-only">${esc(T("Buscar"))}</span><input type="search" id="apc-normas-q" placeholder="${esc(T("Buscar: país, cadenas, 3PMSF, peaje…"))}" autocomplete="off"></label><p class="apc-nota" id="apc-normas-n" aria-live="polite"></p></div>` : ""}
+      ${orden.map(([k, o]) => `<details class="panel apc-prohib-pais" data-nombre="${esc(o.nombre + " " + nomIdi(k, o.nombre))}"${o.prohib.some(x => periodos(x, ahora, ahora + 60000).length) ? " open" : ""}><summary><b>${banderaPais(k, "b-pais")}${esc(nomIdi(k, o.nombre))}</b> <small>${esc(cuenta(o))}</small></summary>
+        ${TEMAS().map(([t, tn]) => {
           const ns = o.normas.filter(n => n.tema === t), ps = t === "prohibicion" ? o.prohib : [];
           if (!ns.length && !ps.length) return "";
-          return `<section class="apc-tema" data-tema="${t}"><h3>${esc(tn)}</h3><ul class="apc-lista">${ns.map(normaHTML).join("")}${ps.map(x => { const ya = periodos(x, ahora, ahora + 60000).length > 0; return `<li class="apc apc-prohib-una${ya ? " ahora" : ""}"><b class="apc-nom">${esc(x.motivo || "Prohibición")}</b>${ya ? ` <span class="apc-ahora">Ahora en vigor</span>` : ""}
-          <p>${esc(horarioProhib(x))}</p>${x.nota ? `<p class="apc-nota">${esc(x.nota)}</p>` : ""}${x.url ? `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener">Ver la web oficial</a>` : ""}</li>`; }).join("")}</ul></section>`;
+          return `<section class="apc-tema" data-tema="${t}"><h3>${esc(tn)}</h3><ul class="apc-lista">${ns.map(normaHTML).join("")}${ps.map(x => { const ya = periodos(x, ahora, ahora + 60000).length > 0; return `<li class="apc apc-prohib-una${ya ? " ahora" : ""}"><b class="apc-nom">${esc(x.motivo ? T(x.motivo) : T("Prohibición"))}</b>${ya ? ` <span class="apc-ahora">${esc(T("Ahora en vigor"))}</span>` : ""}
+          <p>${esc(horarioProhib(x))}</p>${x.nota ? `<p class="apc-nota">${esc(T(x.nota))}</p>` : ""}${x.url ? `<a href="${esc(urlSegura(x.url))}" target="_blank" rel="noopener">${esc(T("Ver la web oficial"))}</a>` : ""}</li>`; }).join("")}</ul></section>`;
         }).join("")}
-        ${!o.prohib.length && !o.normas.length ? `<p class="apc-nota apc-pais-vacio">La sección no tiene apuntadas normas de este país: mira su web oficial.</p>` : ""}
+        ${!o.prohib.length && !o.normas.length ? `<p class="apc-nota apc-pais-vacio">${esc(T("La sección no tiene apuntadas normas de este país: mira su web oficial."))}</p>` : ""}
         ${o.enlaces.length ? `<div class="lista-restr apc-pais-webs">${o.enlaces.map(restriccionHTML).join("")}</div>` : ""}</details>`).join("")}`
-      : `<p>La sección todavía no tiene apuntada ninguna prohibición.</p>`}
-      <p class="apc-nota">Orientativo: puede haber festivos locales o restricciones que no están apuntados. Compruébalo en las webs oficiales.</p></section>`;
+      : `<p>${esc(T("La sección todavía no tiene apuntada ninguna prohibición."))}</p>`}
+      <p class="apc-nota">${esc(T("Orientativo: puede haber festivos locales o restricciones que no están apuntados. Compruébalo en las webs oficiales."))}</p></section>`;
+    const m = $("apc-normas-trad"); if (m && ERR_TRAD_APC) { m.textContent = ERR_TRAD_APC; m.className = "msg err"; }
   }
   window.__pintaProhibTodas = pintaTodasProhib;
   function prohibicionesRuta() {
@@ -1531,11 +1546,12 @@
     [T("Añadir un aparcamiento"), T("¿Has encontrado uno que no sale? En el mapa toca «Añadir aparcamiento», toca el sitio (o usa tu posición), ponle nombre y guárdalo. Se queda en tu móvil, en «Mis aparcamientos». Si marcas «Proponerlo también a los compañeros», sale enseguida a todos."), visible(".apc-anade-btn", "#apc-abre-mapa", "#apc-cambiar")],
   ];
   // La guía se traduce como «Mis descansos» (función traducir, modo textos, grupo «aparcar»: solo los T("…") de este archivo)
-  let MAPA_APC = {};
-  const T = (s, v) => (MAPA_APC[s] || s).replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m);
+  let MAPA_APC = {}, ERR_TRAD_APC = "";
+  const T = (s, v) => ((Object.hasOwn(MAPA_APC, s) && typeof MAPA_APC[s] === "string" ? MAPA_APC[s] : "") || s).replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m);
   async function cargaIdiomaApc() {
     const idi = miIdioma(), m = $("apc-guia-msg");
     if (m) { m.textContent = ""; m.className = "msg"; }
+    ERR_TRAD_APC = "";
     if (!idi) { MAPA_APC = {}; return; }
     const CACHE = "ccoo-textos-aparcar";
     try { const c = JSON.parse(localStorage.getItem(CACHE) || "null"); if (c && c.idioma === idi && c.v === VERSION_WEB && Date.now() - c.t < 86400000) { MAPA_APC = c.mapa; return; } } catch (_) {}
@@ -1546,7 +1562,7 @@
       if (miIdioma() !== idi) return;
       MAPA_APC = data.textos; if (m) m.textContent = "";
       try { localStorage.setItem(CACHE, JSON.stringify({ idioma: idi, v: VERSION_WEB, t: Date.now(), mapa: MAPA_APC })); } catch (_) {}
-    } catch (_) { MAPA_APC = {}; if (m) { m.textContent = "La traducción no está disponible ahora mismo. Prueba más tarde."; m.className = "msg err"; } }
+    } catch (_) { MAPA_APC = {}; ERR_TRAD_APC = "La traducción no está disponible ahora mismo. Prueba más tarde."; if (m) { m.textContent = ERR_TRAD_APC; m.className = "msg err"; } }
   }
   function pintaGuiaApc() {
     const caja = $("apc-guia-cuerpo"); if (!caja) return;
@@ -1564,8 +1580,9 @@
     pintaFormulario();
     pintaGuiaApc();
     if ($("apc-guia-idioma")) $("apc-guia-idioma").onchange = () => ponMiIdioma($("apc-guia-idioma").value);
-    addEventListener("mi-idioma", async () => { await cargaIdiomaApc(); pintaGuiaApc(); });
-    cargaIdiomaApc().then(pintaGuiaApc);
+    const repintaFicha = () => { if ($("apc-prohib-todas")?.childElementCount) pintaTodasProhib(); };
+    addEventListener("mi-idioma", async () => { await cargaIdiomaApc(); pintaGuiaApc(); repintaFicha(); });
+    cargaIdiomaApc().then(() => { pintaGuiaApc(); if (miIdioma()) repintaFicha(); });
     // Durante el viaje, los avisos de los compañeros se refrescan cada 2 minutos
     $("apc-buscar").onclick = buscaRuta;
     $("apc-abre-mapa").onclick = abreMapaLibre;

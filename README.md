@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 170: la ficha de normas por país, traducida
+Lo pidió Lorena: la ficha por país de «Restricciones en mi ruta» se traduce al idioma del conductor, como la guía y «Mis descansos». Arriba de la ficha hay un selector de idioma (es el mismo idioma de toda la Zona Conductores). Se traducen los títulos, botones, etiquetas y avisos, el texto de cada norma y el nombre y la nota de las prohibiciones que escribe el padre en el panel (la función `traducir`, grupo «aparcar», los añade a la lista; solo lo que se ve en la web). Los nombres de los países, los días y los meses los pone el propio móvil en su idioma. En árabe la ficha va de derecha a izquierda.
+
 ## Versión 169: «Todas las semanas» con fondo rojo suave
 Lo pidió el padre (petición n.º 35): en Mis incentivos, la caja «Todas las semanas» (pestaña Semana) tiene ahora el mismo fondo rojo suave y el mismo borde que la barra de pestañas Día · Semana · Mes · Ajustes. Solo cambia el color; en modo oscuro se ve igual de suave.
 

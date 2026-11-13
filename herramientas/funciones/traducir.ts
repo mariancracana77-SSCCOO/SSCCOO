@@ -6,6 +6,7 @@
 // En «ganancias» añade los nombres, grupos y notas de la tabla tarifas_conductor (los escribe el admin en el panel).
 // v77: si Gemini contesta «mucha demanda» (503/500) o «cuota» (429), reintenta con espera y apunta cada fallo en el registro.
 // v96: grupo «aparcar» (la guía rápida de «Aparcamientos en mi ruta»).
+// v170: en «aparcar» añade también la ficha de normas por país (normas_pais visibles) y los nombres y notas de prohibiciones_camion.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -25,7 +26,7 @@ const CAMPOS: Record<string, string[]> = {
 const GRUPOS: Record<string, { archivo: string; tema: string }> = {
   descansos: { archivo: "descansos.js", tema: "una calculadora de descansos semanales para conductores de camión (Reglamento CE 561/2006)" },
   ganancias: { archivo: "ganancias.js", tema: "una calculadora de lo que gana un conductor de camión (salario, dietas, suplementos, pluses, kilómetros)" },
-  aparcar: { archivo: "aparcar.js", tema: "la guía de uso de una herramienta que busca aparcamientos para camiones en la ruta, con mapa, cortes de carretera y peajes" },
+  aparcar: { archivo: "aparcar.js", tema: "una herramienta para conductores de camión que busca aparcamientos en la ruta (con mapa, cortes de carretera y peajes) y explica por país las normas para camiones: peajes, cadenas e invierno, prohibiciones de circular y festivos" },
 };
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -98,6 +99,13 @@ async function textos(grupo: string, codigo: string, idioma: string) {
     const { data: tar } = await admin.from("tarifas_conductor").select("grupo, concepto, nota").eq("visible", true);
     for (const t of tar ?? []) for (const s of [t.grupo, t.concepto, t.nota]) if (s && !lista.includes(s)) lista.push(s);
   }
+  if (grupo === "aparcar") {
+    // Solo lo que se ve en la web: normas comprobadas y prohibiciones en uso
+    const { data: nor } = await admin.from("normas_pais").select("titulo, texto, peso, fechas").eq("visible", true);
+    for (const n of nor ?? []) for (const s of [n.titulo, n.texto, n.peso, n.fechas]) if (s && !lista.includes(s)) lista.push(s);
+    const { data: pro } = await admin.from("prohibiciones_camion").select("motivo, nota, visible");
+    for (const x of (pro ?? []).filter((x) => x.visible !== false)) for (const s of [x.motivo, x.nota]) if (s && !lista.includes(s)) lista.push(s);
+  }
   if (!lista.length || lista.length > 500) return json({ error: "Nada que traducir." }, 400);
   const huella = await huellaDe(JSON.stringify(lista)), tabla = "textos-" + grupo;
   const { data: guardada } = await admin.from("traducciones").select("*").eq("tabla", tabla).eq("id_reg", 0).eq("idioma", codigo).maybeSingle();
@@ -106,7 +114,7 @@ async function textos(grupo: string, codigo: string, idioma: string) {
   if (!clave) return json({ error: "La traducción no está disponible ahora mismo." }, 503);
   const sistema = `Traduce del español al ${idioma} los textos de ${GRUPOS[grupo].tema}, de la Sección Sindical CCOO.
 Recibes una lista JSON de textos y devuelves {"t": [...]} con la traducción de cada uno, en el mismo orden y el mismo número de elementos.
-Reglas: traducción clara y natural para un camionero. Deja igual lo que va entre llaves, como {fecha} o {horas} (son huecos que se rellenan luego: no los traduzcas), y conserva las marcas ** ** alrededor de la parte traducida equivalente. Si un texto empieza en minúscula o acaba en coma, respeta eso (son trozos de una lista). Mantén siglas (CCOO, CE, PDF, ADR, GB-CG-MA), cifras y nombres propios (FENADISMER, II Acuerdo Marco, España, Cataluña).`;
+Reglas: traducción clara y natural para un camionero. Deja igual lo que va entre llaves, como {fecha} o {horas} (son huecos que se rellenan luego: no los traduzcas), y conserva las marcas ** ** alrededor de la parte traducida equivalente. Si un texto empieza en minúscula o acaba en coma, respeta eso (son trozos de una lista). Mantén siglas (CCOO, CE, PDF, ADR, GB-CG-MA, DGT, BALM, ASFINAG, GO-Maut, Lkw-Maut, MMA, 3PMSF), cifras y nombres propios (FENADISMER, II Acuerdo Marco, España, Cataluña).`;
   const res: Record<string, string> = {};
   // En tandas de 50 para que la respuesta no se corte, todas a la vez (v81): una detrás de otra pasaban
   // del límite de 150 s de la función con «Mis ganancias»

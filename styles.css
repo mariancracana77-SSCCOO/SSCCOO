@@ -2694,3 +2694,12 @@ body.solo-restr #apc-prohib-todas { margin-top: 20px; }
 .apc-prohib-todas .aviso-oficial { margin: 0; }
 .apc-prohib-una.ahora { border-left: 4px solid var(--rojo, #AB1012); }
 .apc-ahora { display: inline-block; width: fit-content; justify-self: start; align-self: start; font-size: .8em; font-weight: 700; color: #fff; background: var(--rojo, #AB1012); border-radius: 99px; padding: 1px 8px; }
+/* v170: idioma de la ficha de normas por país */
+.apc-normas-cab { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.apc-normas-cab .tit-seccion { margin: 0; }
+.apc-normas-idioma { display: inline-flex; align-items: center; gap: 6px; color: var(--azul); }
+.apc-normas-idioma select { min-height: 44px; padding: 6px 10px; border: 1px solid var(--linea); border-radius: 12px; background: var(--tarjeta); color: var(--tinta); font: inherit; font-weight: 600; }
+#apc-normas-trad:empty { display: none; }
+.apc-prohib-todas[dir="rtl"] .apc-norma, .apc-prohib-todas[dir="rtl"] .apc-prohib-una { border-left-width: 1px; border-right: 4px solid var(--azul); }
+.apc-prohib-todas[dir="rtl"] .apc-prohib-una.ahora { border-right-color: var(--rojo, #AB1012); }
+.apc-prohib-todas[dir="rtl"] .apc-prohib-pais summary::after { margin-left: 0; margin-right: auto; }
