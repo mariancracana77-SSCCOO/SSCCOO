@@ -1,8 +1,8 @@
 // Service worker: permite instalar la web como app, abrirla sin conexión
 // y recibir notificaciones aunque la app esté cerrada.
-const VERSION = "172"; // súbelo en cada actualización
+const VERSION = "173"; // súbelo en cada actualización
 const CACHE = "ccoo-v" + VERSION;
-const BASE = ["./", "index.html", "logo.png", "icon-192.png", "camion.webp", "icon-512.png", "badge-96.png", "manifest.json", "fuentes/atkinson-hyperlegible-latin-400-normal.woff2", "fuentes/atkinson-hyperlegible-latin-700-normal.woff2", "fuentes/barlow-condensed-latin-700-normal.woff2", ...["styles.css", "fuentes.css", "lectura.js", "lib/supabase.js", "config.js", "iconos.js", "render.js", "app.js", "descansos.js", "ganancias.js", "aparcar.js", "lib/leaflet.js", "lib/leaflet.css"].map(f => f + "?v=" + VERSION)];
+const BASE = ["./", "index.html", "logo.png", "icon-192.png", "camion.webp", "icon-512.png", "badge-96.png", "manifest.json", "fuentes/atkinson-hyperlegible-latin-400-normal.woff2", "fuentes/atkinson-hyperlegible-latin-700-normal.woff2", "fuentes/barlow-condensed-latin-700-normal.woff2", ...["styles.css", "fuentes.css", "lectura.js", "lib/supabase.js", "config.js", "iconos.js", "render.js", "app.js", "descansos.js", "ganancias.js", "aparcar.js", "finiquito.js", "adr.js", "lib/leaflet.js", "lib/leaflet.css"].map(f => f + "?v=" + VERSION)];
 // cache: "reload": se piden a internet, no a la caché normal del navegador (GitHub Pages la guarda 10 minutos y
 // se podría quedar con una portada de la versión anterior junto a los archivos de la nueva)
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(BASE.map(u => new Request(u, { cache: "reload" }))))); self.skipWaiting(); });

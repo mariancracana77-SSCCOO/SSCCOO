@@ -25,9 +25,9 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="fuentes.css?v=172">
-<script src="lectura.js?v=172"></script>
-<link rel="stylesheet" href="styles.css?v=172">
+<link rel="stylesheet" href="fuentes.css?v=173">
+<script src="lectura.js?v=173"></script>
+<link rel="stylesheet" href="styles.css?v=173">
 </head>
 <body class="publica">
 
@@ -430,6 +430,70 @@
 
   </section>
 
+  <!-- MI FINIQUITO (Zona Conductores, petición n.º 38): calculadora del padre pasada tal cual; todo se calcula en pantalla, no se guarda nada (finiquito.js) -->
+  <section class="vista zc-herr" id="v-finiquito">
+    <h1 class="titulo-vista">Mi finiquito</h1>
+    <p class="intro-vista">Cuánto te toca si te despiden o te vas: finiquito, pagas, vacaciones e indemnización según el convenio de Girona. Transporte de mercancías y logística de Girona 2026-2027 (BOP 160, 20/08/2026). Importes brutos. Se calcula en tu móvil: no se guarda ni se envía nada.</p>
+    <div class="panel zc-caja">
+      <div class="zc-dos">
+        <div><label for="fin-alta">Fecha de alta</label><input type="date" id="fin-alta"></div>
+        <div><label for="fin-baja">Fecha de baja</label><input type="date" id="fin-baja"></div>
+      </div>
+      <label for="fin-cat">Categoría profesional</label>
+      <select id="fin-cat"></select>
+      <div id="fin-man" class="zc-dos" hidden>
+        <div><label for="fin-bm">Salario base mensual (€)</label><input type="number" id="fin-bm" inputmode="decimal"></div>
+        <div><label for="fin-pm">Plus convenio mensual (€)</label><input type="number" id="fin-pm" inputmode="decimal"></div>
+      </div>
+      <p class="zc-pista" id="fin-tabinfo"></p>
+      <label for="fin-plus">Otros pluses fijos al mes (€)</label>
+      <input type="number" id="fin-plus" inputmode="decimal" value="0">
+      <p class="zc-pista">Solo si los cobras todos los meses (nocturnidad fija, etc.). La antigüedad se calcula sola.</p>
+      <label for="fin-pagas">¿Cómo cobras las pagas extra?</label>
+      <select id="fin-pagas">
+        <option value="none">Las 3 aparte (junio, diciembre y marzo)</option>
+        <option value="mar">Marzo prorrateada, junio y diciembre aparte</option>
+        <option value="all">Las 3 prorrateadas en la nómina</option>
+      </select>
+      <label for="fin-dis">Vacaciones ya disfrutadas este año (días laborables)</label>
+      <input type="number" id="fin-dis" inputmode="decimal" value="0">
+      <p class="zc-pista">El convenio da 23 días laborables al año; los sábados no cuentan.</p>
+      <label for="fin-tipo">Motivo de la baja</label>
+      <select id="fin-tipo">
+        <option value="imp">Despido improcedente (o la empresa lo reconoce)</option>
+        <option value="obj">Despido objetivo / ERE</option>
+        <option value="tmp">Fin de contrato temporal</option>
+        <option value="dis">Despido disciplinario procedente</option>
+        <option value="vol">Baja voluntaria / dimisión</option>
+      </select>
+    </div>
+    <div id="fin-out" aria-live="polite"></div>
+    <div class="zc-aviso">
+      <b>Antes de firmar:</b>
+      <ul>
+        <li>Firma siempre «recibí, no conforme» si no estás de acuerdo con las cuentas.</li>
+        <li>Tienes <b>20 días hábiles</b> desde el despido para reclamar. No se amplían.</li>
+        <li>Pide copia de la carta de despido y del finiquito.</li>
+      </ul>
+    </div>
+    <a class="btn zc-delegado" href="#delegados"><svg class="icono p" aria-hidden="true"><use href="#i-telefono"/></svg>Hablar con un delegado</a>
+    <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Orientativo: no sustituye al convenio ni al asesoramiento de un delegado o un abogado laboralista. Cálculo con el convenio de Girona 2026-2027 (tablas salariales, antigüedad del 10% cada tramo, 3 pagas extra de 30 días y 23 días laborables de vacaciones) y el Estatuto de los Trabajadores. Supuestos: verano se devenga de enero a junio y Navidad de julio a diciembre; el día de vacaciones se valora de forma aproximada. Tu contrato o un acuerdo de empresa pueden mejorar estos importes. El finiquito tributa y cotiza; la indemnización legal por despido está exenta de IRPF hasta el límite legal.</span></p>
+  </section>
+
+  <!-- TEST DE ADR (Zona Conductores, petición n.º 39): test, placa naranja y cómo sacar el carnet; no se guarda nada (adr.js) -->
+  <section class="vista zc-herr" id="v-adr">
+    <h1 class="titulo-vista">Test de ADR</h1>
+    <p class="intro-vista">Practica para el examen y consulta cómo sacar o renovar el carnet. No se guarda nada.</p>
+    <nav class="zc-tabs" role="tablist" aria-label="Test de ADR">
+      <button type="button" role="tab" data-adr-tab="0">Test</button>
+      <button type="button" role="tab" data-adr-tab="1">Placa naranja</button>
+      <button type="button" role="tab" data-adr-tab="2">Sacar el carnet</button>
+    </nav>
+    <div id="adr-vista" aria-live="polite"></div>
+    <a class="btn zc-delegado" href="#delegados"><svg class="icono p" aria-hidden="true"><use href="#i-telefono"/></svg>Hablar con un delegado</a>
+    <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Orientativo: material de repaso, no sustituye al examen oficial. El examen oficial se basa en el texto del ADR vigente y en lo que explica tu centro de formación. Comprueba duración, precios y fechas con un centro autorizado.</span></p>
+  </section>
+
   <!-- APARTADO (los crea el admin desde el panel: Comité de empresa, etc.) -->
   <section class="vista" id="v-apartado">
     <h1 class="titulo-vista" id="ap-titulo">Cargando…</h1>
@@ -539,13 +603,15 @@
 <div class="barra-acciones" id="barra-acciones"></div>
 <button class="arriba-btn" id="arriba" type="button" aria-label="Volver arriba" title="Volver arriba"><svg class="arriba-aro" viewBox="0 0 52 52" aria-hidden="true"><circle class="aro-fondo" cx="26" cy="26" r="23"/><circle class="aro-prog" cx="26" cy="26" r="23" pathLength="100"/></svg><span data-i="arriba"></span></button>
 
-<script src="lib/supabase.js?v=172"></script>
-<script src="iconos.js?v=172"></script>
-<script src="config.js?v=172"></script>
-<script src="render.js?v=172"></script>
-<script src="app.js?v=172"></script>
-<script src="descansos.js?v=172"></script>
-<script src="ganancias.js?v=172"></script>
-<script src="aparcar.js?v=172"></script>
+<script src="lib/supabase.js?v=173"></script>
+<script src="iconos.js?v=173"></script>
+<script src="config.js?v=173"></script>
+<script src="render.js?v=173"></script>
+<script src="app.js?v=173"></script>
+<script src="descansos.js?v=173"></script>
+<script src="ganancias.js?v=173"></script>
+<script src="aparcar.js?v=173"></script>
+<script src="finiquito.js?v=173"></script>
+<script src="adr.js?v=173"></script>
 </body>
 </html>

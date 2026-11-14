@@ -2721,3 +2721,45 @@ body.solo-restr #apc-prohib-todas { margin-top: 20px; }
 .gan-reparto .gan-nomina-aparte { color: var(--azul); }
 .gan-reparto .gan-nomina-aparte b { color: var(--azul); }
 .gan-reparto .gan-nomina-aparte small { display: block; margin-top: 2px; font-size: .85rem; line-height: 1.35; }
+
+/* v173 (peticiones n.º 38 y 39 del padre): «Mi finiquito» (finiquito.js) y «Test de ADR» (adr.js) en Zona Conductores, en su azul; el rojo solo en «Hablar con un delegado» */
+.zc-herr .zc-caja { border-left: 5px solid var(--cond-azul); }
+.zc-herr .zc-caja h2 { font-size: 1.15rem; margin: 0 0 10px; text-wrap: balance; }
+.zc-dos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 0 12px; }
+.zc-dos > div { min-width: 0; }
+.zc-caja label:first-child, .zc-dos > div:first-child label { margin-top: 0; }
+.zc-pista { color: var(--suave); font-size: .9rem; margin: 4px 0 0; }
+.zc-ok { background: var(--verde-suave); border-radius: 12px; padding: 12px 14px; margin: 0 0 14px; }
+.zc-error { color: var(--rojo); font-weight: 700; }
+.zc-tabla { width: 100%; border-collapse: collapse; }
+.zc-tabla td { padding: 9px 0; border-bottom: 1px solid var(--linea); vertical-align: top; }
+.zc-tabla td:last-child { text-align: right; font-weight: 700; white-space: nowrap; padding-left: 10px; }
+.zc-tabla td small { display: block; color: var(--suave); font-weight: 400; font-size: .9rem; }
+.zc-tabla tr.zc-sec td { border: 0; padding-top: 14px; padding-left: 0; font-weight: 800; color: var(--cond-azul-ic); text-align: left; }
+.zc-total { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; padding: 14px 16px; border-radius: 12px; background: var(--cond-azul); color: #fff; font-weight: 800; font-size: 1.15rem; }
+.zc-aviso { background: var(--ambar-suave); border-left: 5px solid var(--ambar-rotulo); border-radius: 10px; padding: 12px 14px; margin: 0 0 14px; }
+.zc-aviso ul { margin: 6px 0 0; padding-left: 20px; }
+.zc-aviso li { margin-bottom: 4px; }
+.btn.zc-delegado { display: flex; justify-content: center; align-items: center; gap: 8px; width: 100%; min-height: 52px; margin: 0 0 14px; background: var(--rojo); border-color: var(--rojo); color: #fff; font-weight: 800; text-decoration: none; }
+.btn.zc-btn { display: block; width: 100%; min-height: 48px; margin-top: 12px; background: var(--cond-azul); border-color: var(--cond-azul); color: #fff; font-weight: 800; }
+.zc-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; margin: 0 0 14px; background: var(--tarjeta); border: 1px solid var(--linea); border-radius: 14px; }
+.zc-tabs button { min-height: 48px; padding: 6px 4px; border: 0; border-radius: 10px; background: none; color: var(--tinta); font: inherit; font-weight: 700; font-size: .95rem; line-height: 1.15; cursor: pointer; }
+.zc-tabs button.activa { background: var(--cond-azul); color: #fff; }
+.zc-barra { height: 8px; background: var(--linea); border-radius: 99px; overflow: hidden; margin-bottom: 8px; }
+.zc-barra i { display: block; height: 100%; background: var(--cond-azul-ic); }
+.zc-opc { display: block; width: 100%; min-height: 48px; margin-top: 8px; padding: 12px; text-align: left; font: inherit; color: var(--tinta); background: var(--fondo); border: 1px solid var(--linea); border-radius: 12px; cursor: pointer; }
+.zc-opc:disabled { cursor: default; opacity: 1; }
+.zc-opc.bien { background: var(--verde-suave); border: 2px solid var(--verde); font-weight: 700; }
+.zc-opc.mal { background: var(--rojo-suave); border: 2px solid var(--rojo); }
+.zc-exp { margin: 12px 0 0; color: var(--suave); }
+.zc-lista { padding-left: 22px; margin: 6px 0 12px; }
+.zc-lista li { margin-bottom: 10px; }
+.zc-caja ul { padding-left: 20px; }
+input.zc-placa-in { font-size: 1.4rem; letter-spacing: .1em; text-align: center; text-transform: uppercase; }
+/* La placa naranja de verdad: siempre naranja con letra negra, también en oscuro */
+.zc-placa { display: grid; max-width: 200px; margin: 12px auto; border: 3px solid #111; border-radius: 6px; background: #f57c00; color: #111; font-weight: 800; font-size: 1.8rem; text-align: center; }
+.zc-placa div { padding: 8px; border-bottom: 3px solid #111; overflow-wrap: anywhere; }
+.zc-placa div:last-child { border: 0; }
+.zc-dos[hidden] { display: none; }
+.zc-herr .zc-caja { padding: 16px; }
+@media (min-width: 1000px) { .zc-herr > * { max-width: 760px; } }

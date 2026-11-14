@@ -77,6 +77,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 173: «Mi finiquito» y «Test de ADR» en Zona Conductores
+
+- Peticiones n.º 38 y 39 del panel. Dos herramientas nuevas que hizo el padre, pasadas tal cual (mismas tablas, cuentas, preguntas y respuestas) al estilo de la web: **Mi finiquito** (convenio de Girona 2026-2027: salario del mes, pagas extra, vacaciones e indemnización según el motivo de la baja) y **Test de ADR** (test de 10 preguntas al azar con repaso de fallos, descifrador de la placa naranja y consejos para sacar o renovar el carnet). Salen como tarjetas y pestañas de Zona Conductores, con «Orientativo…» y la fuente de cada dato, y el botón «Hablar con un delegado». Todo se calcula en pantalla: no se guarda nada en el móvil ni se envía nada. Archivos nuevos `finiquito.js` y `adr.js`.
+
 ## Versión 172: lo de la nómina no suma en el cobro de la semana
 
 - Petición n.º 37 del panel. En Mis incentivos > «Semana», la cifra grande «Esta semana» es solo el cobro semanal; debajo sigue «Cobro semanal» y, en azul, lo que va con la nómina (nocturnidad, ADR fijo), con «No se suma aquí: este dinero lo verás en la nómina de final de mes, no en el cobro semanal». Los días de la lista, «Todas las semanas» y la comparación con la semana pasada también cuentan solo lo semanal. «Día», «Mes» y el PDF no cambian, ni lo que se guarda en el móvil.
