@@ -1,6 +1,6 @@
 // Test de ADR (Zona Conductores, petición n.º 39 del padre). Es su página «ADR: tests y ayudas» pasada tal cual:
 // las preguntas, las respuestas, las explicaciones, el descifrador de la placa naranja y los consejos son los suyos,
-// sin cambiar ni una palabra (si hay que corregir algo, que lo diga él). Aquí solo cambia la forma: sin <script>
+// sin cambiar ni una palabra (si hay que corregir algo, que lo diga él; en la v173 él pidió corregir el ejemplo de la gasolina en la pregunta de los 1.000 puntos). Aquí solo cambia la forma: sin <script>
 // en línea ni onclick (CSP), todo con delegación y esc(), y los colores de Zona Conductores. No se guarda nada.
 (function () {
   const $ = (i) => document.getElementById(i);
@@ -21,7 +21,7 @@
     ["Fumar durante la carga y descarga está…", ["Permitido lejos del camión", "Prohibido", "Permitido en cabina"], 1, "Está prohibido, también cerca del vehículo."],
     ["¿Cuál es el extintor mínimo para la cabina?", ["Uno de polvo de 2 kg", "Uno de CO2 de 1 kg", "No hace falta en cabina"], 0, "Al menos uno de 2 kg de polvo, apto para incendios de cabina y motor."],
     ["Cada miembro de la tripulación debe llevar…", ["Chaleco reflectante y linterna portátil", "Solo casco", "Una cuña por persona"], 0, "Chaleco reflectante, linterna que no produzca chispas, guantes y protección ocular. Las cuñas y señales son del vehículo."],
-    ["Si un transporte tiene material de categoría 3 (como la gasolina), ¿cuánto multiplica cada litro en el cálculo de los 1.000 puntos?", ["×50", "×3", "×1"], 2, "Categoría 3: ×1. La 2 multiplica ×3 y la 1 ×50. Se aplica la exención de 1.000 puntos."],
+    ["Si un transporte tiene material de categoría 3 (como el gasóleo, UN 1202), ¿cuánto multiplica cada litro en el cálculo de los 1.000 puntos?", ["×50", "×3", "×1"], 2, "Categoría 3: ×1. La 2 (como la gasolina, UN 1203) multiplica ×3 y la 1 ×50. Se aplica la exención de 1.000 puntos."],
     ["¿Qué debe llevar el documento de transporte de la mercancía?", ["Solo el nombre del cliente", "Número ONU, denominación, clase, grupo de embalaje y cantidad", "Solo la matrícula"], 1, "Número ONU, nombre oficial, clase, grupo de embalaje (si tiene) y cantidad."],
     ["Si hay un accidente con derrame, lo primero es…", ["Recoger la carga y seguir", "Parar el motor, señalizar, avisar al 112 y seguir las instrucciones escritas", "Esperar sin avisar"], 1, "Para el motor, señaliza, llama al 112 e indica la materia con su número ONU."]
   ];

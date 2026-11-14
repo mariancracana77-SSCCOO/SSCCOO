@@ -72,7 +72,10 @@
       if (alta >= cut) { dias = 33 * anios; cap = 720; nota = "33 días por año, máx. 24 mensualidades"; }
       else {
         const y45 = inc(alta, Math.min(baja, cut - DAY)) / 365.25, y33 = Math.max(0, anios - y45), d45 = 45 * y45;
-        dias = d45 + 33 * y33; cap = d45 > 720 ? 1260 : 720; nota = "45 días/año hasta el 11/02/2012 y 33 después, máx. " + (cap === 1260 ? "42" : "24") + " mensualidades";
+        // v173 (corregido con el visto bueno del padre): Estatuto, disposición transitoria undécima. Si solo el tramo de antes
+        // del 12/02/2012 ya pasa de 720 días, se cobra ese tramo (máx. 1260 = 42 mensualidades) y lo de después no suma.
+        if (d45 > 720) { dias = Math.min(d45, 1260); cap = 1260; nota = "45 días/año hasta el 11/02/2012 (pasa de 720 días: lo de después no suma), máx. 42 mensualidades"; }
+        else { dias = d45 + 33 * y33; cap = 720; nota = "45 días/año hasta el 11/02/2012 y 33 después, máx. 24 mensualidades"; }
       }
       dias = Math.min(dias, cap);
     } else if (tipo === "obj") { dias = Math.min(20 * anios, 360); nota = "20 días por año, máx. 12 mensualidades"; }
