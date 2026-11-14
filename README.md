@@ -77,6 +77,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 174: «Mi hora ordinaria», «Diccionario del conductor», más preguntas de ADR y explicación de los pluses fijos
+
+- Peticiones n.º 40 a 43 del panel. **Mi hora ordinaria** (n.º 43) y **Diccionario del conductor** (n.º 42, 53 palabras con buscador y filtros) son herramientas del padre pasadas tal cual a Zona Conductores (`hora.js`, `diccionario.js`). Las tablas de sueldos del convenio de Girona y la regla de antigüedad están ahora en un solo archivo, `convenio-girona.js`, que usan el finiquito y la hora ordinaria (si cambia una cifra, se cambia ahí). El test de ADR pasa de 16 a 60 preguntas y en cada test nuevo salen primero las que aún no han salido (n.º 41; las 44 nuevas, a revisar por alguien con el ADR). En «Mi finiquito» y «Mi hora ordinaria», un desplegable explica qué son los pluses fijos y por qué cuentan (n.º 40). No se guarda nada en el móvil.
+
 ## Versión 173: «Mi finiquito» y «Test de ADR» en Zona Conductores
 
 - Peticiones n.º 38 y 39 del panel. Dos herramientas nuevas que hizo el padre, pasadas tal cual (mismas tablas, cuentas, preguntas y respuestas) al estilo de la web: **Mi finiquito** (convenio de Girona 2026-2027: salario del mes, pagas extra, vacaciones e indemnización según el motivo de la baja) y **Test de ADR** (test de 10 preguntas al azar con repaso de fallos, descifrador de la placa naranja y consejos para sacar o renovar el carnet). Salen como tarjetas y pestañas de Zona Conductores, con «Orientativo…» y la fuente de cada dato, y el botón «Hablar con un delegado». Todo se calcula en pantalla: no se guarda nada en el móvil ni se envía nada. Archivos nuevos `finiquito.js` y `adr.js`.
