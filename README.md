@@ -77,6 +77,15 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 178: Simulador de carga en Zona Conductores
+
+- Petición n.º 46 del padre (se lo dio a Lorena el 15/11/2026): herramienta nueva «Simulador de carga» (`#carga`, `carga.js`). El remolque visto desde arriba (13,6 × 2,4 m, se cambia en «Ajustes del remolque») y cómo se llena con cada recogida: europalet, industrial, medio palet u otro tamaño, apilados en 2 alturas, aprovechar huecos, peso y carga útil, copiar el resumen y empezar de cero (pregunta en la página, sin `confirm()`). Las cuentas son las del archivo del padre, sin cambiar.
+- Vistas «Desde arriba», «De lado» y «En 3D» (lo pidió Lorena: «usa un modelo 3d del camión real»): `carga-3d.js` dibuja con three.js (`lib/three/`, versión 0.170.0, licencia MIT) una tractora azul y crema con remolque de lonas casi transparentes y los palets de cada recogida con su color, apilados, huecos y en rojo lo que no cabe. Se mueve con el dedo o el ratón. three.js solo se descarga al abrir el simulador y si el móvil puede dibujar en 3D; si no, se queda «Desde arriba» y lo dice. Sin animaciones: solo dibuja cuando algo cambia.
+- Medidas reales (lo pidió Lorena): cada recogida admite su alto con el palet (opcional) y «Ajustes del remolque» el alto por dentro (2,70 m; «mega» 3,00). Avisa si no caben de alto o apilados y en 3D lo que pasa del techo sale en rojo. Palets de madera de 1,20 × 0,80 × 0,144 m, remolque de 2,48 m por dentro y 4 m de alto, tractora con su batalla y conjunto de 16,50 m, letreros con las medidas y una persona de 1,75 m para comparar.
+- Guarda las recogidas en el móvil (localStorage `ccoo-remolque`); si otra ventana guarda, esta se pone al día (evento `storage`). Lo guardado se limpia campo a campo al leerlo.
+- Selector de idioma como las demás herramientas: grupo nuevo `carga` en la función `traducir` (copia de la de antes en `privado.respaldo_funciones`).
+- Pruebas: `pruebas/carga.cjs` (las cuentas con casos conocidos: 33 y 34 europalets, 26 industriales, apilados, huecos), `traducir-textos.cjs`, `traducir-navegador.cjs` y `humo.cjs` (con la vista nueva).
+
 ## Versión 177: traducir Mi finiquito, Mi hora ordinaria, el Diccionario y el Test de ADR
 
 - Petición n.º 45 del padre (con el sí de Lorena del 15/11/2026): las cuatro herramientas nuevas de Zona Conductores llevan arriba el selector «Idioma · Language», el mismo de Mis descansos (el idioma elegido vale para todas). Las cuentas no cambian: solo el texto que se ve. `zona-idioma.js` pone la traducción encima de lo que hay en pantalla y vuelve al español al elegir «Español».

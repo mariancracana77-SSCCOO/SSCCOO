@@ -33,7 +33,7 @@ const PERMITIDOS = [/^[\d.,\s]+ h$/, /^\*\*ZZ /, /^X?\d+$/]; // «147,2 h» (cif
     if (fallan.length) { mal++; console.log(`MAL ${nombre}: ${fallan.length} textos ${debe ? "sin traducir" : "sin volver al español"}:`, fallan.slice(0, 8)); }
     else console.log(`OK  ${nombre} (${vistos.length} textos)`);
   };
-  for (const [g, hash] of [["finiquito", "finiquito"], ["hora", "hora"], ["diccionario", "diccionario"], ["adr", "adr"]]) {
+  for (const [g, hash] of [["finiquito", "finiquito"], ["hora", "hora"], ["diccionario", "diccionario"], ["adr", "adr"], ["carga", "carga"]]) {
     await p.goto(BASE + "#" + hash); await p.waitForTimeout(700);
     await p.evaluate(([g, lista]) => {
       try { localStorage.removeItem("ccoo-mi-idioma"); localStorage.removeItem("ccoo-textos-" + g); } catch (_) {}
@@ -44,6 +44,7 @@ const PERMITIDOS = [/^[\d.,\s]+ h$/, /^\*\*ZZ /, /^X?\d+$/]; // «147,2 h» (cif
     const sel = `#v-${g} .zc-idioma select`;
     if (g === "finiquito") { await p.fill("#fin-alta", "2015-03-01"); await p.fill("#fin-baja", "2026-10-20"); }
     if (g === "hora") await p.fill("#ho-hx", "10");
+    if (g === "carga") { await p.evaluate(() => { try { localStorage.removeItem("ccoo-remolque"); } catch (_) {} }); await p.reload(); await p.waitForTimeout(700); await p.evaluate(([g, lista]) => { const o = sb.functions.invoke.bind(sb.functions); sb.functions.invoke = async (n, op) => n === "traducir" && op?.body?.modo === "textos" && op.body.grupo === g ? { data: { textos: Object.fromEntries(lista.map(s => [s, "ZZ " + s])) }, error: null } : o(n, op); }, [g, TEXTOS[g]]); await p.fill("#cg-0-q", "10"); await p.fill("#cg-0-w", "500"); await p.click("#v-carga .cg-ajustes summary"); await p.fill("#cg-pay", "4000"); }
     await p.selectOption(sel, "en"); await p.waitForTimeout(500);
     await comprueba(g + " en inglés", true);
     if (g === "finiquito") { await p.selectOption("#fin-tipo", "dis"); await p.waitForTimeout(300); await comprueba("finiquito disciplinario", true); await p.selectOption("#fin-cat", "man"); await p.waitForTimeout(300); await comprueba("finiquito importes a mano", true); }
@@ -55,6 +56,7 @@ const PERMITIDOS = [/^[\d.,\s]+ h$/, /^\*\*ZZ /, /^X?\d+$/]; // «147,2 h» (cif
       await p.click("[data-adr-tab='2']"); await p.waitForTimeout(300); await comprueba("adr carnet", true);
       await p.click("[data-adr-tab='0']"); await p.waitForTimeout(300);
     }
+    if (g === "carga") { await p.click("#cg-add"); await p.selectOption("#cg-1-t", "ind"); await p.fill("#cg-1-q", "3"); await p.waitForTimeout(300); await comprueba("carga dos recogidas", true); await p.click("#cg-cero"); await p.waitForTimeout(200); await comprueba("carga borrar", true); await p.click("#cg-no"); await p.fill("#cg-0-q", "40"); await p.waitForTimeout(300); await comprueba("carga no cabe", true); }
     await p.selectOption(sel, ""); await p.waitForTimeout(500);
     await comprueba(g + " vuelta al español", false);
   }

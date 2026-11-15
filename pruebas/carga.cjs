@@ -1,0 +1,38 @@
+// v178 (petición n.º 46): comprueba las cuentas del Simulador de carga (carga.js) con casos conocidos de un remolque
+// de 13,6 × 2,4 m. Sin navegador: node pruebas/carga.cjs
+const fs = require("fs"), path = require("path"), vm = require("vm");
+const ctx = { window: {}, document: { getElementById: () => null } };
+vm.runInNewContext(fs.readFileSync(path.join(__dirname, "..", "carga.js"), "utf8"), ctx);
+const C = ctx.window.CargaCuentas;
+const L = 1360, W = 240;
+const r = (t, q, extra) => Object.assign({ t, q, s: false, w: 0, l: 0, a: 0 }, extra || {});
+let mal = 0;
+const igual = (nombre, v, esperado) => { const ok = JSON.stringify(v) === JSON.stringify(esperado); if (!ok) mal++; console.log((ok ? "OK  " : "MAL ") + nombre + ": " + JSON.stringify(v) + (ok ? "" : " (se esperaba " + JSON.stringify(esperado) + ")")); };
+const largo = (recs, fill = true) => C.calcula(recs, L, W, fill).usado;
+igual("34 europalets llenan los 13,6 m justos", largo([r("eu", 34)]), 1360);
+igual("33 europalets: 13,2 m (11 filas de 3)", largo([r("eu", 33)]), 1320);
+igual("35 europalets no caben (14 m)", largo([r("eu", 35)]), 1400);
+igual("26 industriales: 13 m (de 2 atravesados)", largo([r("ind", 26)]), 1300);
+igual("27 industriales no caben (13,6 m + 1 fila)", largo([r("ind", 27)]) > 1360, true);
+igual("4 medios palets: una fila de 0,8 m", largo([r("med", 4)]), 80);
+igual("1 europalet: fila atravesada de 0,8 m", largo([r("eu", 1)]), 80);
+igual("20 europalets apilados = 10 sitios: 4 m", largo([r("eu", 20, { s: true })]), 400);
+igual("21 europalets apilados = 11 sitios: 4,4 m", largo([r("eu", 21, { s: true })]), 440);
+const uno = C.calcula([r("eu", 1)], L, W, true);
+igual("hueco que deja 1 europalet", C.holes(uno.rows).map(h => [h.w, h.h, h.c]), [[80, 120, 1]]);
+igual("en ese hueco cabe 1 europalet", C.nfit([120, 80], C.holes(uno.rows)[0]), 1);
+igual("medio palet en el hueco (aprovechar huecos): no alarga", largo([r("eu", 1), r("med", 1)], true), 80);
+igual("sin aprovechar huecos el medio palet usa la misma fila (es la última)", largo([r("eu", 1), r("med", 1)], false), 80);
+igual("sin aprovechar huecos, una fila anterior no se usa", largo([r("eu", 1), r("ind", 2), r("med", 1)], false), 80 + 100 + 60);
+igual("con aprovechar huecos, el medio palet va al hueco de la fila 1", largo([r("eu", 1), r("ind", 2), r("med", 1)], true), 80 + 100);
+const diez = C.calcula([r("eu", 10)], L, W, true);
+igual("tras 10 europalets (4 m) caben 24 más", C.maxFit(diez.rows, [120, 80], W, L, true), 24);
+igual("tras 10 europalets caben 18 industriales (9 filas de 2 en 9,6 m)", C.maxFit(diez.rows, [120, 100], W, L, true), 18);
+const ancho = C.calcula([r("cu", 2, { l: 250, a: 250 })], L, W, true);
+igual("palet de 2,5 × 2,5 m: más ancho que el remolque", ancho.bad, [0]);
+igual("otro tamaño sin medidas: se pide", C.calcula([r("cu", 2)], L, W, true).sinMedida, [0]);
+igual("peso: 10 × 500 kg", C.calcula([r("eu", 10, { w: 500 })], L, W, true).kg, 5000);
+igual("todo lo apuntado se coloca (34 europalets = 34 dibujados)", C.calcula([r("eu", 34)], L, W, true).rows.reduce((s, x) => s + x.items.length, 0), 34);
+igual("remolque de 2,45 m: 3 europalets a lo largo siguen cabiendo", C.calcula([r("eu", 33)], L, 245, true).usado, 1320);
+console.log(mal ? `\n${mal} mal` : "\nTodo bien");
+process.exit(mal ? 1 : 0);

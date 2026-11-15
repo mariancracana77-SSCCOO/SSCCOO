@@ -2792,3 +2792,53 @@ input.zc-busca { width: 100%; margin: 0 0 4px; }
 .zc-idioma { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin: 0 0 12px; }
 .zc-idioma .msg { margin: 0; }
 .zc-idioma .msg:empty { display: none; }
+
+/* v178 (petición n.º 46 del padre): Simulador de carga (carga.js), en el azul de Zona Conductores */
+.cg-fija { position: sticky; top: var(--cg-top, 0px); z-index: 5; background: var(--fondo); padding: 6px 0 8px; margin: 0 0 12px; border-bottom: 1px solid var(--linea); }
+.cg-extremos { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: .8rem; font-weight: 800; color: var(--suave); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+.cg-zoom { min-height: 40px; padding: 4px 12px; border: 1px solid var(--linea); border-radius: 10px; background: var(--tarjeta); color: var(--cond-azul-ic); font: inherit; font-size: .85rem; font-weight: 700; text-transform: none; letter-spacing: 0; cursor: pointer; }
+.cg-remolque { overflow-x: auto; -webkit-overflow-scrolling: touch; background: var(--cg-suelo); border: 2px solid var(--tinta); border-radius: 8px; min-height: 40px; }
+.cg-remolque svg { display: block; }
+.cg-vistas { margin: 0 0 8px; }
+.cg-vistas[hidden], .cg-extremos[hidden], .cg-remolque[hidden] { display: none; }
+.cg-fija.cg-en3d { position: static; }
+.cg-3d { position: relative; height: clamp(210px, 56vw, 440px); border: 2px solid var(--tinta); border-radius: 8px; overflow: hidden; background: var(--cg-suelo); }
+.cg-3d[hidden] { display: none; }
+.cg-3d canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.cg-3d-pista { position: absolute; left: 8px; right: 8px; top: 6px; margin: 0; padding: 4px 8px; border-radius: 8px; background: var(--tarjeta); color: var(--suave); font-size: .8rem; line-height: 1.25; opacity: .92; pointer-events: none; }
+.cg-sin3d { margin: 6px 0 0; }
+.cg-3d.tocado .cg-3d-pista { display: none; }
+.cg-remolque .cg-hueco { stroke: var(--cg-hueco); }
+.cg-remolque .cg-sobra { fill: var(--rojo); opacity: .28; }
+.cg-remolque .cg-linea { stroke: var(--rojo); }
+.cg-cab { margin: 6px 0 0; font-weight: 700; }
+.cg-cab small { font-weight: 400; color: var(--suave); }
+.cg-cab .cg-pasa { color: var(--rojo); }
+:root { --cg-suelo: #e9e6df; --cg-hueco: #777; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cg-suelo: #2a2f3d; --cg-hueco: #9aa0ad; } }
+:root[data-theme="dark"] { --cg-suelo: #2a2f3d; --cg-hueco: #9aa0ad; }
+label.cg-marca { display: flex; gap: 10px; align-items: flex-start; margin: 12px 0 0; font-weight: 400; cursor: pointer; }
+label.cg-marca input { width: 24px; height: 24px; flex: none; margin: 2px 0 0; }
+label.cg-marca small { display: block; color: var(--suave); font-size: .9rem; margin-top: 2px; }
+label.cg-huecos { margin: 0 0 12px; }
+.cg-rec { margin: 0 0 12px; }
+.cg-rec-cab { display: flex; gap: 8px; align-items: center; }
+.cg-rec-cab input { flex: 1; min-width: 0; font-weight: 700; }
+.cg-num { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; color: #fff; font-weight: 800; background: var(--cg-col); }
+.cg-quitar { flex: none; min-height: 44px; padding: 6px 12px; border: 1px solid var(--linea); border-radius: 10px; background: none; color: var(--suave); font: inherit; font-size: .9rem; cursor: pointer; }
+.zc-herr .zc-caja.cg-rec { border-left-color: var(--cg-col); }
+.cg-c0 { --cg-col: #2a3f9e; } .cg-c1 { --cg-col: #c2410c; } .cg-c2 { --cg-col: #047857; } .cg-c3 { --cg-col: #7c3aed; }
+.cg-c4 { --cg-col: #be123c; } .cg-c5 { --cg-col: #0e7490; } .cg-c6 { --cg-col: #a16207; } .cg-c7 { --cg-col: #4d7c0f; }
+.btn.cg-mas { display: flex; justify-content: center; align-items: center; gap: 8px; width: 100%; min-height: 48px; margin: 0 0 14px; background: none; border: 2px solid var(--cond-azul-ic); color: var(--cond-azul-ic); font-weight: 800; }
+#cg-res { margin: 0 0 4px; }
+.cg-ajustes { margin: 0 0 4px; }
+.cg-ajustes-in { padding: 4px 14px 14px; }
+.btn.cg-cero { display: block; width: 100%; min-height: 48px; margin: 10px 0 14px; }
+#cg-confirma { margin: 10px 0 14px; }
+.cg-confirma-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.cg-confirma-btns .btn { flex: 1 1 140px; min-height: 48px; }
+.cg-resumen { white-space: pre-wrap; overflow-wrap: anywhere; user-select: all; background: var(--tarjeta); border: 1px solid var(--linea); border-radius: 10px; padding: 10px 12px; font: inherit; font-size: .95rem; }
+/* Al ir a un campo (teclado o «Añadir»), que no quede debajo del dibujo fijo ni de la barra de abajo */
+#v-carga :is(input, select, button, summary, a) { scroll-margin-top: calc(var(--cg-top, 0px) + var(--cg-alto, 0px) + 12px); scroll-margin-bottom: 96px; }
+.cg-p { margin: 0; }
+#cg-confirma[hidden], .btn.cg-cero[hidden], .cg-resumen[hidden] { display: none; }
