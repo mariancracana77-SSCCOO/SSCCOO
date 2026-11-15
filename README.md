@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 180: colocar palets a mano en el Simulador de carga
+- Botón «Colocar a mano» (opcional, en «Desde arriba»): se toca un hueco o el «+» de un palet suelto de una recogida apilada y se elige qué palet va ahí; si no cabe, dice por qué (medida o alto por dentro). El palet sale de su recogida y lo demás se sigue colocando solo. «Deshacer» y «Quitar lo colocado a mano». Se guarda en el móvil con las recogidas (petición n.º 48).
+
 ## Versión 179: Simulador de carga más grande y con colores
 - En cada recogida, el tipo de palet, el n.º de palets, los kg y el alto salen más grandes y cada uno con su color (azul, verde, naranja y morado), igual en todas las recogidas. La cabecera de cada recogida lleva su color. El 3D, algo más alto en el móvil (petición n.º 47).
 - También en la petición n.º 47: el peso es «Kg en total» de la recogida (lo guardado con «kg por palet» se pasa solo, multiplicando una vez), y con «Aprovechar huecos» una recogida apilada pone sus palets encima de un palet suelto de otra recogida apilada (si es igual o más pequeño y cabe de alto). Los avisos de huecos dicen qué tipo de palet no cabe.

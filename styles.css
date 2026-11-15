@@ -2846,6 +2846,32 @@ label.cg-huecos { margin: 0 0 12px; }
 .cg-rec-cab { margin: -16px -16px 4px; padding: 10px 16px; background: color-mix(in srgb, var(--cg-col) 14%, var(--tarjeta)); border-bottom: 2px solid var(--cg-col); }
 .cg-num { width: 44px; height: 44px; font-size: 1.3rem; }
 .cg-rec-cab input { font-size: 1.15rem; }
+/* v180 (petición 48): colocar a mano */
+.cg-mano { margin: 0 0 12px; }
+.cg-mano-barra { display: flex; flex-wrap: wrap; gap: 8px; }
+.cg-mano-barra .btn { flex: 1 1 150px; min-height: 48px; font-weight: 800; }
+.btn.cg-mano-btn { background: none; border: 2px solid var(--cond-azul-ic); color: var(--cond-azul-ic); }
+.btn.cg-mano-btn[aria-pressed="true"] { background: var(--cond-azul); border-color: var(--cond-azul); color: #fff; }
+.cg-mano-barra .btn[hidden], .cg-elige[hidden], #cg-mano-pista[hidden] { display: none; }
+#cg-mano-pista, #cg-mano-msg { margin: 8px 0 0; }
+#cg-mano-msg:empty { display: none; }
+.cg-elige { margin: 10px 0 0; display: grid; gap: 8px; scroll-margin-top: calc(var(--cg-top, 0px) + var(--cg-alto, 0px) + 12px); scroll-margin-bottom: 96px; }
+.cg-elige-opts { display: grid; gap: 8px; }
+.btn.cg-pon, .cg-no { display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%; min-height: 56px; margin: 0; padding: 8px 12px; text-align: left; border-radius: 12px; }
+.btn.cg-pon { background: color-mix(in srgb, var(--cg-col) 14%, var(--tarjeta)); border: 2px solid var(--cg-col); color: var(--tinta); font-weight: 800; }
+.cg-no { border: 2px dashed var(--linea); color: var(--suave); }
+.cg-pon small, .cg-no small { display: block; font-weight: 400; font-size: .9rem; color: var(--suave); }
+.cg-pon-num { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; background: var(--cg-col); color: #fff; font-weight: 800; }
+.cg-no .cg-pon-num { opacity: .55; }
+.cg-remolque .cg-sitio { fill: var(--cond-azul-ic); fill-opacity: .16; stroke: var(--cond-azul-ic); stroke-width: 4; cursor: pointer; }
+.cg-remolque .cg-sitio-enc circle { fill: #fff; stroke: var(--cond-azul); stroke-width: 5; }
+.cg-remolque .cg-sitio-enc { cursor: pointer; }
+.cg-remolque .cg-sitio-mas { fill: var(--cond-azul-ic); font-weight: 800; pointer-events: none; }
+.cg-remolque .cg-sitio-enc .cg-sitio-mas { fill: var(--cond-azul); }
+.cg-remolque .cg-sitio.cg-sel { fill-opacity: .42; stroke-width: 7; }
+.cg-remolque .cg-sitio-enc.cg-sel circle { fill: #ffd84d; stroke-width: 6; }
+.cg-remolque [data-sitio]:focus { outline: none; }
+.cg-remolque [data-sitio]:focus-visible.cg-sitio, .cg-remolque [data-sitio]:focus-visible circle { stroke: var(--rojo); stroke-width: 7; }
 .btn.cg-mas { display: flex; justify-content: center; align-items: center; gap: 8px; width: 100%; min-height: 48px; margin: 0 0 14px; background: none; border: 2px solid var(--cond-azul-ic); color: var(--cond-azul-ic); font-weight: 800; }
 #cg-res { margin: 0 0 4px; }
 .cg-ajustes { margin: 0 0 4px; }
