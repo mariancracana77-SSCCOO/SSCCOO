@@ -77,6 +77,11 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 177: traducir Mi finiquito, Mi hora ordinaria, el Diccionario y el Test de ADR
+
+- Petición n.º 45 del padre (con el sí de Lorena del 15/11/2026): las cuatro herramientas nuevas de Zona Conductores llevan arriba el selector «Idioma · Language», el mismo de Mis descansos (el idioma elegido vale para todas). Las cuentas no cambian: solo el texto que se ve. `zona-idioma.js` pone la traducción encima de lo que hay en pantalla y vuelve al español al elegir «Español».
+- La función `traducir` tiene los grupos `finiquito`, `hora`, `diccionario` y `adr`: saca ella misma los textos de su sección de `index.html` y de sus `.js` (`T("...")` y lo de entre `/* textos */` y `/* fin textos */`). Copia de la función de antes en `privado.respaldo_funciones` (id 14). Pruebas: `pruebas/traducir-textos.cjs` y `pruebas/traducir-navegador.cjs`.
+
 ## Versión 176: rediseño de la vista de ordenador
 
 - Lo pidió Lorena: la web en el ordenador (navegador, desde 1000 px) con un aspecto más profesional y menos «hecho por IA». Todo en `web-pc.css` y `web-pc.js`, que solo se cargan en esa vista: el móvil y la app instalada se quedan exactamente igual.

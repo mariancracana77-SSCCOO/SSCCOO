@@ -12,24 +12,27 @@
   const f1 = (n) => n.toFixed(1).replace(".", ",");
   // Tablas del convenio de Girona 2026-2027 y regla de antigüedad: en convenio-girona.js (las comparte con «Mi hora ordinaria»)
   const TAB = CONVENIO_GIRONA.TAB;
+  // v177 (petición n.º 45): textos traducibles con T("...") (zona-idioma.js; la función «traducir» los saca de este archivo)
+  const Z = typeof ZonaIdioma === "function" ? ZonaIdioma("finiquito", "v-finiquito", () => calc()) : { T: (x, v) => x.replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m), TH: null };
+  const T = Z.T, TH = Z.TH || ((x, v) => esc(T(x, v)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>"));
   const sel = $("fin-cat");
-  sel.innerHTML = Object.keys(TAB).map(k => `<option value="${esc(k)}">${esc(TAB[k][0])}</option>`).join("") + `<option value="man">Otra (introduzco los importes)</option>`;
+  sel.innerHTML = Object.keys(TAB).map(k => `<option value="${esc(k)}">${esc(TAB[k][0])}</option>`).join("") + `<option value="man">${esc(T("Otra (introduzco los importes)"))}</option>`;
   sel.value = "c";
-  const caja = (t) => `<div class="zc-ok">${t}</div>`;
+  const caja = (t) => `<div class="zc-ok">${t}</div>`; // t ya va escapado
   function calc() {
     const out = $("fin-out"), man = sel.value === "man";
     $("fin-man").hidden = !man;
-    if (!$("fin-alta").value || !$("fin-baja").value) { out.innerHTML = caja("Rellena las fechas para ver el resultado."); return; }
+    if (!$("fin-alta").value || !$("fin-baja").value) { out.innerHTML = caja(esc(T("Rellena las fechas para ver el resultado."))); return; }
     const alta = D($("fin-alta").value), baja = D($("fin-baja").value);
-    if (baja < alta) { out.innerHTML = `<p class="zc-error">La fecha de baja no puede ser anterior al alta.</p>`; return; }
+    if (baja < alta) { out.innerHTML = `<p class="zc-error">${esc(T("La fecha de baja no puede ser anterior al alta."))}</p>`; return; }
     const bd = new Date(baja), by = bd.getUTCFullYear(), bm = bd.getUTCMonth(), bdy = bd.getUTCDate();
     let base, pc, yr = "";
     if (man) { base = parseFloat($("fin-bm").value) || 0; pc = parseFloat($("fin-pm").value) || 0; $("fin-tabinfo").textContent = ""; }
     else {
       const t = TAB[sel.value][by >= 2027 ? 2 : 1]; base = t[0]; pc = t[1]; yr = by >= 2027 ? 2027 : 2026;
-      $("fin-tabinfo").textContent = "Tabla " + yr + ": salario base " + eur(base) + " + plus convenio " + eur(pc) + " al mes.";
+      $("fin-tabinfo").textContent = T("Tabla {a}: salario base {b} + plus convenio {p} al mes.", { a: yr, b: eur(base), p: eur(pc) });
     }
-    if (!(base > 0)) { out.innerHTML = caja("Introduce el salario base mensual."); return; }
+    if (!(base > 0)) { out.innerHTML = caja(esc(T("Introduce el salario base mensual."))); return; }
     const anios = inc(alta, baja) / 365.25, ay = Math.floor(anios);
     const pct = CONVENIO_GIRONA.pctAntiguedad(ay);
     const ant = base * pct / 100, P = base + pc + ant, X = parseFloat($("fin-plus").value) || 0;
@@ -38,47 +41,47 @@
     const diasMes = Math.min(30, bdy), rows = [];
     let fin = 0;
     const add = (t, sm, v) => { rows.push([t, sm, v]); fin += v; };
-    add("Salario del mes de la baja", diasMes + " días a " + eur(ord / 30) + "/día", ord / 30 * diasMes);
+    add(T("Salario del mes de la baja"), T("{n} días a {e}/día", { n: diasMes, e: eur(ord / 30) }), ord / 30 * diasMes);
     if (pagas !== "all") {
       const sem = 182.5;
       let st, v;
-      if (bm <= 5) { st = Math.max(alta, Date.UTC(by, 0, 1)); v = P * Math.min(1, inc(st, baja) / sem); add("Paga extra de verano (parte devengada)", "1 ene – 30 jun", v); }
-      else { st = Math.max(alta, Date.UTC(by, 6, 1)); v = P * Math.min(1, inc(st, baja) / sem); add("Paga extra de Navidad (parte devengada)", "1 jul – 31 dic", v); }
+      if (bm <= 5) { st = Math.max(alta, Date.UTC(by, 0, 1)); v = P * Math.min(1, inc(st, baja) / sem); add(T("Paga extra de verano (parte devengada)"), T("1 ene – 30 jun"), v); }
+      else { st = Math.max(alta, Date.UTC(by, 6, 1)); v = P * Math.min(1, inc(st, baja) / sem); add(T("Paga extra de Navidad (parte devengada)"), T("1 jul – 31 dic"), v); }
     }
     if (pagas === "none") {
-      add("Paga de marzo (parte devengada este año)", "1 ene a la baja · se paga hasta el 15 de marzo del año siguiente", P * inc(Math.max(alta, Date.UTC(by, 0, 1)), baja) / 365);
+      add(T("Paga de marzo (parte devengada este año)"), T("1 ene a la baja · se paga hasta el 15 de marzo del año siguiente"), P * inc(Math.max(alta, Date.UTC(by, 0, 1)), baja) / 365);
       const ye = Date.UTC(by - 1, 11, 31);
       if ((bm < 2 || (bm === 2 && bdy < 15)) && alta <= ye) {
-        add("Paga de marzo del año anterior", "Aún no cobrada si la baja es antes del 15 de marzo", P * inc(Math.max(alta, Date.UTC(by - 1, 0, 1)), ye) / 365);
+        add(T("Paga de marzo del año anterior"), T("Aún no cobrada si la baja es antes del 15 de marzo"), P * inc(Math.max(alta, Date.UTC(by - 1, 0, 1)), ye) / 365);
       }
     }
     const dev = 23 * inc(Math.max(alta, Date.UTC(by, 0, 1)), baja) / 365;
     const pend = Math.max(0, dev - (parseFloat($("fin-dis").value) || 0));
-    add("Vacaciones no disfrutadas", f1(pend) + " días laborables pendientes de " + f1(dev) + " devengados", pend * (P + X) * 12 / 365 * 1.4);
+    add(T("Vacaciones no disfrutadas"), T("{p} días laborables pendientes de {d} devengados", { p: f1(pend), d: f1(dev) }), pend * (P + X) * 12 / 365 * 1.4);
     const diario = (15 * P + 12 * X) / 365;
     let dias = 0, nota = "", cap = 0;
     if (tipo === "imp") {
       const cut = Date.UTC(2012, 1, 12);
-      if (alta >= cut) { dias = 33 * anios; cap = 720; nota = "33 días por año, máx. 24 mensualidades"; }
+      if (alta >= cut) { dias = 33 * anios; cap = 720; nota = T("33 días por año, máx. 24 mensualidades"); }
       else {
         const y45 = inc(alta, Math.min(baja, cut - DAY)) / 365.25, y33 = Math.max(0, anios - y45), d45 = 45 * y45;
         // v173 (corregido con el visto bueno del padre): Estatuto, disposición transitoria undécima. Si solo el tramo de antes
         // del 12/02/2012 ya pasa de 720 días, se cobra ese tramo (máx. 1260 = 42 mensualidades) y lo de después no suma.
-        if (d45 > 720) { dias = Math.min(d45, 1260); cap = 1260; nota = "45 días/año hasta el 11/02/2012 (pasa de 720 días: lo de después no suma), máx. 42 mensualidades"; }
-        else { dias = d45 + 33 * y33; cap = 720; nota = "45 días/año hasta el 11/02/2012 y 33 después, máx. 24 mensualidades"; }
+        if (d45 > 720) { dias = Math.min(d45, 1260); cap = 1260; nota = T("45 días/año hasta el 11/02/2012 (pasa de 720 días: lo de después no suma), máx. 42 mensualidades"); }
+        else { dias = d45 + 33 * y33; cap = 720; nota = T("45 días/año hasta el 11/02/2012 y 33 después, máx. 24 mensualidades"); }
       }
       dias = Math.min(dias, cap);
-    } else if (tipo === "obj") { dias = Math.min(20 * anios, 360); nota = "20 días por año, máx. 12 mensualidades"; }
-    else if (tipo === "tmp") { dias = 12 * anios; nota = "12 días por año trabajado"; }
+    } else if (tipo === "obj") { dias = Math.min(20 * anios, 360); nota = T("20 días por año, máx. 12 mensualidades"); }
+    else if (tipo === "tmp") { dias = 12 * anios; nota = T("12 días por año trabajado"); }
     const ind = dias * diario;
     const fila = (t, sm, v, fuerte) => `<tr><td>${fuerte ? `<b>${esc(t)}</b>` : esc(t)}${sm ? `<small>${esc(sm)}</small>` : ""}</td><td>${esc(eur(v))}</td></tr>`;
-    let h = caja(`Antigüedad: <b>${ay} años</b> → complemento del <b>${pct}%</b> sobre el salario base (${esc(eur(ant))}/mes). Paga extra = ${esc(eur(P))}.`);
-    h += `<div class="panel zc-caja zc-resultado"><table class="zc-tabla"><tr class="zc-sec"><td colspan="2">Finiquito</td></tr>`;
+    let h = caja(TH("Antigüedad: **{y} años** → complemento del **{p}%** sobre el salario base ({a}/mes). Paga extra = {e}.", { y: ay, p: pct, a: eur(ant), e: eur(P) }));
+    h += `<div class="panel zc-caja zc-resultado"><table class="zc-tabla"><tr class="zc-sec"><td colspan="2">${esc(T("Finiquito"))}</td></tr>`;
     rows.forEach(r => { h += fila(r[0], r[1], r[2]); });
-    h += fila("Total finiquito", "", fin, true) + `<tr class="zc-sec"><td colspan="2">Indemnización</td></tr>`;
-    if (ind > 0) h += fila("Indemnización por la baja", nota + " · " + f1(dias) + " días a " + eur(diario) + "/día", ind);
-    else h += fila("Este motivo no da derecho a indemnización legal", tipo === "dis" ? "Si crees que el despido es injusto, puedes impugnarlo: podría pasar a improcedente." : "Revisa si tu contrato o empresa la mejoran.", 0);
-    h += `</table><div class="zc-total"><span>Total bruto</span><span>${esc(eur(fin + ind))}</span></div></div>`;
+    h += fila(T("Total finiquito"), "", fin, true) + `<tr class="zc-sec"><td colspan="2">${esc(T("Indemnización"))}</td></tr>`;
+    if (ind > 0) h += fila(T("Indemnización por la baja"), nota + " · " + T("{n} días a {e}/día", { n: f1(dias), e: eur(diario) }), ind);
+    else h += fila(T("Este motivo no da derecho a indemnización legal"), tipo === "dis" ? T("Si crees que el despido es injusto, puedes impugnarlo: podría pasar a improcedente.") : T("Revisa si tu contrato o empresa la mejoran."), 0);
+    h += `</table><div class="zc-total"><span>${esc(T("Total bruto"))}</span><span>${esc(eur(fin + ind))}</span></div></div>`;
     out.innerHTML = h;
   }
   ["fin-alta", "fin-baja", "fin-cat", "fin-bm", "fin-pm", "fin-plus", "fin-pagas", "fin-dis", "fin-tipo"].forEach(i => $(i).addEventListener("input", calc));

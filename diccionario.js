@@ -5,6 +5,8 @@
 (function () {
   const $ = (i) => document.getElementById(i);
   if (!$("v-diccionario")) return;
+  // v177 (petición n.º 45): lo de entre /* textos */ y /* fin textos */ lo saca la función «traducir» para traducirlo (zona-idioma.js)
+  /* textos */
   const C = ["Papeles y aduanas","Conducción","Trabajo y nómina","Vehículo"];
   // [categoría (posición en C), palabra, definición]
   const W = [
@@ -61,20 +63,23 @@
     [3,"ITV","Inspección Técnica de Vehículos. Los camiones la pasan con más frecuencia que un turismo."],
     [3,"ATP","Acuerdo para el transporte de mercancías perecederas: camiones frigoríficos o isotermos."],
     [3,"AdBlue","Líquido que reduce las emisiones del motor diésel. Sin él, el camión puede limitar potencia."]
-];;
+];
+  /* fin textos */
+  const Z = typeof ZonaIdioma === "function" ? ZonaIdioma("diccionario", "v-diccionario", () => { chips(); list(); }) : { T: (x, v) => x.replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m) };
+  const T = Z.T;
   let cat = -1, qv = "";
   const n = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   function chips() {
-    $("dic-chips").innerHTML = [["-1", "Todos"], ...C.map((c, i) => [String(i), c])]
+    $("dic-chips").innerHTML = [["-1", T("Todos")], ...C.map((c, i) => [String(i), T(c)])]
       .map(([v, t]) => `<button type="button" class="zc-chip${+v === cat ? " activa" : ""}" data-c="${esc(v)}" aria-pressed="${+v === cat}">${esc(t)}</button>`).join("");
   }
   function list() {
     const q = n(qv);
-    const r = W.filter(w => (cat < 0 || w[0] === cat) && (!q || n(w[1]).indexOf(q) >= 0 || n(w[2]).indexOf(q) >= 0)).sort((a, b) => a[1].localeCompare(b[1], "es"));
-    $("dic-cuenta").textContent = r.length === 1 ? "1 palabra" : r.length + " palabras";
+    const r = W.filter(w => (cat < 0 || w[0] === cat) && (!q || n(w[1]).indexOf(q) >= 0 || n(w[2]).indexOf(q) >= 0 || n(T(w[1])).indexOf(q) >= 0 || n(T(w[2])).indexOf(q) >= 0)).sort((a, b) => a[1].localeCompare(b[1], "es"));
+    $("dic-cuenta").textContent = r.length === 1 ? T("1 palabra") : T("{n} palabras", { n: r.length });
     $("dic-lista").innerHTML = r.length
-      ? r.map(w => `<div class="panel zc-palabra"><div class="zc-cat">${esc(C[w[0]])}</div><b>${esc(w[1])}</b><p>${esc(w[2])}</p></div>`).join("")
-      : `<p class="zc-vacio">No hay resultados. Prueba con otra palabra.</p>`;
+      ? r.map(w => `<div class="panel zc-palabra"><div class="zc-cat">${esc(T(C[w[0]]))}</div><b>${esc(T(w[1]))}</b><p>${esc(T(w[2]))}</p></div>`).join("")
+      : `<p class="zc-vacio">${esc(T("No hay resultados. Prueba con otra palabra."))}</p>`;
   }
   $("dic-q").addEventListener("input", (e) => { qv = e.target.value; list(); });
   $("dic-chips").addEventListener("click", (e) => { const b = e.target.closest(".zc-chip"); if (b) { cat = +b.dataset.c; chips(); list(); } });

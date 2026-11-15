@@ -1,0 +1,63 @@
+// v177 (petición n.º 45): comprueba en el navegador que en Mi finiquito, Mi hora ordinaria, Diccionario y Test de ADR
+// TODO el texto que se ve sale de la lista que saca la función «traducir» (la misma que pruebas/traducir-textos.cjs).
+// Traducción falsa: «ZZ » + el texto. Al elegir un idioma todo lo que se ve tiene que empezar por «ZZ»; al volver al
+// español no puede quedar ningún «ZZ». Uso: BASE=http://localhost:8765/ NODE_PATH=$(npm root -g) node pruebas/traducir-navegador.cjs
+const { chromium } = require("playwright");
+const fs = require("fs"), path = require("path"), { execFileSync } = require("child_process");
+const BASE = process.env.BASE || "http://localhost:8765/";
+const MOCK = fs.readFileSync(path.join(__dirname, "mock-supabase.js"), "utf8");
+const tmp = path.join(require("os").tmpdir(), "textos-zona.json");
+execFileSync("node", [path.join(__dirname, "traducir-textos.cjs"), "--json", tmp], { stdio: "inherit" });
+const TEXTOS = JSON.parse(fs.readFileSync(tmp, "utf8"));
+// Lo que se mira en la página: la misma forma de partir el texto que zona-idioma.js
+const MIRA = `(() => {
+  const EN = { B: "**", STRONG: "**", I: "", EM: "" }, SALTA = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, INPUT: 1, TEMPLATE: 1, svg: 1, SVG: 1 };
+  const L = /\\p{L}/u, j = (s) => s.replace(/\\s+/g, " ").trim(), out = [];
+  const bloque = (el) => { let l = false; for (const n of el.childNodes) { if (n.nodeType === 3) { if (L.test(n.data)) l = true; continue; } if (n.nodeType === 8) continue; if (n.nodeType !== 1 || !(n.tagName in EN) || [...n.childNodes].some(m => m.nodeType !== 3)) return false; if (L.test(n.textContent)) l = true; } return l; };
+  const marca = (el) => j([...el.childNodes].map(n => n.nodeType === 3 ? n.data : n.nodeType === 1 ? EN[n.tagName] + n.textContent + EN[n.tagName] : "").join(""));
+  const r = (el) => { if (SALTA[el.tagName] || el.getAttribute("translate") === "no" || el.hidden || el.closest("[hidden]")) return;
+    for (const a of ["placeholder", "aria-label", "title"]) { const v = el.getAttribute(a); if (v && L.test(v)) out.push("@" + j(v)); }
+    if (bloque(el)) { out.push(marca(el)); return; }
+    for (const n of el.childNodes) { if (n.nodeType === 1) r(n); else if (n.nodeType === 3 && L.test(n.data)) out.push(j(n.data)); } };
+  r(document.querySelector(".vista.activa")); return out; })()`;
+const PERMITIDOS = [/^[\d.,\s]+ h$/, /^\*\*ZZ /, /^X?\d+$/]; // «147,2 h» (cifra con unidad), una negrita ya traducida y la placa «X338»
+(async () => {
+  const b = await chromium.launch(), ctx = await b.newContext({ viewport: { width: 412, height: 900 } });
+  await ctx.route("**/lib/supabase.js*", r => r.fulfill({ contentType: "application/javascript", body: MOCK }));
+  const p = await ctx.newPage(), errores = [];
+  p.on("pageerror", e => errores.push(String(e))); p.on("console", m => { if (m.type() === "error") errores.push(m.text()); });
+  let mal = 0;
+  const comprueba = async (nombre, debe) => {
+    const vistos = await p.evaluate(MIRA);
+    const fallan = vistos.filter(t => { const s = t.replace(/^@/, ""); return debe ? !s.startsWith("ZZ") && !PERMITIDOS.some(x => x.test(s)) : s.includes("ZZ"); });
+    if (fallan.length) { mal++; console.log(`MAL ${nombre}: ${fallan.length} textos ${debe ? "sin traducir" : "sin volver al español"}:`, fallan.slice(0, 8)); }
+    else console.log(`OK  ${nombre} (${vistos.length} textos)`);
+  };
+  for (const [g, hash] of [["finiquito", "finiquito"], ["hora", "hora"], ["diccionario", "diccionario"], ["adr", "adr"]]) {
+    await p.goto(BASE + "#" + hash); await p.waitForTimeout(700);
+    await p.evaluate(([g, lista]) => {
+      try { localStorage.removeItem("ccoo-mi-idioma"); localStorage.removeItem("ccoo-textos-" + g); } catch (_) {}
+      const o = sb.functions.invoke.bind(sb.functions);
+      sb.functions.invoke = async (n, op) => n === "traducir" && op?.body?.modo === "textos" && op.body.grupo === g
+        ? { data: { textos: Object.fromEntries(lista.map(s => [s, "ZZ " + s])) }, error: null } : o(n, op);
+    }, [g, TEXTOS[g]]);
+    const sel = `#v-${g} .zc-idioma select`;
+    if (g === "finiquito") { await p.fill("#fin-alta", "2015-03-01"); await p.fill("#fin-baja", "2026-10-20"); }
+    if (g === "hora") await p.fill("#ho-hx", "10");
+    await p.selectOption(sel, "en"); await p.waitForTimeout(500);
+    await comprueba(g + " en inglés", true);
+    if (g === "finiquito") { await p.selectOption("#fin-tipo", "dis"); await p.waitForTimeout(300); await comprueba("finiquito disciplinario", true); await p.selectOption("#fin-cat", "man"); await p.waitForTimeout(300); await comprueba("finiquito importes a mano", true); }
+    if (g === "hora") { await p.fill("#ho-hx", "20"); await p.waitForTimeout(300); await comprueba("hora extra por encima", true); }
+    if (g === "diccionario") { await p.click("#dic-chips .zc-chip:nth-child(2)"); await p.waitForTimeout(300); await comprueba("diccionario filtro", true); await p.fill("#dic-q", "zzzzzz-nada"); await p.waitForTimeout(300); await comprueba("diccionario sin resultados", true); await p.fill("#dic-q", ""); }
+    if (g === "adr") {
+      await p.click("#adr-vista .zc-opc"); await p.waitForTimeout(300); await comprueba("adr respondida", true);
+      await p.click("[data-adr-tab='1']"); await p.fill("#adr-k", "X338"); await p.waitForTimeout(300); await comprueba("adr placa", true);
+      await p.click("[data-adr-tab='2']"); await p.waitForTimeout(300); await comprueba("adr carnet", true);
+      await p.click("[data-adr-tab='0']"); await p.waitForTimeout(300);
+    }
+    await p.selectOption(sel, ""); await p.waitForTimeout(500);
+    await comprueba(g + " vuelta al español", false);
+  }
+  if (errores.length) { mal++; console.log("MAL errores de consola:", errores.slice(0, 5)); }
+  await b.close(); console.log(mal ? `FALLAN ${mal}` : "TODO OK"); process.exit(mal ? 1 : 0);
+})();

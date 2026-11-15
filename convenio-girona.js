@@ -4,6 +4,8 @@
 // en internet solo se encontró el de 2025). No guarda nada en el móvil.
 // TAB: clave → [nombre, [base 2026, plus convenio 2026, hora extra 2026], [base 2027, plus convenio 2027, hora extra 2027]]
 const CONVENIO_GIRONA = Object.freeze({
+  // v177 (petición n.º 45): los nombres de entre /* textos */ y /* fin textos */ los traduce la función «traducir» (zona-idioma.js)
+  /* textos */
   TAB: Object.freeze({
     cm: ["Conductor mecánico", [1188.56, 191.66, 13.06], [1230.16, 198.37, 13.52]],
     c: ["Conductor", [1082.40, 184.58, 11.83], [1120.28, 191.04, 12.24]],
@@ -15,6 +17,7 @@ const CONVENIO_GIRONA = Object.freeze({
     a1: ["Oficial 1ª administrativo", [1292.03, 198.56, 13.82], [1337.25, 205.51, 14.30]],
     a2: ["Oficial 2ª administrativo", [1127.50, 187.60, 12.15], [1166.96, 194.17, 12.58]]
   }),
+  /* fin textos */
   // Antigüedad: % del salario base según los años en la empresa (sube a los 4, 9, 14, 19 y 24 años)
   pctAntiguedad: (anios) => anios >= 24 ? 50 : anios >= 19 ? 40 : anios >= 14 ? 30 : anios >= 9 ? 20 : anios >= 4 ? 10 : 0
 });

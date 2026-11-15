@@ -6,6 +6,8 @@
   const $ = (i) => document.getElementById(i);
   const vista = $("adr-vista");
   if (!vista) return;
+  // v177 (petición n.º 45): lo de entre /* textos */ y /* fin textos */ lo saca la función «traducir» para traducirlo (zona-idioma.js)
+  /* textos */
   // [pregunta, [opciones], n.º de la correcta (desde 0), explicación]
   const Q = [
     ["¿Qué indica el número de arriba en la placa naranja?", ["El número ONU de la materia", "El número de identificación de peligro", "El peso de la carga"], 1, "Arriba va el número de peligro (2 o 3 cifras) y abajo el número ONU de 4 cifras."],
@@ -71,6 +73,9 @@
     ["En un incendio de cabina con mercancías peligrosas, lo correcto es…", ["Intentar apagarlo solo si es pequeño y seguro; si no, alejarse y avisar", "Abrir la carga para sacarla", "Seguir conduciendo hasta un taller"], 0, "Si se puede con seguridad, extintor; si no, alejarse, avisar al 112 y seguir las instrucciones escritas."]
   ];
   const KEM = { "2": "emisión de gas", "3": "inflamabilidad de un líquido", "4": "inflamabilidad de un sólido", "5": "comburente (favorece el incendio)", "6": "toxicidad o riesgo de infección", "7": "radiactividad", "8": "corrosividad", "9": "riesgo de reacción violenta espontánea", "0": "sin peligro secundario" };
+  /* fin textos */
+  const Z = typeof ZonaIdioma === "function" ? ZonaIdioma("adr", "v-adr", () => render()) : { T: (x, v) => x.replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m), TH: null };
+  const T = Z.T, TH = Z.TH || ((x, v) => esc(T(x, v)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>"));
   let tab = 0, qi = 0, score = 0, order = [], failed = [], done = false, respondida = false, placaTxt = "";
   const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
   const start = (list) => { order = list; qi = 0; score = 0; failed = []; done = false; respondida = false; };
@@ -86,15 +91,15 @@
 
   function test() {
     if (done || qi >= order.length) {
-      vista.innerHTML = `<div class="panel zc-caja"><h2>Resultado: ${score} de ${order.length}</h2><p>${score / order.length >= .8 ? "Muy bien, vas preparado." : "Repasa los fallos y vuelve a intentarlo."}</p>` +
-        (failed.length ? `<button type="button" class="btn zc-btn" data-adr="repasar">Repasar los ${failed.length} fallos</button>` : "") +
-        `<button type="button" class="btn zc-btn" data-adr="nuevo">Nuevo test de 10 preguntas</button></div>`;
+      vista.innerHTML = `<div class="panel zc-caja"><h2>${esc(T("Resultado: {a} de {n}", { a: score, n: order.length }))}</h2><p>${esc(score / order.length >= .8 ? T("Muy bien, vas preparado.") : T("Repasa los fallos y vuelve a intentarlo."))}</p>` +
+        (failed.length ? `<button type="button" class="btn zc-btn" data-adr="repasar">${esc(T("Repasar los {n} fallos", { n: failed.length }))}</button>` : "") +
+        `<button type="button" class="btn zc-btn" data-adr="nuevo">${esc(T("Nuevo test de 10 preguntas"))}</button></div>`;
       return;
     }
     const q = Q[order[qi]];
     vista.innerHTML = `<div class="panel zc-caja"><div class="zc-barra" aria-hidden="true"><i style="width:${Math.round(qi / order.length * 100)}%"></i></div>` +
-      `<p class="zc-pista">Pregunta ${qi + 1} de ${order.length}</p><h2>${esc(q[0])}</h2>` +
-      q[1].map((o, i) => `<button type="button" class="zc-opc" data-o="${i}">${esc(o)}</button>`).join("") + `<div id="adr-fb"></div></div>`;
+      `<p class="zc-pista">${esc(T("Pregunta {a} de {n}", { a: qi + 1, n: order.length }))}</p><h2>${esc(T(q[0]))}</h2>` +
+      q[1].map((o, i) => `<button type="button" class="zc-opc" data-o="${i}">${esc(T(o))}</button>`).join("") + `<div id="adr-fb"></div></div>`;
   }
   // El ancho de la barra va con style="" (es CSS, no un script: la CSP de estilos lo permite)
   function responde(b) {
@@ -104,14 +109,14 @@
     todas.forEach(x => { x.disabled = true; });
     todas[q[2]].classList.add("bien");
     if (o === q[2]) score++; else { b.classList.add("mal"); if (failed.indexOf(order[qi]) < 0) failed.push(order[qi]); }
-    $("adr-fb").innerHTML = `<p class="zc-exp">${esc(q[3])}</p><button type="button" class="btn zc-btn" data-adr="siguiente">${qi + 1 >= order.length ? "Ver resultado" : "Siguiente"}</button>`;
+    $("adr-fb").innerHTML = `<p class="zc-exp">${esc(T(q[3]))}</p><button type="button" class="btn zc-btn" data-adr="siguiente">${esc(qi + 1 >= order.length ? T("Ver resultado") : T("Siguiente"))}</button>`;
     $("adr-fb").querySelector("button").focus();
   }
 
   function placa() {
-    vista.innerHTML = `<div class="panel zc-caja"><h2>Descifra la placa naranja</h2><p class="zc-pista">Escribe el número de peligro (por ejemplo 33, 268 o X323).</p>` +
-      `<label class="sr-only" for="adr-k">Número de peligro</label><input id="adr-k" class="zc-placa-in" maxlength="4" placeholder="33" autocomplete="off" autocapitalize="characters" value="${esc(placaTxt)}"><div id="adr-kr"></div></div>` +
-      `<div class="zc-aviso">Si repites una cifra (33, 66…) el peligro es más intenso. Una X delante prohíbe echar agua.</div>`;
+    vista.innerHTML = `<div class="panel zc-caja"><h2>${esc(T("Descifra la placa naranja"))}</h2><p class="zc-pista">${esc(T("Escribe el número de peligro (por ejemplo 33, 268 o X323)."))}</p>` +
+      `<label class="sr-only" for="adr-k">${esc(T("Número de peligro"))}</label><input id="adr-k" class="zc-placa-in" maxlength="4" placeholder="33" autocomplete="off" autocapitalize="characters" value="${esc(placaTxt)}"><div id="adr-kr"></div></div>` +
+      `<div class="zc-aviso">${esc(T("Si repites una cifra (33, 66…) el peligro es más intenso. Una X delante prohíbe echar agua."))}</div>`;
     descifra();
   }
   function descifra() {
@@ -123,25 +128,26 @@
     const x = s[0] === "X", d = x ? s.slice(1) : s;
     if (!d) { kr.innerHTML = ""; return; }
     let r = `<div class="zc-placa" aria-hidden="true"><div>${esc(s)}</div><div>????</div></div><ul>`;
-    if (x) r += `<li><b>X</b>: reacciona peligrosamente con el agua. No uses agua.</li>`;
+    if (x) r += `<li>${TH("**X**: reacciona peligrosamente con el agua. No uses agua.")}</li>`;
     for (let i = 0; i < d.length; i++) {
       const c = d[i], m = KEM[c];
-      if (i > 0 && c === d[i - 1] && c !== "0") r += `<li><b>${esc(c)} repetido</b>: peligro intensificado.</li>`;
-      else if (i === 0) r += `<li><b>${esc(c)}</b>: peligro principal, ${esc(m || "cifra no válida")}.</li>`;
-      else r += `<li><b>${esc(c)}</b>: peligro secundario, ${esc(m || "cifra no válida")}.</li>`;
+      if (i > 0 && c === d[i - 1] && c !== "0") r += `<li>${TH("**{c} repetido**: peligro intensificado.", { c })}</li>`;
+      else if (i === 0) r += `<li>${TH("**{c}**: peligro principal, {m}.", { c, m: m ? T(m) : T("cifra no válida") })}</li>`;
+      else r += `<li>${TH("**{c}**: peligro secundario, {m}.", { c, m: m ? T(m) : T("cifra no válida") })}</li>`;
     }
     kr.innerHTML = r + "</ul>";
   }
 
   function carnet() {
-    vista.innerHTML = `<div class="panel zc-caja"><h2>Sacarlo o renovarlo sin perder tiempo</h2><ol class="zc-lista">` +
-      `<li><b>Pide que lo gestione y lo pague la empresa.</b> El convenio de Girona (art. 44) dice que la formación del ADR corre a cargo de la empresa y cuenta como jornada de trabajo, siempre que lo necesites para tu puesto.</li>` +
-      `<li><b>No esperes al último mes.</b> La renovación se hace con un curso y una prueba antes de que caduque (5 años). Si caduca, hay que volver a sacar todo desde cero.</li>` +
-      `<li><b>Agrupa los cursos.</b> Si necesitas más de uno (por ejemplo bultos y cisternas), se pueden hacer a la vez.</li>` +
-      `<li><b>Elige un centro autorizado con fechas cercanas</b> y pregunta si ya incluye la inscripción al examen.</li>` +
-      `<li><b>Practica con el test</b> en los ratos de espera de carga. Repasa solo los fallos.</li>` +
-      `<li><b>Pregunta por la bonificación.</b> Muchas empresas pueden descontar parte del curso de sus cuotas de formación.</li></ol>` +
-      `<div class="zc-aviso"><b>Si la empresa se niega</b> a pagarlo o a darte las horas, pulsa «Hablar con un delegado». Guarda por escrito lo que te contesten.</div></div>`;
+    const li = (h) => `<li>${h}</li>`;
+    vista.innerHTML = `<div class="panel zc-caja"><h2>${esc(T("Sacarlo o renovarlo sin perder tiempo"))}</h2><ol class="zc-lista">` +
+      li(TH("**Pide que lo gestione y lo pague la empresa.** El convenio de Girona (art. 44) dice que la formación del ADR corre a cargo de la empresa y cuenta como jornada de trabajo, siempre que lo necesites para tu puesto.")) +
+      li(TH("**No esperes al último mes.** La renovación se hace con un curso y una prueba antes de que caduque (5 años). Si caduca, hay que volver a sacar todo desde cero.")) +
+      li(TH("**Agrupa los cursos.** Si necesitas más de uno (por ejemplo bultos y cisternas), se pueden hacer a la vez.")) +
+      li(TH("**Elige un centro autorizado con fechas cercanas** y pregunta si ya incluye la inscripción al examen.")) +
+      li(TH("**Practica con el test** en los ratos de espera de carga. Repasa solo los fallos.")) +
+      li(TH("**Pregunta por la bonificación.** Muchas empresas pueden descontar parte del curso de sus cuotas de formación.")) + `</ol>` +
+      `<div class="zc-aviso">${TH("**Si la empresa se niega** a pagarlo o a darte las horas, pulsa «Hablar con un delegado». Guarda por escrito lo que te contesten.")}</div></div>`;
   }
 
   const tabs = document.querySelectorAll("[data-adr-tab]");

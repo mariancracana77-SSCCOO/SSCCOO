@@ -7,6 +7,9 @@
 // v77: si Gemini contesta «mucha demanda» (503/500) o «cuota» (429), reintenta con espera y apunta cada fallo en el registro.
 // v96: grupo «aparcar» (la guía rápida de «Aparcamientos en mi ruta»).
 // v170: en «aparcar» añade también la ficha de normas por país (normas_pais visibles) y los nombres y notas de prohibiciones_camion.
+// v177 (petición n.º 45 del padre): grupos «finiquito», «hora», «diccionario» y «adr» (herramientas nuevas de Zona Conductores).
+// Además de T("...") sacan las cadenas de entre /* textos */ y /* fin textos */ de sus .js y el texto que se ve en su
+// sección de index.html («textosVista»: misma forma de partirlo que zona-idioma.js en la web). Copia de antes en privado.respaldo_funciones (id 14).
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -23,10 +26,14 @@ const CAMPOS: Record<string, string[]> = {
   eventos: ["titulo", "descripcion", "lugar"],
   documentos: ["titulo", "descripcion"],
 };
-const GRUPOS: Record<string, { archivo: string; tema: string }> = {
+const GRUPOS: Record<string, { archivo: string; tema: string; mas?: string[]; vista?: string }> = {
   descansos: { archivo: "descansos.js", tema: "una calculadora de descansos semanales para conductores de camión (Reglamento CE 561/2006)" },
   ganancias: { archivo: "ganancias.js", tema: "una calculadora de lo que gana un conductor de camión (salario, dietas, suplementos, pluses, kilómetros)" },
   aparcar: { archivo: "aparcar.js", tema: "una herramienta para conductores de camión que busca aparcamientos en la ruta (con mapa, cortes de carretera y peajes) y explica por país las normas para camiones: peajes, cadenas e invierno, prohibiciones de circular y festivos" },
+  finiquito: { archivo: "finiquito.js", mas: ["convenio-girona.js"], vista: "v-finiquito", tema: "una calculadora del finiquito y la indemnización de un conductor de camión según el convenio de transporte de mercancías de Girona y el Estatuto de los Trabajadores (salario, pagas extra, vacaciones, antigüedad, tipos de despido)" },
+  hora: { archivo: "hora.js", mas: ["convenio-girona.js"], vista: "v-hora", tema: "una calculadora del precio de la hora ordinaria y la hora extra de un conductor de camión según el convenio de transporte de mercancías de Girona" },
+  diccionario: { archivo: "diccionario.js", vista: "v-diccionario", tema: "un diccionario de siglas y palabras del transporte por carretera para conductores de camión (papeles y aduanas, conducción, nómina, vehículo). Las siglas y palabras técnicas (CMR, DUA, TIR, AdBlue, ITV...) se dejan igual si en ese idioma se usan así" },
+  adr: { archivo: "adr.js", vista: "v-adr", tema: "un test de preguntas para el examen del ADR (transporte de mercancías peligrosas por carretera), con la placa naranja y cómo sacar el carnet. Usa los términos oficiales del ADR en ese idioma (clases, número ONU, número de peligro, instrucciones escritas)" },
 };
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -88,13 +95,102 @@ async function gemini(clave: string, sistema: string, entrada: unknown, esquema:
 }
 const marcas = (t: string) => [...(t.match(/\{\w+\}/g) ?? [])].sort().join(",") + "|" + (t.match(/\*\*/g) ?? []).length;
 
+// --- textosVista (v177) --- Misma forma de partir el texto que zona-idioma.js en la web (si se cambia una, la otra):
+// un elemento con solo texto y <b>/<strong>/<i>/<em> (con solo texto dentro) es un bloque entero, con ** ** en las
+// negritas; si no, cada trozo de texto suelto va aparte. Espacios juntados. Se saltan script, style, svg, textarea,
+// input, template y lo que lleva translate="no". También placeholder, aria-label y title.
+// Está escrito sin tipos para poder probarlo igual con Node (pruebas/traducir-textos.cjs).
+const EN_LINEA_V = { b: "**", strong: "**", i: "", em: "" };
+const SALTA_V = { script: 1, style: 1, textarea: 1, input: 1, template: 1, svg: 1 };
+const VACIOS_V = { area: 1, base: 1, br: 1, col: 1, embed: 1, hr: 1, img: 1, input: 1, link: 1, meta: 1, source: 1, track: 1, wbr: 1 };
+const LETRA_V = /\p{L}/u;
+const juntaV = (s) => s.replace(/\s+/g, " ").trim();
+const entidadesV = (s) => s.replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot|apos|nbsp);/gi, (m, e) => {
+  const l = e.toLowerCase();
+  if (l[0] === "#") return String.fromCodePoint(l[1] === "x" ? parseInt(l.slice(2), 16) : parseInt(l.slice(1), 10));
+  return { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " }[l];
+});
+function arbolV(html, id) {
+  const ini = html.search(new RegExp(`<[a-z]+[^>]*\\sid="${id}"`, "i"));
+  if (ini < 0) return null;
+  const re = /<!--[\s\S]*?-->|<\/([a-zA-Z][\w-]*)\s*>|<([a-zA-Z][\w-]*)((?:\s+[^\s=>\/]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?)*)\s*(\/?)>|([^<]+)/g;
+  re.lastIndex = ini;
+  const raiz = { tag: "#raiz", attrs: {}, hijos: [] }, pila = [raiz];
+  let m;
+  while ((m = re.exec(html))) {
+    const arriba = pila[pila.length - 1];
+    if (m[0].startsWith("<!--")) continue;
+    if (m[1]) { // cierre
+      const t = m[1].toLowerCase();
+      for (let i = pila.length - 1; i > 0; i--) if (pila[i].tag === t) { pila.length = i; break; }
+      if (pila.length === 1) break; // se cerró la sección
+      continue;
+    }
+    if (m[2]) {
+      const t = m[2].toLowerCase(), attrs = {};
+      for (const a of (m[3] || "").matchAll(/([^\s=>\/]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g)) attrs[a[1].toLowerCase()] = entidadesV(a[2] ?? a[3] ?? a[4] ?? "");
+      const nodo = { tag: t, attrs, hijos: [] };
+      arriba.hijos.push(nodo);
+      if (!m[4] && !VACIOS_V[t]) pila.push(nodo);
+      continue;
+    }
+    if (m[5] != null && pila.length > 1) arriba.hijos.push({ texto: entidadesV(m[5]) });
+  }
+  return raiz.hijos[0] || null;
+}
+const textoDeV = (n) => n.texto != null ? n.texto : (n.hijos || []).map(textoDeV).join("");
+function esBloqueV(el) {
+  let letra = false;
+  for (const n of el.hijos) {
+    if (n.texto != null) { if (LETRA_V.test(n.texto)) letra = true; continue; }
+    if (!(n.tag in EN_LINEA_V) || n.hijos.some((x) => x.texto == null)) return false;
+    if (LETRA_V.test(textoDeV(n))) letra = true;
+  }
+  return letra;
+}
+const marcadoV = (el) => juntaV(el.hijos.map((n) => n.texto != null ? n.texto : EN_LINEA_V[n.tag] + textoDeV(n) + EN_LINEA_V[n.tag]).join(""));
+function textosVista(html, id) {
+  const lista = [], pon = (s) => { if (s && LETRA_V.test(s) && !lista.includes(s)) lista.push(s); };
+  const recorre = (el) => {
+    if (SALTA_V[el.tag] || el.attrs.translate === "no") return;
+    for (const a of ["placeholder", "aria-label", "title"]) if (el.attrs[a]) pon(juntaV(el.attrs[a]));
+    if (esBloqueV(el)) { pon(marcadoV(el)); return; }
+    for (const n of el.hijos) { if (n.texto != null) pon(juntaV(n.texto)); else recorre(n); }
+  };
+  const raiz = arbolV(html, id);
+  if (raiz) recorre(raiz);
+  return lista;
+}
+// Cadenas de los .js: T("...")/TH("...") y las de entre /* textos */ y /* fin textos */ (con alguna letra)
+function textosJS(fuente) {
+  const lista = [], pon = (s) => { if (s && LETRA_V.test(s) && !lista.includes(s)) lista.push(s); };
+  for (const m of fuente.matchAll(/\bTH?\("((?:[^"\\]|\\.)*)"/g)) { try { pon(JSON.parse('"' + m[1] + '"')); } catch { /* */ } }
+  for (const z of fuente.matchAll(/\/\* textos \*\/([\s\S]*?)\/\* fin textos \*\//g)) {
+    for (const m of z[1].matchAll(/"((?:[^"\\]|\\.)*)"/g)) { try { pon(JSON.parse('"' + m[1] + '"')); } catch { /* */ } }
+  }
+  return lista;
+}
+// --- fin textosVista ---
+
 async function textos(grupo: string, codigo: string, idioma: string) {
   const { data: w } = await admin.from("config_privada").select("valor").eq("clave", "web_url").maybeSingle();
   const web = String(w?.valor || "").replace(/\/?$/, "/");
-  const r = await fetch(web + GRUPOS[grupo].archivo + "?t=" + Date.now(), { headers: { "Cache-Control": "no-cache" } });
-  if (!r.ok) return json({ error: "La traducción no está disponible ahora mismo." }, 503);
-  const fuente = await r.text(), lista: string[] = [];
-  for (const m of fuente.matchAll(/\bTH?\("((?:[^"\\]|\\.)*)"/g)) { try { const s = JSON.parse('"' + m[1] + '"'); if (s && !lista.includes(s)) lista.push(s); } catch { /* */ } }
+  const G = GRUPOS[grupo], baja = async (f: string) => {
+    const r = await fetch(web + f + "?t=" + Date.now(), { headers: { "Cache-Control": "no-cache" } });
+    return r.ok ? await r.text() : null;
+  };
+  const fuente = await baja(G.archivo);
+  if (fuente == null) return json({ error: "La traducción no está disponible ahora mismo." }, 503);
+  const lista: string[] = [];
+  if (!G.vista) { // los de siempre: solo T("...")/TH("..."), como antes
+    for (const m of fuente.matchAll(/\bTH?\("((?:[^"\\]|\\.)*)"/g)) { try { const s = JSON.parse('"' + m[1] + '"'); if (s && !lista.includes(s)) lista.push(s); } catch { /* */ } }
+  } else { // v177: lo que se ve en su sección de index.html y las cadenas de sus .js
+    const html = await baja("index.html");
+    if (html == null) return json({ error: "La traducción no está disponible ahora mismo." }, 503);
+    const fuentes = [fuente];
+    for (const f of G.mas ?? []) { const x = await baja(f); if (x == null) return json({ error: "La traducción no está disponible ahora mismo." }, 503); fuentes.push(x); }
+    for (const s of [...textosVista(html, G.vista), ...fuentes.flatMap((x) => textosJS(x))]) if (!lista.includes(s)) lista.push(s);
+  }
   if (grupo === "ganancias") {
     const { data: tar } = await admin.from("tarifas_conductor").select("grupo, concepto, nota").eq("visible", true);
     for (const t of tar ?? []) for (const s of [t.grupo, t.concepto, t.nota]) if (s && !lista.includes(s)) lista.push(s);

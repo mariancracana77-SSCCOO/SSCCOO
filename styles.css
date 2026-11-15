@@ -2787,3 +2787,8 @@ input.zc-busca { width: 100%; margin: 0 0 4px; }
 .zc-palabra p { margin: 4px 0 0; }
 .zc-cat { font-size: .8rem; color: var(--suave); text-transform: uppercase; letter-spacing: .04em; }
 .zc-vacio { color: var(--suave); text-align: center; padding: 24px 0; }
+
+/* v177 (petición n.º 45 del padre): idioma de las herramientas nuevas de Zona Conductores (zona-idioma.js), como en Mis descansos */
+.zc-idioma { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin: 0 0 12px; }
+.zc-idioma .msg { margin: 0; }
+.zc-idioma .msg:empty { display: none; }
