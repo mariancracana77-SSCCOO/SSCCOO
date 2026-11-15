@@ -77,9 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
-## Versión 175: subapartados de Zona Conductores en rojo
+## Versión 175: botón «Zona Conductores» en rojo
 
-- Petición n.º 44 del padre: la fila de botones de debajo del camión (subapartados de Zona Conductores) vuelve al rojo de los demás apartados. El camión, las tarjetas y las herramientas siguen en azul.
+- Petición n.º 44 del padre: el botón «Zona Conductores» de la fila de debajo del camión va en el rojo de los botones de la web (elegido, con borde blanco). Los demás subapartados, el camión, las tarjetas y las herramientas siguen en azul.
 
 ## Versión 174: «Mi hora ordinaria», «Diccionario del conductor», más preguntas de ADR y explicación de los pluses fijos
 
