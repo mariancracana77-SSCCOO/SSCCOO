@@ -34,5 +34,21 @@ igual("otro tamaño sin medidas: se pide", C.calcula([r("cu", 2)], L, W, true).s
 igual("peso: 10 × 500 kg", C.calcula([r("eu", 10, { w: 500 })], L, W, true).kg, 5000);
 igual("todo lo apuntado se coloca (34 europalets = 34 dibujados)", C.calcula([r("eu", 34)], L, W, true).rows.reduce((s, x) => s + x.items.length, 0), 34);
 igual("remolque de 2,45 m: 3 europalets a lo largo siguen cabiendo", C.calcula([r("eu", 33)], L, 245, true).usado, 1320);
+// v179 (petición n.º 47): peso total y palets encima de un palet suelto
+igual("peso total de la recogida: 5 industriales, 900 kg en total", C.calcula([r("ind", 5, { kg: 900 })], L, W, true).kg, 900);
+igual("datos viejos (kg por palet): 5 × 900 = 4500", C.calcula([r("ind", 5, { w: 900 })], L, W, true).kg, 4500);
+igual("si hay kg total, manda sobre el viejo por palet", C.calcula([r("ind", 5, { w: 900, kg: 1000 })], L, W, true).kg, 1000);
+const caso = C.calcula([r("ind", 5, { s: true }), r("eu", 23, { s: true })], L, 248, true);
+const encima = caso.rows.reduce((n, x) => n + x.items.filter(i => i.top).length, 0);
+igual("caso del padre (5 industriales + 23 europalets apilados): un europalet va encima del industrial suelto", encima, 1);
+igual("caso del padre: 6,00 m (antes 6,40 m)", caso.usado, 600);
+igual("sin apilar la siguiente, no se pone nada encima", C.calcula([r("ind", 5, { s: true }), r("eu", 4)], L, 248, true).rows.some(x => x.items.some(i => i.top)), false);
+igual("si la de abajo no va apilada, no se le pone nada encima", C.calcula([r("ind", 1), r("eu", 2, { s: true })], L, 248, true).rows.some(x => x.items.some(i => i.top)), false);
+igual("un industrial no va encima de un europalet suelto (es más grande)", C.calcula([r("eu", 3, { s: true }), r("ind", 2, { s: true })], L, 248, true).rows.some(x => x.items.some(i => i.top)), false);
+igual("si no cabe de alto (150 + 150 > 270), no va encima", C.calcula([r("ind", 5, { s: true, h: 150 }), r("eu", 2, { s: true, h: 150 })], L, 248, true, 270).rows.some(x => x.items.some(i => i.top)), false);
+igual("con alto de 3 m sí cabe (150 + 150)", C.calcula([r("ind", 5, { s: true, h: 150 }), r("eu", 2, { s: true, h: 150 })], L, 248, true, 300).rows.some(x => x.items.some(i => i.top)), true);
+igual("sin aprovechar huecos, encima solo en la última fila", C.calcula([r("ind", 5, { s: true }), r("med", 4), r("eu", 2, { s: true })], L, 248, false).rows.some(x => x.items.some(i => i.top)), false);
+const todos = (R) => R.rows.reduce((s, x) => s + x.items.reduce((t, i) => t + (i.s ? 2 : 1) + (i.top ? 1 : 0), 0), 0);
+igual("todos los palets se dibujan (5 + 23 = 28)", todos(caso), 28);
 console.log(mal ? `\n${mal} mal` : "\nTodo bien");
 process.exit(mal ? 1 : 0);

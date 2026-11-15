@@ -183,22 +183,30 @@ export function crea(caja) {
         const w = p.w / 100, d = p.h / 100, cx = x + (p.x + p.w / 2) / 100, cz = oz + (p.y + p.h / 2) / 100;
         const m = porColor[p.r] || (porColor[p.r] = mat(colores[(p.r - 1) % colores.length], { roughness: 0.55 }));
         const H = Math.max((altos[p.r - 1] || ALTO_CARGA * 100) / 100, ALTO_PALET + 0.05), hb = H - ALTO_PALET;
-        const alturas = p.s ? 2 : 1;
-        for (let k = 0; k < alturas; k++) {
-          const y0 = ALTO_SUELO + k * H;
-          palet(cx, y0, cz, w, d);
-          const b = caja3(w - 0.04, hb, d - 0.04, m, cx, y0 + ALTO_PALET + hb / 2, cz, 0.03);
-          carga.add(b);
-          const e = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w - 0.04, hb, d - 0.04)), borde);
-          e.position.copy(b.position); carga.add(e);
+        // Pisos: el suyo, otro igual si va apilado y, desde la v179, el palet de otra recogida que va encima (p.top)
+        const pisos = [{ w, d, m, H, hb }];
+        if (p.s) pisos.push(pisos[0]);
+        else if (p.top) {
+          const mt = porColor[p.top.r] || (porColor[p.top.r] = mat(colores[(p.top.r - 1) % colores.length], { roughness: 0.55 }));
+          const Ht = Math.max((p.top.hc || altos[p.top.r - 1] || ALTO_CARGA * 100) / 100, ALTO_PALET + 0.05);
+          pisos.push({ w: p.top.w / 100, d: p.top.h / 100, m: mt, H: Ht, hb: Ht - ALTO_PALET });
         }
-        const arriba = ALTO_SUELO + alturas * H, techo = ALTO_SUELO + ALTO_DENTRO;
+        let y0 = ALTO_SUELO;
+        pisos.forEach(q => {
+          palet(cx, y0, cz, q.w, q.d);
+          const b = caja3(q.w - 0.04, q.hb, q.d - 0.04, q.m, cx, y0 + ALTO_PALET + q.hb / 2, cz, 0.03);
+          carga.add(b);
+          const e = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(q.w - 0.04, q.hb, q.d - 0.04)), borde);
+          e.position.copy(b.position); carga.add(e);
+          y0 += q.H;
+        });
+        const arriba = y0, techo = ALTO_SUELO + ALTO_DENTRO;
         masAlto = Math.max(masAlto, arriba);
         if (arriba > techo + 0.005) { // lo que pasa del techo, en rojo
           const sob = new THREE.Mesh(new THREE.BoxGeometry(w - 0.02, arriba - techo, d - 0.02), rojo);
           sob.position.set(cx, (techo + arriba) / 2, cz); sob.renderOrder = 4; carga.add(sob);
         }
-        const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: textoNumero(p.r), depthTest: true, depthWrite: false }));
+        const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: textoNumero(p.top ? p.top.r : p.r), depthTest: true, depthWrite: false }));
         s.scale.set(0.42, 0.42, 1); s.position.set(cx, arriba + 0.3, cz); s.renderOrder = 5; carga.add(s);
       });
       // Huecos libres: rectángulo de rayas en el suelo

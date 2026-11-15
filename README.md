@@ -78,7 +78,8 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
 ## Versión 179: Simulador de carga más grande y con colores
-- En cada recogida, el tipo de palet, el n.º de palets, los kg y el alto salen más grandes y cada uno con su color (azul, verde, naranja y morado), igual en todas las recogidas. La cabecera de cada recogida lleva su color. El 3D, algo más alto en el móvil. Las cuentas no cambian (petición n.º 47).
+- En cada recogida, el tipo de palet, el n.º de palets, los kg y el alto salen más grandes y cada uno con su color (azul, verde, naranja y morado), igual en todas las recogidas. La cabecera de cada recogida lleva su color. El 3D, algo más alto en el móvil (petición n.º 47).
+- También en la petición n.º 47: el peso es «Kg en total» de la recogida (lo guardado con «kg por palet» se pasa solo, multiplicando una vez), y con «Aprovechar huecos» una recogida apilada pone sus palets encima de un palet suelto de otra recogida apilada (si es igual o más pequeño y cabe de alto). Los avisos de huecos dicen qué tipo de palet no cabe.
 
 ## Versión 178: Simulador de carga en Zona Conductores
 
