@@ -77,6 +77,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 176: rediseño de la vista de ordenador
+
+- Lo pidió Lorena: la web en el ordenador (navegador, desde 1000 px) con un aspecto más profesional y menos «hecho por IA». Todo en `web-pc.css` y `web-pc.js`, que solo se cargan en esa vista: el móvil y la app instalada se quedan exactamente igual.
+- Cabecera «Asfalto» (la eligió Lorena): oscura, con la fecha del día, «Instalar», «Letra y colores» y «Buscar» en palabras y la pestaña elegida subrayada en blanco.
+- Portada, Avisos, Calendario, Convenio, Calcula, Comité/Actas, PRL, Documentos, Dudas, Nosotros, Buscar, Aviso legal y Zona Conductores: filas separadas por rayas en vez de tarjetas, esquinas rectas, títulos en Inter y textos largos en Source Serif 4 (fuentes alojadas en `fuentes/`, licencia OFL). Se mantienen el rojo del logo, el azul y el camión de Zona Conductores y el botón rojo de la v175.
+
 ## Versión 175: botón «Zona Conductores» en rojo
 
 - Petición n.º 44 del padre: el botón «Zona Conductores» de la fila de debajo del camión va en el rojo de los botones de la web (elegido, con borde blanco). Los demás subapartados, el camión, las tarjetas y las herramientas siguen en azul.

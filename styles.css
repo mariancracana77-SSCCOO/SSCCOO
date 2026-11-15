@@ -2589,6 +2589,7 @@ details.recupera-caja > div { padding: 0 14px 14px; }
 
 /* --- 2) Ordenador --- */
 .web-mapa, .pie-web { display: none; }
+.cab-fecha { display: none; } /* la fecha de la cabecera solo sale en la vista web (web-pc.css) */
 .miga[hidden] { display: none; }
 @media (max-width: 999.98px) { .miga { display: none; } }
 @media (min-width: 1000px) {

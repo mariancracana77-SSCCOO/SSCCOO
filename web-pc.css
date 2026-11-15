@@ -1,0 +1,500 @@
+/* v174+: la web en el ordenador, dirección A «Circular» (la eligió Lorena, 15/11/2026): la hoja informativa de la sección.
+   SOLO vista web: index.html lo carga con media="(min-width: 1000px) and (display-mode: browser)"; el móvil y la app instalada no lo leen.
+   Papel blanco, tinta negra y el rojo del logo solo para lo urgente y lo activo. Sin tarjetas: filas con filetes. Una sola esquina (0).
+   Inter (titulares e interfaz) y Source Serif 4 (texto para leer), licencia SIL OFL, alojadas en fuentes/. */
+@font-face { font-family: "Inter"; font-style: normal; font-display: swap; font-weight: 100 900; src: url(fuentes/inter-latin-wght-normal.woff2) format("woff2"); }
+@font-face { font-family: "Source Serif 4"; font-style: normal; font-display: swap; font-weight: 200 900; src: url(fuentes/source-serif-4-latin-wght-normal.woff2) format("woff2"); }
+
+:root {
+  --a-sans: "Inter", "Atkinson Hyperlegible", system-ui, sans-serif;
+  --a-serif: "Source Serif 4", Georgia, serif;
+  --a-papel: #ffffff; --a-tinta: #16181b; --a-gris: #5b6068; --a-filete: #d9d9d6; --a-fondo2: #f3f3f1;
+  --a-rojo: #ab1012; --a-rojo-txt: #ab1012;
+  --a-curva: cubic-bezier(.2, .7, .2, 1);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --a-papel: #121417; --a-tinta: #ecebe7; --a-gris: #a2a7ae; --a-filete: #2e333a; --a-fondo2: #1a1d21; --a-rojo-txt: #ff8a8b; } }
+:root[data-theme="dark"] { --a-papel: #121417; --a-tinta: #ecebe7; --a-gris: #a2a7ae; --a-filete: #2e333a; --a-fondo2: #1a1d21; --a-rojo-txt: #ff8a8b; }
+
+body.publica { background: var(--a-papel); color: var(--a-tinta); font-family: var(--a-sans); }
+::selection { background: var(--a-rojo); color: #fff; }
+body.publica :focus-visible { outline: 2px solid var(--a-rojo-txt); outline-offset: 3px; }
+.contenedor { max-width: 1180px; padding-left: 32px; padding-right: 32px; }
+
+/* ---- Cabecera: la de una publicación. Nombre grande y fecha del día; herramientas como palabras;
+   pestañas en tinta sobre el papel entre dos rayas, como las secciones de un periódico ---- */
+.cab-tablon { background: var(--a-papel); color: var(--a-tinta); border-top: 6px solid var(--a-rojo); border-bottom: 0; }
+.cab-fila { max-width: 1180px; padding: 22px 32px 18px; gap: 16px; align-items: center; }
+.cab-fila img { width: 58px; height: 58px; }
+.cab-titulo .nombre { font-family: var(--a-sans); font-weight: 850; font-size: 2rem; line-height: 1; letter-spacing: -.035em; text-transform: none; color: var(--a-tinta); }
+.cab-titulo .sub { font-size: 1rem; color: var(--a-gris); margin-top: 5px; }
+.cab-fecha { display: block; margin: 0 6px 0 auto; font-family: var(--a-serif); font-size: 1.05rem; color: var(--a-gris); white-space: nowrap; }
+.cab-acciones { display: flex; gap: 0; }
+:root .cab-tablon .btn-tab, :root .cab-tablon a.btn-tab { width: auto; height: 40px; padding: 0 0 0 18px; margin-left: 18px; gap: 7px; display: inline-flex; align-items: center; border: 0; border-left: 1px solid var(--a-filete); border-radius: 0; background: none; color: var(--a-tinta); font-family: var(--a-sans); font-size: .98rem; font-weight: 600; }
+:root .cab-tablon .btn-tab.oculto { display: none; }
+.cab-tablon .btn-tab:hover { text-decoration: underline; text-underline-offset: 4px; }
+.cab-tablon .btn-tab .icono { width: 18px; height: 18px; }
+.cab-tablon .btn-tab.aa { font-size: 0; }
+.cab-tablon .btn-tab.aa::after { content: "Letra y colores"; font-size: .98rem; }
+.cab-tablon #cab-instalar::after { content: "Instalar"; }
+.cab-tablon a.btn-tab[href="#buscar"]::after { content: "Buscar"; }
+.pestanas-caja { background: none; max-width: 1180px; margin: 0 auto; padding: 0 32px; }
+.cab-tablon .pestanas-web { max-width: none; padding: 0; gap: 26px; border-top: 3px solid var(--a-tinta); border-bottom: 1px solid var(--a-tinta); }
+.cab-tablon .pestanas-web a:not(.pest-cond) { font-family: var(--a-sans); font-size: 1.02rem; font-weight: 600; text-transform: none; letter-spacing: 0; padding: 12px 0 10px; margin-bottom: -1px; border-bottom: 3px solid transparent; transition: none; }
+:root .cab-tablon .pestanas-web a:not(.activa):not(.pest-cond) { color: var(--a-tinta); }
+:root .cab-tablon .pestanas-web a:not(.activa):not(.pest-cond):hover { color: var(--a-rojo-txt); }
+:root .cab-tablon .pestanas-web a.activa:not(.pest-cond) { color: var(--a-rojo-txt); border-bottom-color: var(--a-rojo); font-weight: 750; }
+:root .cab-tablon .cuenta-pestana { background: none; color: var(--a-rojo-txt); min-width: 0; height: auto; padding: 0; margin-left: 3px; border-radius: 0; font-size: .8rem; font-weight: 800; vertical-align: super; }
+
+/* ---- Títulos ---- */
+.titulo-vista { font-family: var(--a-sans); font-weight: 800; font-size: 2.75rem; letter-spacing: -.035em; text-transform: none; }
+.titulo-vista::after { display: none; }
+.tit-seccion, .w-sec { display: flex; align-items: baseline; gap: 14px; font-family: var(--a-sans); font-size: 1.35rem; font-weight: 750; letter-spacing: -.015em; text-transform: none; color: var(--a-tinta); margin: 0 0 4px; padding-bottom: 10px; border-bottom: 2px solid var(--a-tinta); }
+.tit-seccion a, .tit-seccion span { margin-left: auto; font-size: .98rem; font-weight: 600; letter-spacing: 0; color: var(--a-rojo-txt); }
+.tit-seccion span.traducir { margin-left: 0; }
+.tit-seccion a:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+/* ---- Portada: rejilla de 12 columnas, 8 + 4 ---- */
+.portada { grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); column-gap: 56px; padding-top: 18px; }
+.zona-rotulo { background: none; border-radius: 0; padding: 0; }
+
+/* Aviso principal: el bloque rojo de la circular (el panel de luces se queda para la app) */
+.rotulo, a.rotulo { background: var(--a-rojo); border: 0; border-radius: 0; padding: 30px 34px 0; color: #fff; }
+.rotulo:not(.es-urgente) { background: var(--a-tinta); color: var(--a-papel); }
+.rot-tipo, .rot-tipo.urgente { background: none; padding: 0; border-radius: 0; color: #fff; font-size: .9rem; letter-spacing: .02em; text-transform: none; font-weight: 700; }
+.rotulo:not(.es-urgente) .rot-tipo { color: var(--a-papel); }
+.rot-tipo .icono { display: none; }
+.rot-led { display: none; }
+.rot-l1 { font-family: var(--a-sans); font-weight: 800; font-size: clamp(2.4rem, 3.4vw, 3.2rem); line-height: 1.02; letter-spacing: -.035em; text-transform: none; color: #fff; text-shadow: none; margin: 14px 0 12px; max-width: 18ch; }
+.rotulo:not(.es-urgente) .rot-l1 { color: var(--a-papel); }
+.rot-l1::after { display: none; }
+.rot-l2 { font-family: var(--a-serif); font-size: 1.2rem; line-height: 1.5; color: rgba(255, 255, 255, .9); max-width: 60ch; }
+.rotulo:not(.es-urgente) .rot-l2 { color: var(--a-papel); opacity: .85; }
+.rot-ir { margin-top: 22px; border-top: 1px solid rgba(255, 255, 255, .35); padding: 16px 0 18px; font-size: 1.05rem; color: inherit; }
+.rotulo:hover .rot-ir span:first-child { text-decoration: underline; text-underline-offset: 4px; }
+.rot-caja .traducir .accion, .tit-seccion .accion { border-radius: 4px; box-shadow: none; }
+
+/* Cuenta atrás: una línea de la circular con las cifras grandes */
+.cuenta-atras { margin-top: 0; padding: 18px 0; border-radius: 0; background: none; border-left: 0; border-bottom: 1px solid var(--a-filete); color: var(--a-tinta); }
+.cuenta-atras:hover { background: none; }
+.cuenta-atras:hover b { text-decoration: underline; text-underline-offset: 4px; }
+.ca-txt small { color: var(--a-gris); font-size: .92rem; }
+.ca-txt b { color: var(--a-tinta); font-size: 1.2rem; }
+.ca-cifras { gap: 22px; }
+.ca-bloque { flex-direction: row; align-items: baseline; gap: 6px; min-width: 0; padding: 0; background: none; border: 0; border-radius: 0; }
+.ca-bloque b { font-family: var(--a-sans); font-weight: 800; font-size: 2.6rem; letter-spacing: -.04em; color: var(--a-tinta); font-variant-numeric: tabular-nums; }
+.ca-bloque small { color: var(--a-gris); font-size: .95rem; text-transform: none; letter-spacing: 0; font-weight: 600; }
+.ca-ahora { font-family: var(--a-sans); color: var(--a-rojo-txt); text-transform: none; }
+
+/* Novedades y buscador: texto y una raya, sin cajas */
+.novedades-tira { margin: 0; min-height: 0; padding: 16px 0; border-radius: 0; background: none; color: var(--a-tinta); border-bottom: 1px solid var(--a-filete); font-weight: 600; }
+.novedades-tira:hover, .novedades-tira.al-dia:hover { background: none; }
+.novedades-tira:hover span:not(.n) { text-decoration: underline; text-underline-offset: 4px; }
+.novedades-tira .n { font-family: var(--a-sans); font-size: 1rem; font-weight: 800; background: none; color: var(--a-rojo-txt); padding: 0; min-width: 0; }
+.novedades-tira.al-dia { color: var(--a-gris); }
+.buscar-portada { margin-top: 22px; border: 0; border-bottom: 2px solid var(--a-tinta); border-radius: 0; background: none; padding: 12px 2px; color: var(--a-gris); box-shadow: none; }
+.buscar-portada:hover { color: var(--a-tinta); }
+
+/* Lo último: filas con la fecha a la izquierda */
+.lo-ultimo { margin-top: 48px; }
+.grupo-tablon { font-family: var(--a-sans); font-size: .95rem; font-weight: 700; letter-spacing: 0; text-transform: none; color: var(--a-tinta); margin: 26px 0 0; padding-bottom: 8px; }
+.grupo-tablon::after { display: none; }
+.item-tablon, .item-tablon.es-nuevo { display: grid; grid-template-columns: 1fr; margin: 0; padding: 16px 0 18px; background: none; border: 0; border-top: 1px solid var(--a-filete); border-radius: 0; box-shadow: none; }
+.item-tablon:hover { background: none; border-color: var(--a-filete); }
+.item-tablon:hover b { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.item-tablon small { font-size: .9rem; color: var(--a-gris); order: 0; }
+.item-tablon b { font-family: var(--a-sans); font-size: 1.3rem; font-weight: 700; letter-spacing: -.015em; margin-top: 4px; }
+.item-tablon .res { font-family: var(--a-serif); font-size: 1.08rem; color: var(--a-gris); margin-top: 4px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.marca-nuevo { background: none; color: var(--a-rojo-txt); padding: 0; border-radius: 0; font-family: var(--a-sans); font-size: .9rem; font-weight: 700; letter-spacing: 0; text-transform: none; }
+
+/* Columna: próximas fechas, sabías que, mapa */
+.portada-lateral .paradas .tit-seccion { margin-top: 0; }
+.ruta { margin-top: 6px; }
+.ruta li:not(:last-child)::after { width: 2px; left: 6px; top: 22px; background: var(--a-filete); }
+.ruta a { padding: 14px 0 14px 30px; border-radius: 0; }
+.ruta a::before, .ruta-aqui { width: 14px; height: 14px; top: 18px; border-width: 2px; }
+.ruta li.ruta-hoy { padding: 12px 0 4px 30px; }
+.ruta .cuando, .ruta li.ruta-hoy .cuando { font-family: var(--a-sans); font-size: .95rem; font-weight: 700; letter-spacing: 0; text-transform: none; background: none; color: var(--a-rojo-txt); padding: 0; }
+.ruta li.ruta-hoy .cuando { color: var(--a-gris); }
+.ruta b { font-size: 1.15rem; font-weight: 700; letter-spacing: -.01em; }
+.sabias { margin-top: 40px; }
+.sabias-tarjeta { background: none; border: 0; border-radius: 0; padding: 14px 0 0; box-shadow: none; }
+.sabias-tarjeta b { font-family: var(--a-sans); font-size: 1.15rem; font-weight: 700; text-transform: none; letter-spacing: -.01em; }
+.sabias-tarjeta p { font-family: var(--a-serif); font-size: 1.3rem; line-height: 1.4; margin: 6px 0 10px; }
+.sabias-tarjeta a { color: var(--a-rojo-txt); font-weight: 600; }
+.web-mapa { margin-top: 44px; }
+.web-mapa .w-sec { font-size: 1.35rem; }
+.w-cols { gap: 22px; margin-top: 14px; }
+.w-cols h3 { font-family: var(--a-sans); font-size: .95rem; font-weight: 700; letter-spacing: 0; text-transform: none; color: var(--a-gris); }
+.w-cols a { min-height: 34px; font-size: 1.05rem; color: var(--a-tinta); }
+.banda-instalar { background: none; border: 0; border-top: 1px solid var(--a-filete); border-radius: 0; padding: 18px 0 0; margin-top: 30px; box-shadow: none; color: var(--a-tinta); }
+.banda-instalar .btn { border-radius: 4px; box-shadow: none; }
+
+/* ---- Pie: a todo lo ancho, sin esquinas ---- */
+.pie { border-radius: 0; margin-top: 80px; padding-left: max(32px, calc(50vw - 590px + 32px)); padding-right: max(32px, calc(50vw - 590px + 32px)); }
+.pie-marca b, .pie-col h2 { font-family: var(--a-sans); text-transform: none; letter-spacing: -.01em; font-weight: 750; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .vista.activa, .vista.activa.desde-der, .vista.activa.desde-izq { animation: a-entra .35s var(--a-curva) both; }
+  @keyframes a-entra { from { opacity: 0; transform: translateY(8px); } }
+}
+
+/* ---- Ajustes que necesitan pesar más que reglas antiguas de styles.css ---- */
+#inicio-feed .item-tablon, #inicio-feed .item-tablon.es-nuevo { border: 0; border-top: 1px solid var(--a-filete); border-radius: 0; box-shadow: none; padding: 16px 0 18px; }
+#inicio-feed .grupo-tablon + .item-tablon { border-top: 0; }
+#inicio-feed .grupo-tablon { border-bottom: 1px solid var(--a-tinta); }
+#inicio-feed .marca-nuevo, .marca-nuevo { background: none; color: var(--a-rojo-txt) !important; padding: 0; border-radius: 0; font-family: var(--a-sans); font-size: .9rem; font-weight: 700; letter-spacing: 0; text-transform: none; }
+.paradas .ruta .cuando, .paradas .ruta li.hoy .cuando { padding: 0; border-radius: 0; background: none; color: var(--a-rojo-txt) !important; font-family: var(--a-sans); font-size: .95rem; letter-spacing: 0; text-transform: none; margin-bottom: 2px; }
+.paradas .ruta li:not(:last-child)::after { width: 2px; left: 11px; background: var(--a-filete); }
+.paradas .ruta a::before { left: 5px; width: 14px; height: 14px; border: 2px solid var(--a-rojo); background: var(--a-papel); box-shadow: none; }
+.ruta-aqui { left: 5px; width: 14px; height: 14px; border: 0; background: var(--a-tinta); box-shadow: none; }
+.paradas .ruta a, .ruta-hoy { padding-left: 34px; }
+:root:root .banda-instalar { background: none; color: var(--a-tinta); border: 0; border-top: 1px solid var(--a-filete); border-radius: 0; box-shadow: none; padding: 18px 0 0; }
+:root:root .banda-instalar * { color: var(--a-tinta); }
+:root:root .banda-instalar .btn { color: #fff; border-radius: 4px; background: var(--a-rojo); border-color: var(--a-rojo); min-height: 44px; margin-left: auto; }
+.pie { margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); border-left: 0; border-right: 0; border-bottom: 0; }
+.paradas .ruta::before { left: 11px; width: 2px; border-radius: 0; background: var(--a-filete); box-shadow: none; border: 0; }
+.paradas .ruta li:not(:last-child)::after { display: none; }
+:root:root .zona-rotulo { background: none; }
+
+/* ---- Fase 1: retoques de portada y cabecera ---- */
+/* «Traducir» del aviso, dentro del bloque rojo, arriba a la derecha */
+.rot-caja { position: relative; }
+.rot-caja > .traducir { position: absolute; top: 24px; right: 28px; }
+.rot-caja > .traducir .accion { background: transparent; color: #fff; border: 1px solid rgba(255, 255, 255, .55); }
+.rot-caja > .traducir .accion:hover { border-color: #fff; background: rgba(255, 255, 255, .08); }
+.rot-caja > .traducir .accion .icono { color: #fff; }
+.rotulo:not(.es-urgente) ~ .traducir .accion, .rotulo:not(.es-urgente) ~ .traducir .accion .icono { color: var(--a-papel); border-color: var(--a-gris); }
+.tit-seccion .traducir .accion { border-radius: 0; border-color: var(--a-filete); background: transparent; color: var(--a-tinta); }
+/* Superficies del navegador */
+html { scrollbar-color: var(--a-gris) var(--a-papel); }
+body.publica a { text-underline-offset: 4px; }
+.ca-cifras, .ruta .cuando, #version-web { font-variant-numeric: tabular-nums; }
+/* El cartel de las pestañas cuando hay novedades, sin pastilla */
+/* Contraste alto: líneas más marcadas */
+:root[data-contraste="alto"] { --a-filete: var(--a-tinta); --a-gris: var(--a-tinta); }
+/* Al cambiar de pestaña, solo el contenido entra; el bloque rojo llega un poco después (el momento de la portada) */
+@media (prefers-reduced-motion: no-preference) {
+  #v-inicio.activa .rotulo { animation: a-bloque .5s .08s var(--a-curva) both; }
+  @keyframes a-bloque { from { opacity: 0; transform: translateY(14px); } }
+}
+:root[data-movimiento="menos"] .vista.activa, :root[data-movimiento="menos"] #v-inicio.activa .rotulo { animation: none; }
+/* Las subpestañas (Zona Conductores y demás) siguen en la carretera oscura, a todo lo ancho */
+.subpest-caja { max-width: 1116px; margin: 0 auto; background: none; border-top: 1px solid #3a414a; }
+.subpest-caja .subpestanas { padding: 12px 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .cab-tablon .pestanas-web a:not(.pest-cond):not(.activa) { transition: color .15s; }
+}
+
+/* Cabecera elegida por Lorena (15/11/2026): «Asfalto», la cabecera oscura de siempre (la carretera), limpia:
+   herramientas en palabras, sin cajitas ni mayúsculas, raya roja abajo y la pestaña en la que estás marcada en blanco */
+:root:root .cab-tablon { background: var(--asfalto); color: #fff; border-top: 0; }
+:root:root .cab-titulo .nombre { color: #fff; }
+:root:root .cab-titulo .sub, :root:root .cab-fecha { color: #aeb4bc; }
+:root:root .cab-fila img { background: #fff; }
+:root:root .cab-tablon .btn-tab, :root:root .cab-tablon a.btn-tab { color: #fff; border-left-color: #3a414a; }
+:root:root .cab-tablon .pestanas-web { border-top: 1px solid #3a414a; border-bottom: 0; }
+:root:root .cab-tablon .pestanas-web a:not(.activa):not(.pest-cond) { color: #c9ced4; }
+:root:root .cab-tablon .pestanas-web a:not(.activa):not(.pest-cond):hover { color: #fff; }
+:root:root .cab-tablon .pestanas-web a.activa:not(.pest-cond) { color: #fff; font-weight: 750; border-bottom-color: #fff; border-bottom-width: 4px; margin-bottom: 0; }
+:root:root .cab-tablon .cuenta-pestana { color: #ff8a8b; }
+:root:root .cab-tablon { box-shadow: inset 0 -4px 0 var(--a-rojo); }
+
+/* ===== Fase 2 (15/11/2026): Avisos y Calendario, en la misma línea que la portada ===== */
+/* Comunes: la entradilla en serif, buscador como raya, filtros como pestañas de texto subrayadas */
+#v-avisos .intro-vista, #v-calendario .intro-vista { font-family: var(--a-serif); font-size: 1.2rem; line-height: 1.5; color: var(--a-gris); max-width: 62ch; margin-bottom: 26px; }
+#v-avisos .buscador input { border: 0; border-bottom: 2px solid var(--a-tinta); border-radius: 0; background: none; box-shadow: none; padding: 12px 2px 12px 34px; font-size: 1.05rem; }
+#v-avisos .buscador .icono { left: 2px; }
+#v-avisos .buscador input:focus { outline: 0; border-bottom-color: var(--a-rojo); }
+#v-avisos .filtros, #v-calendario .cal-vista { gap: 24px; margin: 18px 0 8px; padding: 0; border-bottom: 1px solid var(--a-filete); }
+:root:root #v-avisos .filtros .filtro, :root:root #v-calendario .cal-vista .filtro { min-height: 0; padding: 10px 0 9px; margin-bottom: -1px; border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: none; color: var(--a-gris); font-family: var(--a-sans); font-size: 1rem; font-weight: 600; transition: none; }
+:root:root #v-avisos .filtros .filtro:hover, :root:root #v-calendario .cal-vista .filtro:hover { color: var(--a-tinta); }
+:root:root #v-avisos .filtros .filtro.activo, :root:root #v-calendario .cal-vista .filtro.activo { color: var(--a-tinta); border-bottom-color: var(--a-rojo); font-weight: 750; }
+:root:root #v-avisos .filtro .cuenta { background: none; color: var(--a-rojo-txt); padding: 0; }
+
+/* Avisos: el mes como titular de sección y cada aviso una pieza separada por una raya, sin tarjeta */
+:root:root #v-avisos .grupo-mes { font-family: var(--a-sans); font-size: 1.35rem; font-weight: 750; letter-spacing: -.015em; text-transform: none; margin: 34px 0 0; padding-bottom: 10px; border-bottom: 2px solid var(--a-tinta); }
+:root:root #v-avisos .grupo-mes::after { display: none; }
+:root:root #v-avisos .grupo-mes span { order: 0; background: none; color: var(--a-gris); padding: 0; font-family: var(--a-sans); font-size: 1rem; font-weight: 600; }
+:root:root #v-avisos .aviso { background: none; border: 0; border-radius: 0; box-shadow: none; margin: 0; padding: 26px 0 22px; border-top: 1px solid var(--a-filete); }
+:root:root #v-avisos .grupo-mes + .aviso { border-top: 0; }
+:root:root #v-avisos .aviso.urgente, :root:root #v-avisos .aviso.fijado { border-left: 0; padding-left: 0; }
+#v-avisos .aviso .cab { gap: 14px; margin-bottom: 8px; }
+:root:root #v-avisos .aviso .etq { background: none; padding: 0; border-radius: 0; font-family: var(--a-sans); font-size: .92rem; font-weight: 700; color: var(--a-gris); }
+:root:root #v-avisos .aviso .etq.tipo { color: var(--c); }
+:root:root #v-avisos .aviso .etq.tipo::before { width: 9px; height: 9px; border-radius: 0; }
+:root:root #v-avisos .aviso .etq.urgente { color: #fff; background: var(--a-rojo); padding: 3px 9px; }
+:root:root #v-avisos .aviso .etq.nuevo { color: var(--a-rojo-txt); }
+:root:root #v-avisos .aviso .etq.fijado { color: var(--a-gris); }
+#v-avisos .aviso h3 { font-family: var(--a-sans); font-size: 1.75rem; font-weight: 800; line-height: 1.15; letter-spacing: -.025em; text-transform: none; margin: 0 0 12px; max-width: 30ch; }
+#v-avisos .aviso .cuerpo { font-family: var(--a-serif); font-size: 1.15rem; line-height: 1.6; max-width: 68ch; }
+:root:root #v-avisos .leer-mas { border: 0; border-radius: 0; padding: 4px 0; min-height: 0; background: none; color: var(--a-rojo-txt); font-family: var(--a-sans); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+:root:root #v-avisos .leer-mas:hover { background: none; color: var(--a-tinta); }
+:root:root #v-avisos .pie-tarjeta { border-top: 0; margin-top: 14px; padding-top: 0; }
+#v-avisos .pie-tarjeta .fechas { font-size: .92rem; color: var(--a-gris); }
+:root:root #v-avisos .acciones-tarjeta { gap: 22px; }
+:root:root #v-avisos .accion { min-height: 36px; padding: 0; border: 0; border-radius: 0; background: none; color: var(--a-tinta); font-family: var(--a-sans); font-size: .95rem; font-weight: 600; }
+:root:root #v-avisos .accion:hover { color: var(--a-rojo-txt); text-decoration: underline; text-underline-offset: 4px; }
+:root:root #v-avisos .accion .icono { color: var(--a-gris); }
+:root:root #v-avisos .accion.wa .icono { color: #128c4b; }
+
+/* Calendario: la hoja del mes sin caja, días limpios; hoy en rojo y el día elegido con un marco */
+:root:root #v-calendario .cal-rejilla { gap: 56px; grid-template-columns: 7fr 5fr; }
+:root:root #v-calendario .panel.cal { background: none; border: 0; border-radius: 0; box-shadow: none; padding: 0; }
+#v-calendario .cal-vista { margin-top: 0; }
+#v-calendario .cal-cab { margin: 22px 0 14px; }
+:root:root #v-calendario .cal-cab h2 { font-family: var(--a-sans); font-size: 1.9rem; font-weight: 800; letter-spacing: -.03em; text-transform: none; }
+:root:root #v-calendario .btn-hoy, :root:root #v-calendario .btn-ic { border-radius: 0; border: 1px solid var(--a-filete); background: none; color: var(--a-tinta); font-family: var(--a-sans); }
+:root:root #v-calendario .btn-hoy:hover, :root:root #v-calendario .btn-ic:hover { border-color: var(--a-tinta); }
+#v-calendario .semana { border-bottom: 1px solid var(--a-tinta); }
+:root:root #v-calendario .semana div, :root:root #v-calendario .cal-sem-cab { font-family: var(--a-sans); font-size: .85rem; font-weight: 700; text-transform: none; letter-spacing: 0; color: var(--a-gris); }
+:root:root #v-calendario .cal-sem, :root:root #v-calendario .cal-sem.actual { background: none; box-shadow: none; border-radius: 0; color: var(--a-gris); font-weight: 600; font-size: .85rem; font-variant-numeric: tabular-nums; }
+:root:root #v-calendario .cal-sem.actual { color: var(--a-tinta); font-weight: 800; }
+#v-calendario .dias { row-gap: 0; }
+:root:root #v-calendario .dia { border-radius: 0; background: none; box-shadow: none; border-bottom: 1px solid var(--a-filete); min-height: 58px; padding-top: 8px; transition: none; }
+:root:root #v-calendario .dia:hover { background: var(--a-fondo2); }
+:root:root #v-calendario .dia .n { border-radius: 0; font-family: var(--a-sans); font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+:root:root #v-calendario .dia.con-ev .n { font-weight: 800; }
+:root:root #v-calendario .dia.con-ev .punto { width: 22px; height: 4px; border-radius: 0; background: var(--tc, var(--a-rojo)); }
+:root:root #v-calendario .dia .punto.bandera { width: 16px; height: 11px; border-radius: 2px; }
+:root:root #v-calendario .dia.hoy .n { background: var(--a-rojo); color: #fff; }
+:root:root #v-calendario .dia.sel, :root:root #v-calendario .dia.sel.con-ev { background: none; box-shadow: inset 0 0 0 2px var(--a-tinta); }
+:root:root #v-calendario .leyenda { gap: 20px; margin-top: 18px; align-items: center; }
+:root:root #v-calendario .leyenda-tit { color: var(--a-gris); font-weight: 600; }
+:root:root #v-calendario .filtro-cal { min-height: 0; padding: 4px 0; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; color: var(--a-gris); font-family: var(--a-sans); font-size: .98rem; font-weight: 600; transition: none; }
+:root:root #v-calendario .filtro-cal.etq.tipo::before { border-radius: 0; width: 10px; height: 10px; }
+:root:root #v-calendario .filtro-cal.activo { color: var(--a-tinta); border-bottom-color: var(--a-tinta); font-weight: 750; }
+
+/* El día elegido y las próximas fechas como lista con rayas (antes un panel negro) */
+:root:root #v-calendario .dia-detalle { background: none; border: 0; border-top: 2px solid var(--a-tinta); border-radius: 0; box-shadow: none; padding: 14px 0 6px; }
+:root:root #v-calendario .dia-detalle h3 { font-family: var(--a-sans); font-size: 1.35rem; font-weight: 750; letter-spacing: -.015em; text-transform: none; margin-bottom: 6px; }
+#v-calendario .dia-detalle .fecha-txt { font-family: var(--a-serif); font-size: 1.08rem; color: var(--a-gris); }
+:root:root #v-calendario .titulo-bloque { font-family: var(--a-sans); font-size: 1.35rem; font-weight: 750; letter-spacing: -.015em; text-transform: none; margin: 36px 0 0; padding-bottom: 10px; border-bottom: 2px solid var(--a-tinta); }
+:root:root #v-calendario .tablero { background: none; border: 0; border-radius: 0; }
+:root:root #v-calendario .tablero-cab { display: none; }
+:root:root #v-calendario .fila-tablero { grid-template-columns: 92px 1fr; gap: 16px; padding: 16px 0; color: var(--a-tinta); border-bottom: 1px solid var(--a-filete); transition: none; }
+:root:root #v-calendario .fila-tablero:hover { background: none; }
+:root:root #v-calendario .fila-tablero:hover b { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+:root:root #v-calendario .t-dia { font-family: var(--a-sans); font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; text-transform: none; color: var(--a-tinta); font-variant-numeric: tabular-nums; }
+:root:root #v-calendario .t-dia small { font-size: .9rem; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--a-gris); }
+:root:root #v-calendario .t-tipo { background: none; padding: 0; border-radius: 0; color: var(--t); font-size: .88rem; letter-spacing: 0; text-transform: none; font-weight: 700; }
+:root:root #v-calendario .t-que b { font-family: var(--a-sans); font-size: 1.15rem; font-weight: 700; color: var(--a-tinta); }
+:root:root #v-calendario .t-lugar { color: var(--a-gris); font-family: var(--a-serif); font-size: 1rem; }
+
+/* Suscribirse al calendario: sin caja; un botón principal rojo y los demás de línea, esquinas rectas */
+:root:root #v-calendario .cal-suscribir { background: var(--a-fondo2); border: 0; border-radius: 0; box-shadow: none; padding: 22px 24px; margin-top: 36px; }
+:root:root #v-calendario .cal-suscribir h2 { font-family: var(--a-sans); font-size: 1.2rem; font-weight: 750; letter-spacing: -.01em; }
+#v-calendario .cal-suscribir p:not(.cal-sus-nota):not(.cal-sus-ayuda) { font-family: var(--a-serif); font-size: 1.08rem; line-height: 1.5; }
+:root:root #v-calendario .cal-sus-botones .btn { border-radius: 0; min-height: 46px; font-family: var(--a-sans); font-size: 1rem; font-weight: 650; box-shadow: none; }
+:root:root #v-calendario .cal-sus-botones .btn.sec { background: none; border: 1px solid var(--a-tinta); color: var(--a-tinta); }
+/* Color del tipo (el que pone el padre en Ajustes) como texto: en oscuro, aclarado para que se lea */
+:root { --a-tipo-luz: 0%; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --a-tipo-luz: 45%; } }
+:root[data-theme="dark"] { --a-tipo-luz: 45%; }
+:root:root #v-avisos .aviso .etq.tipo, :root:root #v-calendario .t-tipo { color: color-mix(in srgb, var(--tc, var(--a-rojo)), #fff var(--a-tipo-luz)); }
+:root:root #v-avisos .aviso .etq.tipo::before, :root:root #v-calendario .filtro-cal.etq.tipo::before { content: ""; display: inline-block; background: var(--tc, var(--a-rojo)); }
+:root:root #v-calendario .filtro-cal.activo { outline: 0; }
+:root:root #v-calendario .cal-vista { display: flex; }
+:root:root #v-calendario .cal-vista .filtro { flex: none; }
+:root:root #v-calendario .fila-tablero { grid-template-columns: 116px 1fr; }
+/* Vista «Año»: los doce meses como hojas sin caja, separadas por una raya; el mes actual con la raya roja */
+:root:root #v-calendario .cal-ano { gap: 26px 28px; margin-top: 6px; }
+:root:root #v-calendario .mini-mes { border: 0; border-top: 2px solid var(--a-tinta); border-radius: 0; box-shadow: none; background: none; padding: 4px 0 0; }
+:root:root #v-calendario .mini-mes.actual { border-top: 4px solid var(--a-rojo); padding-top: 2px; box-shadow: none; }
+:root:root #v-calendario .mini-tit { padding: 0; font-family: var(--a-sans); font-size: 1.05rem; font-weight: 750; letter-spacing: -.01em; text-transform: none; transition: none; }
+:root:root #v-calendario .mini-tit:hover { background: none; color: var(--a-rojo-txt); }
+:root:root #v-calendario .mini-n { background: none; color: var(--a-rojo-txt); padding: 0; min-width: 0; font-size: .9rem; }
+:root:root #v-calendario .mini-dias .ad { border-radius: 0; }
+:root:root #v-calendario .mini-dias .ad.hoy { outline: 0; background: var(--a-rojo); color: #fff; }
+:root:root #v-calendario .mini-dias button.ad.hoy { outline: 2px solid var(--a-tinta); outline-offset: 1px; }
+
+/* ===== Fase 3 (15/11/2026): Convenio, Calcula, Comité/Actas, apartados (PRL…), Documentos y Dudas ===== */
+/* Subpestañas (menos las de Zona Conductores, que son su fase): palabras blancas en la carretera, la elegida subrayada */
+:root:root .subpest-caja:not(.cond) .subpestanas { gap: 26px; padding: 0; }
+:root:root .subpest-caja:not(.cond) .subpestanas a { min-height: 0; padding: 12px 0 9px; border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: none; color: #c9ced4; font-family: var(--a-sans); font-size: .98rem; font-weight: 600; transition: none; }
+:root:root .subpest-caja:not(.cond) .subpestanas a:hover { color: #fff; }
+:root:root .subpest-caja:not(.cond) .subpestanas a.activa { color: #fff; font-weight: 750; border-bottom-color: #fff; }
+:root:root .subpest-caja:not(.cond) .subpestanas a .cuenta-pestana { background: none; color: #ff8a8b; }
+
+/* Lo común de estas vistas: entradilla en serif, buscador como raya, filtros como pestañas de texto, mes como titular */
+:is(#v-convenio, #v-calcula, #v-actas, #v-apartado, #v-documentos, #v-preguntas) .intro-vista { font-family: var(--a-serif); font-size: 1.2rem; line-height: 1.5; color: var(--a-gris); max-width: 62ch; margin-bottom: 26px; }
+:is(#v-convenio, #v-actas, #v-apartado, #v-documentos, #v-preguntas) .buscador input { border: 0; border-bottom: 2px solid var(--a-tinta); border-radius: 0; background: none; box-shadow: none; padding: 12px 2px 12px 34px; font-size: 1.05rem; }
+:is(#v-convenio, #v-actas, #v-apartado, #v-documentos, #v-preguntas) .buscador .icono { left: 2px; }
+:is(#v-convenio, #v-actas, #v-apartado, #v-documentos, #v-preguntas) .buscador input:focus { outline: 0; border-bottom-color: var(--a-rojo); }
+:is(#v-convenio, #v-actas, #v-apartado, #v-documentos, #v-preguntas) .filtros:not(:empty) { gap: 24px; margin: 18px 0 8px; padding: 0; border-bottom: 1px solid var(--a-filete); }
+:root:root :is(#v-convenio, #v-actas, #v-apartado, #v-documentos, #v-preguntas) .filtros .filtro { min-height: 0; padding: 10px 0 9px; margin-bottom: -1px; border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: none; color: var(--a-gris); font-family: var(--a-sans); font-size: 1rem; font-weight: 600; transition: none; }
+:root:root :is(#v-convenio, #v-actas, #v-apartado, #v-documentos, #v-preguntas) .filtros .filtro:hover { color: var(--a-tinta); }
+:root:root :is(#v-convenio, #v-actas, #v-apartado, #v-documentos, #v-preguntas) .filtros .filtro.activo { color: var(--a-tinta); border-bottom-color: var(--a-rojo); font-weight: 750; }
+:root:root :is(#v-actas, #v-apartado, #v-documentos) .grupo-mes { font-family: var(--a-sans); font-size: 1.35rem; font-weight: 750; letter-spacing: -.015em; text-transform: none; margin: 34px 0 0; padding-bottom: 10px; border-bottom: 2px solid var(--a-tinta); }
+:root:root :is(#v-actas, #v-apartado, #v-documentos) .grupo-mes::after { display: none; }
+:root:root :is(#v-actas, #v-apartado, #v-documentos) .grupo-mes span { order: 0; background: none; color: var(--a-gris); padding: 0; font-family: var(--a-sans); font-size: 1rem; font-weight: 600; }
+/* Etiquetas de tipo como texto de color; botones de compartir como texto */
+:root:root :is(#v-convenio, #v-actas, #v-apartado, #v-documentos, #v-preguntas) .etq { background: none; padding: 0; border-radius: 0; font-family: var(--a-sans); font-size: .92rem; font-weight: 700; color: var(--a-gris); }
+:root:root :is(#v-convenio, #v-actas, #v-apartado, #v-documentos, #v-preguntas) .etq.tipo { color: color-mix(in srgb, var(--tc, var(--a-rojo)), #fff var(--a-tipo-luz)); }
+:root:root :is(#v-convenio, #v-actas, #v-apartado, #v-documentos, #v-preguntas) .etq.tipo::before { width: 9px; height: 9px; border-radius: 0; background: var(--tc, var(--a-rojo)); }
+:root:root :is(#v-convenio, #v-actas, #v-apartado, #v-preguntas) .pie-tarjeta { border-top: 0; margin-top: 14px; padding-top: 0; }
+:root:root :is(#v-convenio, #v-actas, #v-apartado, #v-preguntas) .acciones-tarjeta { gap: 22px; }
+:root:root :is(#v-convenio, #v-actas, #v-apartado, #v-preguntas) .accion { min-height: 36px; padding: 0; border: 0; border-radius: 0; background: none; color: var(--a-tinta); font-family: var(--a-sans); font-size: .95rem; font-weight: 600; }
+:root:root :is(#v-convenio, #v-actas, #v-apartado, #v-preguntas) .accion:hover { color: var(--a-rojo-txt); text-decoration: underline; text-underline-offset: 4px; }
+:root:root :is(#v-convenio, #v-actas, #v-apartado, #v-preguntas) .accion .icono { color: var(--a-gris); }
+:root:root :is(#v-convenio, #v-actas, #v-apartado, #v-preguntas) .accion.wa .icono { color: #128c4b; }
+
+/* Apartados desplegables (convenio y preguntas): una fila con raya; el título en negrita y el texto en serif */
+:root:root :is(#v-convenio, #v-preguntas) details.apartado { background: none; border: 0; border-top: 1px solid var(--a-filete); border-radius: 0; box-shadow: none; margin: 0; }
+:root:root :is(#v-convenio, #v-preguntas) details.apartado:last-of-type { border-bottom: 1px solid var(--a-filete); }
+:root:root :is(#v-convenio, #v-preguntas) details.apartado > summary { padding: 18px 0; background: none; }
+:root:root :is(#v-convenio, #v-preguntas) details.apartado > summary:hover h3 { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+:root:root :is(#v-convenio, #v-preguntas) details.apartado h3 { font-family: var(--a-sans); font-size: 1.3rem; font-weight: 700; letter-spacing: -.015em; text-transform: none; margin-top: 4px; }
+:root:root :is(#v-convenio, #v-preguntas) details.apartado .meta .etq:not(.tipo) { color: var(--a-gris); }
+:root:root :is(#v-convenio, #v-preguntas) details.apartado .contenido { padding: 0 0 22px; border: 0; }
+:is(#v-convenio, #v-preguntas) details.apartado .contenido > div:first-child { font-family: var(--a-serif); font-size: 1.12rem; line-height: 1.6; max-width: 68ch; }
+:root:root #v-convenio .conv-rejilla { gap: 56px; grid-template-columns: 8fr 4fr; }
+:root:root #v-convenio .enlace-faq { background: none; border: 0; border-top: 2px solid var(--a-tinta); border-radius: 0; box-shadow: none; padding: 14px 0; margin-bottom: 8px; }
+:root:root #v-convenio .enlace-faq .ic { background: none; color: var(--a-rojo-txt); width: auto; padding: 0; }
+:root:root #v-convenio .enlace-faq b { font-family: var(--a-sans); font-size: 1.15rem; font-weight: 750; text-transform: none; letter-spacing: -.01em; }
+:root:root #v-convenio .enlace-faq:hover b { text-decoration: underline; text-underline-offset: 4px; }
+#v-convenio .enlace-faq p { font-family: var(--a-serif); color: var(--a-gris); }
+:root:root #v-convenio #lista-convenio { margin-top: 24px; }
+/* La columna de documentos al lado: sin caja, título con raya */
+:root:root #v-convenio .lateral .panel { background: none; border: 0; border-radius: 0; box-shadow: none; padding: 0; }
+:root:root #v-convenio .lateral h2 { font-family: var(--a-sans); font-size: 1.2rem; font-weight: 750; letter-spacing: -.01em; text-transform: none; padding: 12px 0 10px; border-top: 2px solid var(--a-tinta); border-bottom: 1px solid var(--a-filete); margin: 0; }
+:root:root #v-convenio .lateral .doc { padding: 14px 0; border-bottom: 1px solid var(--a-filete); border-radius: 0; background: none; }
+:root:root #v-convenio .lateral .doc .ic { background: none; color: var(--a-rojo-txt); border-radius: 0; }
+:root:root #v-convenio .lateral .doc b { font-family: var(--a-sans); font-weight: 700; }
+:root:root #v-convenio .lateral .doc:hover b { text-decoration: underline; text-underline-offset: 4px; }
+:root:root #v-convenio .lateral .enlace-btn { margin-top: 14px; color: var(--a-rojo-txt); font-family: var(--a-sans); font-weight: 700; text-transform: none; }
+
+/* Actas (Comité, PRL y demás apartados): la fecha como cifra grande, sin cartel de color; el texto en serif */
+:root:root :is(#v-actas, #v-apartado) .acta { background: none; border: 0; border-top: 1px solid var(--a-filete); border-radius: 0; box-shadow: none; margin: 0; padding: 26px 0 22px; grid-template-columns: 96px 1fr; gap: 24px; }
+:root:root :is(#v-actas, #v-apartado) .grupo-mes + .acta { border-top: 0; }
+:root:root :is(#v-actas, #v-apartado) .cartel { background: none; color: var(--a-tinta); border: 0; border-radius: 0; box-shadow: none; width: auto; height: auto; padding: 0; align-items: flex-start; justify-content: flex-start; text-align: left; }
+:root:root :is(#v-actas, #v-apartado) .cartel b { font-family: var(--a-sans); font-size: 3rem; font-weight: 800; line-height: .95; letter-spacing: -.05em; color: var(--a-tinta); font-variant-numeric: tabular-nums; }
+:root:root :is(#v-actas, #v-apartado) .cartel span { font-family: var(--a-sans); font-size: 1rem; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--a-gris); }
+:root:root :is(#v-actas, #v-apartado) .acta h3 { font-family: var(--a-sans); font-size: 1.6rem; font-weight: 800; line-height: 1.15; letter-spacing: -.025em; text-transform: none; margin: 6px 0 4px; }
+:root:root :is(#v-actas, #v-apartado) .acta .fecha-txt { font-size: .95rem; color: var(--a-gris); }
+:is(#v-actas, #v-apartado) .acta .fecha-txt + div { font-family: var(--a-serif); font-size: 1.12rem; line-height: 1.6; max-width: 68ch; margin-top: 12px; }
+:root:root :is(#v-actas, #v-apartado) .acuerdos { background: var(--a-fondo2); border: 0; border-left: 3px solid var(--a-tinta); border-radius: 0; padding: 14px 20px; max-width: 68ch; }
+:root:root :is(#v-actas, #v-apartado) .acuerdos b { font-family: var(--a-sans); font-size: 1rem; font-weight: 750; text-transform: none; letter-spacing: 0; }
+:is(#v-actas, #v-apartado) .acuerdos li { font-family: var(--a-serif); font-size: 1.08rem; }
+
+/* Documentos: una lista con rayas (antes tarjetas); el icono en rojo y «Abrir» como enlace */
+:root:root #v-documentos .lista-documentos { display: block; }
+:root:root #v-documentos .documento { background: none; border: 0; border-bottom: 1px solid var(--a-filete); border-radius: 0; box-shadow: none; margin: 0; padding: 18px 0; gap: 18px; }
+:root:root #v-documentos .documento .ic { background: none; color: var(--a-rojo-txt); border-radius: 0; }
+:root:root #v-documentos .documento b { font-family: var(--a-sans); font-size: 1.25rem; font-weight: 700; letter-spacing: -.015em; text-transform: none; }
+:root:root #v-documentos .documento small { font-size: .92rem; color: var(--a-gris); }
+:root:root #v-documentos .documento:hover { background: none; border-color: var(--a-filete); }
+:root:root #v-documentos .documento:hover b { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+:root:root #v-documentos .documento .abrir { color: var(--a-rojo-txt); font-family: var(--a-sans); font-weight: 700; }
+
+/* Dudas: «¿Dónde está…?» como fila; el buzón en un bloque gris de esquinas rectas con la raya roja arriba */
+:root:root #v-preguntas details.donde { background: none; border: 0; border-top: 2px solid var(--a-tinta); border-bottom: 1px solid var(--a-filete); border-radius: 0; box-shadow: none; margin: 22px 0; }
+:root:root #v-preguntas details.donde > summary { padding: 14px 0; font-family: var(--a-sans); font-size: 1.1rem; font-weight: 700; }
+:root:root #v-preguntas details.donde > summary small { background: none; color: var(--a-rojo-txt); padding: 0; font-size: 1rem; }
+:root:root #v-preguntas .buzon { background: var(--a-fondo2); border: 0; border-top: 4px solid var(--a-rojo); border-radius: 0; box-shadow: none; padding: 28px 32px; margin-top: 48px; }
+:root:root #v-preguntas .buzon h2 { font-family: var(--a-sans); font-size: 1.6rem; font-weight: 800; letter-spacing: -.025em; text-transform: none; }
+#v-preguntas .buzon > p:first-of-type { font-family: var(--a-serif); font-size: 1.12rem; }
+:root:root #v-preguntas .aviso-datos { border-radius: 0; border: 0; border-left: 3px solid var(--a-rojo); background: var(--a-papel); }
+:root:root #v-preguntas .tipo-buzon { gap: 0; }
+:root:root #v-preguntas .tipo-buzon span { border-radius: 0; box-shadow: none; transition: none; }
+:root:root #v-preguntas .buzon textarea { border-radius: 0; background: var(--a-papel); }
+:root:root #v-preguntas .buzon .check input { border-radius: 0; }
+:root:root #v-preguntas #buzon-enviar { border-radius: 0; box-shadow: none; font-family: var(--a-sans); }
+
+/* Calcula: el aviso, las pestañas de calculadora y la caja como el resto (esquinas rectas, sin sombras) */
+:root:root #v-calcula :is(.panel, .btn, .filtro, input, select, .aviso-datos, .resultado-calc) { border-radius: 0; box-shadow: none; }
+:root:root #v-calcula :is(h2, h3) { font-family: var(--a-sans); font-weight: 750; letter-spacing: -.015em; text-transform: none; }
+:root:root #v-calcula .rc-num small { font-family: var(--a-sans); font-size: 1rem; font-weight: 700; text-transform: none; letter-spacing: 0; }
+:root:root #v-calcula .rc-num { font-family: var(--a-sans); font-weight: 800; letter-spacing: -.04em; }
+
+/* ===== Fase 4 (15/11/2026): Nosotros, Buscar y Aviso legal ===== */
+:is(#v-info, #v-buscar) .intro-vista { font-family: var(--a-serif); font-size: 1.2rem; line-height: 1.5; color: var(--a-gris); max-width: 62ch; margin-bottom: 26px; }
+:is(#v-info, #v-buscar) .titulo-bloque { font-family: var(--a-sans); font-size: 1.35rem; font-weight: 750; letter-spacing: -.015em; text-transform: none; margin: 44px 0 0; padding-bottom: 10px; border-bottom: 2px solid var(--a-tinta); }
+/* Nosotros: dos columnas de texto con raya arriba (sin cajas); contacto con un botón rojo recto */
+:root:root #v-info .info-rejilla { gap: 56px; }
+:root:root #v-info .info-rejilla .panel { background: none; border: 0; border-top: 2px solid var(--a-tinta); border-radius: 0; box-shadow: none; padding: 14px 0 0; }
+:root:root #v-info .info-rejilla h2 { font-family: var(--a-sans); font-size: 1.35rem; font-weight: 750; letter-spacing: -.015em; text-transform: none; }
+#v-info .info-rejilla :is(#txt-quienes, #txt-contacto) { font-family: var(--a-serif); font-size: 1.15rem; line-height: 1.6; max-width: 62ch; }
+:root:root #v-info .contacto-btn { border-radius: 0; box-shadow: none; font-family: var(--a-sans); padding: 13px 20px; }
+/* Delegados: filas con rayas; las iniciales en un cuadrado rojo */
+:root:root #v-info .lista-delegados { gap: 0 56px; }
+:root:root #v-info .delegado { background: none; border: 0; border-bottom: 1px solid var(--a-filete); border-radius: 0; box-shadow: none; padding: 18px 0; align-items: center; }
+:root:root #v-info .avatar { border-radius: 0; font-family: var(--a-sans); font-weight: 800; font-size: 1.1rem; letter-spacing: -.02em; }
+:root:root #v-info .delegado b { font-family: var(--a-sans); font-size: 1.2rem; font-weight: 700; letter-spacing: -.01em; text-transform: none; }
+:root:root #v-info .delegado .cargo { color: var(--a-gris); }
+:root:root #v-info .delegado .accion { border-radius: 0; box-shadow: none; }
+/* Enlaces útiles */
+:root:root #v-info .lista-enlaces a { border-radius: 0; box-shadow: none; }
+/* Avisos en el móvil: bloque gris, esquinas rectas */
+:root:root #v-info #banda-app-info .banda { background: var(--a-fondo2); border: 0; border-radius: 0; box-shadow: none; padding: 20px 24px; margin-top: 44px; }
+:root:root #v-info #banda-app-info .banda .ic { border-radius: 0; background: none; color: var(--a-rojo-txt); width: auto; }
+:root:root #v-info #banda-app-info .banda b { font-family: var(--a-sans); font-size: 1.15rem; font-weight: 750; text-transform: none; }
+:root:root #v-info #banda-app-info .banda p { font-family: var(--a-serif); font-size: 1.02rem; color: var(--a-gris); }
+:root:root #v-info #banda-app-info .btn { border-radius: 0; box-shadow: none; font-family: var(--a-sans); }
+:root:root #v-info #banda-app-info .btn.sec { background: none; border: 1px solid var(--a-tinta); color: var(--a-tinta); }
+
+/* Buscar: buscador como raya gruesa; búsquedas útiles como palabras; el mapa de la web como columnas de enlaces */
+:root:root #v-buscar .buscador.grande input { border: 0; border-bottom: 3px solid var(--a-tinta); border-radius: 0; background: none; box-shadow: none; padding: 14px 2px 14px 40px; font-size: 1.3rem; }
+:root:root #v-buscar .buscador.grande input:focus { outline: 0; border-bottom-color: var(--a-rojo); }
+:root:root #v-buscar .buscador.grande .icono { left: 4px; }
+:root:root #v-buscar .busca-chips { gap: 8px 24px; margin-top: 14px; }
+:root:root #v-buscar .busca-chips .filtro { min-height: 0; padding: 2px 0; border: 0; border-radius: 0; background: none; color: var(--a-rojo-txt); font-family: var(--a-sans); font-size: 1.05rem; font-weight: 600; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; transition: none; }
+:root:root #v-buscar .busca-chips .filtro:hover { color: var(--a-tinta); }
+:root:root #v-buscar .mapa-web { gap: 30px 32px; margin-top: 18px; }
+:root:root #v-buscar .mapa-grupo { background: none; border: 0; border-top: 2px solid var(--a-tinta); border-radius: 0; box-shadow: none; padding: 10px 0 0; }
+:root:root #v-buscar .mapa-tit { font-family: var(--a-sans); font-size: 1.05rem; font-weight: 750; letter-spacing: -.01em; text-transform: none; color: var(--a-tinta); border-bottom: 0; padding-bottom: 6px; }
+:root:root #v-buscar .mapa-tit:hover { color: var(--a-rojo-txt); }
+:root:root #v-buscar .mapa-grupo li a { border-left: 0; padding: 6px 0; color: var(--a-tinta); font-weight: 500; }
+:root:root #v-buscar .mapa-grupo li a:hover { color: var(--a-rojo-txt); text-decoration: underline; text-underline-offset: 4px; }
+
+/* Aviso legal y privacidad: texto de lectura, sin caja */
+:root:root #v-legal .texto-legal { background: none; border: 0; border-radius: 0; box-shadow: none; padding: 0 0 30px; margin-bottom: 30px; border-bottom: 1px solid var(--a-filete); }
+:root:root #v-legal .texto-legal :is(h1, .h1) { font-family: var(--a-sans); font-size: 2.4rem; font-weight: 800; letter-spacing: -.035em; text-transform: none; margin: 24px 0 14px; }
+#v-legal .texto-legal > div { font-family: var(--a-serif); font-size: 1.12rem; line-height: 1.65; }
+:root:root .pie { border-left: 0; border-right: 0; border-bottom: 0; }
+/* Resultados de la búsqueda: filas con rayas, sin caja; saltos como palabras */
+:root:root #v-buscar .titulo-bloque .etq { background: none; color: var(--a-gris); padding: 0; font-family: var(--a-sans); font-size: 1rem; font-weight: 600; }
+:root:root #v-buscar .busca-saltos { gap: 8px 24px; }
+:root:root #v-buscar .busca-saltos a { border: 0; border-radius: 0; background: none; padding: 2px 0; min-height: 0; color: var(--a-tinta); font-family: var(--a-sans); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+:root:root #v-buscar .busca-saltos a span { background: none; color: var(--a-rojo-txt); padding: 0; min-width: 0; }
+:root:root #v-buscar .resultados { background: none; border: 0; border-radius: 0; box-shadow: none; padding: 0; }
+:root:root #v-buscar .resultado { padding: 16px 0; margin: 0; border: 0; border-bottom: 1px solid var(--a-filete); border-radius: 0; background: none; }
+:root:root #v-buscar .resultado .ic { background: none; border-radius: 0; color: var(--a-gris); }
+:root:root #v-buscar .resultado b { font-family: var(--a-sans); font-size: 1.15rem; font-weight: 700; }
+:root:root #v-buscar .resultado:hover { background: none; }
+:root:root #v-buscar .resultado:hover b { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+:root:root #v-buscar mark { border-radius: 0; }
+:root:root #v-buscar .buscador button { color: var(--a-tinta); border-radius: 0; }
+
+/* ===== Fase 5 (15/11/2026): Zona Conductores. Se queda su azul y su camión; solo cambia la forma ===== */
+/* Subpestañas azules: palabras blancas en la carretera; la elegida, subrayada en azul claro */
+:root:root .subpest-caja.cond .subpestanas { gap: 26px; padding: 0; }
+:root:root .subpest-caja.cond .subpestanas a { min-height: 0; padding: 12px 0 9px; border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: none; color: #c9ced4; font-family: var(--a-sans); font-size: .98rem; font-weight: 600; transition: none; }
+:root:root .subpest-caja.cond .subpestanas a:hover { color: #fff; }
+:root:root .subpest-caja.cond .subpestanas a.activa { color: #fff; font-weight: 750; border-bottom-color: #8fa4ff; }
+:root:root .subpest-caja.cond .subpestanas a .cuenta-pestana { background: none; color: #8fa4ff; }
+/* La portada de la zona: cada herramienta, una fila con raya; el icono en azul */
+:root:root #v-apartado .desc-promo { background: none; border: 0; border-bottom: 1px solid var(--a-filete); border-radius: 0; box-shadow: none; margin: 0; padding: 18px 0; gap: 18px; }
+:root:root #v-apartado #ap-extra { border-top: 2px solid var(--a-tinta); margin-bottom: 30px; }
+:root:root #v-apartado .desc-promo b { font-family: var(--a-sans); font-size: 1.2rem; font-weight: 700; letter-spacing: -.01em; text-transform: none; }
+:root:root #v-apartado .desc-promo small { font-family: var(--a-serif); font-size: 1.02rem; color: var(--a-gris); }
+:root:root #v-apartado .desc-promo:hover { background: none; }
+:root:root #v-apartado .desc-promo:hover b { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+/* Publicaciones de los apartados (como las actas): la fecha como cifra grande */
+:root:root #v-apartado .publicacion { background: none; border: 0; border-top: 1px solid var(--a-filete); border-radius: 0; box-shadow: none; margin: 0; padding: 26px 0 22px; grid-template-columns: 96px 1fr; gap: 24px; }
+:root:root #v-apartado .grupo-mes + .publicacion { border-top: 0; }
+:root:root #v-apartado .pub-fecha { background: none; border: 0; border-radius: 0; width: auto; padding: 0; text-align: left; color: var(--a-gris); font-family: var(--a-sans); font-size: 1rem; font-weight: 600; text-transform: none; letter-spacing: 0; }
+:root:root #v-apartado .pub-fecha b { font-family: var(--a-sans); font-size: 3rem; font-weight: 800; line-height: .95; letter-spacing: -.05em; color: var(--a-tinta); }
+:root:root #v-apartado .publicacion h3 { font-family: var(--a-sans); font-size: 1.6rem; font-weight: 800; letter-spacing: -.025em; text-transform: none; }
+
+/* Las herramientas (descansos, incentivos, aparcamientos, finiquito, ADR, hora, diccionario): esquinas rectas, sin sombras,
+   títulos con la letra nueva y la entradilla en serif. Colores, banderas y avisos se quedan como están */
+:is(#v-descansos, #v-ganancias, #v-aparcar, .zc-herr) .intro-vista { font-family: var(--a-serif); font-size: 1.15rem; line-height: 1.5; color: var(--a-gris); max-width: 64ch; }
+:root:root :is(#v-descansos, #v-ganancias, #v-aparcar, .zc-herr) :is(.panel, .btn, .btn-ic, select, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, .aviso-oficial, details.desc-guia, .guia-ir, .recupera-caja, details.desc-mini, button.desc-mini, nav.desc-tabs, nav.desc-tabs button, .gan-fecha, .gan-total, .gan-mini-mes, details.gan-horarios, li.gan-fila, section.gan-grupo, .apc-form, .zc-explica, .zc-ok, .zc-aviso, nav.zc-tabs, nav.zc-tabs button, .zc-barra, .zc-opc, .zc-grande, .zc-busca, .zc-chip) { border-radius: 0; box-shadow: none; }
+:root:root :is(#v-descansos, #v-ganancias, #v-aparcar, .zc-herr) :is(h2, h3, summary) { font-family: var(--a-sans); letter-spacing: -.01em; text-transform: none; }
+:root:root :is(#v-descansos, #v-ganancias, #v-aparcar, .zc-herr) :is(h2, h3) { font-weight: 750; }
+:root:root .zc-herr .zc-palabra { border-radius: 0; box-shadow: none; }
+:root:root #v-ganancias :is(.gan-tira button, .gan-dias button, .gan-aj-resumen) { border-radius: 0; box-shadow: none; }
+/* v175 (petición n.º 44 del padre): el botón «Zona Conductores» de las subpestañas en rojo. En la vista web, un bloque rojo recto;
+   los demás siguen como palabras con el subrayado azul */
+:root:root .subpest-caja.cond .subpestanas a[data-v="ap-zona-conductores"] { background: var(--a-rojo); color: #fff; padding: 9px 14px; margin: 3px 0; border-bottom: 0; }
+:root:root .subpest-caja.cond .subpestanas a[data-v="ap-zona-conductores"].activa { box-shadow: inset 0 -3px 0 #fff; }
