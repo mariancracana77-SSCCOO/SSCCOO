@@ -77,6 +77,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 175: subapartados de Zona Conductores en rojo
+
+- Petición n.º 44 del padre: la fila de botones de debajo del camión (subapartados de Zona Conductores) vuelve al rojo de los demás apartados. El camión, las tarjetas y las herramientas siguen en azul.
+
 ## Versión 174: «Mi hora ordinaria», «Diccionario del conductor», más preguntas de ADR y explicación de los pluses fijos
 
 - Peticiones n.º 40 a 43 del panel. **Mi hora ordinaria** (n.º 43) y **Diccionario del conductor** (n.º 42, 53 palabras con buscador y filtros) son herramientas del padre pasadas tal cual a Zona Conductores (`hora.js`, `diccionario.js`). Las tablas de sueldos del convenio de Girona y la regla de antigüedad están ahora en un solo archivo, `convenio-girona.js`, que usan el finiquito y la hora ordinaria (si cambia una cifra, se cambia ahí). El test de ADR pasa de 16 a 60 preguntas y en cada test nuevo salen primero las que aún no han salido (n.º 41; las 44 nuevas, a revisar por alguien con el ADR). En «Mi finiquito» y «Mi hora ordinaria», un desplegable explica qué son los pluses fijos y por qué cuentan (n.º 40). No se guarda nada en el móvil.

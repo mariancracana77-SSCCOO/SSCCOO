@@ -2231,11 +2231,8 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
               linear-gradient(90deg, transparent, rgba(255, 255, 255, .3)) 0 24px / 12px 2px no-repeat; }
 .pestanas-web a.pest-cond.activa::before { border-bottom: 3px solid #fff; height: 48px; bottom: -21px; }
 .cab-tablon .pestanas-web a.pest-cond:hover { filter: brightness(1.15); }
-.subpest-caja.cond .subpestanas a { background: var(--cond-morado); border-color: var(--cond-morado); }
-.subpest-caja.cond .subpestanas a:hover { border-color: #fff; }
-.subpest-caja.cond .subpestanas a.activa { background: #fff; border-color: #fff; color: var(--cond-morado); }
-.subpest-caja.cond .subpestanas a .cuenta-pestana { color: var(--cond-morado); }
-.subpest-caja.cond .pest-flecha.sub { background: var(--cond-morado); }
+/* v175 (petición n.º 44 del padre): la fila de subapartados de Zona Conductores vuelve al rojo de los demás apartados (sin reglas propias);
+   el camión de la pestaña, las tarjetas y las herramientas siguen en azul. */
 .desc-promo.cond { border-left-color: var(--cond-morado); }
 .desc-promo.cond > .icono:first-child { color: var(--cond-morado-ic); }
 .en-cond .titulo-vista::after { background: var(--cond-morado); }
