@@ -28,15 +28,28 @@
     });
     return best ? best.o : null;
   }
-  function put(row, fi, o, flag, rec) {
+  function put(row, fi, o, flag, rec, sp) {
     const r = row.free[fi]; row.free.splice(fi, 1);
-    row.items.push({ r: rec, s: flag, x: r.x, y: r.y, w: o[0], h: o[1] });
+    // apil: su recogida va apilada (se le puede poner otro encima); hc: su alto en cm (0 = sin apuntar)
+    row.items.push({ r: rec, s: flag, x: r.x, y: r.y, w: o[0], h: o[1], apil: !!sp?.st, hc: sp?.h || 0 });
     if (r.w - o[0] > 0) row.free.push({ x: r.x + o[0], y: r.y, w: r.w - o[0], h: r.h });
     if (r.h - o[1] > 0) row.free.push({ x: r.x, y: r.y + o[1], w: o[0], h: r.h - o[1] });
   }
   function place(rows, sp, W, fill) {
-    const q = Math.max(0, Math.floor(sp.q || 0)); if (!q) return true;
+    let q = Math.max(0, Math.floor(sp.q || 0)); if (!q) return true;
     const os = orients(sp.d, W); if (!os.length) return false;
+    // v179 (petición n.º 47): huecos encima. Si esta recogida va apilada, sus palets ocupan primero el sitio libre
+    // encima de un palet suelto de otra recogida apilada (impar), si son iguales o más pequeños y caben de alto.
+    // Con «Aprovechar huecos», en cualquier fila; sin él, solo en la última (la que queda a mano).
+    if (sp.st) {
+      const techo = sp.alto || 270, alto = sp.h || 120;
+      for (let i = fill ? 0 : Math.max(0, rows.length - 1); i < rows.length && q; i++) rows[i].items.forEach(it => {
+        if (!q || it.s || it.top || !it.apil || (it.hc || 120) + alto > techo) return;
+        const o = [[sp.d[0], sp.d[1]], [sp.d[1], sp.d[0]]].find(o => o[0] <= it.w && o[1] <= it.h);
+        if (o) { it.top = { r: sp.rec, w: o[0], h: o[1], hc: sp.h || 0 }; q--; }
+      });
+      if (!q) return true;
+    }
     const n = sp.st ? Math.ceil(q / 2) : q, flags = [];
     for (let i = 0; i < n; i++) flags.push(!!sp.st && !(q % 2 === 1 && i === n - 1));
     while (flags.length) {
@@ -46,7 +59,7 @@
         if (o) { const w = r.w * r.h - o[0] * o[1]; if (!best || w < best.w) { best = { row: rows[i], fi, w }; bo = o; } }
       });
       if (!best) break;
-      put(best.row, best.fi, bo, flags.shift(), sp.rec);
+      put(best.row, best.fi, bo, flags.shift(), sp.rec, sp);
     }
     if (!flags.length) return true;
     const b = plan(flags.length, os), list = [];
@@ -57,7 +70,7 @@
       const row = { al: o.al, ac: o.ac, items: [], free: [] };
       for (let k = 0; k < o.cap; k++) row.free.push({ x: 0, y: k * o.ac, w: o.al, h: o.ac });
       rows.push(row);
-      for (let k = 0; k < o.cap && flags.length; k++) put(row, 0, [o.al, o.ac], flags.shift(), sp.rec);
+      for (let k = 0; k < o.cap && flags.length; k++) put(row, 0, [o.al, o.ac], flags.shift(), sp.rec, sp);
     });
     return true;
   }
@@ -80,20 +93,22 @@
   const MEDIDAS = { eu: [120, 80], ind: [120, 100], med: [80, 60] };
   const dims = (r) => r.t === "cu" ? [r.l || 0, r.a || 0] : MEDIDAS[r.t] || MEDIDAS.eu;
   // Todas las recogidas a la vez: lo que pinta la pantalla y lo que miran las pruebas
-  function calcula(recs, Lc, Wc, fill) {
+  // Peso: kg = total de la recogida (v179); los datos viejos solo traen w (kg por palet)
+  const kgRec = (r, q) => r.kg != null ? Math.max(0, +r.kg || 0) : q * (r.w || 0);
+  function calcula(recs, Lc, Wc, fill, altoC) {
     const rows = [], res = { rows, lineas: [], bad: [], sinMedida: [], kg: 0, tot: 0 };
     recs.forEach((r, i) => {
       const q = Math.max(0, Math.floor(r.q || 0)), d = dims(r), before = used(rows);
       if (!q) return;
       if (!(d[0] > 0 && d[1] > 0)) { res.sinMedida.push(i); return; }
-      if (!place(rows, { d, st: r.s, rec: i + 1, q }, Wc, fill)) { res.bad.push(i); return; }
-      res.kg += q * (r.w || 0); res.tot += q;
+      if (!place(rows, { d, st: r.s, rec: i + 1, q, h: r.h > 0 ? r.h : 0, alto: altoC || 270 }, Wc, fill)) { res.bad.push(i); return; }
+      res.kg += kgRec(r, q); res.tot += q;
       res.lineas.push({ i, q, d, nuevo: used(rows) - before });
     });
     res.usado = used(rows);
     return res;
   }
-  window.CargaCuentas = { orients, plan, place, used, maxFit, nfit, holes, calcula, MEDIDAS };
+  window.CargaCuentas = { orients, plan, place, used, maxFit, nfit, holes, calcula, MEDIDAS, kgRec };
 
   // ---- Pantalla ----
   const $ = (i) => document.getElementById(i);
@@ -107,12 +122,16 @@
   const COL = ["#2a3f9e", "#c2410c", "#047857", "#7c3aed", "#be123c", "#0e7490", "#a16207", "#4d7c0f"];
   const KEY = "ccoo-remolque", N_COL = COL.length;
   let recs = [], fit = false, FILL = true, resumen = "", VISTA = "3d", motor = null, cargando = null, ultimo = null;
-  const nuevo = (i) => ({ n: T("Recogida {n}", { n: i }), t: "eu", q: 0, s: false, w: 0, l: 120, a: 80, h: 0 });
+  const nuevo = (i) => ({ n: T("Recogida {n}", { n: i }), t: "eu", q: 0, s: false, kg: 0, l: 120, a: 80, h: 0 });
   const num = (v) => { const x = parseFloat(String(v).replace(",", ".")); return isFinite(x) ? x : 0; };
   const f = (n, d) => n.toFixed(d).replace(".", ",");
   const kg = (n) => Math.round(n).toLocaleString("es-ES");
   // Lo guardado puede venir de una versión vieja o estropeado: se limpia campo a campo, sin perder lo que vale.
-  const limpia = (r, i) => ({ n: typeof r?.n === "string" ? r.n.slice(0, 60) : T("Recogida {n}", { n: i + 1 }), t: NOMBRES[r?.t] ? r.t : "eu", q: Math.max(0, Math.floor(num(r?.q))), s: !!r?.s, w: Math.max(0, num(r?.w)), l: Math.max(0, num(r?.l ?? 120)), a: Math.max(0, num(r?.a ?? 80)), h: Math.min(400, Math.max(0, num(r?.h))) });
+  // v179 (petición n.º 47): el peso es el total de la recogida («kg»). Lo guardado antes traía «w» = kg por palet:
+  // se pasa una vez (w × n.º de palets) para no perder lo apuntado. Al guardar se deja también «w» (por palet) para que
+  // una versión anterior de la web siga leyendo el peso si hubiera que volver atrás.
+  const limpiaKg = (r) => r?.kg != null ? Math.max(0, num(r.kg)) : Math.max(0, num(r?.w)) * Math.max(0, Math.floor(num(r?.q)));
+  const limpia = (r, i) => ({ n: typeof r?.n === "string" ? r.n.slice(0, 60) : T("Recogida {n}", { n: i + 1 }), t: NOMBRES[r?.t] ? r.t : "eu", q: Math.max(0, Math.floor(num(r?.q))), s: !!r?.s, kg: limpiaKg(r), l: Math.max(0, num(r?.l ?? 120)), a: Math.max(0, num(r?.a ?? 80)), h: Math.min(400, Math.max(0, num(r?.h))) });
   function load() {
     recs = []; FILL = true;
     try {
@@ -128,7 +147,7 @@
     if (!recs.length) recs = [nuevo(1)];
     $("cg-fill").checked = FILL;
   }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify({ recs, len: $("cg-len").value, wid: $("cg-wid").value, pay: $("cg-pay").value, alt: $("cg-alt").value, fill: FILL, vista: VISTA })); } catch (e) { /* móvil sin espacio o en privado */ } }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify({ recs: recs.map(r => Object.assign({}, r, { w: r.q > 0 ? Math.round(r.kg / r.q * 100) / 100 : 0 })), len: $("cg-len").value, wid: $("cg-wid").value, pay: $("cg-pay").value, alt: $("cg-alt").value, fill: FILL, vista: VISTA })); } catch (e) { /* móvil sin espacio o en privado */ } }
   // Otra ventana ha guardado: ponerse al día (si no, al tocar aquí se pisaría lo de la otra)
   window.addEventListener("storage", (e) => { if (e.key === KEY) { load(); build(); ponVista(VISTA, true); } });
 
@@ -137,10 +156,11 @@
       const id = "cg-" + i;
       let h = `<div class="panel zc-caja cg-rec cg-c${i % N_COL}"><div class="cg-rec-cab"><span class="cg-num" aria-hidden="true">${i + 1}</span><label class="sr-only" for="${id}-n">${esc(T("Nombre de la recogida"))}</label><input id="${id}-n" data-i="${i}" data-f="n" value="${esc(r.n)}" maxlength="60">` +
         (recs.length > 1 ? `<button type="button" class="cg-quitar" data-del="${i}">${esc(T("Quitar"))}</button>` : "") + `</div>`;
-      h += `<label for="${id}-t">${esc(T("Tipo de palet"))}</label><select id="${id}-t" data-i="${i}" data-f="t">` + Object.keys(NOMBRES).map(k => `<option value="${k}"${r.t === k ? " selected" : ""}>${esc(T(NOMBRES[k]))}</option>`).join("") + `</select>`;
+      h += `<div class="cg-dato cg-d-t"><label for="${id}-t">${esc(T("Tipo de palet"))}</label><select id="${id}-t" data-i="${i}" data-f="t">` + Object.keys(NOMBRES).map(k => `<option value="${k}"${r.t === k ? " selected" : ""}>${esc(T(NOMBRES[k]))}</option>`).join("") + `</select>`;
       if (r.t === "cu") h += `<div class="zc-dos"><div><label for="${id}-l">${esc(T("Largo (cm)"))}</label><input id="${id}-l" type="number" inputmode="decimal" min="0" data-i="${i}" data-f="l" value="${esc(r.l)}"></div><div><label for="${id}-a">${esc(T("Ancho (cm)"))}</label><input id="${id}-a" type="number" inputmode="decimal" min="0" data-i="${i}" data-f="a" value="${esc(r.a)}"></div></div>`;
-      h += `<div class="zc-dos"><div><label for="${id}-q">${esc(T("N.º de palets"))}</label><input id="${id}-q" type="number" inputmode="numeric" min="0" data-i="${i}" data-f="q" value="${r.q || ""}" placeholder="0"></div><div><label for="${id}-w">${esc(T("Kg por palet (opcional)"))}</label><input id="${id}-w" type="number" inputmode="decimal" min="0" data-i="${i}" data-f="w" value="${r.w || ""}" placeholder="0"></div></div>`;
-      h += `<label for="${id}-h">${esc(T("Alto con la carga y el palet (cm, opcional)"))}</label><input id="${id}-h" type="number" inputmode="decimal" min="0" max="400" data-i="${i}" data-f="h" value="${r.h || ""}" placeholder="${esc(T("Ej. 120"))}">`;
+      h += `</div>`;
+      h += `<div class="zc-dos"><div class="cg-dato cg-d-q"><label for="${id}-q">${esc(T("N.º de palets"))}</label><input id="${id}-q" type="number" inputmode="numeric" min="0" data-i="${i}" data-f="q" value="${r.q || ""}" placeholder="0"></div><div class="cg-dato cg-d-w"><label for="${id}-w">${esc(T("Kg en total de esta recogida (opcional)"))}</label><input id="${id}-w" type="number" inputmode="decimal" min="0" data-i="${i}" data-f="kg" value="${r.kg || ""}" placeholder="0"></div></div>`;
+      h += `<div class="cg-dato cg-d-h"><label for="${id}-h">${esc(T("Alto con la carga y el palet (cm, opcional)"))}</label><input id="${id}-h" type="number" inputmode="decimal" min="0" max="400" data-i="${i}" data-f="h" value="${r.h || ""}" placeholder="${esc(T("Ej. 120"))}"></div>`;
       h += `<label class="cg-marca"><input type="checkbox" data-i="${i}" data-f="s"${r.s ? " checked" : ""}><span>${esc(T("Van apilados en 2 alturas"))}</span></label></div>`;
       return h;
     }).join("");
@@ -154,8 +174,14 @@
       r.items.forEach(p => {
         const px = x + p.x;
         s += `<rect x="${px}" y="${p.y}" width="${p.w}" height="${p.h}" fill="${COL[(p.r - 1) % N_COL]}" stroke="#fff" stroke-width="3" rx="4"/>`;
-        if (p.w >= 60 && p.h >= 60) s += `<text x="${px + p.w / 2}" y="${p.y + p.h / 2 + 10}" font-size="32" font-weight="800" fill="#fff" text-anchor="middle">${p.r}</text>`;
+        if (p.w >= 60 && p.h >= 60 && !p.top) s += `<text x="${px + p.w / 2}" y="${p.y + p.h / 2 + 10}" font-size="32" font-weight="800" fill="#fff" text-anchor="middle">${p.r}</text>`;
         if (p.s && p.w >= 60) s += `<text x="${px + p.w - 6}" y="${p.y + 30}" font-size="24" font-weight="700" fill="#fff" text-anchor="end">×2</text>`;
+        // Palet de otra recogida encima (v179): recuadro de su color dentro y «1+2» (abajo + encima)
+        if (p.top) {
+          const tw = Math.max(20, p.top.w - 24), th = Math.max(20, p.top.h - 24), tx = px + (p.w - tw) / 2, ty = p.y + (p.h - th) / 2;
+          s += `<rect x="${tx}" y="${ty}" width="${tw}" height="${th}" fill="${COL[(p.top.r - 1) % N_COL]}" stroke="#fff" stroke-width="3" rx="4"/>`;
+          if (p.w >= 60 && p.h >= 60) s += `<text x="${px + p.w / 2}" y="${p.y + p.h / 2 + 10}" font-size="28" font-weight="800" fill="#fff" text-anchor="middle">${p.r}+${p.top.r}</text>`;
+        }
       });
       r.free.forEach(h => {
         if (h.w >= 30 && h.h >= 30) s += `<rect class="cg-hueco" x="${x + h.x + 3}" y="${h.y + 3}" width="${h.w - 6}" height="${h.h - 6}" fill="none" stroke-width="3" stroke-dasharray="10 8" rx="4"/>`;
@@ -168,10 +194,11 @@
   function calc() {
     const L = num($("cg-len").value), W = num($("cg-wid").value), pay = num($("cg-pay").value);
     if (!(L > 0 && W > 0)) { $("cg-dibujo").innerHTML = ""; $("cg-cab").textContent = T("Pon el largo y el ancho del remolque en «Ajustes del remolque»."); $("cg-res").innerHTML = ""; resumen = ""; return; }
-    const Lc = Math.round(L * 100), Wc = Math.round(W * 100), R = calcula(recs, Lc, Wc, FILL), rows = R.rows, u = R.usado, libre = Lc - u;
-    draw(rows, Lc, Wc);
     // Alto: el de cada recogida (si no lo apuntan, 1,20 m en el 3D, que es lo normal para apilar 2 en 2,70 m) y el de dentro
-    const Hc = Math.round((num($("cg-alt").value) || 2.7) * 100), altos = recs.map(r => r.h > 0 ? r.h : 0);
+    const Hc = Math.round((num($("cg-alt").value) || 2.7) * 100);
+    const Lc = Math.round(L * 100), Wc = Math.round(W * 100), R = calcula(recs, Lc, Wc, FILL, Hc), rows = R.rows, u = R.usado, libre = Lc - u;
+    draw(rows, Lc, Wc);
+    const altos = recs.map(r => r.h > 0 ? r.h : 0);
     ultimo = [rows, Lc, Wc, { altos, alto: Hc }];
     if (motor && VISTA !== "arriba") motor.pinta(rows, Lc, Wc, COL, oscuro(), ultimo[3]);
     $("cg-cab").innerHTML = TH("{n} palets", { n: R.tot }) + " · " + `<b${u > Lc ? ' class="cg-pasa"' : ""}>${esc(T("{u} m de {l} m", { u: f(u / 100, 2), l: f(L, 2) }))}</b> <small>${esc(u > Lc ? T("No cabe: sobran {m} m", { m: f((u - Lc) / 100, 2) }) : T("Quedan {m} m", { m: f(libre / 100, 2) }))}</small>`;
@@ -188,6 +215,16 @@
       h += `<div class="zc-ok">${TH("Te quedan **{m} m**. Aún caben unos **{eu} europalets**, {ind} industriales o {med} medios palets.", { m: f(libre / 100, 2), eu, ind, med })}</div>`;
     }
     const hs = holes(rows);
+    // Tipos de palet apuntados (para decir cuál no cabe en un hueco)
+    const tipos = [];
+    recs.forEach(r => { if (!(r.q > 0)) return; const d = dims(r); if (!(d[0] > 0 && d[1] > 0)) return; const nombre = r.t === "cu" ? d[0] + "×" + d[1] : T(NOMBRES[r.t]); if (!tipos.some(t => t.nombre === nombre)) tipos.push({ d, nombre }); });
+    // Palets sueltos de recogidas apiladas con el sitio de encima libre (v179)
+    const sueltos = {};
+    rows.forEach(row => row.items.forEach(it => { if (it.apil && !it.s && !it.top) sueltos[it.r] = (sueltos[it.r] || 0) + 1; }));
+    Object.keys(sueltos).forEach(k => {
+      const c = sueltos[k], r = nombre(+k - 1);
+      h += `<div class="zc-aviso">${esc(c > 1 ? T("Encima de {c} palets sueltos de {r} queda sitio para otro palet. Si la siguiente recogida va apilada, se pone ahí (si es igual o más pequeño y cabe de alto).", { c, r }) : T("Encima de 1 palet suelto de {r} queda sitio para otro palet. Si la siguiente recogida va apilada, se pone ahí (si es igual o más pequeño y cabe de alto).", { r }))}</div>`;
+    });
     if (hs.length) {
       h += `<div class="zc-aviso"><p class="cg-p">${TH("**Huecos sin usar** (los de línea discontinua del dibujo):")}</p><ul>` + hs.map(g => {
         const a = nfit([120, 80], g), b = nfit([120, 100], g), c = nfit([80, 60], g), opts = [];
@@ -195,7 +232,9 @@
         if (b) opts.push(b > 1 ? T("{n} industriales", { n: b }) : T("1 industrial"));
         if (c) opts.push(c > 1 ? T("{n} medios palets", { n: c }) : T("1 medio palet"));
         const que = g.c > 1 ? T("{c} huecos de {w}×{h} cm", { c: g.c, w: g.w, h: g.h }) : T("1 hueco de {w}×{h} cm", { w: g.w, h: g.h });
-        return `<li>${esc(opts.length ? T("{que}: caben {opts}.", { que, opts: opts.join(T(" o ")) }) : T("{que}: solo cabe mercancía suelta o pequeña.", { que }))}</li>`;
+        // Por qué no se ha usado (v179): los tipos de palet apuntados que no caben en ese hueco
+        const noCaben = tipos.filter(t => !nfit(t.d, g)).map(t => t.nombre);
+        return `<li>${esc((opts.length ? T("{que}: caben {opts}.", { que, opts: opts.join(T(" o ")) }) : T("{que}: solo cabe mercancía suelta o pequeña.", { que })) + (noCaben.length ? " " + T("No cabe: {t}.", { t: noCaben.join(", ") }) : ""))}</li>`;
       }).join("") + `</ul><p class="zc-pista">${esc(T("Añade otra recogida con ese tipo de palet y se colocará sola en el hueco."))}</p></div>`;
     }
     if (R.kg > 0) {
