@@ -50,5 +50,24 @@ igual("con alto de 3 m sí cabe (150 + 150)", C.calcula([r("ind", 5, { s: true, 
 igual("sin aprovechar huecos, encima solo en la última fila", C.calcula([r("ind", 5, { s: true }), r("med", 4), r("eu", 2, { s: true })], L, 248, false).rows.some(x => x.items.some(i => i.top)), false);
 const todos = (R) => R.rows.reduce((s, x) => s + x.items.reduce((t, i) => t + (i.s ? 2 : 1) + (i.top ? 1 : 0), 0), 0);
 igual("todos los palets se dibujan (5 + 23 = 28)", todos(caso), 28);
+// v180 (petición n.º 48): colocar a mano
+const tres = [r("ind", 5, { s: true }), r("med", 4), r("eu", 23, { s: true })];
+const auto3 = C.calcula(tres, L, 248, false, 270), sit3 = C.sitios(auto3.rows);
+const enc = sit3.find(s => s.tipo === "encima" && s.x === 100), hue = sit3.find(s => s.tipo === "hueco" && s.w === 60 && s.h === 80);
+igual("sin nada a mano, igual que antes (caso del padre 6,00 m)", C.calcula([r("ind", 5, { s: true }), r("eu", 23, { s: true })], L, 248, true, 270, []).usado, 600);
+igual("sin aprovechar huecos hay un industrial suelto con sitio encima", !!enc, true);
+const am = C.calcula(tres, L, 248, false, 270, [{ r: 2, x: enc.x, y: enc.y, e: true }]);
+igual("a mano: un europalet encima del industrial suelto ahorra 0,40 m (7,40 a 7,00)", [auto3.usado, am.usado, am.mano, am.manoMal], [740, 700, 1, 0]);
+igual("a mano: siguen todos los palets (5 + 4 + 23 = 32)", todos(am), 32);
+igual("a mano: el palet puesto encima va marcado", am.rows.some(x => x.items.some(i => i.top && i.top.m && i.top.r === 3)), true);
+const ah = C.calcula(tres, L, 248, false, 270, [{ r: 1, x: hue.x, y: hue.y, e: false }]);
+igual("a mano: un medio palet en el hueco de 60×80", [ah.mano, ah.manoMal, todos(ah)], [1, 0, 32]);
+igual("no cabe: un industrial en un hueco de 60×80", C.noCabe(hue, [120, 100], 0, 270), "medida");
+igual("no cabe de alto: 150 encima de 150 con 2,70", C.noCabe(Object.assign({}, enc, { it: Object.assign({}, enc.it, { hc: 150 }) }), [120, 80], 150, 270), "alto");
+const sin = C.calcula(tres, L, 248, false, 270, [{ r: 2, x: 5000, y: 0, e: true }]);
+igual("si el sitio ya no está, el palet se coloca solo y se avisa", [sin.mano, sin.manoMal, todos(sin)], [0, 1, 32]);
+const muchos = C.calcula([r("med", 1), r("eu", 2, { s: true })], L, 248, true, 270, [{ r: 0, x: 0, y: 0, e: false }, { r: 0, x: 0, y: 0, e: false }, { r: 0, x: 0, y: 0, e: false }]);
+igual("nunca se ponen a mano más palets de los que tiene la recogida", todos(muchos), 3);
+igual("de una recogida quitada (n.º que no existe) no se pone nada", todos(C.calcula([r("eu", 2)], L, 248, true, 270, [{ r: 5, x: 0, y: 0, e: false }])), 2);
 console.log(mal ? `\n${mal} mal` : "\nTodo bien");
 process.exit(mal ? 1 : 0);
