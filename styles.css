@@ -2885,3 +2885,55 @@ label.cg-huecos { margin: 0 0 12px; }
 #v-carga :is(input, select, button, summary, a) { scroll-margin-top: calc(var(--cg-top, 0px) + var(--cg-alto, 0px) + 12px); scroll-margin-bottom: 96px; }
 .cg-p { margin: 0; }
 #cg-confirma[hidden], .btn.cg-cero[hidden], .cg-resumen[hidden] { display: none; }
+/* v181: Peso por ejes y estiba (Zona Conductores, petición n.º 50; ejes.js). Azul de Zona Conductores, sin estilos en línea */
+.ej-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ej-lab { font-weight: 700; margin: 16px 0 6px; }
+.ej-sim { width: 100%; margin: 0 0 6px; }
+#v-ejes .check input { accent-color: var(--cond-azul); }
+#ej-centro { width: 100%; accent-color: var(--cond-azul); min-height: 44px; }
+.ej-camion .btn { margin-top: 12px; }
+.ej-dib { display: block; width: 100%; height: auto; margin: 0 0 14px; }
+.ej-dib .ej-trac { fill: var(--cond-azul); }
+.ej-dib .ej-caja { fill: var(--tarjeta); stroke: var(--cond-azul-ic); stroke-width: 2; }
+.ej-dib .ej-carga { fill: var(--cond-azul-ic); opacity: .8; }
+.ej-dib .ej-rueda { fill: var(--tinta); stroke: var(--tarjeta); stroke-width: 3; }
+.ej-dib .ej-piv { fill: var(--ambar-rotulo); }
+.ej-eje { padding: 12px 14px; margin: 0 0 10px; border-left: 5px solid var(--verde); }
+.ej-eje.justo { border-left-color: var(--ambar-rotulo); }
+.ej-eje.mal { border-left-color: var(--rojo); }
+.ej-eje-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.ej-eje-cab span { min-width: 0; }
+.ej-eje-cab small { display: block; color: var(--suave); }
+.ej-eje-cab strong { font-size: 1.35rem; white-space: nowrap; }
+.ej-barra { margin: 8px 0 6px; }
+.ej-eje.bien .ej-barra i { background: var(--verde); }
+.ej-eje.justo .ej-barra i { background: var(--ambar-rotulo); }
+.ej-eje.mal .ej-barra i { background: var(--rojo); }
+.ej-eje-pie { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; color: var(--suave); font-size: .95rem; }
+.ej-eje.bien .ej-eje-pie b { color: var(--verde); }
+.ej-eje.justo .ej-eje-pie b { color: var(--ambar-rotulo); }
+.ej-eje.mal .ej-eje-pie b { color: var(--rojo); }
+.ej-avisos { margin: 0; padding-left: 20px; }
+.ej-avisos li { margin-bottom: 6px; }
+#ej-p-ejes[hidden], #ej-p-estiba[hidden], #ej-sim[hidden], #ej-sim-caja[hidden], #ej-mano[hidden], #es-mu-otro-caja[hidden] { display: none; }
+.ej-barra i.ej-p0 { width: 0%; }
+.ej-barra i.ej-p5 { width: 5%; }
+.ej-barra i.ej-p10 { width: 10%; }
+.ej-barra i.ej-p15 { width: 15%; }
+.ej-barra i.ej-p20 { width: 20%; }
+.ej-barra i.ej-p25 { width: 25%; }
+.ej-barra i.ej-p30 { width: 30%; }
+.ej-barra i.ej-p35 { width: 35%; }
+.ej-barra i.ej-p40 { width: 40%; }
+.ej-barra i.ej-p45 { width: 45%; }
+.ej-barra i.ej-p50 { width: 50%; }
+.ej-barra i.ej-p55 { width: 55%; }
+.ej-barra i.ej-p60 { width: 60%; }
+.ej-barra i.ej-p65 { width: 65%; }
+.ej-barra i.ej-p70 { width: 70%; }
+.ej-barra i.ej-p75 { width: 75%; }
+.ej-barra i.ej-p80 { width: 80%; }
+.ej-barra i.ej-p85 { width: 85%; }
+.ej-barra i.ej-p90 { width: 90%; }
+.ej-barra i.ej-p95 { width: 95%; }
+.ej-barra i.ej-p100 { width: 100%; }

@@ -25,10 +25,10 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="fuentes.css?v=180">
-<script src="lectura.js?v=180"></script>
-<link rel="stylesheet" href="styles.css?v=180">
-<link rel="stylesheet" href="web-pc.css?v=180" media="(min-width: 1000px) and (display-mode: browser)">
+<link rel="stylesheet" href="fuentes.css?v=181">
+<script src="lectura.js?v=181"></script>
+<link rel="stylesheet" href="styles.css?v=181">
+<link rel="stylesheet" href="web-pc.css?v=181" media="(min-width: 1000px) and (display-mode: browser)">
 </head>
 <body class="publica">
 
@@ -601,6 +601,91 @@
     <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Simulación orientativa: coloca los palets por filas desde la cabina, mezclando filas largas y atravesadas para ocupar lo mínimo. La colocación real, los huecos y la mercancía que sobresale pueden cambiar el resultado. Comprueba siempre el peso por eje y la MMA antes de salir.</span></p>
   </section>
 
+  <!-- PESO POR EJES Y ESTIBA (Zona Conductores, petición n.º 50): reparto de peso por ejes y cinchas según EN 12195-1; guarda lo apuntado solo en el móvil, clave «ccoo-ejes» (ejes.js) -->
+  <section class="vista zc-herr" id="v-ejes">
+    <h1 class="titulo-vista">Peso por ejes y estiba</h1>
+    <p class="intro-vista">Antes de salir: cuánto pesa cada eje con tu carga y cuántas cinchas necesitas. Es orientativo: manda la báscula. Lo que apuntas se guarda solo en tu móvil.</p>
+    <nav class="zc-tabs ej-tabs" id="ej-pest" aria-label="Qué quieres calcular"><button type="button" data-v="ejes">Peso por ejes</button><button type="button" data-v="estiba">Estiba (cinchas)</button></nav>
+    <div id="ej-p-ejes">
+      <div class="panel zc-caja">
+        <button type="button" class="btn sec ej-sim" id="ej-sim" hidden>Usar mi carga del Simulador</button>
+        <div id="ej-sim-caja" hidden><p class="zc-pista" id="ej-sim-nota"></p></div>
+        <div id="ej-mano">
+          <label for="ej-kg">Peso de la carga (kg)</label>
+          <input id="ej-kg" type="number" inputmode="decimal" min="0" value="12750">
+          <label for="ej-largo">Metros de suelo que ocupa</label>
+          <input id="ej-largo" type="number" inputmode="decimal" min="0.4" step="0.1" value="13.6">
+          <p class="zc-pista">Si va repartida por todo el remolque, 13,6.</p>
+          <p class="ej-lab">Dónde va</p>
+          <nav class="zc-tabs ej-pos" id="ej-pos" aria-label="Dónde va la carga"><button type="button" data-v="cabina">Pegada a la cabina</button><button type="button" data-v="centro">En el centro</button><button type="button" data-v="puertas">Hacia las puertas</button></nav>
+          <label for="ej-centro" id="ej-centro-v">Centro de la carga</label>
+          <input id="ej-centro" type="range" min="0" max="13.6" step="0.1" value="6.8">
+        </div>
+        <p class="ej-lab">Gasoil en los depósitos</p>
+        <nav class="zc-tabs" id="ej-gas" aria-label="Gasoil en los depósitos"><button type="button" data-v="1/4">1/4</button><button type="button" data-v="1/2">La mitad</button><button type="button" data-v="lleno">Lleno</button></nav>
+        <details class="zc-explica ej-camion">
+          <summary>Mi camión: pesos en vacío y medidas</summary>
+          <p class="zc-pista">Lo mejor: pesa tu camión vacío en una báscula, eje por eje, con los depósitos a la mitad, y apúntalo aquí. Las medidas salen de la ficha técnica.</p>
+          <div class="zc-dos">
+            <div><label for="ej-c-del">Vacío: eje delantero (kg)</label><input id="ej-c-del" type="number" inputmode="decimal" value="5700"></div>
+            <div><label for="ej-c-mot">Vacío: eje motriz (kg)</label><input id="ej-c-mot" type="number" inputmode="decimal" value="4450"></div>
+            <div><label for="ej-c-tri">Vacío: trídem (kg)</label><input id="ej-c-tri" type="number" inputmode="decimal" value="4500"></div>
+            <div><label for="ej-c-dep">Depósitos de gasoil (litros)</label><input id="ej-c-dep" type="number" inputmode="decimal" value="700"></div>
+            <div><label for="ej-c-bat">Batalla de la tractora (m)</label><input id="ej-c-bat" type="number" inputmode="decimal" step="0.05" value="3.7"></div>
+            <div><label for="ej-c-qr">Quinta rueda: delante del eje motriz (m)</label><input id="ej-c-qr" type="number" inputmode="decimal" step="0.05" value="0.55"></div>
+            <div><label for="ej-c-piv">Pivote: desde la pared delantera (m)</label><input id="ej-c-piv" type="number" inputmode="decimal" step="0.05" value="1.3"></div>
+            <div><label for="ej-c-ejes">Del pivote al centro del trídem (m)</label><input id="ej-c-ejes" type="number" inputmode="decimal" step="0.05" value="7.7"></div>
+            <div><label for="ej-c-caja">Largo de la caja (m)</label><input id="ej-c-caja" type="number" inputmode="decimal" step="0.1" value="13.6"></div>
+            <div><label for="ej-c-mDel">Máximo eje delantero (kg)</label><input id="ej-c-mDel" type="number" inputmode="decimal" value="7500"></div>
+            <div><label for="ej-c-mMot">Máximo eje motriz (kg)</label><input id="ej-c-mMot" type="number" inputmode="decimal" value="11500"></div>
+            <div><label for="ej-c-mTri">Máximo trídem (kg)</label><input id="ej-c-mTri" type="number" inputmode="decimal" value="24000"></div>
+            <div><label for="ej-c-mTot">Máximo total (kg)</label><input id="ej-c-mTot" type="number" inputmode="decimal" value="40000"></div>
+          </div>
+          <button type="button" class="btn sec" id="ej-c-defecto">Volver a los valores de ejemplo</button>
+        </details>
+      </div>
+      <div id="ej-out" aria-live="polite"></div>
+      <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Cálculo orientativo para una tractora de dos ejes con semirremolque de tres ejes. Reparte la carga entre el pivote y el trídem, y lo del pivote entre los ejes de la tractora, según las medidas de «Mi camión». Los pesos en vacío y las medidas de ejemplo no son los de tu camión: cámbialos por los tuyos. Límites de ejemplo: eje motriz 11.500 kg, trídem 24.000 kg y 40.000 kg en total (Directiva 96/53/CE); el eje delantero, el de la ficha técnica. Manda siempre la báscula.</span></p>
+    </div>
+    <div id="ej-p-estiba" hidden>
+      <div class="panel zc-caja">
+        <label for="es-kg">Peso de lo que sujetas con estas cinchas (kg)</label>
+        <input id="es-kg" type="number" inputmode="decimal" min="0" value="1000">
+        <label for="es-mu">Qué va debajo (rozamiento)</label>
+        <select id="es-mu">
+          <option value="0.45">Palet de madera sobre suelo de madera o contrachapado (0,45)</option>
+          <option value="0.4">Palet de madera sobre suelo de aluminio con ranuras (0,40)</option>
+          <option value="0.3">Palet de madera sobre chapa de acero (0,30)</option>
+          <option value="0.6">Con alfombrilla antideslizante (0,60)</option>
+          <option value="otro">Otro valor</option>
+        </select>
+        <div id="es-mu-otro-caja" hidden><label for="es-mu-otro">Rozamiento (de 0,1 a 1)</label><input id="es-mu-otro" type="number" inputmode="decimal" step="0.05" min="0.1" max="1" placeholder="Ej. 0,5"></div>
+        <label for="es-ang">Ángulo de la cincha con el suelo</label>
+        <select id="es-ang">
+          <option value="85">Casi vertical (unos 85°)</option>
+          <option value="70">Bastante inclinada (unos 70°)</option>
+          <option value="55">Inclinada (unos 55°)</option>
+          <option value="35">Muy tumbada (unos 35°)</option>
+        </select>
+        <p class="zc-pista">Cuanto más vertical, más aprieta la carga contra el suelo. Con carga baja y ancha, la cincha queda más tumbada.</p>
+        <label for="es-stf">Fuerza de tensado de la cincha: STF (daN)</label>
+        <input id="es-stf" type="number" inputmode="decimal" min="1" value="400">
+        <p class="zc-pista">Viene en la etiqueta de la cincha como «STF». No confundir con LC, que es mucho más alto.</p>
+        <label class="check"><input type="checkbox" id="es-bloq"><span>Va pegada a la cabecera o a otra carga por delante (bloqueada hacia delante)</span></label>
+        <details class="zc-explica">
+          <summary>¿Puede volcar? (opcional)</summary>
+          <div class="zc-dos">
+            <div><label for="es-h">Alto de la carga (m)</label><input id="es-h" type="number" inputmode="decimal" step="0.05" placeholder="Ej. 1,8"></div>
+            <div><label for="es-b">Ancho de la carga (m)</label><input id="es-b" type="number" inputmode="decimal" step="0.05" placeholder="Ej. 0,8"></div>
+          </div>
+        </details>
+      </div>
+      <div id="es-out" aria-live="polite"></div>
+      <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Cálculo orientativo de cinchas por encima de la carga (amarre por rozamiento) según la norma EN 12195-1:2010 para carretera: fuerzas de 0,8 del peso hacia delante y 0,5 hacia atrás y de lado; margen de seguridad de 1,25 hacia delante y 1,1 en las demás. No calcula otros amarres (en lazo, directo, con barras o calzos). Comprueba que las cinchas y los puntos de amarre están bien y vuelve a tensarlas en la ruta.</span></p>
+    </div>
+    <a class="btn zc-delegado" href="#delegados"><svg class="icono p" aria-hidden="true"><use href="#i-telefono"/></svg>Hablar con un delegado</a>
+  </section>
+
   <!-- APARTADO (los crea el admin desde el panel: Comité de empresa, etc.) -->
   <section class="vista" id="v-apartado">
     <h1 class="titulo-vista" id="ap-titulo">Cargando…</h1>
@@ -710,21 +795,22 @@
 <div class="barra-acciones" id="barra-acciones"></div>
 <button class="arriba-btn" id="arriba" type="button" aria-label="Volver arriba" title="Volver arriba"><svg class="arriba-aro" viewBox="0 0 52 52" aria-hidden="true"><circle class="aro-fondo" cx="26" cy="26" r="23"/><circle class="aro-prog" cx="26" cy="26" r="23" pathLength="100"/></svg><span data-i="arriba"></span></button>
 
-<script src="lib/supabase.js?v=180"></script>
-<script src="iconos.js?v=180"></script>
-<script src="config.js?v=180"></script>
-<script src="render.js?v=180"></script>
-<script src="app.js?v=180"></script>
-<script src="descansos.js?v=180"></script>
-<script src="ganancias.js?v=180"></script>
-<script src="aparcar.js?v=180"></script>
-<script src="zona-idioma.js?v=180"></script>
-<script src="convenio-girona.js?v=180"></script>
-<script src="finiquito.js?v=180"></script>
-<script src="adr.js?v=180"></script>
-<script src="hora.js?v=180"></script>
-<script src="diccionario.js?v=180"></script>
-<script src="carga.js?v=180"></script>
-<script src="web-pc.js?v=180"></script>
+<script src="lib/supabase.js?v=181"></script>
+<script src="iconos.js?v=181"></script>
+<script src="config.js?v=181"></script>
+<script src="render.js?v=181"></script>
+<script src="app.js?v=181"></script>
+<script src="descansos.js?v=181"></script>
+<script src="ganancias.js?v=181"></script>
+<script src="aparcar.js?v=181"></script>
+<script src="zona-idioma.js?v=181"></script>
+<script src="convenio-girona.js?v=181"></script>
+<script src="finiquito.js?v=181"></script>
+<script src="adr.js?v=181"></script>
+<script src="hora.js?v=181"></script>
+<script src="diccionario.js?v=181"></script>
+<script src="carga.js?v=181"></script>
+<script src="ejes.js?v=181"></script>
+<script src="web-pc.js?v=181"></script>
 </body>
 </html>

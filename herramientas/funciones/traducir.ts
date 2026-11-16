@@ -9,6 +9,7 @@
 // v170: en «aparcar» añade también la ficha de normas por país (normas_pais visibles) y los nombres y notas de prohibiciones_camion.
 // v177 (petición n.º 45 del padre): grupos «finiquito», «hora», «diccionario» y «adr» (herramientas nuevas de Zona Conductores).
 // v178 (petición n.º 46 del padre): grupo «carga» (Simulador de carga). Copia de la v177 en privado.respaldo_funciones (nombre traducir-v177).
+// v181 (petición n.º 50 del padre): grupo «ejes» (Peso por ejes y estiba). Copia de la v178 en privado.respaldo_funciones (nombre traducir-v178).
 // Además de T("...") sacan las cadenas de entre /* textos */ y /* fin textos */ de sus .js y el texto que se ve en su
 // sección de index.html («textosVista»: misma forma de partirlo que zona-idioma.js en la web). Copia de antes en privado.respaldo_funciones (id 14).
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
@@ -36,6 +37,7 @@ const GRUPOS: Record<string, { archivo: string; tema: string; mas?: string[]; vi
   diccionario: { archivo: "diccionario.js", vista: "v-diccionario", tema: "un diccionario de siglas y palabras del transporte por carretera para conductores de camión (papeles y aduanas, conducción, nómina, vehículo). Las siglas y palabras técnicas (CMR, DUA, TIR, AdBlue, ITV...) se dejan igual si en ese idioma se usan así" },
   adr: { archivo: "adr.js", vista: "v-adr", tema: "un test de preguntas para el examen del ADR (transporte de mercancías peligrosas por carretera), con la placa naranja y cómo sacar el carnet. Usa los términos oficiales del ADR en ese idioma (clases, número ONU, número de peligro, instrucciones escritas)" },
   carga: { archivo: "carga.js", vista: "v-carga", tema: "un simulador de carga para conductores de camión: el remolque (visto desde arriba, de lado o en 3D) y cómo se llena de palets (europalet, palet industrial, medio palet) con cada recogida, huecos libres, apilado en 2 alturas, alto de la carga, peso y carga útil. Usa las palabras del transporte en ese idioma (remolque, palet, cabina, puertas)" },
+  ejes: { archivo: "ejes.js", vista: "v-ejes", tema: "una calculadora para conductores de camión: el reparto del peso de la carga entre los ejes de una tractora y un semirremolque de tres ejes (eje delantero, eje motriz, trídem, peso total, báscula) y cuántas cinchas hacen falta para sujetar la carga según la norma EN 12195-1 (estiba, rozamiento, ángulo, STF). Usa las palabras del transporte en ese idioma (eje motriz, quinta rueda, pivote, cincha, trinquete)" },
 };
 const CORS = {
   "Access-Control-Allow-Origin": "*",

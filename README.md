@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 181: peso por ejes y estiba (Zona Conductores)
+- Herramienta nueva «Peso por ejes y estiba» (`ejes.js`, petición n.º 50). «Peso por ejes»: reparte la carga entre el eje delantero y el motriz de la tractora y el trídem del semirremolque, según dónde va la carga y el gasoil, con barras de color frente a los máximos (7.500 / 11.500 / 24.000 / 40.000 kg, cambiables en «Mi camión») y botón «Usar mi carga del Simulador». «Estiba (cinchas)»: cuántas cinchas por encima hacen falta según la norma EN 12195-1 (rozamiento, ángulo y STF de la etiqueta), con aviso de vuelco opcional. Todo orientativo; se guarda en el móvil (`ccoo-ejes`).
+
 ## Versión 180: colocar palets a mano en el Simulador de carga
 - Botón «Colocar a mano» (opcional, en «Desde arriba»): se toca un hueco o el «+» de un palet suelto de una recogida apilada y se elige qué palet va ahí; si no cabe, dice por qué (medida o alto por dentro). El palet sale de su recogida y lo demás se sigue colocando solo. «Deshacer» y «Quitar lo colocado a mano». Se guarda en el móvil con las recogidas (petición n.º 48).
 
