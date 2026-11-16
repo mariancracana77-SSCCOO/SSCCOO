@@ -269,6 +269,7 @@ function abrir(k) {
   else if (k === "propuestas") pintaPropuestas();
   else if (k === "peticiones") pintaPeticiones();
   else if (k === "prohibiciones") pintaProhibiciones();
+  else if (k === "multas") pintaMultas();
   else if (k === "historial") pintaHistorial();
   else if (k === "textos") pintaTextos();
   else if (k === "ajustes") pintaAjustes();

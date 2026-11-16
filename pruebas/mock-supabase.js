@@ -40,6 +40,12 @@
       { osm: "w6", pais: "FR", lat: 44.9000, lon: 4.8000, nombre: "Lejos de la ruta", horario: null, pago: 0, precio: null, vigilado: false, duchas: false, aseos: false, plazas: null, area: true, camion: true },
     ],
     // Avisos de compañeros (el «Aire de prueba» avisado cerrado hace un rato)
+    // v182: Multas en Europa (una oculta, para ver que no sale)
+    multas_paises: [
+      { id: 1, pais: "FR", nombre: "Francia", tema: "descansos", titulo: "Descanso semanal normal en la cabina", importe: "Hasta 1.500 € (3.000 € si se repite)", texto: "Multa de quinta clase al conductor. A la empresa: hasta 30.000 € y un año de prisión.", en_el_acto: true, fuente: "Ministerio de Transición Ecológica", url: "https://www.ecologie.gouv.fr/", revisado: "2026-11-16", revisar: false, orden: 1, visible: true },
+      { id: 2, pais: "FR", nombre: "Francia", tema: "pago", titulo: "Depósito para conductores extranjeros", importe: "El importe de la multa", texto: "Si no pagas, el camión se puede inmovilizar.", en_el_acto: true, fuente: "Prueba", url: "https://www.example.org/", revisado: "2026-11-16", revisar: true, orden: 2, visible: true },
+      { id: 3, pais: "BE", nombre: "Bélgica", tema: "descansos", titulo: "Descanso semanal normal en la cabina", importe: "1.800 €", texto: "Texto de prueba.", en_el_acto: null, fuente: "Prueba", url: null, revisado: null, revisar: false, orden: 3, visible: true },
+      { id: 4, pais: "DE", nombre: "Alemania", tema: "velocidad", titulo: "Oculta", importe: "1 €", texto: "No debe salir.", en_el_acto: null, fuente: "Prueba", url: null, revisado: null, revisar: true, orden: 4, visible: false }],
     peajes_paises: [
       { id: 1, pais: "ES", nombre: "España", cobra: "peaje", precio_km: 0.17, nota: "Estimación. Revisar.", orden: 1, visible: true },
       { id: 2, pais: "FR", nombre: "Francia", cobra: "peaje", precio_km: 0.25, nota: "Estimación clase 4. Revisar.", orden: 2, visible: true },

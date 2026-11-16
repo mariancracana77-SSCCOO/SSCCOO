@@ -6,7 +6,7 @@
 const NOMBRE_TABLA = { comunicados: "el aviso", eventos: "la fecha", convenio_secciones: "el apartado del convenio", actas: "el acta", documentos: "el documento",
   preguntas: "la pregunta frecuente", plantillas: "la plantilla", delegados: "el delegado", enlaces: "el enlace", apartados: "el apartado de la web",
   publicaciones: "la publicación", opciones: "la opción de lista", calc_permisos: "el permiso de la calculadora", calc_categorias: "el precio de horas extra",
-  avisos_recurrentes: "el aviso que se repite", buzon: "el mensaje del buzón", paginas: "el texto", calc_ajustes: "el ajuste de la calculadora", admins: "el administrador", restricciones: "el país de restricciones para camiones", tarifas_conductor: "el importe de «Mis incentivos»", peajes_paises: "el precio de peaje de un país", aparcamientos_compas: "el aparcamiento propuesto", aparcamientos_correcciones: "el aviso de un aparcamiento", prohibiciones_camion: "la prohibición de circular", normas_pais: "la norma de un país" };
+  avisos_recurrentes: "el aviso que se repite", buzon: "el mensaje del buzón", paginas: "el texto", calc_ajustes: "el ajuste de la calculadora", admins: "el administrador", restricciones: "el país de restricciones para camiones", tarifas_conductor: "el importe de «Mis incentivos»", peajes_paises: "el precio de peaje de un país", multas_paises: "la multa de un país", aparcamientos_compas: "el aparcamiento propuesto", aparcamientos_correcciones: "el aviso de un aparcamiento", prohibiciones_camion: "la prohibición de circular", normas_pais: "la norma de un país" };
 const VERBO = { crear: "creó", cambiar: "cambió", borrar: "borró" };
 const BOTON_DESHACER = { borrar: "Recuperar", cambiar: "Volver a como estaba", crear: "Deshacer (quitarlo)" };
 const CAMPOS_NOMBRE = { titulo: "Título", contenido: "Texto", categoria: "Categoría", urgente: "Urgente", fijado: "Fijado", adjuntos: "Archivos", fecha: "Fecha", hora: "Hora", hora_fin: "Hora de fin",
@@ -338,6 +338,26 @@ async function pintaPeajes() {
   $("lista-peajes").innerHTML = l.length ? l.map(x => filaOrden("peajes", x)).join("") : `<div class="panel vacio">${icono("euro")}No hay ningún país. Pulsa «Añadir país».</div>`;
   enlazarItems($("lista-peajes"));
   if (l.length > 1) hacerOrdenable($("lista-peajes"), "peajes");
+}
+
+// ---------- Multas en Europa (v182, petición n.º 49) ----------
+async function pintaMultas() {
+  $("zona").innerHTML = `<div class="sec-cab"><div><h1>Multas en Europa</h1><p>Lo que sale en «Multas en Europa» de Zona Conductores: por país, las multas más habituales para un camionero. Los importes cambian: cuando compruebes una en la página oficial, pon la fecha en «Comprobado el» y quita «Revisar».</p></div><button class="btn" data-nuevo="multas">${icono("mas", "p")}Añadir multa</button></div>
+    <div class="filtro-fechas" id="multas-paises" role="group" aria-label="Ver solo un país"></div>
+    <div class="lista-adm" id="lista-multas"><p class="fecha-txt">Cargando…</p></div>`;
+  $("zona").querySelector("[data-nuevo]").onclick = () => abrirEditor("multas");
+  try { await cargarDatos("multas"); } catch (e) { $("lista-multas").innerHTML = `<p class="msg err">No se ha podido cargar: ${esc(e.message)}</p>`; return; }
+  const l = datos.multas, ps = [...new Map(l.map(x => [x.pais, x.nombre || x.pais])).entries()];
+  let solo = "";
+  const pinta = () => {
+    $("multas-paises").innerHTML = ps.length > 1 ? [["", "Todos"], ...ps].map(([c, t]) => `<button type="button" class="filtro ${solo === c ? "activo" : ""}" data-pais="${esc(c)}" aria-pressed="${solo === c}">${esc(t)}${c ? ` <span class="cuenta">${l.filter(x => x.pais === c).length}</span>` : ""}</button>`).join("") : "";
+    const v = l.filter(x => !solo || x.pais === solo);
+    $("lista-multas").innerHTML = v.length ? v.map(x => filaOrden("multas", x)).join("") : `<div class="panel vacio">${icono("alerta")}No hay ninguna multa. Pulsa «Añadir multa».</div>`;
+    enlazarItems($("lista-multas"));
+    if (!solo && v.length > 1) hacerOrdenable($("lista-multas"), "multas");
+  };
+  $("multas-paises").addEventListener("click", (e) => { const b = e.target.closest("[data-pais]"); if (b) { solo = b.dataset.pais; pinta(); } });
+  pinta();
 }
 
 // ---------- Prohibiciones de circular para camiones (v108) ----------

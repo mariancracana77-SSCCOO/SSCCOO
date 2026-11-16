@@ -10,6 +10,7 @@
 // v177 (petición n.º 45 del padre): grupos «finiquito», «hora», «diccionario» y «adr» (herramientas nuevas de Zona Conductores).
 // v178 (petición n.º 46 del padre): grupo «carga» (Simulador de carga). Copia de la v177 en privado.respaldo_funciones (nombre traducir-v177).
 // v181 (petición n.º 50 del padre): grupo «ejes» (Peso por ejes y estiba). Copia de la v178 en privado.respaldo_funciones (nombre traducir-v178).
+// v182 (petición n.º 49 del padre): grupo «multas» (Multas en Europa), con los textos visibles de la tabla multas_paises.
 // Además de T("...") sacan las cadenas de entre /* textos */ y /* fin textos */ de sus .js y el texto que se ve en su
 // sección de index.html («textosVista»: misma forma de partirlo que zona-idioma.js en la web). Copia de antes en privado.respaldo_funciones (id 14).
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
@@ -38,6 +39,7 @@ const GRUPOS: Record<string, { archivo: string; tema: string; mas?: string[]; vi
   adr: { archivo: "adr.js", vista: "v-adr", tema: "un test de preguntas para el examen del ADR (transporte de mercancías peligrosas por carretera), con la placa naranja y cómo sacar el carnet. Usa los términos oficiales del ADR en ese idioma (clases, número ONU, número de peligro, instrucciones escritas)" },
   carga: { archivo: "carga.js", vista: "v-carga", tema: "un simulador de carga para conductores de camión: el remolque (visto desde arriba, de lado o en 3D) y cómo se llena de palets (europalet, palet industrial, medio palet) con cada recogida, huecos libres, apilado en 2 alturas, alto de la carga, peso y carga útil. Usa las palabras del transporte en ese idioma (remolque, palet, cabina, puertas)" },
   ejes: { archivo: "ejes.js", vista: "v-ejes", tema: "una calculadora para conductores de camión: el reparto del peso de la carga entre los ejes de una tractora y un semirremolque de tres ejes (eje delantero, eje motriz, trídem, peso total, báscula) y cuántas cinchas hacen falta para sujetar la carga según la norma EN 12195-1 (estiba, rozamiento, ángulo, STF). Usa las palabras del transporte en ese idioma (eje motriz, quinta rueda, pivote, cincha, trinquete)" },
+  multas: { archivo: "multas.js", vista: "v-multas", tema: "una guía para conductores de camión con las multas de tráfico y de transporte más habituales en cada país de Europa (velocidad, tacógrafo, tiempos de conducción y descanso, exceso de peso, alcohol, móvil, peajes y viñetas, zonas de bajas emisiones, pago en el acto e inmovilización del camión)" },
 };
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -205,6 +207,11 @@ async function textos(grupo: string, codigo: string, idioma: string) {
     for (const n of nor ?? []) for (const s of [n.titulo, n.texto, n.peso, n.fechas]) if (s && !lista.includes(s)) lista.push(s);
     const { data: pro } = await admin.from("prohibiciones_camion").select("motivo, nota, visible");
     for (const x of (pro ?? []).filter((x) => x.visible !== false)) for (const s of [x.motivo, x.nota]) if (s && !lista.includes(s)) lista.push(s);
+  }
+  if (grupo === "multas") {
+    // v182 (petición n.º 49): lo que se ve de la tabla multas_paises (solo las visibles)
+    const { data: mu } = await admin.from("multas_paises").select("nombre, titulo, importe, texto").eq("visible", true);
+    for (const m of mu ?? []) for (const s of [m.nombre, m.titulo, m.importe, m.texto]) if (s && !lista.includes(s)) lista.push(s);
   }
   if (!lista.length || lista.length > 500) return json({ error: "Nada que traducir." }, 400);
   const huella = await huellaDe(JSON.stringify(lista)), tabla = "textos-" + grupo;

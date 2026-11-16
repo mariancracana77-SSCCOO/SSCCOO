@@ -2937,3 +2937,24 @@ label.cg-huecos { margin: 0 0 12px; }
 .ej-barra i.ej-p90 { width: 90%; }
 .ej-barra i.ej-p95 { width: 95%; }
 .ej-barra i.ej-p100 { width: 100%; }
+
+/* v182: Multas en Europa (petición n.º 49, multas.js) */
+.mu-filtros { display: grid; gap: 6px; }
+.mu-lab { font-weight: 700; }
+.mu-sel { width: 100%; max-width: 420px; }
+.mu-pais { margin: 18px 0 6px; }
+.mu-pais-tit { font-size: 1.35rem; margin: 0 0 6px; padding-bottom: 4px; border-bottom: 3px solid var(--cond-azul); color: var(--cond-azul-ic); }
+.mu-multa { border-left: 5px solid var(--cond-azul); padding: 12px 14px; margin: 0 0 10px; }
+.mu-multa.mu-dudosa { border-left-style: dashed; }
+.mu-tit { font-size: 1.1rem; margin: 4px 0 2px; overflow-wrap: anywhere; }
+.mu-importe { font-size: 1.25rem; font-weight: 800; margin: 2px 0 4px; color: var(--cond-azul-ic); overflow-wrap: anywhere; }
+.mu-marcas { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 6px; }
+.mu-marca { font-size: .85rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; border: 1px solid transparent; }
+.mu-acto { background: var(--azul-suave); color: var(--tinta); border-color: var(--cond-azul); }
+.mu-revisar { background: var(--ambar-suave); color: var(--tinta); border-color: var(--ambar); }
+.mu-texto { margin: 4px 0 6px; }
+.mu-fuente { font-size: .9rem; color: var(--suave); margin: 0; overflow-wrap: anywhere; }
+.mu-fuente a { color: var(--cond-azul-ic); }
+.mu-consejos { margin-top: 18px; }
+.mu-consejos h2 { font-size: 1.15rem; margin: 0 0 6px; }
+.mu-consejos ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }

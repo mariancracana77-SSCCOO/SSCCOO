@@ -401,6 +401,29 @@ SECCIONES.normas = {
   extracto: (x) => x.texto, chips: (x) => [x.visible === true ? null : "Sin comprobar: no se ve", (TEMAS_NORMA.find(t => t[0] === x.tema) || [])[1], x.peso], fechas: (x) => [null, x.actualizado],
 };
 
+// Multas en Europa (v182, petición n.º 49): las de la herramienta «Multas en Europa» de Zona Conductores (tabla
+// «multas_paises»). Se editan en la página «Multas en Europa». «Revisar» = no se ha podido confirmar en una página
+// oficial (la web lo dice); «Se ve en la web» quitado = no sale.
+const PAISES_MULTA = { ES: "España", FR: "Francia", DE: "Alemania", IT: "Italia", PT: "Portugal", BE: "Bélgica", NL: "Países Bajos", LU: "Luxemburgo", AT: "Austria", CH: "Suiza", PL: "Polonia", CZ: "Chequia", SK: "Eslovaquia", HU: "Hungría", RO: "Rumanía", BG: "Bulgaria", SI: "Eslovenia", HR: "Croacia", DK: "Dinamarca", SE: "Suecia", NO: "Noruega", FI: "Finlandia", GB: "Reino Unido", IE: "Irlanda", AD: "Andorra", GR: "Grecia", LT: "Lituania", LV: "Letonia", EE: "Estonia", RS: "Serbia", TR: "Turquía" };
+const TEMAS_MULTA = [["velocidad", "Velocidad"], ["tacografo", "Tacógrafo"], ["descansos", "Conducción y descansos"], ["peso", "Exceso de peso"], ["alcohol", "Alcohol"], ["movil", "Móvil"], ["peaje", "Peajes y viñetas"], ["zbe", "Zonas de bajas emisiones"], ["pago", "Pago en el acto e inmovilización"], ["otros", "Otras"]];
+SECCIONES.multas = {
+  nombre: "Multas en Europa", icono: "alerta", tabla: "multas_paises", orden: ["orden", true], uno: "multa", nuevo: "Añadir multa", lista: "aviso", campoColor: "_", oculta: true, volver: "multas",
+  intro: "", tituloDe: (x) => `${x.nombre || PAISES_MULTA[x.pais] || x.pais || "País"}: ${x.titulo || ""}`,
+  campos: [
+    { fila: [{ k: "pais", l: "País", t: "select", ops: Object.entries(PAISES_MULTA), def: "FR" }, { k: "tema", l: "Tema", t: "select", ops: TEMAS_MULTA, def: "velocidad" }] },
+    { k: "nombre", l: "Nombre del país como sale en la web", t: "text", req: true, ph: "Ej: Francia", ayuda: "El mismo en todas las multas de ese país." },
+    { k: "titulo", l: "Qué se multa", t: "text", req: true, ph: "Ej: Descanso semanal normal en la cabina" },
+    { k: "importe", l: "Cuánto", t: "text", opc: true, ph: "Ej: de 135 a 750 €" },
+    { k: "texto", l: "Qué tiene que saber el conductor", t: "textarea", opc: true, corto: true, ph: "Corto y claro: el límite, quién paga, si inmovilizan el camión…" },
+    { k: "fuente", l: "Quién lo publica", t: "text", req: true, ph: "Ej: Ministerio del Interior de Francia" },
+    { k: "url", l: "Página donde lo has comprobado", t: "url", opc: true, ph: "https://…" },
+    { fila: [{ k: "revisado", l: "Comprobado el", t: "date", opc: true }, { k: "orden", l: "Posición", t: "number" }] },
+    { checks: [{ k: "en_el_acto", l: "Al conductor extranjero se le hace pagar en el acto (o un depósito)", def: false }, { k: "revisar", l: "Revisar: no lo he podido confirmar en una página oficial (la web lo avisa)", def: false }, { k: "visible", l: "Se ve en la web", def: true }] },
+  ],
+  previa: (x) => `<div class="panel calc"><div class="resultado-calc"><span class="rc-tit">${esc(x.nombre || PAISES_MULTA[x.pais] || "")}: ${esc(x.titulo || "")}</span>${x.importe ? `<span class="rc-num">${esc(x.importe)}</span>` : ""}${x.texto ? `<span class="rc-sub">${esc(x.texto)}</span>` : ""}</div></div>`,
+  extracto: (x) => [x.importe, x.texto].filter(Boolean).join(" · "), chips: (x) => [x.visible === false ? "No se ve" : null, x.revisar ? "Revisar" : null, (TEMAS_MULTA.find(t => t[0] === x.tema) || [])[1], x.en_el_acto ? "En el acto" : null], fechas: (x) => [null, x.actualizado],
+};
+
 // Una sección del panel por cada apartado
 const seccionApartado = (a) => ({
   slug: a.slug, nombre: a.titulo, icono: a.icono || "carpeta", tabla: "publicaciones", filtro: { apartado_id: a.id }, orden: ["fecha", false], uno: "publicación", nuevo: "Publicar en " + a.titulo, lista: "aviso", campoColor: "_",
@@ -427,8 +450,8 @@ async function cargarApartados() {
 let PAGINAS = {};
 // Menú agrupado igual que las pestañas de la web (v52): cada apartado principal con lo que va dentro, un poco metido.
 // «cab» pone un título encima; «sub» lo mete dentro del de arriba. Si falta el apartado de arriba, va suelto.
-const DENTRO_PANEL = { actas: "comite", convenio: "convenio-y-leyes", calculadoras: "convenio-y-leyes", camiones: "zona-conductores", ganancias: "zona-conductores", peajes: "zona-conductores", propuestas: "zona-conductores", prohibiciones: "zona-conductores" };
-const PAG_FIJAS = { peticiones: { nombre: "Pedir un cambio a Claude", icono: "magia" }, calculadoras: { nombre: "Calculadoras", icono: "reloj" }, camiones: { nombre: "Restricciones camiones", icono: "lugar" }, ganancias: { nombre: "Importes conductores", icono: "euro" }, peajes: { nombre: "Peajes camión", icono: "euro" }, propuestas: { nombre: "Aparcamientos de los conductores", icono: "lugar" }, prohibiciones: { nombre: "Prohibiciones de circular", icono: "alerta" },
+const DENTRO_PANEL = { actas: "comite", convenio: "convenio-y-leyes", calculadoras: "convenio-y-leyes", camiones: "zona-conductores", ganancias: "zona-conductores", peajes: "zona-conductores", propuestas: "zona-conductores", prohibiciones: "zona-conductores", multas: "zona-conductores" };
+const PAG_FIJAS = { peticiones: { nombre: "Pedir un cambio a Claude", icono: "magia" }, calculadoras: { nombre: "Calculadoras", icono: "reloj" }, camiones: { nombre: "Restricciones camiones", icono: "lugar" }, ganancias: { nombre: "Importes conductores", icono: "euro" }, peajes: { nombre: "Peajes camión", icono: "euro" }, propuestas: { nombre: "Aparcamientos de los conductores", icono: "lugar" }, prohibiciones: { nombre: "Prohibiciones de circular", icono: "alerta" }, multas: { nombre: "Multas en Europa", icono: "alerta" },
   buzon: { nombre: "Buzón anónimo", icono: "correo" }, ortografia: { nombre: "Revisar ortografía", icono: "check" }, historial: { nombre: "Historial", icono: "reloj" }, textos: { nombre: "Textos", icono: "texto" }, ajustes: { nombre: "Ajustes", icono: "ajustes" } };
 const padreDe = (a) => a.padre_id ? APARTADOS.find(p => p.id === a.padre_id && !p.padre_id) : null;
 function construirPaginas() {
