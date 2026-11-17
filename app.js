@@ -691,9 +691,9 @@ const TARJETAS_COND = [
   ["sobresale", "medida", "Cargas que sobresalen", "Cuánto puede sobresalir tu carga por delante, por detrás o por los lados, y cómo señalizarla con el panel V-20."],
   ["conversor", "cambio", "Conversor rápido", "Bar y PSI, kilómetros y millas, litros y galones, grados, pies y pulgadas: escribe un número y se cambia solo."],
 ];
-const tarjetasCond = (l) => l.map(([h, ic, b, sm]) => h === "utilidades"
+const tarjetasCond = (l, amarillas) => l.map(([h, ic, b, sm]) => h === "utilidades"
   ? `<a class="panel desc-promo cond util" href="#utilidades">${icono(ic)}<span><b>${esc(b)}</b><small>${esc(sm)}</small></span>${icono("der", "p")}</a>`
-  : `<a class="panel desc-promo cond" href="#${esc(h)}">${icono(ic)}<span><b>${esc(b)}</b><small>${esc(sm)}</small></span>${icono("der", "p")}</a>`).join("");
+  : `<a class="panel desc-promo cond${amarillas ? " util" : ""}" href="#${esc(h)}">${icono(ic)}<span><b>${esc(b)}</b><small>${esc(sm)}</small></span>${icono("der", "p")}</a>`).join("");
 TARJETAS_COND.splice(TARJETAS_COND.findIndex(t => t[0] === "hora") + 1, 0, ["utilidades", "ajustes", "Utilidades en ruta", "Restricciones, test de ADR, diccionario, simulador de carga, peso por ejes, multas en Europa, cargas que sobresalen y conversor."]);
 function pintaApartado() {
   const a = D.apartados.find(x => x.slug === estado.ap);
@@ -710,7 +710,7 @@ function pintaApartado() {
     : vacio(esc(a.icono || "carpeta"), q || hayFecha("ap") ? "No hay nada que coincida con la búsqueda o la fecha." : "Todavía no hay nada publicado en este apartado.");
 }
 $("buscar-ap").oninput = () => pintaApartado();
-$("util-lista").innerHTML = tarjetasCond(TARJETAS_COND.filter(t => UTIL.includes(t[0]))); // v187: página «Utilidades en ruta»
+$("util-lista").innerHTML = tarjetasCond(TARJETAS_COND.filter(t => UTIL.includes(t[0])), true); // v187: página «Utilidades en ruta»; v188: dentro también en amarillo, para no confundirla con Zona Conductores
 
 // ---------- Preguntas frecuentes ----------
 // «¿Dónde está…?» (v63): cada sección y subapartado de la web, más algunas cosas que no son pestañas,

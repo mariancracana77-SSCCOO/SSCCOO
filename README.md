@@ -77,6 +77,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 188: tarjetas amarillas dentro de «Utilidades en ruta»
+
+Dentro de «Utilidades en ruta» las 8 herramientas salen también en amarillo (lo pidió el padre por Lorena), para que se note que estás en esa página y no en Zona Conductores. La pastilla «Utilidades en ruta» de la segunda fila (móvil y PC) también es amarilla.
+
 ## Versión 187: «Utilidades en ruta» en Zona Conductores
 
 - Petición n.º 56 del padre: Zona Conductores se queda con Mis descansos, Mis incentivos, Aparcamientos en mi ruta, Mi finiquito, Mi hora ordinaria y una tarjeta amarilla «Utilidades en ruta» (`#utilidades`).

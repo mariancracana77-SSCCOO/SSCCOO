@@ -2240,6 +2240,10 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
    con el fondo rojo de los botones de la web; elegido, con borde blanco. Los demás subapartados siguen en azul. */
 .subpest-caja.cond .subpestanas a[data-v="ap-zona-conductores"], .subpest-caja.cond .subpestanas a[data-v="ap-zona-conductores"].activa { background: var(--rojo); border-color: var(--rojo); color: #fff; }
 .subpest-caja.cond .subpestanas a[data-v="ap-zona-conductores"].activa, .subpest-caja.cond .subpestanas a[data-v="ap-zona-conductores"]:hover { border-color: #fff; }
+/* v188 (lo pidió el padre por Lorena): «Utilidades en ruta» también amarilla en la segunda fila, como su tarjeta */
+.subpest-caja.cond .subpestanas a[data-v="utilidades"] { background: #ffd23f; border-color: #ffd23f; color: #1d1a10; }
+.subpest-caja.cond .subpestanas a[data-v="utilidades"]:hover { background: #ffdc66; border-color: #fff; }
+.subpest-caja.cond .subpestanas a[data-v="utilidades"].activa { background: #ffd23f; border-color: #fff; color: #1d1a10; box-shadow: 0 0 0 2px #fff; }
 .desc-promo.cond { border-left-color: var(--cond-morado); }
 .desc-promo.cond > .icono:first-child { color: var(--cond-morado-ic); }
 .en-cond .titulo-vista::after { background: var(--cond-morado); }
