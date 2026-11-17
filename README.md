@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 184: metros de suelo a la vista (Zona Conductores)
+- Petición n.º 54: en «Peso por ejes», «Metros de suelo que ocupa» sale a la vista en la primera tarjeta, debajo del peso de la carga y encima del nivel de depósitos (antes estaba plegado en «Posición de la carga»). Las cuentas no cambian.
+
 ## Versión 183: «Peso por ejes» más fácil (Zona Conductores)
 - Peticiones n.º 51, 52 y 53: «Peso por ejes» como la calculadora de Gemini. Título «Reparto de pesos por ejes». Tarjeta de la carga: kilos con número, barra y pastilla, y nivel de depósitos con los litros en cada botón. Tarjeta «Posición de la carga»: «Uniforme / Delante / Centrado / Atrás», el dibujo con el centro de gravedad marcado, y la barra con «−»/«+» de 10 cm. La barra mueve el centro entre 1 m y el largo − 1 m aunque la carga ocupe todo el suelo; antes se quedaba quieta. «Resultado estimado en báscula» con un sello «Correcto / Al límite / Exceso de peso» y las barras de eje motriz, trídem y total. El delantero solo sale si va al límite. Estados: «Al límite (precaución)» en naranja, «¡Exceso +N kg!» y poca tracción. Debajo, «Consejo de estiba y colocación» con qué hacer. «Metros de suelo» queda plegado y opcional. Lo guardado en el móvil (`ccoo-ejes`) sigue igual.
 

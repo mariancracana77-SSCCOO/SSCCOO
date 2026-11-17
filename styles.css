@@ -2924,7 +2924,10 @@ label.cg-huecos { margin: 0 0 12px; }
 .ej-lados span:last-child { text-align: right; }
 #ej-centro::-webkit-slider-thumb { width: 30px; height: 30px; }
 #ej-centro::-moz-range-thumb { width: 30px; height: 30px; }
-.ej-largo-mas input { margin-top: 8px; }
+.ej-largo-caja { margin-top: 14px; }
+.ej-largo-caja label { display: block; font-weight: 700; margin: 0 0 6px; }
+.ej-largo-caja input { max-width: 9rem; font-size: 1.3rem; font-weight: 800; }
+.ej-largo-caja .zc-pista { margin: 6px 0 0; }
 .ej-res-cab { align-items: center; margin-bottom: 12px; }
 .ej-res-cab .ej-h { text-transform: uppercase; }
 .ej-sello { flex: none; padding: 6px 12px; border-radius: 999px; font-weight: 800; text-transform: uppercase; background: color-mix(in srgb, var(--verde) 15%, transparent); color: var(--verde); }
