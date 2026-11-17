@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 186: cargas que sobresalen y conversor rápido (Zona Conductores)
+- Petición n.º 55: herramienta nueva «Cargas que sobresalen» (`sobresale.js`): cuánto puede sobresalir una carga indivisible por delante, por detrás o por los lados según el artículo 15 del Reglamento General de Circulación, con el dibujo visto desde arriba, cómo señalizarla (panel V-20, luces) y aviso si hace falta autorización de transporte especial.
+- «Conversor rápido» (`conversor.js`): presión, distancia, velocidad, peso, galones, temperatura, pies y pulgadas, escribiendo en cualquiera de los dos cuadros. Las dos se traducen como el resto de Zona Conductores.
 ## Versión 185: revisión a fondo de las calculadoras (Zona Conductores)
 - Lo hizo Lorena (17/11/2026): se han repasado todas las calculadoras y se corrigen errores de las cuentas (no las cifras del convenio).
 - «Mi finiquito»: el mes de la baja cuenta como mes de 30 días (en febrero salían 28 o 29 y en los meses de 31, 31); si el alta es del mismo mes, solo desde ese día; los años de antigüedad van por aniversarios (la víspera del aniversario contaba un año menos); las pagas usan los días reales de cada semestre y de cada año (bisiestos); sin importes negativos.

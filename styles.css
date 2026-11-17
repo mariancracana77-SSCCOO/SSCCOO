@@ -3007,3 +3007,36 @@ label.cg-huecos { margin: 0 0 12px; }
 .mu-consejos { margin-top: 18px; }
 .mu-consejos h2 { font-size: 1.15rem; margin: 0 0 6px; }
 .mu-consejos ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+
+/* v186 (petición n.º 55): «Cargas que sobresalen» (sobresale.js) y «Conversor rápido» (conversor.js), Zona Conductores */
+.so-dib { display: block; width: 100%; height: auto; max-height: 220px; }
+.so-veh { fill: var(--fondo); stroke: var(--suave); stroke-width: 1.5; }
+.so-cab { fill: var(--cond-azul); }
+.so-dib-t { fill: #fff; font: 700 9px/1 system-ui, sans-serif; text-anchor: middle; dominant-baseline: central; letter-spacing: .05em; }
+.so-carga { fill: var(--ej-naranja-b); stroke: var(--ej-naranja); stroke-width: 1.5; opacity: .92; }
+.so-luz { stroke: var(--tinta); stroke-width: 1.2; }
+.so-luz.roja, .so-l.roja { fill: #d62020; background: #d62020; }
+.so-luz.blanca, .so-l.blanca { fill: #fff; background: #fff; }
+.so-v20 rect { fill: #fff; stroke: #d62020; stroke-width: 1; }
+.so-v20 path { stroke: #d62020; stroke-width: 2.4; fill: none; }
+.so-dib-p { fill: var(--suave); font: 600 11px/1 system-ui, sans-serif; }
+.so-dib-p.so-fin { text-anchor: end; }
+.so-ley { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 8px 0 0; color: var(--suave); font-size: .95rem; }
+.so-l { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--tinta); vertical-align: middle; }
+.so-l + .so-l, .so-ley .so-l:not(:first-child) { margin-left: 8px; }
+.so-l.v20 { border-radius: 2px; border-color: #d62020; background: repeating-linear-gradient(45deg, #d62020 0 3px, #fff 3px 6px); }
+.so-v20-fila { display: flex; gap: 14px; align-items: flex-start; }
+.so-v20-fila p { margin: 0; min-width: 0; }
+.so-v20-dib { flex: none; width: 64px; height: 64px; }
+.so-v20-f { fill: #fff; stroke: #d62020; stroke-width: 2; }
+.so-v20-r { fill: #d62020; }
+.zc-mal ul { margin: 6px 0 8px; padding-left: 20px; }
+.cv-u { display: block; font-weight: 800; color: var(--cond-azul-ic); margin: 0 0 6px; }
+.cv-num { width: 100%; font-size: 2rem !important; font-weight: 800; padding: 10px 14px; }
+.cv-cambia { display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; margin: 12px auto; border: 2px solid var(--cond-azul); border-radius: 50%; background: var(--tarjeta); color: var(--cond-azul-ic); cursor: pointer; }
+.cv-cambia .icono { width: 26px; height: 26px; }
+.cv-cambia:active { transform: scale(.95); }
+.cv-q { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.cv-q button { min-height: 44px; padding: 8px 14px; border: 1px solid var(--linea); border-radius: 12px; background: var(--fondo); color: var(--tinta); font: inherit; font-weight: 700; cursor: pointer; }
+.cv-q button:active { transform: scale(.97); }
+.so-p { margin: 0; }
