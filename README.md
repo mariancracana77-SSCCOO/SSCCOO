@@ -77,6 +77,15 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 185: revisión a fondo de las calculadoras (Zona Conductores)
+- Lo hizo Lorena (17/11/2026): se han repasado todas las calculadoras y se corrigen errores de las cuentas (no las cifras del convenio).
+- «Mi finiquito»: el mes de la baja cuenta como mes de 30 días (en febrero salían 28 o 29 y en los meses de 31, 31); si el alta es del mismo mes, solo desde ese día; los años de antigüedad van por aniversarios (la víspera del aniversario contaba un año menos); las pagas usan los días reales de cada semestre y de cada año (bisiestos); sin importes negativos.
+- «Mi hora»: el texto decía «unas 160,5 horas al mes», y son unas 147 (1.766 ÷ 12), como en la cuenta.
+- «Peso por ejes»: la quinta rueda a 0 m ya cuenta (antes se cambiaba por 0,55 m y podía decir «Correcto» con el motriz pasado); «Exceso» solo desde 1 kg de más; «Al límite» desde el 95 % de verdad; avisos si la carga del Simulador es más larga que la caja o si algún eje sale negativo.
+- «Simulador de carga»: ya no dice «No cabe» por un redondeo de decimales; como mucho 300 palets por recogida (con muchísimos se quedaba colgado).
+- «Test ADR»: las respuestas salen mezcladas (la correcta casi nunca era la C); si llega la traducción después de contestar ya no se bloquea; la placa explica 22, 44 y 99.
+- Prueba nueva `pruebas/calculos.cjs`.
+
 ## Versión 184: metros de suelo a la vista (Zona Conductores)
 - Petición n.º 54: en «Peso por ejes», «Metros de suelo que ocupa» sale a la vista en la primera tarjeta, debajo del peso de la carga y encima del nivel de depósitos (antes estaba plegado en «Posición de la carga»). Las cuentas no cambian.
 

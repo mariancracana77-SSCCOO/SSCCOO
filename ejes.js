@@ -17,6 +17,9 @@
 // largo − 1 m aunque la carga ocupe todo el suelo (antes se quedaba quieta), «Resultado estimado en báscula» en su
 // tarjeta con eje motriz, trídem y total (el delantero solo si va justo o pasa), «Al límite (precaución)», «¡Exceso
 // +N kg!» y poca tracción en ámbar, y «Consejo de estiba y colocación» con qué hacer.
+// v185 (revisión a fondo que pidió Lorena el 17/11/2026): la quinta rueda y el pivote admiten 0 (antes un 0 se cambiaba
+// sin avisar por 0,55 m y escondía el exceso del motriz), «Exceso» solo desde 0,5 kg de más (lo que se ve como 1 kg), «Al límite» desde el 95 % de
+// verdad (sin redondear), y avisos si la carga del Simulador es más larga que la caja o si los datos del camión no cuadran.
 // Todo es orientativo y se calcula en el móvil. Lo que se apunta se guarda solo aquí, clave «ccoo-ejes».
 // Las cuentas están en EjesCuentas (sin pantalla) para poder probarlas.
 (function () {
@@ -120,7 +123,9 @@
     } catch (e) { /* móvil sin espacio o en privado */ }
   }
   function camion() {
-    const c = {}; CAMPOS.forEach(k => { const v = num($("ej-c-" + k).value); c[k] = v > 0 ? v : CAMION[k]; });
+    // Vacío o no válido: el valor de ejemplo. La quinta rueda, el pivote y los depósitos pueden ser 0
+    const CERO = { qr: 1, piv: 1, dep: 1 };
+    const c = {}; CAMPOS.forEach(k => { const v = num($("ej-c-" + k).value); c[k] = v > 0 || (CERO[k] && v === 0) ? v : CAMION[k]; });
     if (c.qr >= c.bat) c.qr = CAMION.qr; // la quinta rueda va entre los ejes de la tractora
     return c;
   }
@@ -140,17 +145,19 @@
     return lim(c, isFinite(x) ? x : c.caja / 2);
   }
   // Estado de un eje: «mal» si pasa, «justo» desde el 95 % (como Gemini: «Al límite»)
-  const estado = (v, max) => v > max ? "mal" : Math.round(v / max * 100) >= 95 ? "justo" : "bien";
+  // v185: «mal» solo si pasa al menos 0,5 kg, que se ve como 1 kg (antes salía «¡Exceso +0 kg!») y «justo» desde el 95 % sin redondear
+  const estado = (v, max) => v - max >= 0.5 ? "mal" : v / max >= 0.95 ? "justo" : "bien";
   function barra(nombre, v, max, pie, aviso) {
     const p = max > 0 ? v / max * 100 : 0, cls = aviso ? (estado(v, max) === "mal" ? "mal" : "justo") : estado(v, max);
-    const est = v > max ? T("¡Exceso +{k}!", { k: kgTxt(v - max) }) : aviso || (cls === "justo" ? T("Al límite (precaución)") : T("Correcto"));
+    const est = estado(v, max) === "mal" ? T("¡Exceso +{k}!", { k: kgTxt(v - max) }) : aviso || (cls === "justo" ? T("Al límite (precaución)") : T("Correcto"));
     return `<div class="ej-eje ${cls}"><div class="ej-eje-cab"><span><b>${esc(nombre)}</b><small>${esc(T("Máx. {k}", { k: kgTxt(max) }))}</small></span><strong>${esc(kgTxt(v))}</strong></div>` +
       `<div class="zc-barra ej-barra"><i class="ej-p${Math.min(100, p > 0 ? Math.max(5, Math.round(p / 5) * 5) : 0)}"></i></div><div class="ej-eje-pie"><span>${esc(pie === "gen" ? T("{p} % del límite general", { p: Math.round(p) }) : T("{p} % de capacidad", { p: Math.round(p) }))}</span><b>${esc(est)}</b></div></div>`;
   }
   // El peor de todos: «mal» si alguno pasa, «justo» si alguno va al límite o el motriz lleva poca tracción
   function peor(r, c, poca) {
     const es = [estado(r.del, c.mDel), estado(r.mot, c.mMot), estado(r.tri, c.mTri), estado(r.tot, c.mTot)];
-    return es.includes("mal") ? "mal" : es.includes("justo") || poca ? "justo" : "bien";
+    const negativo = r.del < 0 || r.mot < 0 || r.tri < 0; // datos del camión que no cuadran: nunca «Correcto»
+    return es.includes("mal") ? "mal" : es.includes("justo") || poca || negativo ? "justo" : "bien";
   }
   // Dibujo de lado: tractora, semirremolque, ejes y la carga (solo clases: sin estilos en línea por la CSP)
   function dibujo(c, carga, cg) {
@@ -207,10 +214,12 @@
     $("ej-res").innerHTML = res;
     // Consejo de estiba y colocación: qué hacer, con el peso de lo que pasa
     const avisos = [];
-    if (r.tot > c.mTot) avisos.push(T("Pasa del peso total en {k}: sobra carga. No se arregla moviéndola: hay que quitar peso.", { k: kgTxt(r.tot - c.mTot) }));
-    if (r.mot > c.mMot) avisos.push(T("Sobrecarga en el eje motriz ({k}). Retrasa la carga hacia las puertas: deja la primera fila vacía (sin palets pegados al tablero delantero) o pon delante los palets más ligeros.", { k: kgTxt(r.mot) }));
-    if (r.del > c.mDel) avisos.push(T("Sobrecarga en el eje delantero ({k}). Retrasa la carga hacia las puertas o lleva menos gasoil.", { k: kgTxt(r.del) }));
-    if (r.tri > c.mTri) avisos.push(T("Sobrecarga en el trídem ({k}). Adelanta la carga hacia la cabina: pon delante los palets más pesados.", { k: kgTxt(r.tri) }));
+    if (r.mot < 0 || r.del < 0 || r.tri < 0) avisos.push(T("Algún eje sale con peso negativo: revisa los datos de «Mi camión» y dónde va la carga."));
+    if (SIM && sim && sim.largo > c.caja + 0.05) avisos.push(T("La carga del Simulador ocupa {m} y tu caja mide {c}: no cabe. Revisa el largo de la caja en «Mi camión» o en el Simulador.", { m: mTxt(sim.largo), c: mTxt(c.caja) }));
+    if (r.tot - c.mTot >= 0.5) avisos.push(T("Pasa del peso total en {k}: sobra carga. No se arregla moviéndola: hay que quitar peso.", { k: kgTxt(r.tot - c.mTot) }));
+    if (r.mot - c.mMot >= 0.5) avisos.push(T("Sobrecarga en el eje motriz ({k}). Retrasa la carga hacia las puertas: deja la primera fila vacía (sin palets pegados al tablero delantero) o pon delante los palets más ligeros.", { k: kgTxt(r.mot) }));
+    if (r.del - c.mDel >= 0.5) avisos.push(T("Sobrecarga en el eje delantero ({k}). Retrasa la carga hacia las puertas o lleva menos gasoil.", { k: kgTxt(r.del) }));
+    if (r.tri - c.mTri >= 0.5) avisos.push(T("Sobrecarga en el trídem ({k}). Adelanta la carga hacia la cabina: pon delante los palets más pesados.", { k: kgTxt(r.tri) }));
     if (poca) avisos.push(T("Poca tracción: el eje motriz lleva menos del 25 % del peso total. Puede patinar y no cumple la norma europea. Adelanta la carga hacia la cabina."));
     if (r.tri < c.tri * 0.98 && r.kg > 0) avisos.push(T("La carga va tan pegada a la cabina que descarga el trídem: revisa dónde va."));
     if (!avisos.length) {

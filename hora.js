@@ -16,8 +16,8 @@
   const fila = (t, sm, v, fuerte) => `<tr><td>${fuerte ? `<b>${esc(t)}</b>` : esc(t)}${sm ? `<small>${esc(sm)}</small>` : ""}</td><td>${esc(v)}</td></tr>`;
   function calc() {
     const yr = +$("ho-yr").value, t = TAB[s.value][yr], base = t[0], pc = t[1], hxc = t[2];
-    const y = parseFloat($("ho-ant").value) || 0, pct = CONVENIO_GIRONA.pctAntiguedad(y);
-    const ant = base * pct / 100, P = base + pc + ant, X = parseFloat($("ho-plus").value) || 0;
+    const y = Math.max(0, parseFloat($("ho-ant").value) || 0), pct = CONVENIO_GIRONA.pctAntiguedad(y);
+    const ant = base * pct / 100, P = base + pc + ant, X = Math.max(0, parseFloat($("ho-plus").value) || 0);
     const anual = 15 * P + 12 * X, h = parseFloat($("ho-hrs").value) || 0;
     $("ho-antinfo").textContent = T("Antigüedad: {p}% del salario base ({a} al mes). Sube a los 4, 9, 14, 19 y 24 años.", { p: pct, a: eur(ant) });
     if (!(h > 0)) { $("ho-out").innerHTML = ""; return; }

@@ -77,7 +77,7 @@
   const used = (rows) => rows.reduce((s, r) => s + r.al, 0);
   function maxFit(rows, d, W, L, fill) {
     if (!orients(d, W).length) return 0;
-    for (let q = 1; q <= 200; q++) { const c = JSON.parse(JSON.stringify(rows)); place(c, { d, st: false, rec: 0, q }, W, fill); if (used(c) > L) return q - 1; }
+    for (let q = 1; q <= 200; q++) { const c = JSON.parse(JSON.stringify(rows)); place(c, { d, st: false, rec: 0, q }, W, fill); if (used(c) > L + 1e-6) return q - 1; }
     return 200;
   }
   function nfit(d, r) {
@@ -121,12 +121,14 @@
   // mano (v180): palets puestos a mano [{r: n.º de recogida desde 0, x, y: sitio en cm, e: encima}]. Esos palets salen
   // del cálculo automático de su recogida; luego se ponen en su sitio. Si el sitio ya no está o no cabe (han cambiado
   // los datos), ese palet se vuelve a colocar solo (res.manoMal) para no perder ninguno.
+  // v185: como mucho TOPE palets por recogida (con 100.000 se quedaba colgado; en un remolque caben unos 66)
+  const TOPE = 300, cant = (r) => Math.min(TOPE, Math.max(0, Math.floor(r.q || 0)));
   function calcula(recs, Lc, Wc, fill, altoC, mano) {
     const rows = [], res = { rows, lineas: [], bad: [], sinMedida: [], kg: 0, tot: 0, mano: 0, manoMal: 0 };
     const techo = altoC || 270, cuenta = recs.map(() => 0), validos = [];
-    (mano || []).forEach(m => { const r = recs[m.r]; if (r && cuenta[m.r] < Math.max(0, Math.floor(r.q || 0))) { cuenta[m.r]++; validos.push(m); } });
+    (mano || []).forEach(m => { const r = recs[m.r]; if (r && cuenta[m.r] < cant(r)) { cuenta[m.r]++; validos.push(m); } });
     recs.forEach((r, i) => {
-      const q = Math.max(0, Math.floor(r.q || 0)), d = dims(r), before = used(rows);
+      const q = cant(r), d = dims(r), before = used(rows);
       if (!q) return;
       if (!(d[0] > 0 && d[1] > 0)) { res.sinMedida.push(i); return; }
       if (!orients(d, Wc).length || !place(rows, { d, st: r.s, rec: i + 1, q: q - cuenta[i], h: r.h > 0 ? r.h : 0, alto: techo }, Wc, fill)) { res.bad.push(i); return; }
@@ -141,7 +143,8 @@
       if (s) { ponMano(s, d, m.r + 1, !!r.s, ha); res.mano++; } else { vuelta[m.r]++; res.manoMal++; }
     });
     vuelta.forEach((n, i) => { if (n) { const r = recs[i]; place(rows, { d: dims(r), st: r.s, rec: i + 1, q: n, h: r.h > 0 ? r.h : 0, alto: techo }, Wc, fill); } });
-    res.usado = used(rows);
+    // v185: redondeado a la milésima de cm (las sumas de decimales daban 1360,0000001 y «No cabe» sin pasar)
+    res.usado = Math.round(used(rows) * 1000) / 1000;
     return res;
   }
   window.CargaCuentas = { orients, plan, place, used, maxFit, nfit, holes, calcula, MEDIDAS, kgRec, sitios, noCabe, dims };
@@ -170,7 +173,7 @@
   // se pasa una vez (w × n.º de palets) para no perder lo apuntado. Al guardar se deja también «w» (por palet) para que
   // una versión anterior de la web siga leyendo el peso si hubiera que volver atrás.
   const limpiaKg = (r) => r?.kg != null ? Math.max(0, num(r.kg)) : Math.max(0, num(r?.w)) * Math.max(0, Math.floor(num(r?.q)));
-  const limpia = (r, i) => ({ n: typeof r?.n === "string" ? r.n.slice(0, 60) : T("Recogida {n}", { n: i + 1 }), t: NOMBRES[r?.t] ? r.t : "eu", q: Math.max(0, Math.floor(num(r?.q))), s: !!r?.s, kg: limpiaKg(r), l: Math.max(0, num(r?.l ?? 120)), a: Math.max(0, num(r?.a ?? 80)), h: Math.min(400, Math.max(0, num(r?.h))) });
+  const limpia = (r, i) => ({ n: typeof r?.n === "string" ? r.n.slice(0, 60) : T("Recogida {n}", { n: i + 1 }), t: NOMBRES[r?.t] ? r.t : "eu", q: Math.min(300, Math.max(0, Math.floor(num(r?.q)))), s: !!r?.s, kg: limpiaKg(r), l: Math.max(0, num(r?.l ?? 120)), a: Math.max(0, num(r?.a ?? 80)), h: Math.min(400, Math.max(0, num(r?.h))) });
   // Lo colocado a mano: lista de {r, x, y, e}; lo que no valga se tira (nunca toca las recogidas)
   const limpiaMano = (m, n) => Array.isArray(m) ? m.slice(0, 200).filter(o => o && Number.isInteger(o.r) && o.r >= 0 && o.r < n && isFinite(o.x) && isFinite(o.y) && o.x >= 0 && o.y >= 0).map(o => ({ r: o.r, x: Math.round(o.x), y: Math.round(o.y), e: !!o.e })) : [];
   function load() {
@@ -411,7 +414,7 @@
     if (fd === "n") r.n = el.value.slice(0, 60);
     else if (fd === "s") r.s = el.checked;
     else if (fd === "t") { r.t = NOMBRES[el.value] ? el.value : "eu"; save(); build(); calc(); $("cg-" + i + "-t")?.focus(); return; }
-    else r[fd] = fd === "q" ? Math.max(0, Math.floor(num(el.value))) : Math.max(0, num(el.value));
+    else r[fd] = fd === "q" ? Math.min(300, Math.max(0, Math.floor(num(el.value)))) : Math.max(0, num(el.value));
     save(); calc();
   });
   $("cg-recs").addEventListener("change", (e) => { if (e.target.dataset.f === "s") { recs[+e.target.dataset.i].s = e.target.checked; save(); calc(); } });

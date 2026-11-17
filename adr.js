@@ -2,6 +2,9 @@
 // las preguntas, las respuestas, las explicaciones, el descifrador de la placa naranja y los consejos son los suyos,
 // sin cambiar ni una palabra (si hay que corregir algo, que lo diga él; en la v173 él pidió corregir el ejemplo de la gasolina en la pregunta de los 1.000 puntos; en la v174 pidió más preguntas). Aquí solo cambia la forma: sin <script>
 // en línea ni onclick (CSP), todo con delegación y esc(), y los colores de Zona Conductores. No se guarda nada.
+// v185 (revisión a fondo que pidió Lorena el 17/11/2026): las respuestas salen en orden mezclado (antes la correcta casi
+// nunca era la C y se podía acertar sin saber), si llega la traducción después de contestar ya no se bloquea el test
+// (se vuelve a pintar con la respuesta marcada) y la placa explica los casos especiales 22, 44 y 99 del ADR.
 (function () {
   const $ = (i) => document.getElementById(i);
   const vista = $("adr-vista");
@@ -76,9 +79,10 @@
   /* fin textos */
   const Z = typeof ZonaIdioma === "function" ? ZonaIdioma("adr", "v-adr", () => render()) : { T: (x, v) => x.replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m), TH: null };
   const T = Z.T, TH = Z.TH || ((x, v) => esc(T(x, v)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>"));
-  let tab = 0, qi = 0, score = 0, order = [], failed = [], done = false, respondida = false, placaTxt = "";
+  let tab = 0, qi = 0, score = 0, order = [], failed = [], done = false, respondida = false, elegida = -1, placaTxt = "";
+  const mezcla = new Map(); // n.º de pregunta → orden en que salen sus respuestas (igual al repintar)
   const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; };
-  const start = (list) => { order = list; qi = 0; score = 0; failed = []; done = false; respondida = false; };
+  const start = (list) => { order = list; qi = 0; score = 0; failed = []; done = false; respondida = false; mezcla.clear(); };
   // v174: en cada test nuevo salen primero las que aún no han salido en esta visita (no se guarda nada en el móvil)
   const salidas = new Set();
   const nuevo10 = () => {
@@ -97,20 +101,29 @@
       return;
     }
     const q = Q[order[qi]];
+    if (!mezcla.has(order[qi])) mezcla.set(order[qi], shuffle(q[1].map((_, i) => i)));
     vista.innerHTML = `<div class="panel zc-caja"><div class="zc-barra" aria-hidden="true"><i style="width:${Math.round(qi / order.length * 100)}%"></i></div>` +
       `<p class="zc-pista">${esc(T("Pregunta {a} de {n}", { a: qi + 1, n: order.length }))}</p><h2>${esc(T(q[0]))}</h2>` +
-      q[1].map((o, i) => `<button type="button" class="zc-opc" data-o="${i}">${esc(T(o))}</button>`).join("") + `<div id="adr-fb"></div></div>`;
+      mezcla.get(order[qi]).map(i => `<button type="button" class="zc-opc" data-o="${i}">${esc(T(q[1][i]))}</button>`).join("") + `<div id="adr-fb"></div></div>`;
+    if (respondida) marca(false); // repintado (por ejemplo, al llegar la traducción) con la pregunta ya contestada
   }
   // El ancho de la barra va con style="" (es CSS, no un script: la CSP de estilos lo permite)
   function responde(b) {
     if (respondida) return;
     respondida = true;
-    const q = Q[order[qi]], o = +b.dataset.o, todas = vista.querySelectorAll(".zc-opc");
-    todas.forEach(x => { x.disabled = true; });
-    todas[q[2]].classList.add("bien");
-    if (o === q[2]) score++; else { b.classList.add("mal"); if (failed.indexOf(order[qi]) < 0) failed.push(order[qi]); }
+    const q = Q[order[qi]], o = +b.dataset.o;
+    elegida = o;
+    if (o === q[2]) score++; else if (failed.indexOf(order[qi]) < 0) failed.push(order[qi]);
+    marca(true);
+  }
+  // Marca la correcta, la elegida si está mal, y enseña la explicación y «Siguiente»
+  function marca(foco) {
+    const q = Q[order[qi]], opc = (i) => vista.querySelector(`.zc-opc[data-o="${i}"]`);
+    vista.querySelectorAll(".zc-opc").forEach(x => { x.disabled = true; });
+    opc(q[2])?.classList.add("bien");
+    if (elegida !== q[2]) opc(elegida)?.classList.add("mal");
     $("adr-fb").innerHTML = `<p class="zc-exp">${esc(T(q[3]))}</p><button type="button" class="btn zc-btn" data-adr="siguiente">${esc(qi + 1 >= order.length ? T("Ver resultado") : T("Siguiente"))}</button>`;
-    $("adr-fb").querySelector("button").focus();
+    if (foco) $("adr-fb").querySelector("button").focus();
   }
 
   function placa() {
@@ -131,7 +144,11 @@
     if (x) r += `<li>${TH("**X**: reacciona peligrosamente con el agua. No uses agua.")}</li>`;
     for (let i = 0; i < d.length; i++) {
       const c = d[i], m = KEM[c];
-      if (i > 0 && c === d[i - 1] && c !== "0") r += `<li>${TH("**{c} repetido**: peligro intensificado.", { c })}</li>`;
+      // ADR 5.3.2.3: 22, 44 y 99 al principio no son «repetido», tienen su propio significado
+      if (i === 1 && d[0] === c && c === "2") r += `<li>${TH("**22**: gas refrigerado (licuado a muy baja temperatura).")}</li>`;
+      else if (i === 1 && d[0] === c && c === "4") r += `<li>${TH("**44**: sólido inflamable que, a temperatura elevada, está fundido.")}</li>`;
+      else if (i === 1 && d[0] === c && c === "9") r += `<li>${TH("**99**: materia peligrosa transportada a temperatura elevada.")}</li>`;
+      else if (i > 0 && c === d[i - 1] && c !== "0") r += `<li>${TH("**{c} repetido**: peligro intensificado.", { c })}</li>`;
       else if (i === 0) r += `<li>${TH("**{c}**: peligro principal, {m}.", { c, m: m ? T(m) : T("cifra no válida") })}</li>`;
       else r += `<li>${TH("**{c}**: peligro secundario, {m}.", { c, m: m ? T(m) : T("cifra no válida") })}</li>`;
     }
