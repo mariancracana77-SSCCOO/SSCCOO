@@ -473,12 +473,15 @@ body.publica a { text-underline-offset: 4px; }
 :root:root .subpest-caja.cond .subpestanas a.activa { color: #fff; font-weight: 750; border-bottom-color: #8fa4ff; }
 :root:root .subpest-caja.cond .subpestanas a .cuenta-pestana { background: none; color: #8fa4ff; }
 /* La portada de la zona: cada herramienta, una fila con raya; el icono en azul */
-:root:root #v-apartado .desc-promo { background: none; border: 0; border-bottom: 1px solid var(--a-filete); border-radius: 0; box-shadow: none; margin: 0; padding: 18px 0; gap: 18px; }
+:root:root #v-apartado .desc-promo, :root:root #v-utilidades .desc-promo { background: none; border: 0; border-bottom: 1px solid var(--a-filete); border-radius: 0; box-shadow: none; margin: 0; padding: 18px 0; gap: 18px; }
 :root:root #v-apartado #ap-extra { border-top: 2px solid var(--a-tinta); margin-bottom: 30px; }
-:root:root #v-apartado .desc-promo b { font-family: var(--a-sans); font-size: 1.2rem; font-weight: 700; letter-spacing: -.01em; text-transform: none; }
-:root:root #v-apartado .desc-promo small { font-family: var(--a-serif); font-size: 1.02rem; color: var(--a-gris); }
-:root:root #v-apartado .desc-promo:hover { background: none; }
-:root:root #v-apartado .desc-promo:hover b { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+:root:root #v-apartado .desc-promo b, :root:root #v-utilidades .desc-promo b { font-family: var(--a-sans); font-size: 1.2rem; font-weight: 700; letter-spacing: -.01em; text-transform: none; }
+:root:root #v-apartado .desc-promo small, :root:root #v-utilidades .desc-promo small { font-family: var(--a-serif); font-size: 1.02rem; color: var(--a-gris); }
+:root:root #v-apartado .desc-promo:hover, :root:root #v-utilidades .desc-promo:hover { background: none; }
+:root:root #v-apartado .desc-promo:hover b, :root:root #v-utilidades .desc-promo:hover b { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+/* v187 (petición n.º 56 del padre): «Utilidades en ruta» en amarillo también en el PC */
+:root:root #v-apartado .desc-promo.util, :root:root #v-apartado .desc-promo.util:hover { background: #ffd23f; border-radius: 10px; border-bottom: 0; padding: 18px 16px; margin-top: 10px; color: #1d1a10; }
+:root:root #v-apartado .desc-promo.util small { color: #3d3420; }
 /* Publicaciones de los apartados (como las actas): la fecha como cifra grande */
 :root:root #v-apartado .publicacion { background: none; border: 0; border-top: 1px solid var(--a-filete); border-radius: 0; box-shadow: none; margin: 0; padding: 26px 0 22px; grid-template-columns: 96px 1fr; gap: 24px; }
 :root:root #v-apartado .grupo-mes + .publicacion { border-top: 0; }

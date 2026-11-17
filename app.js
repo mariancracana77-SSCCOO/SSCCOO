@@ -15,7 +15,7 @@ $("version-web").textContent = "Versión " + VERSION_WEB;
 document.querySelector(".contacto-btn").innerHTML = icono("correo", "p") + "Escribir a la Sección Sindical";
 
 // ---------- Navegación ----------
-const VISTAS = ["inicio", "avisos", "calendario", "convenio", "calcula", "actas", "documentos", "preguntas", "info", "buscar", "legal", "descansos", "ganancias", "aparcar", "restricciones", "finiquito", "adr", "hora", "diccionario", "carga", "ejes", "multas", "sobresale", "conversor"];
+const VISTAS = ["inicio", "avisos", "calendario", "convenio", "calcula", "actas", "documentos", "preguntas", "info", "buscar", "legal", "descansos", "ganancias", "aparcar", "restricciones", "finiquito", "adr", "hora", "diccionario", "carga", "ejes", "multas", "sobresale", "conversor", "utilidades"];
 // Título de la pestaña del navegador según la sección (se ve en el historial, al compartir y con lector de pantalla)
 const TITULO_WEB = document.title;
 const ponTitulo = (nombre) => { document.title = nombre ? nombre + " · CCOO Calsina Carré" : TITULO_WEB; };
@@ -91,9 +91,12 @@ document.querySelector("[data-saltar]").addEventListener("click", (ev) => { ev.p
 // Arriba solo salen los apartados principales; lo que va dentro (Actas en «Comité de empresa», los subapartados
 // que crea el admin…) sale en una segunda fila (#subpestanas). Las direcciones de siempre (#actas, #ap-…) siguen valiendo.
 // Si falta el apartado de arriba (borrado u oculto), lo de dentro vuelve a salir arriba.
-const DENTRO_DE = { actas: "comite", convenio: "convenio-y-leyes", calcula: "convenio-y-leyes", descansos: "zona-conductores", ganancias: "zona-conductores", aparcar: "zona-conductores", restricciones: "zona-conductores", finiquito: "zona-conductores", adr: "zona-conductores", hora: "zona-conductores", diccionario: "zona-conductores", carga: "zona-conductores", ejes: "zona-conductores", multas: "zona-conductores", sobresale: "zona-conductores", conversor: "zona-conductores", preguntas: "@info" };
+const DENTRO_DE = { actas: "comite", convenio: "convenio-y-leyes", calcula: "convenio-y-leyes", descansos: "zona-conductores", ganancias: "zona-conductores", aparcar: "zona-conductores", restricciones: "zona-conductores", finiquito: "zona-conductores", adr: "zona-conductores", hora: "zona-conductores", utilidades: "zona-conductores", diccionario: "zona-conductores", carga: "zona-conductores", ejes: "zona-conductores", multas: "zona-conductores", sobresale: "zona-conductores", conversor: "zona-conductores", preguntas: "@info" };
 const APARTADO_AFILIATE = "afiliate"; // va el último, al lado de «Nosotros», para animar a afiliarse
-const NOMBRE_FIJO = { inicio: "Inicio", avisos: "Avisos", calendario: "Calendario", actas: "Actas", documentos: "Documentos", convenio: "Convenio", calcula: "Calcula", preguntas: "Dudas", info: "Nosotros", descansos: "Mis descansos", ganancias: "Mis incentivos", aparcar: "Aparcamientos en mi ruta", restricciones: "Restricciones en mi ruta", finiquito: "Mi finiquito", adr: "Test de ADR", hora: "Mi hora ordinaria", diccionario: "Diccionario del conductor", carga: "Simulador de carga", ejes: "Peso por ejes y estiba", multas: "Multas en Europa", sobresale: "Cargas que sobresalen", conversor: "Conversor rápido" };
+const NOMBRE_FIJO = { inicio: "Inicio", avisos: "Avisos", calendario: "Calendario", actas: "Actas", documentos: "Documentos", convenio: "Convenio", calcula: "Calcula", preguntas: "Dudas", info: "Nosotros", descansos: "Mis descansos", ganancias: "Mis incentivos", aparcar: "Aparcamientos en mi ruta", restricciones: "Restricciones en mi ruta", finiquito: "Mi finiquito", adr: "Test de ADR", hora: "Mi hora ordinaria", utilidades: "Utilidades en ruta", diccionario: "Diccionario del conductor", carga: "Simulador de carga", ejes: "Peso por ejes y estiba", multas: "Multas en Europa", sobresale: "Cargas que sobresalen", conversor: "Conversor rápido" };
+// v187 (petición n.º 56 del padre): estas 8 herramientas van dentro de «Utilidades en ruta» (#utilidades, tarjeta amarilla).
+// Siguen siendo de Zona Conductores (enlaces directos, buscador y miga), pero no salen en su segunda fila ni en los accesos de Inicio.
+const UTIL = ["restricciones", "adr", "diccionario", "carga", "ejes", "multas", "sobresale", "conversor"];
 let GRUPOS = [], GRUPO_DE = {};
 const padreValido = (a) => !!a.padre_id && D.apartados.some(p => p.id === a.padre_id && !p.padre_id);
 function montaGrupos() {
@@ -142,7 +145,8 @@ function marcaPestanas(clave) {
   document.body.classList.toggle("con-subpestanas", !!hay);
   if (!hay) { sub.innerHTML = ""; flechasPestanas(); return; }
   sub.setAttribute("aria-label", "Dentro de " + g.titulo);
-  sub.innerHTML = g.miembros.map(m => `<a href="#${esc(m.clave)}" data-v="${esc(m.clave)}" class="${m.clave === clave ? "activa" : ""}"${m.clave === clave ? ' aria-current="page"' : ""}>${esc(m.titulo)}</a>`).join("");
+  const marca = UTIL.includes(clave) ? "utilidades" : clave; // v187: dentro de una utilidad se resalta «Utilidades en ruta»
+  sub.innerHTML = g.miembros.filter(m => !UTIL.includes(m.clave)).map(m => `<a href="#${esc(m.clave)}" data-v="${esc(m.clave)}" class="${m.clave === marca ? "activa" : ""}"${m.clave === clave ? ' aria-current="page"' : ""}>${esc(m.titulo)}</a>`).join("");
   sub.scrollLeft = 0; // se ve desde el principio; solo se mueve si la elegida no cabe
   const act = sub.querySelector(".activa"); if (act && act.offsetLeft + act.offsetWidth > sub.clientWidth) sub.scrollLeft = act.offsetLeft - 16;
   flechasPestanas();
@@ -354,8 +358,8 @@ function pintaInicio() {
   if ($("ver-mas")) $("ver-mas").onclick = () => { estado.feedMax = max + 20; pintaInicio(); };
   if (aparece) $("inicio-feed").querySelectorAll(".item-tablon").forEach(el => { if (el.getBoundingClientRect().top > innerHeight) { el.classList.add("por-ver"); aparece.observe(el); } });
   // Accesos
-  const IC_FIJO = { descansos: "reloj", ganancias: "euro", aparcar: "lugar", restricciones: "alerta", finiquito: "hoja", adr: "escudo", hora: "euro", diccionario: "texto", carga: "archivo", ejes: "check", multas: "alerta", sobresale: "medida", conversor: "cambio", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta" };
-  const acc = GRUPOS.flatMap(g => g.miembros).filter(m => m.clave !== "inicio" && m.clave !== "info")
+  const IC_FIJO = { descansos: "reloj", ganancias: "euro", aparcar: "lugar", restricciones: "alerta", finiquito: "hoja", adr: "escudo", hora: "euro", diccionario: "texto", carga: "archivo", ejes: "check", multas: "alerta", sobresale: "medida", conversor: "cambio", utilidades: "ajustes", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta" };
+  const acc = GRUPOS.flatMap(g => g.miembros).filter(m => m.clave !== "inicio" && m.clave !== "info" && !UTIL.includes(m.clave))
     .map(m => [m.clave, IC_FIJO[m.clave] || D.apartados.find(a => "ap-" + a.slug === m.clave)?.icono || "carpeta", m.titulo]);
   // v163 (lo pidió Lorena): los 4 más usados primero y en grande; color por grupo (azul = Zona Conductores, gris = documentación)
   const PRIMEROS = ["avisos", "calendario", "ap-" + APARTADO_CONDUCTORES, "actas"];
@@ -468,7 +472,8 @@ function pintaMiga(clave) {
   const g = GRUPO_DE[clave];
   if (!clave || clave === "inicio" || !g) { m.hidden = true; m.innerHTML = ""; return; }
   const yo = g.miembros.find(x => x.clave === clave), partes = [`<a href="#inicio">Inicio</a>`];
-  if (yo && g.miembros.length > 1 && g.miembros[0].clave !== clave) partes.push(`<a href="#${esc(g.miembros[0].clave)}">${esc(g.titulo)}</a>`, `<span aria-current="page">${esc(yo.titulo)}</span>`);
+  if (yo && UTIL.includes(clave)) partes.push(`<a href="#${esc(g.miembros[0].clave)}">${esc(g.titulo)}</a>`, `<a href="#utilidades">${esc(NOMBRE_FIJO.utilidades)}</a>`, `<span aria-current="page">${esc(yo.titulo)}</span>`);
+  else if (yo && g.miembros.length > 1 && g.miembros[0].clave !== clave) partes.push(`<a href="#${esc(g.miembros[0].clave)}">${esc(g.titulo)}</a>`, `<span aria-current="page">${esc(yo.titulo)}</span>`);
   else partes.push(`<span aria-current="page">${esc(yo ? (g.miembros.length > 1 ? g.titulo : yo.titulo) : g.titulo)}</span>`);
   m.innerHTML = `<ol>${partes.map(p => `<li>${p}</li>`).join("")}</ol>`; m.hidden = false;
 }
@@ -669,13 +674,34 @@ window.restrInfo = () => {
   const f = String(D.paginas.restricciones_revisado || "").trim();
   return { lista, revisado: fechaLarga((/^\d{4}-\d{2}-\d{2}$/.test(f) ? f : RESTRICCIONES_REVISADO) + "T12:00:00"), trad: lista.some(restrTraducida) };
 };
+// Tarjetas de Zona Conductores (v187, petición n.º 56: antes iban todas en una línea). [enlace, icono, nombre, explicación].
+// Las de UTIL salen en «Utilidades en ruta» (#utilidades); en Zona Conductores, en su lugar, la tarjeta amarilla.
+const TARJETAS_COND = [
+  ["descansos", "reloj", "Mis descansos", "Tu descanso diario y semanal: cuándo te toca, si puede ser reducido y qué tienes que compensar. Con avisos al móvil."],
+  ["ganancias", "euro", "Mis incentivos", "Lo que ganas cada día, semana y mes: dietas, suplementos, pluses y kilómetros."],
+  ["aparcar", "lugar", "Aparcamientos en mi ruta", "Ruta para tu camión y, mientras conduces, los aparcamientos que tienes por delante, cortes y dónde te toca parar."],
+  ["restricciones", "alerta", "Restricciones en mi ruta", "Pon de dónde sales y adónde llegas y te digo si en esa ruta hay prohibiciones de circular para camiones o cortes. Gratis."],
+  ["finiquito", "hoja", "Mi finiquito", "Cuánto te toca si te despiden o te vas: finiquito, pagas, vacaciones e indemnización según el convenio de Girona."],
+  ["adr", "escudo", "Test de ADR", "Practica para el examen de mercancías peligrosas, descifra la placa naranja y mira cómo sacar o renovar el carnet."],
+  ["hora", "euro", "Mi hora ordinaria", "Cuánto vale tu hora normal según el convenio de Girona y si tu hora extra está bien pagada."],
+  ["diccionario", "texto", "Diccionario del conductor", "Siglas y palabras de papeles, controles y nómina, explicadas en una frase. Con buscador."],
+  ["carga", "archivo", "Simulador de carga", "Mira el remolque desde arriba y cómo se llena con cada recogida: europalets, industriales, apilados, huecos y peso."],
+  ["ejes", "check", "Peso por ejes y estiba", "Cuánto pesa cada eje con tu carga antes de la báscula y cuántas cinchas necesitas para sujetarla."],
+  ["multas", "alerta", "Multas en Europa", "País por país, cuánto te pueden multar por velocidad, tacógrafo, descansos, peso, alcohol, móvil o peajes, y si hay que pagar en el acto."],
+  ["sobresale", "medida", "Cargas que sobresalen", "Cuánto puede sobresalir tu carga por delante, por detrás o por los lados, y cómo señalizarla con el panel V-20."],
+  ["conversor", "cambio", "Conversor rápido", "Bar y PSI, kilómetros y millas, litros y galones, grados, pies y pulgadas: escribe un número y se cambia solo."],
+];
+const tarjetasCond = (l) => l.map(([h, ic, b, sm]) => h === "utilidades"
+  ? `<a class="panel desc-promo cond util" href="#utilidades">${icono(ic)}<span><b>${esc(b)}</b><small>${esc(sm)}</small></span>${icono("der", "p")}</a>`
+  : `<a class="panel desc-promo cond" href="#${esc(h)}">${icono(ic)}<span><b>${esc(b)}</b><small>${esc(sm)}</small></span>${icono("der", "p")}</a>`).join("");
+TARJETAS_COND.splice(TARJETAS_COND.findIndex(t => t[0] === "hora") + 1, 0, ["utilidades", "ajustes", "Utilidades en ruta", "Restricciones, test de ADR, diccionario, simulador de carga, peso por ejes, multas en Europa, cargas que sobresalen y conversor."]);
 function pintaApartado() {
   const a = D.apartados.find(x => x.slug === estado.ap);
   if (!a) { $("ap-extra").innerHTML = ""; $("ap-titulo").textContent = D.apartados.length || !cargar.listo ? "Cargando…" : "Apartado no encontrado"; $("lista-ap").innerHTML = ""; $("ap-desc").textContent = ""; $("fechas-ap").innerHTML = ""; return; }
   $("ap-titulo").textContent = a.titulo;
   if (location.hash === "#ap-" + a.slug) ponTitulo(a.titulo); // al entrar por enlace directo, el nombre llega al cargar
   $("ap-desc").textContent = a.descripcion || "";
-  $("ap-extra").innerHTML = a.slug === APARTADO_CONDUCTORES ? `<a class="panel desc-promo cond" href="#descansos">${icono("reloj")}<span><b>Mis descansos</b><small>Tu descanso diario y semanal: cuándo te toca, si puede ser reducido y qué tienes que compensar. Con avisos al móvil.</small></span>${icono("der", "p")}</a><a class="panel desc-promo cond" href="#ganancias">${icono("euro")}<span><b>Mis incentivos</b><small>Lo que ganas cada día, semana y mes: dietas, suplementos, pluses y kilómetros.</small></span>${icono("der", "p")}</a><a class="panel desc-promo cond" href="#aparcar">${icono("lugar")}<span><b>Aparcamientos en mi ruta </b><small>Ruta para tu camión y, mientras conduces, los aparcamientos que tienes por delante, cortes y dónde te toca parar.</small></span>${icono("der", "p")}</a><a class="panel desc-promo cond" href="#restricciones">${icono("alerta")}<span><b>Restricciones en mi ruta</b><small>Pon de dónde sales y adónde llegas y te digo si en esa ruta hay prohibiciones de circular para camiones o cortes. Gratis.</small></span>${icono("der", "p")}</a><a class="panel desc-promo cond" href="#finiquito">${icono("hoja")}<span><b>Mi finiquito</b><small>Cuánto te toca si te despiden o te vas: finiquito, pagas, vacaciones e indemnización según el convenio de Girona.</small></span>${icono("der", "p")}</a><a class="panel desc-promo cond" href="#adr">${icono("escudo")}<span><b>Test de ADR</b><small>Practica para el examen de mercancías peligrosas, descifra la placa naranja y mira cómo sacar o renovar el carnet.</small></span>${icono("der", "p")}</a><a class="panel desc-promo cond" href="#hora">${icono("euro")}<span><b>Mi hora ordinaria</b><small>Cuánto vale tu hora normal según el convenio de Girona y si tu hora extra está bien pagada.</small></span>${icono("der", "p")}</a><a class="panel desc-promo cond" href="#diccionario">${icono("texto")}<span><b>Diccionario del conductor</b><small>Siglas y palabras de papeles, controles y nómina, explicadas en una frase. Con buscador.</small></span>${icono("der", "p")}</a><a class="panel desc-promo cond" href="#carga">${icono("archivo")}<span><b>Simulador de carga</b><small>Mira el remolque desde arriba y cómo se llena con cada recogida: europalets, industriales, apilados, huecos y peso.</small></span>${icono("der", "p")}</a><a class="panel desc-promo cond" href="#ejes">${icono("check")}<span><b>Peso por ejes y estiba</b><small>Cuánto pesa cada eje con tu carga antes de la báscula y cuántas cinchas necesitas para sujetarla.</small></span>${icono("der", "p")}</a><a class="panel desc-promo cond" href="#multas">${icono("alerta")}<span><b>Multas en Europa</b><small>País por país, cuánto te pueden multar por velocidad, tacógrafo, descansos, peso, alcohol, móvil o peajes, y si hay que pagar en el acto.</small></span>${icono("der", "p")}</a><a class="panel desc-promo cond" href="#sobresale">${icono("medida")}<span><b>Cargas que sobresalen</b><small>Cuánto puede sobresalir tu carga por delante, por detrás o por los lados, y cómo señalizarla con el panel V-20.</small></span>${icono("der", "p")}</a><a class="panel desc-promo cond" href="#conversor">${icono("cambio")}<span><b>Conversor rápido</b><small>Bar y PSI, kilómetros y millas, litros y galones, grados, pies y pulgadas: escribe un número y se cambia solo.</small></span>${icono("der", "p")}</a>` : ""; // v165 (lo pidió el padre): los enlaces oficiales ya no salen aquí, solo en «Restricciones en mi ruta»
+  $("ap-extra").innerHTML = a.slug === APARTADO_CONDUCTORES ? tarjetasCond(TARJETAS_COND.filter(t => !UTIL.includes(t[0]))) : ""; // v165 (lo pidió el padre): los enlaces oficiales ya no salen aquí, solo en «Restricciones en mi ruta»
   const todas = D.publicaciones.filter(x => x.apartado_id === a.id);
   pintaFechas("fechas-ap", "ap", todas, x => x.fecha, () => pintaApartado());
   const qr = $("buscar-ap").value.trim(), q = normal(qr);
@@ -684,6 +710,7 @@ function pintaApartado() {
     : vacio(esc(a.icono || "carpeta"), q || hayFecha("ap") ? "No hay nada que coincida con la búsqueda o la fecha." : "Todavía no hay nada publicado en este apartado.");
 }
 $("buscar-ap").oninput = () => pintaApartado();
+$("util-lista").innerHTML = tarjetasCond(TARJETAS_COND.filter(t => UTIL.includes(t[0]))); // v187: página «Utilidades en ruta»
 
 // ---------- Preguntas frecuentes ----------
 // «¿Dónde está…?» (v63): cada sección y subapartado de la web, más algunas cosas que no son pestañas,
@@ -1552,6 +1579,7 @@ const PALABRAS_VISTA = { inicio: "inicio portada principal", avisos: "avisos com
   diccionario: "diccionario glosario siglas palabras significado que significa cmr albaran tacografo cap mma tara dieta prorrata cabotaje",
   carga: "simulador de carga remolque trailer semirremolque palets europalet industrial medio palet huecos apilar metros cargar recogida peso",
   sobresale: "cargas que sobresalen sobresalir carga larga ancha voladizo panel v-20 v20 luz roja articulo 15 transporte especial viga tubo",
+  utilidades: "utilidades ruta herramientas restricciones adr diccionario simulador carga peso ejes multas sobresale conversor",
   conversor: "conversor convertir unidades bar psi presion neumaticos millas mph libras galones grados fahrenheit pies pulgadas",
   multas: "multas europa sanciones policia velocidad tacografo descanso cabina alcohol movil peaje vineta maut zona bajas emisiones deposito inmovilizacion francia alemania",
   ejes: "peso por ejes reparto eje motriz delantero tridem bascula sobrepeso 40 toneladas estiba cinchas trincaje amarre sujetar carga EN 12195",
@@ -1564,6 +1592,7 @@ const nomVista = (clave) => clave.startsWith("ap-") ? (D.apartados.find(a => "ap
 // «Grupo › Sección» según las pestañas de arriba
 function rutaDe(clave) {
   const g = GRUPO_DE[clave]; if (!g) return nomVista(clave);
+  if (UTIL.includes(clave)) return g.titulo + " › " + NOMBRE_FIJO.utilidades + " › " + nomVista(clave); // v187
   return g.titulo === nomVista(clave) ? g.titulo : g.titulo + " › " + nomVista(clave);
 }
 // Resalta lo buscado (sin tener en cuenta tildes) dentro de un texto ya sin HTML
@@ -1599,7 +1628,7 @@ function buscarTodo() {
   const sitiosExtra = sitiosWeb().filter(x => !vistas.includes(x.h));
   const secciones = [...lista(sitiosExtra, x => ({ n: nota(x.t, x.p), h: x.h, t: x.t, donde: x.donde, ic: "lugar", sinEnlace: !x.h })), ...lista(vistas, c => {
     const ap = c.startsWith("ap-") ? D.apartados.find(a => "ap-" + a.slug === c) : null;
-    return { n: nota(nomVista(c), ap?.descripcion, PALABRAS_VISTA[c], GRUPO_DE[c]?.titulo), h: c, t: nomVista(c), s: ap?.descripcion || "", donde: rutaDe(c), ic: ap?.icono || { descansos: "reloj", ganancias: "euro", aparcar: "lugar", restricciones: "alerta", finiquito: "hoja", adr: "escudo", hora: "euro", diccionario: "texto", carga: "archivo", ejes: "check", multas: "alerta", sobresale: "medida", conversor: "cambio", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta", info: "grupo", inicio: "inicio" }[c] || "carpeta" };
+    return { n: nota(nomVista(c), ap?.descripcion, PALABRAS_VISTA[c], GRUPO_DE[c]?.titulo), h: c, t: nomVista(c), s: ap?.descripcion || "", donde: rutaDe(c), ic: ap?.icono || { descansos: "reloj", ganancias: "euro", aparcar: "lugar", restricciones: "alerta", finiquito: "hoja", adr: "escudo", hora: "euro", diccionario: "texto", carga: "archivo", ejes: "check", multas: "alerta", sobresale: "medida", conversor: "cambio", utilidades: "ajustes", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta", info: "grupo", inicio: "inicio" }[c] || "carpeta" };
   })].sort((a, b) => b.n - a.n);
   // Archivos: los de Documentos y los adjuntos de avisos, actas y publicaciones
   const arch = [];

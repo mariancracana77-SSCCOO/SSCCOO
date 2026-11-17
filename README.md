@@ -77,6 +77,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 187: «Utilidades en ruta» en Zona Conductores
+
+- Petición n.º 56 del padre: Zona Conductores se queda con Mis descansos, Mis incentivos, Aparcamientos en mi ruta, Mi finiquito, Mi hora ordinaria y una tarjeta amarilla «Utilidades en ruta» (`#utilidades`).
+- Dentro de «Utilidades en ruta»: Restricciones en mi ruta, Test de ADR, Diccionario del conductor, Simulador de carga, Peso por ejes y estiba, Multas en Europa, Cargas que sobresalen y Conversor rápido (`UTIL` en app.js). Las herramientas no cambian: los enlaces directos siguen igual; no salen en la segunda fila ni en los accesos de Inicio y la miga dice Zona Conductores › Utilidades en ruta › …
+- Tarjetas de Zona Conductores en una lista (`TARJETAS_COND`, `tarjetasCond`).
+
 ## Versión 186: cargas que sobresalen y conversor rápido (Zona Conductores)
 - Petición n.º 55: herramienta nueva «Cargas que sobresalen» (`sobresale.js`): cuánto puede sobresalir una carga indivisible por delante, por detrás o por los lados según el artículo 15 del Reglamento General de Circulación, con el dibujo visto desde arriba, cómo señalizarla (panel V-20, luces) y aviso si hace falta autorización de transporte especial.
 - «Conversor rápido» (`conversor.js`): presión, distancia, velocidad, peso, galones, temperatura, pies y pulgadas, escribiendo en cualquiera de los dos cuadros. Las dos se traducen como el resto de Zona Conductores.

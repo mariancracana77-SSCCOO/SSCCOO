@@ -3040,3 +3040,9 @@ label.cg-huecos { margin: 0 0 12px; }
 .cv-q button { min-height: 44px; padding: 8px 14px; border: 1px solid var(--linea); border-radius: 12px; background: var(--fondo); color: var(--tinta); font: inherit; font-weight: 700; cursor: pointer; }
 .cv-q button:active { transform: scale(.97); }
 .so-p { margin: 0; }
+
+/* v187 (petición n.º 56 del padre): tarjeta «Utilidades en ruta» de Zona Conductores, con fondo amarillo (igual en claro y oscuro) */
+.desc-promo.cond.util { background: #ffd23f; border-color: #e0b100; border-left-color: #8a6a00; color: #1d1a10; }
+.desc-promo.cond.util > .icono:first-child, .desc-promo.cond.util > .icono:last-child { color: #1d1a10; }
+.desc-promo.cond.util small { color: #3d3420; }
+.desc-promo.cond.util:hover { background: #ffdc66; }
