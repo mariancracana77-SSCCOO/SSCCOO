@@ -20,7 +20,7 @@ const MIRA = `(() => {
     if (bloque(el)) { out.push(marca(el)); return; }
     for (const n of el.childNodes) { if (n.nodeType === 1) r(n); else if (n.nodeType === 3 && L.test(n.data)) out.push(j(n.data)); } };
   r(document.querySelector(".vista.activa")); return out; })()`;
-const PERMITIDOS = [/^[\d.,\s]+ h$/, /^\*\*ZZ /, /^X?\d+$/]; // «147,2 h» (cifra con unidad), una negrita ya traducida y la placa «X338»
+const PERMITIDOS = [/^[\d.,\s]+ h$/, /^\*\*ZZ /, /^X?\d+$/, /^[\d.]+ kg$/]; // «147,2 h» (cifra con unidad), una negrita ya traducida y la placa «X338» y los kilos de «Peso por ejes» («12.750 kg»)
 (async () => {
   const b = await chromium.launch(), ctx = await b.newContext({ viewport: { width: 412, height: 900 } });
   await ctx.route("**/lib/supabase.js*", r => r.fulfill({ contentType: "application/javascript", body: MOCK }));
@@ -33,7 +33,7 @@ const PERMITIDOS = [/^[\d.,\s]+ h$/, /^\*\*ZZ /, /^X?\d+$/]; // «147,2 h» (cif
     if (fallan.length) { mal++; console.log(`MAL ${nombre}: ${fallan.length} textos ${debe ? "sin traducir" : "sin volver al español"}:`, fallan.slice(0, 8)); }
     else console.log(`OK  ${nombre} (${vistos.length} textos)`);
   };
-  for (const [g, hash] of [["finiquito", "finiquito"], ["hora", "hora"], ["diccionario", "diccionario"], ["adr", "adr"], ["carga", "carga"]]) {
+  for (const [g, hash] of [["finiquito", "finiquito"], ["hora", "hora"], ["diccionario", "diccionario"], ["adr", "adr"], ["carga", "carga"], ["ejes", "ejes"]]) {
     await p.goto(BASE + "#" + hash); await p.waitForTimeout(700);
     await p.evaluate(([g, lista]) => {
       try { localStorage.removeItem("ccoo-mi-idioma"); localStorage.removeItem("ccoo-textos-" + g); } catch (_) {}
@@ -56,6 +56,8 @@ const PERMITIDOS = [/^[\d.,\s]+ h$/, /^\*\*ZZ /, /^X?\d+$/]; // «147,2 h» (cif
       await p.click("[data-adr-tab='2']"); await p.waitForTimeout(300); await comprueba("adr carnet", true);
       await p.click("[data-adr-tab='0']"); await p.waitForTimeout(300);
     }
+    // v183: «Peso por ejes» en los tres estados (correcto, al límite y exceso) y con «Uniforme»
+    if (g === "ejes") { await p.fill("#ej-kg", "12000"); await p.click("#ej-pos [data-v='centro']"); await p.waitForTimeout(300); await comprueba("ejes correcto", true); await p.fill("#ej-kg", "24500"); await p.click("#ej-pos [data-v='uniforme']"); await p.waitForTimeout(300); await comprueba("ejes al límite o exceso", true); await p.click("#ej-pos [data-v='cabina']"); await p.click("[data-paso='-0.1']"); await p.waitForTimeout(300); await comprueba("ejes exceso delante", true); }
     if (g === "carga") { await p.click("#cg-add"); await p.selectOption("#cg-1-t", "ind"); await p.fill("#cg-1-q", "3"); await p.waitForTimeout(300); await comprueba("carga dos recogidas", true); await p.click("#cg-cero"); await p.waitForTimeout(200); await comprueba("carga borrar", true); await p.click("#cg-no"); await p.fill("#cg-0-q", "40"); await p.waitForTimeout(300); await comprueba("carga no cabe", true); }
     await p.selectOption(sel, ""); await p.waitForTimeout(500);
     await comprueba(g + " vuelta al español", false);

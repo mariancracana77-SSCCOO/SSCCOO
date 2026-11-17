@@ -2205,9 +2205,9 @@ html[data-theme="dark"] .gan-fila.fila-z-int { --zc: #5B7FD6; }
 .apc-serv-ops { display: flex; flex-wrap: wrap; gap: 4px 16px; clear: both; }
 
 /* v111: Zona Conductores en azul (lo pidió el padre: «como lo de Calsina», el azul del camión del logo). Solo aquí: el resto sigue en rojo */
-:root { --cond-azul: #2a3f9e; --cond-azul-ic: #2a3f9e; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cond-azul-ic: #8fb0f0; } }
-:root[data-theme="dark"] { --cond-azul-ic: #8fb0f0; }
+:root { --cond-azul: #2a3f9e; --cond-azul-ic: #2a3f9e; --ej-naranja: #b45309; --ej-naranja-b: #f59e0b; --ej-rojo: #ab1012; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cond-azul-ic: #8fb0f0; --ej-naranja: #f59e0b; --ej-naranja-b: #f59e0b; --ej-rojo: #ff7b7b; } }
+:root[data-theme="dark"] { --cond-azul-ic: #8fb0f0; --ej-naranja: #f59e0b; --ej-naranja-b: #f59e0b; --ej-rojo: #ff7b7b; }
 /* v125 (petición n.º 3 del padre): los apartados de dentro de Zona Conductores (subpestañas, tarjetas y raya del título) en morado; la pestaña camión sigue azul como el camión de Calsina */
 /* v126 (petición n.º 3, segunda parte): el padre lo quiere todo con el azul de la cabina del camión de su foto (DAF de Calsina), así que el morado pasa a ser ese azul */
 :root { --cond-morado: var(--cond-azul); --cond-morado-ic: var(--cond-azul-ic); }
@@ -2890,7 +2890,53 @@ label.cg-huecos { margin: 0 0 12px; }
 .ej-lab { font-weight: 700; margin: 16px 0 6px; }
 .ej-sim { width: 100%; margin: 0 0 6px; }
 #v-ejes .check input { accent-color: var(--cond-azul); }
-#ej-centro { width: 100%; accent-color: var(--cond-azul); min-height: 44px; }
+/* v183: «Peso por ejes» con el orden de Gemini (peticiones 51, 52 y 53) */
+.ej-titulo { font-size: 1.45rem; text-transform: uppercase; margin: 14px 0 4px; padding-bottom: 8px; background: linear-gradient(var(--cond-azul), var(--cond-azul)) left bottom / 56px 3px no-repeat; }
+.ej-sub { color: var(--suave); margin: 0 0 12px; }
+.ej-tarjeta { border-left: 5px solid var(--cond-azul); }
+#ej-res.ej-tarjeta { border-left: 0; }
+.ej-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin: 0 0 8px; }
+.ej-cab > :first-child { min-width: 0; margin: 0; font-weight: 700; }
+.ej-h { font-size: 1.15rem; margin: 0; }
+.ej-pastilla { flex: none; padding: 4px 10px; border-radius: 8px; background: color-mix(in srgb, var(--cond-azul) 12%, transparent); color: var(--cond-azul-ic); font-weight: 800; white-space: nowrap; }
+.ej-pastilla.roja { background: color-mix(in srgb, var(--ej-rojo) 14%, transparent); color: var(--ej-rojo); }
+.ej-kg-fila { display: grid; grid-template-columns: minmax(0, 9rem) minmax(0, 1fr); gap: 12px; align-items: center; }
+.ej-kg-fila input[type="number"] { font-size: 1.3rem; font-weight: 800; }
+.ej-kg-fila input[type="range"], #ej-centro { width: 100%; accent-color: var(--cond-azul); min-height: 44px; margin: 0; }
+.ej-gas button { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.ej-gas small { font-weight: 600; font-size: .8rem; opacity: .85; }
+.ej-pos { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ej-pos { gap: 6px; padding: 0; border: 0; background: none; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 400px) { :root:is([data-letra="grande"], [data-letra="muy-grande"]) .ej-pos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 340px) { .ej-pos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ej-pos button { font-size: .85rem; overflow-wrap: normal; word-break: normal; hyphens: none; border: 1px solid var(--linea); background: var(--tarjeta); }
+.ej-pos button.activa { border-color: var(--cond-azul); }
+.ej-dib .ej-dib-t { fill: var(--suave); font-size: 13px; font-weight: 700; }
+.ej-dib-caja { border: 1px solid var(--linea); border-radius: 12px; padding: 10px; margin: 10px 0 6px; }
+.ej-dib-caja .ej-dib { margin: 0 0 6px; }
+.ej-dib .ej-cg { fill: var(--rojo); stroke: var(--tarjeta); stroke-width: 2; }
+.ej-dib .ej-cg-l { stroke: var(--rojo); stroke-width: 2; stroke-dasharray: 4 3; }
+.ej-centro-v { margin: 4px 0 0; }
+.ej-mueve { display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; gap: 8px; align-items: center; }
+.ej-paso { min-width: 48px; min-height: 48px; border-radius: 12px; border: 2px solid var(--cond-azul); background: var(--tarjeta); color: var(--cond-azul-ic); font-size: 1.6rem; font-weight: 800; line-height: 1; cursor: pointer; }
+.ej-paso:active { transform: scale(.96); }
+.ej-lados { display: flex; justify-content: space-between; gap: 10px; color: var(--suave); font-size: .9rem; margin: 0 0 2px; }
+.ej-lados span:last-child { text-align: right; }
+#ej-centro::-webkit-slider-thumb { width: 30px; height: 30px; }
+#ej-centro::-moz-range-thumb { width: 30px; height: 30px; }
+.ej-largo-mas input { margin-top: 8px; }
+.ej-res-cab { align-items: center; margin-bottom: 12px; }
+.ej-res-cab .ej-h { text-transform: uppercase; }
+.ej-sello { flex: none; padding: 6px 12px; border-radius: 999px; font-weight: 800; text-transform: uppercase; background: color-mix(in srgb, var(--verde) 15%, transparent); color: var(--verde); }
+.ej-sello.justo { background: color-mix(in srgb, var(--ej-naranja) 16%, transparent); color: var(--ej-naranja); }
+.ej-sello.mal { background: color-mix(in srgb, var(--ej-rojo) 16%, transparent); color: var(--ej-rojo); }
+#ej-res .ej-eje.mal .ej-eje-pie b { color: var(--ej-rojo); }
+#ej-res .ej-eje { padding: 10px 12px; margin: 0 0 10px; border: 1px solid var(--linea); border-left-width: 1px; border-radius: 10px; }
+#ej-res .ej-eje-cab strong { font-size: 1.2rem; }
+.ej-res-pie { margin: 0; }
+.ej-consejo { font-weight: 800; margin: 0 0 6px; }
+.ej-consejo-caja { border-radius: 12px; }
+#ej-pos[hidden], #ej-mover[hidden], #ej-largo-caja[hidden] { display: none; }
 .ej-camion .btn { margin-top: 12px; }
 .ej-dib { display: block; width: 100%; height: auto; margin: 0 0 14px; }
 .ej-dib .ej-trac { fill: var(--cond-azul); }
@@ -2899,7 +2945,7 @@ label.cg-huecos { margin: 0 0 12px; }
 .ej-dib .ej-rueda { fill: var(--tinta); stroke: var(--tarjeta); stroke-width: 3; }
 .ej-dib .ej-piv { fill: var(--ambar-rotulo); }
 .ej-eje { padding: 12px 14px; margin: 0 0 10px; border-left: 5px solid var(--verde); }
-.ej-eje.justo { border-left-color: var(--ambar-rotulo); }
+.ej-eje.justo { border-left-color: var(--ej-naranja-b); }
 .ej-eje.mal { border-left-color: var(--rojo); }
 .ej-eje-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .ej-eje-cab span { min-width: 0; }
@@ -2907,11 +2953,11 @@ label.cg-huecos { margin: 0 0 12px; }
 .ej-eje-cab strong { font-size: 1.35rem; white-space: nowrap; }
 .ej-barra { margin: 8px 0 6px; }
 .ej-eje.bien .ej-barra i { background: var(--verde); }
-.ej-eje.justo .ej-barra i { background: var(--ambar-rotulo); }
+.ej-eje.justo .ej-barra i { background: var(--ej-naranja-b); }
 .ej-eje.mal .ej-barra i { background: var(--rojo); }
 .ej-eje-pie { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; color: var(--suave); font-size: .95rem; }
 .ej-eje.bien .ej-eje-pie b { color: var(--verde); }
-.ej-eje.justo .ej-eje-pie b { color: var(--ambar-rotulo); }
+.ej-eje.justo .ej-eje-pie b { color: var(--ej-naranja); }
 .ej-eje.mal .ej-eje-pie b { color: var(--rojo); }
 .ej-avisos { margin: 0; padding-left: 20px; }
 .ej-avisos li { margin-bottom: 6px; }

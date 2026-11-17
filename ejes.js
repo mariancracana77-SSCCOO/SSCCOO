@@ -8,6 +8,15 @@
 //    n ≥ (c − μ·cz) · m · g / (2 · μ · sen α · FT) · fs, con c = 0,8 adelante, 0,5 atrás y de lado (carretera),
 //    cz = 1, fs = 1,25 hacia delante y 1,1 en las demás. Comprobada con el ejemplo de la guía IRU (2 cinchas,
 //    μ 0,45, α 55°, STF 400 daN: 10,9 t de lado y 1,4 t adelante; pruebas/ejes.cjs).
+// v183 (peticiones n.º 51, 52 y 53 del padre): con el orden de la calculadora que le hizo Gemini. «Tu carga» (kg con
+// barra y gasoil con sus litros) y «Dónde va la carga»: el dibujo, la barra para moverla con botones «−»/«+» de 10 cm
+// y justo debajo las barras de cada eje con un letrero «Correcto / Muy justo / Exceso de peso», para ver el verde o el
+// rojo sin bajar la pantalla. Lo guardado (ccoo-ejes) sigue igual.
+// Revisión (lo pidió Lorena: «como estaba en Gemini»): título y subtítulo, pastilla con los kilos, litros dentro de los
+// botones del gasoil, «Uniforme / Delante / Centrado / Atrás», la barra mueve el centro de gravedad entre 1 m y el
+// largo − 1 m aunque la carga ocupe todo el suelo (antes se quedaba quieta), «Resultado estimado en báscula» en su
+// tarjeta con eje motriz, trídem y total (el delantero solo si va justo o pasa), «Al límite (precaución)», «¡Exceso
+// +N kg!» y poca tracción en ámbar, y «Consejo de estiba y colocación» con qué hacer.
 // Todo es orientativo y se calcula en el móvil. Lo que se apunta se guarda solo aquí, clave «ccoo-ejes».
 // Las cuentas están en EjesCuentas (sin pantalla) para poder probarlas.
 (function () {
@@ -90,7 +99,7 @@
       if (num(d.largo) > 0) $("ej-largo").value = String(num(d.largo));
       if (num(d.centro) >= 0) $("ej-centro").value = String(num(d.centro));
       if (GASOIL[d.gas]) GAS = d.gas;
-      if (["cabina", "centro", "puertas", "medida"].includes(d.pos)) POS = d.pos;
+      if (["uniforme", "cabina", "centro", "puertas", "medida"].includes(d.pos)) POS = d.pos;
       SIM = !!d.sim; if (d.pest === "estiba") PEST = "estiba";
       const e = d.est || {};
       if (num(e.kg) >= 0) $("es-kg").value = String(num(e.kg));
@@ -118,64 +127,98 @@
   function simulador() { try { return cargaSimulador(JSON.parse(localStorage.getItem("ccoo-remolque") || "null")); } catch (e) { return null; } }
   function marca(sel, val) { vista.querySelectorAll(sel).forEach(b => { const si = b.dataset.v === val; b.classList.toggle("activa", si); b.setAttribute("aria-pressed", String(si)); }); }
   // Centro de la carga según «dónde va»
+  // La barra mueve el centro de gravedad de la carga entre 1 m y el largo − 1 m (con palets de distinto peso puede ir
+  // fuera del centro aunque la carga ocupe todo el suelo)
+  const lim = (c, x) => c.caja < 2 ? c.caja / 2 : Math.min(Math.max(x, 1), c.caja - 1);
+  function largoDe(c) { return POS === "uniforme" ? c.caja : Math.min(Math.max(num($("ej-largo").value) || c.caja, 0.4), c.caja); }
   function centroDe(c, largo) {
-    const l = Math.min(Math.max(largo, 0.4), c.caja);
-    if (POS === "cabina") return l / 2;
-    if (POS === "puertas") return c.caja - l / 2;
-    if (POS === "centro") return c.caja / 2;
+    const l = Math.min(Math.max(largo, 0.4), c.caja), lleno = l > c.caja - 0.3;
+    if (POS === "uniforme" || POS === "centro") return c.caja / 2;
+    if (POS === "cabina") return lim(c, lleno ? c.caja * 0.4 : l / 2);
+    if (POS === "puertas") return lim(c, lleno ? c.caja * 0.6 : c.caja - l / 2);
     const x = num($("ej-centro").value);
-    return Math.min(Math.max(isFinite(x) ? x : c.caja / 2, l / 2), c.caja - l / 2);
+    return lim(c, isFinite(x) ? x : c.caja / 2);
   }
-  function barra(nombre, v, max) {
-    const p = max > 0 ? v / max * 100 : 0, cls = p > 100 ? "mal" : p > 95 ? "justo" : "bien";
-    const est = p > 100 ? T("Pasa {k}", { k: kgTxt(v - max) }) : p > 95 ? T("Muy justo") : T("Correcto");
-    return `<div class="panel ej-eje ${cls}"><div class="ej-eje-cab"><span><b>${esc(nombre)}</b><small>${esc(T("Máximo {k}", { k: kgTxt(max) }))}</small></span><strong>${esc(kgTxt(v))}</strong></div>` +
-      `<div class="zc-barra ej-barra"><i class="ej-p${Math.min(100, Math.max(0, Math.round(p / 5) * 5))}"></i></div><div class="ej-eje-pie"><span>${esc(T("{p} % del máximo", { p: Math.round(p) }))}</span><b>${esc(est)}</b></div></div>`;
+  // Estado de un eje: «mal» si pasa, «justo» desde el 95 % (como Gemini: «Al límite»)
+  const estado = (v, max) => v > max ? "mal" : Math.round(v / max * 100) >= 95 ? "justo" : "bien";
+  function barra(nombre, v, max, pie, aviso) {
+    const p = max > 0 ? v / max * 100 : 0, cls = aviso ? (estado(v, max) === "mal" ? "mal" : "justo") : estado(v, max);
+    const est = v > max ? T("¡Exceso +{k}!", { k: kgTxt(v - max) }) : aviso || (cls === "justo" ? T("Al límite (precaución)") : T("Correcto"));
+    return `<div class="ej-eje ${cls}"><div class="ej-eje-cab"><span><b>${esc(nombre)}</b><small>${esc(T("Máx. {k}", { k: kgTxt(max) }))}</small></span><strong>${esc(kgTxt(v))}</strong></div>` +
+      `<div class="zc-barra ej-barra"><i class="ej-p${Math.min(100, p > 0 ? Math.max(5, Math.round(p / 5) * 5) : 0)}"></i></div><div class="ej-eje-pie"><span>${esc(pie === "gen" ? T("{p} % del límite general", { p: Math.round(p) }) : T("{p} % de capacidad", { p: Math.round(p) }))}</span><b>${esc(est)}</b></div></div>`;
+  }
+  // El peor de todos: «mal» si alguno pasa, «justo» si alguno va al límite o el motriz lleva poca tracción
+  function peor(r, c, poca) {
+    const es = [estado(r.del, c.mDel), estado(r.mot, c.mMot), estado(r.tri, c.mTri), estado(r.tot, c.mTot)];
+    return es.includes("mal") ? "mal" : es.includes("justo") || poca ? "justo" : "bien";
   }
   // Dibujo de lado: tractora, semirremolque, ejes y la carga (solo clases: sin estilos en línea por la CSP)
-  function dibujo(c, carga) {
+  function dibujo(c, carga, cg) {
     const k = 30, x0 = 10 + 2.6 * k, W = x0 + c.caja * k + 10;
-    let s = `<svg class="ej-dib" viewBox="0 0 ${W.toFixed(0)} 120" role="img" aria-label="${esc(T("El camión de lado con la carga"))}">`;
+    let s = `<svg class="ej-dib" viewBox="0 0 ${W.toFixed(0)} 134" role="img" aria-label="${esc(T("El camión de lado con la carga"))}">`;
     s += `<rect class="ej-trac" x="10" y="40" width="${(2.4 * k).toFixed(0)}" height="50" rx="6"/>`;
     s += `<rect class="ej-caja" x="${x0}" y="22" width="${(c.caja * k).toFixed(0)}" height="68" rx="3"/>`;
-    carga.forEach(p => { if (p.kg > 0) s += `<rect class="ej-carga" x="${(x0 + (p.x - p.l / 2) * k).toFixed(1)}" y="52" width="${Math.max(3, p.l * k - 1).toFixed(1)}" height="36" rx="2"/>`; });
+    // El bloque se dibuja centrado en su centro de gravedad: si la barra lo lleva hacia un lado, se acorta (como Gemini)
+    carga.forEach(p => { if (p.kg > 0) { const l = Math.max(0.4, Math.min(p.l, 2 * p.x, 2 * (c.caja - p.x))), ini = p.x - l / 2; p = { ...p, l }; s += `<rect class="ej-carga" x="${(x0 + ini * k).toFixed(1)}" y="52" width="${Math.max(3, p.l * k - 1).toFixed(1)}" height="36" rx="2"/>`; } });
+    if (cg != null) s += `<circle class="ej-cg" cx="${(x0 + cg * k).toFixed(1)}" cy="70" r="9"/><path class="ej-cg-l" d="M${(x0 + cg * k).toFixed(1)} 22 v68"/>`;
     const piv = x0 + c.piv * k, ejeTri = piv + c.ejes * k, mot = piv + c.qr * k, del = mot - c.bat * k;
     [del, mot].forEach(x => { s += `<circle class="ej-rueda" cx="${x.toFixed(1)}" cy="100" r="12"/>`; });
     [-1.31, 0, 1.31].forEach(d => { s += `<circle class="ej-rueda" cx="${(ejeTri + d * k).toFixed(1)}" cy="100" r="12"/>`; });
-    s += `<path class="ej-piv" d="M${piv.toFixed(1)} 90 l-6 8 h12 z"/></svg>`;
+    s += `<path class="ej-piv" d="M${piv.toFixed(1)} 90 l-6 8 h12 z"/>`;
+    s += `<text class="ej-dib-t" x="${((del + mot) / 2).toFixed(1)}" y="128" text-anchor="middle">${esc(T("Tractora"))}</text><text class="ej-dib-t" x="${piv.toFixed(1)}" y="16" text-anchor="middle">${esc(T("Pivote"))}</text><text class="ej-dib-t" x="${ejeTri.toFixed(1)}" y="128" text-anchor="middle">${esc(T("Trídem"))}</text></svg>`;
     return s;
   }
   function calcEjes() {
     const c = camion(), sim = SIM ? simulador() : null;
-    let carga, nota = "";
+    let carga, nota = "", cg = null;
+    const r0 = $("ej-centro"); r0.min = String(lim(c, 0)); r0.max = String(Math.max(lim(c, 0) + 0.1, lim(c, c.caja)));
+    $("ej-pos-t").textContent = T("Posición de la carga ({m})", { m: c.caja.toFixed(2).replace(".", ",") + " m" });
     if (SIM && sim) {
       carga = sim.carga.map(p => ({ kg: p.kg, x: p.x, l: 1.2 }));
+      cg = sim.centro;
       nota = T("Carga del Simulador: {k} en {n} palets, centro a {m} de la cabina.", { k: kgTxt(sim.kg), n: sim.palets, m: mTxt(sim.centro) });
     } else {
-      const kg = Math.max(0, num($("ej-kg").value) || 0), largo = Math.min(Math.max(num($("ej-largo").value) || c.caja, 0.4), c.caja), x = centroDe(c, largo);
-      const r = $("ej-centro"); r.max = String(c.caja); r.min = "0";
-      if (POS !== "medida") r.value = x.toFixed(1);
-      $("ej-centro-v").textContent = T("Centro de la carga: {m} de la cabina", { m: mTxt(x) });
-      carga = [{ kg, x, l: largo }];
+      const kg = Math.max(0, num($("ej-kg").value) || 0), largo = largoDe(c), x = centroDe(c, largo);
+      if (POS !== "medida") r0.value = x.toFixed(1);
+      $("ej-centro-v").textContent = T("Centro de la carga: {m} de la pared delantera. Con «−» y «+» la mueves 10 cm.", { m: mTxt(x) });
+      $("ej-lado-1").textContent = T("Más hacia la cabina ({m})", { m: mTxt(lim(c, 0)) });
+      $("ej-lado-2").textContent = T("Más hacia las puertas ({m})", { m: mTxt(lim(c, c.caja)) });
+      carga = [{ kg, x, l: largo }]; cg = x;
     }
+    $("ej-centro-p").textContent = T("Centro: {m}", { m: mTxt(cg) });
     $("ej-sim-nota").textContent = nota;
     $("ej-sim-caja").hidden = !(SIM && sim);
     $("ej-mano").hidden = !!(SIM && sim);
+    $("ej-pos").hidden = $("ej-mover").hidden = $("ej-largo-caja").hidden = !!(SIM && sim);
+    const kgR = $("ej-kg-r"); if (document.activeElement !== kgR) kgR.value = String(Math.min(30000, Math.max(0, num($("ej-kg").value) || 0)));
+    $("ej-kg-v").textContent = kgTxt(Math.max(0, num($("ej-kg").value) || 0));
+    ["1/4", "1/2", "lleno"].forEach((g, i) => { $("ej-l-" + (i + 1)).textContent = T("(~{l} L)", { l: Math.round(GASOIL[g] * c.dep) }); });
     $("ej-sim").hidden = !simulador();
     $("ej-sim").textContent = SIM && sim ? T("Escribir la carga a mano") : T("Usar mi carga del Simulador");
     const r = reparto(c, carga, GAS);
-    let out = `<div class="zc-grande"><small>${esc(T("Peso total del conjunto"))}</small><strong>${esc(kgTxt(r.tot))}</strong><small>${esc(T("Carga: {k}", { k: kgTxt(r.kg) }))}</small></div>`;
-    out += dibujo(c, carga);
-    out += barra(T("Eje delantero de la tractora"), r.del, c.mDel) + barra(T("Eje motriz de la tractora"), r.mot, c.mMot) + barra(T("Trídem del semirremolque"), r.tri, c.mTri) + barra(T("Total del conjunto"), r.tot, c.mTot);
+    $("ej-dibujo").innerHTML = dibujo(c, carga, cg);
+    const poca = r.kg > 0 && r.mot < r.tot * 0.25;
+    const est = peor(r, c, poca);
+    let res = `<div class="ej-cab ej-res-cab"><h3 class="ej-h">${esc(T("Resultado estimado en báscula"))}</h3><span class="ej-sello ${est}">${esc(est === "mal" ? T("Exceso de peso") : est === "justo" ? T("Al límite") : T("Correcto"))}</span></div>`;
+    if (estado(r.del, c.mDel) !== "bien") res += barra(T("Eje delantero tractora"), r.del, c.mDel, "cap");
+    res += barra(T("Eje motriz tractora"), r.mot, c.mMot, "cap", poca ? T("Poca tracción (precaución)") : "") +
+      barra(T("Trídem semirremolque"), r.tri, c.mTri, "cap") + barra(T("Peso total conjunto"), r.tot, c.mTot, "gen");
+    res += `<p class="zc-pista ej-res-pie">${esc(T("Carga {k} · gasoil {g}", { k: kgTxt(r.kg), g: GAS === "lleno" ? T("lleno") : GAS }))}</p>`;
+    $("ej-res").innerHTML = res;
+    // Consejo de estiba y colocación: qué hacer, con el peso de lo que pasa
     const avisos = [];
+    if (r.tot > c.mTot) avisos.push(T("Pasa del peso total en {k}: sobra carga. No se arregla moviéndola: hay que quitar peso.", { k: kgTxt(r.tot - c.mTot) }));
+    if (r.mot > c.mMot) avisos.push(T("Sobrecarga en el eje motriz ({k}). Retrasa la carga hacia las puertas: deja la primera fila vacía (sin palets pegados al tablero delantero) o pon delante los palets más ligeros.", { k: kgTxt(r.mot) }));
+    if (r.del > c.mDel) avisos.push(T("Sobrecarga en el eje delantero ({k}). Retrasa la carga hacia las puertas o lleva menos gasoil.", { k: kgTxt(r.del) }));
+    if (r.tri > c.mTri) avisos.push(T("Sobrecarga en el trídem ({k}). Adelanta la carga hacia la cabina: pon delante los palets más pesados.", { k: kgTxt(r.tri) }));
+    if (poca) avisos.push(T("Poca tracción: el eje motriz lleva menos del 25 % del peso total. Puede patinar y no cumple la norma europea. Adelanta la carga hacia la cabina."));
     if (r.tri < c.tri * 0.98 && r.kg > 0) avisos.push(T("La carga va tan pegada a la cabina que descarga el trídem: revisa dónde va."));
-    if (r.mot < r.tot * 0.25) avisos.push(T("El eje motriz lleva menos del 25 % del peso total: el camión puede patinar y no cumple la norma europea. Lleva la carga más hacia la cabina."));
-    if (r.del > c.mDel || r.mot > c.mMot) avisos.push(T("Si pasa de la tractora, lleva la carga más hacia las puertas."));
-    if (r.tri > c.mTri) avisos.push(T("Si pasa del trídem, lleva la carga más hacia la cabina."));
-    if (r.tot > c.mTot) avisos.push(T("Pasa del peso total: sobra carga, no se arregla moviéndola."));
-    out += avisos.length ? `<div class="zc-mal"><ul class="ej-avisos">${avisos.map(a => `<li>${esc(a)}</li>`).join("")}</ul></div>`
+    if (!avisos.length) {
+      const al = [[r.del, c.mDel, T("el eje delantero")], [r.mot, c.mMot, T("el eje motriz")], [r.tri, c.mTri, T("el trídem")], [r.tot, c.mTot, T("el peso total")]].filter(a => estado(a[0], a[1]) === "justo").map(a => a[2]);
+      if (al.length) avisos.push(T("Vas al límite en {q}. Cualquier palet de más o mal puesto te hace pasar: revisa la báscula.", { q: al.join(", ") }));
+    }
+    $("ej-out").innerHTML = avisos.length ? `<div class="${est === "mal" ? "zc-mal" : "zc-aviso"} ej-consejo-caja"><p class="ej-consejo">${esc(T("Consejo de estiba y colocación"))}</p><ul class="ej-avisos">${avisos.map(a => `<li>${esc(a)}</li>`).join("")}</ul></div>`
       : `<div class="zc-ok">${esc(T("Dentro de los límites. Al descargar una parte (por ejemplo, la de atrás en el primer cliente), vuelve a mirarlo antes de seguir."))}</div>`;
-    $("ej-out").innerHTML = out;
   }
   function calcEstiba() {
     const m = Math.max(0, num($("es-kg").value) || 0), otro = $("es-mu").value === "otro";
@@ -213,9 +256,20 @@
       calc(); return;
     }
     if (e.target.closest("#ej-sim")) { SIM = !SIM; calc(); }
+    const paso = e.target.closest("[data-paso]");
+    if (paso) {
+      // 10 cm cada toque, desde donde está ahora (también si venía de «Pegada a la cabina», «En el centro»…)
+      const c = camion(), x = centroDe(c, largoDe(c)) + num(paso.dataset.paso);
+      $("ej-centro").value = (Math.round(lim(c, x) * 10) / 10).toFixed(1);
+      POS = "medida"; calc(); return;
+    }
     if (e.target.closest("#ej-c-defecto")) { CAMPOS.forEach(k => { $("ej-c-" + k).value = String(CAMION[k]); }); calc(); }
   });
-  vista.addEventListener("input", (e) => { if (e.target.id === "ej-centro") POS = "medida"; calc(); });
+  vista.addEventListener("input", (e) => {
+    if (e.target.id === "ej-centro") POS = "medida";
+    if (e.target.id === "ej-kg-r") $("ej-kg").value = e.target.value;
+    calc();
+  });
   vista.addEventListener("change", calc);
   addEventListener("storage", (e) => { if (e.key === "ccoo-remolque" || e.key === KEY) { if (e.key === KEY) lee(); calc(); } });
   addEventListener("hashchange", () => { if (location.hash === "#ejes") calc(); }); // al volver del Simulador, con su carga nueva

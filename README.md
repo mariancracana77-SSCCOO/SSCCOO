@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 183: «Peso por ejes» más fácil (Zona Conductores)
+- Peticiones n.º 51, 52 y 53: «Peso por ejes» como la calculadora de Gemini. Título «Reparto de pesos por ejes». Tarjeta de la carga: kilos con número, barra y pastilla, y nivel de depósitos con los litros en cada botón. Tarjeta «Posición de la carga»: «Uniforme / Delante / Centrado / Atrás», el dibujo con el centro de gravedad marcado, y la barra con «−»/«+» de 10 cm. La barra mueve el centro entre 1 m y el largo − 1 m aunque la carga ocupe todo el suelo; antes se quedaba quieta. «Resultado estimado en báscula» con un sello «Correcto / Al límite / Exceso de peso» y las barras de eje motriz, trídem y total. El delantero solo sale si va al límite. Estados: «Al límite (precaución)» en naranja, «¡Exceso +N kg!» y poca tracción. Debajo, «Consejo de estiba y colocación» con qué hacer. «Metros de suelo» queda plegado y opcional. Lo guardado en el móvil (`ccoo-ejes`) sigue igual.
+
 ## Versión 182: Multas en Europa (Zona Conductores)
 - Guía nueva «Multas en Europa» (`multas.js`, petición n.º 49): por país, las multas más habituales para un camionero (velocidad, tacógrafo, descansos, peso, alcohol, móvil, peajes, zonas de bajas emisiones, pago en el acto e inmovilización), con filtro por país y tema, buscador, fuente y fecha de comprobación de cada dato, y consejos «Si te paran». Los datos están en la tabla `multas_paises` y se corrigen en el panel («Multas en Europa», dentro de Zona Conductores). Solo sale en la web lo marcado «Se ve en la web»; lo que no se ha podido confirmar en una página oficial lleva «Revisar».
 
