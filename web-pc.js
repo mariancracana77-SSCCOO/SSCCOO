@@ -12,4 +12,7 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ponFecha); else ponFecha();
   document.addEventListener("visibilitychange", () => { if (!document.hidden) ponFecha(); });
+  // v189 (lo pidió Lorena): sin pantalla de bienvenida en el ordenador. web-pc.css la oculta desde el principio;
+  // aquí se marca como «saltada» para que app.js la quite en cuanto cargue, sin esperar a la animación ni hacer volar el logo.
+  if (matchMedia("(min-width: 1000px) and (display-mode: browser)").matches && typeof quitarBienvenida === "function") quitarBienvenida.ya = true;
 })();

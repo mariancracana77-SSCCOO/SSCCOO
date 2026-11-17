@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 189: sin pantalla de bienvenida en el ordenador
+- Lo pidió Lorena: en la vista web del ordenador (`web-pc.css`/`web-pc.js`) ya no sale la pantalla de bienvenida (logo que se forma, camión que llega y logo que vuela a la cabecera). Las demás animaciones siguen. El móvil y la app siguen igual.
+
 ## Versión 188: tarjetas amarillas dentro de «Utilidades en ruta»
 
 Dentro de «Utilidades en ruta» las 8 herramientas salen también en amarillo (lo pidió el padre por Lorena), para que se note que estás en esa página y no en Zona Conductores. La pastilla «Utilidades en ruta» de la segunda fila (móvil y PC) también es amarilla.

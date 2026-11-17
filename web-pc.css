@@ -504,3 +504,9 @@ body.publica a { text-underline-offset: 4px; }
 :root:root .subpest-caja.cond .subpestanas a[data-v="utilidades"] { background: #ffd23f; color: #1d1a10; padding: 9px 14px; margin: 3px 0; border-bottom: 0; }
 :root:root .subpest-caja.cond .subpestanas a[data-v="utilidades"]:hover { background: #ffdc66; color: #1d1a10; }
 :root:root .subpest-caja.cond .subpestanas a[data-v="utilidades"].activa { color: #1d1a10; box-shadow: inset 0 -3px 0 #1d1a10; }
+
+/* v189 (lo pidió Lorena, 17/11): en la vista web del ordenador no sale la pantalla de bienvenida (logo que se forma,
+   camión que llega y logo que vuela a la cabecera). El resto de animaciones siguen. El móvil y la app siguen igual. */
+#bienvenida { display: none !important; }
+:root .cab-logo.bv-oculto { opacity: 1; }
+:root .cab-logo.bv-aterriza { animation: none; }
