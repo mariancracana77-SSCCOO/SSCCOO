@@ -58,6 +58,23 @@ const { chromium } = require('playwright');
   ok(await p.locator('.mue-ficha.mue-resalta').count() === 1 && (await p.inputValue('#mue-q')) === '', 'tocar un punto abre su ficha (quita la búsqueda que la escondía)');
   await p.locator('.mue-ficha [data-borra]').first().click(); await p.locator('.mue-si').click(); await p.waitForTimeout(200);
   ok(await p.locator('#mue-mapa .mue-pin').count() === 1, 'al borrar, el punto sale del mapa');
+  // v192 (petición n.º 60): «Elegir en el mapa» en el formulario
+  await p.click('#mue-nuevo'); await p.click('#mue-elegir'); await p.waitForTimeout(900);
+  ok(await p.locator('#mue-elige').isVisible() && await p.getAttribute('#mue-elegir', 'aria-expanded') === 'true', 'elegir en el mapa: se abre dentro de la ficha');
+  const caja = await p.locator('#mue-elige-mapa').boundingBox();
+  await p.mouse.click(caja.x + caja.width / 2 + 40, caja.y + caja.height / 2 + 30); await p.waitForTimeout(300);
+  const la = await p.inputValue('#mue-lat'), lo = await p.inputValue('#mue-lon');
+  ok(la !== '' && lo !== '' && await p.locator('#mue-elige-mapa .mue-pin-puerta').count() === 1, 'tocar el mapa pone el punto y rellena latitud y longitud');
+  await p.fill('#mue-lat', '41.95'); await p.fill('#mue-lon', '2.85'); await p.locator('#mue-lon').dispatchEvent('change'); await p.waitForTimeout(200);
+  const pp = await p.evaluate(() => { const r = document.querySelector('#mue-elige-mapa .mue-pin-puerta').getBoundingClientRect(); return r.width > 0; });
+  ok(pp, 'escribir los números a mano mueve el punto');
+  await p.click('#mue-quita-punto');
+  ok((await p.inputValue('#mue-lat')) === '' && await p.locator('#mue-elige-mapa .mue-pin-puerta').count() === 0, 'quitar el punto vacía la posición');
+  await p.mouse.click(caja.x + caja.width / 2, caja.y + caja.height / 2); await p.waitForTimeout(200);
+  await p.fill('#mue-nombre', 'Elegido en mapa'); await p.fill('#mue-truco', 'Por la puerta de atrás');
+  await p.click('#mue-form button[type=submit]'); await p.waitForTimeout(300);
+  const nueva = await p.evaluate(() => JSON.parse(localStorage.getItem('ccoo-muelles')).fichas.find(f => f.nombre === 'Elegido en mapa'));
+  ok(nueva && typeof nueva.lat === 'number' && typeof nueva.lon === 'number' && await p.locator('#mue-elige').isHidden(), 'guardar con el punto elegido: la ficha lleva su posición y el mapa se cierra');
   const c2 = await b.newContext({ viewport: { width: 360, height: 740 } });
   await c2.route('**/lib/supabase.js*', r => r.fulfill({ path: require('path').join(__dirname, 'mock-supabase.js'), contentType: 'application/javascript' }));
   await c2.addInitScript(d => { try { localStorage.setItem('ccoo-aviso-privacidad', '1'); localStorage.setItem('ccoo-muelles', d); } catch (e) {} }, JSON.stringify({ v: 1, fichas: [{ id: 'mx1', nombre: 'X', truco: 't', nivel: 'cuidado', lat: 41.9, lon: 2.8 }] }));
@@ -66,6 +83,8 @@ const { chromium } = require('playwright');
   try { await p2.locator('#bienvenida').click({ timeout: 1500 }); } catch {}
   await c2.setOffline(true); await p2.click('#mue-ver-mapa'); await p2.waitForTimeout(500);
   ok((await p2.textContent('#mue-mapa-msg')).includes('Sin internet') && await p2.locator('.mue-ficha').count() === 1, 'sin internet: mensaje claro y la libreta sigue');
+  await p2.click('#mue-nuevo'); await p2.click('#mue-elegir'); await p2.waitForTimeout(300);
+  ok((await p2.textContent('#mue-gps-msg')).includes('Sin internet') && await p2.locator('#mue-elige').isHidden(), 'sin internet: elegir en el mapa lo dice y se pueden escribir los números');
   await c2.close();
   // v190 idiomas (orden de Lorena): por defecto español aunque el móvil esté en rumano; botón «Español» para volver
   const c3 = await b.newContext({ viewport: { width: 360, height: 740 }, locale: 'ro-RO' });

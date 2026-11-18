@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 192: «Elegir en el mapa» en Accesos y muelles
+- Petición n.º 60 del padre: en el formulario de un cliente, junto a «Usar mi posición ahora», el botón «Elegir en el mapa» abre un mapa dentro de la ficha (el mismo Leaflet de `lib/` y las mismas teselas de OpenStreetMap). Se toca la puerta de camiones (o se arrastra el punto) y se rellenan latitud y longitud; «Quitar el punto» las vacía y, si se escriben a mano, el punto se mueve. Se guarda con «Guardar», como siempre, solo en el móvil. Sin internet lo dice y se pueden escribir los números. Empieza en el punto ya escrito, si no en el último cliente con posición, si no en España. Icono nuevo `mapa`. Pruebas en `pruebas/muelles-navegador.cjs`.
+
 ## Versión 191: «Mis incentivos» con fondo de billete de 100 euros
 - Petición n.º 59 del padre (solo visual): la tarjeta «Mis incentivos» de Zona Conductores y su pastilla de la segunda fila llevan un fondo de billete de 100 euros. Es un dibujo con la idea del billete (verde, ondas, arco, estrellas, «100» y «€»), no una copia del billete de verdad: `billete-100.svg` (la parte derecha) y `billete-onda.svg` (las ondas, repetidas). Variables `--billete` y `--billete-marco` en `styles.css`; en el PC, reglas en `web-pc.css`. Texto oscuro con sombra clara para que se lea igual en claro y en oscuro. Los dos SVG están en el precache de `sw.js`.
 

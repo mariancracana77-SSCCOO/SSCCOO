@@ -260,18 +260,19 @@
     for (const k of CAMPOS) $("mue-" + k).value = f && f[k] != null ? f[k] : (k === "nivel" ? "cuidado" : "");
     $("mue-form-t").textContent = f ? T("Cambiar la ficha") : T("Añadir un cliente");
     $("mue-gps-msg").textContent = "";
+    cierraElige();
     $("mue-form").hidden = false;
     $("mue-nuevo").hidden = true;
     $("mue-msg").hidden = true;
     $("mue-nombre").focus();
     $("mue-form").scrollIntoView({ block: "start", behavior: "smooth" });
   }
-  function cierra() { $("mue-form").hidden = true; $("mue-nuevo").hidden = false; editando = null; }
+  function cierra() { cierraElige(); $("mue-form").hidden = true; $("mue-nuevo").hidden = false; editando = null; }
   function guardaForm(e) {
     e.preventDefault();
     const d = {}; for (const k of CAMPOS) d[k] = $("mue-" + k).value;
     const lat = d.lat.trim(), lon = d.lon.trim();
-    if ((lat || lon) && (coord(lat, 90) === null || coord(lon, 180) === null)) { $("mue-gps-msg").textContent = T("La posición no está bien escrita: déjala vacía o pulsa «Usar mi posición ahora»."); $("mue-lat").focus(); return; }
+    if ((lat || lon) && (coord(lat, 90) === null || coord(lon, 180) === null)) { $("mue-gps-msg").textContent = T("La posición no está bien escrita: déjala vacía o pulsa «Usar mi posición ahora» o «Elegir en el mapa»."); $("mue-lat").focus(); return; }
     const antes = fichas.find(f => f.id === editando);
     if (!antes && fichas.length >= TOPE) { aviso(T("Ya tienes {n} clientes: borra alguno para poder añadir más.", { n: TOPE }), true); return; }
     const f = limpia({ ...d, id: editando || nuevoId(), cambiado: "" });
@@ -290,7 +291,80 @@
     navigator.geolocation.getCurrentPosition(p => {
       $("mue-lat").value = coord(p.coords.latitude, 90); $("mue-lon").value = coord(p.coords.longitude, 180);
       msg.textContent = T("Hecho. Comprueba que estás en la puerta de camiones.");
+      sigueNumeros();
     }, () => { msg.textContent = T("No se ha podido saber tu posición. Puedes dejarlo vacío."); }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+  }
+
+  // v192 (petición n.º 60): «Elegir en el mapa». Mapa pequeño dentro del formulario (el mismo Leaflet y las mismas
+  // teselas que «Ver el mapa»): al tocar se pone el punto (se puede arrastrar) y se rellenan latitud y longitud.
+  // No guarda nada por su cuenta: se guarda con «Guardar», como siempre. Sin internet lo dice y se pueden escribir los números.
+  let ELIGE = null;
+  function puntoForm() {
+    const lat = coord($("mue-lat").value, 90), lon = coord($("mue-lon").value, 180);
+    return lat !== null && lon !== null ? { lat, lon } : null;
+  }
+  function ponPunto(lat, lon) {
+    const L = window.L;
+    if (ELIGE.punto) ELIGE.punto.setLatLng([lat, lon]);
+    else {
+      const icon = L.divIcon({ className: "mue-pin-puerta", html: "<span></span>", iconSize: [34, 44], iconAnchor: [17, 42] });
+      ELIGE.punto = L.marker([lat, lon], { icon, draggable: true, keyboard: true, title: T("Puerta de camiones"), alt: T("Puerta de camiones") }).addTo(ELIGE.mapa);
+      ELIGE.punto.on("dragend", () => { const p = ELIGE.punto.getLatLng(); rellena(p.lat, p.lng); });
+    }
+  }
+  function rellena(lat, lon) {
+    $("mue-lat").value = coord(lat, 90); $("mue-lon").value = coord(lon, 180);
+    $("mue-gps-msg").textContent = T("Punto puesto. Comprueba que es la puerta de camiones y pulsa «Guardar».");
+  }
+  function quitaPunto() {
+    if (ELIGE?.punto) { ELIGE.punto.remove(); ELIGE.punto = null; }
+    $("mue-lat").value = ""; $("mue-lon").value = "";
+    $("mue-gps-msg").textContent = T("Punto quitado.");
+  }
+  function cierraElige() {
+    $("mue-elige").hidden = true;
+    $("mue-elegir").setAttribute("aria-expanded", "false");
+  }
+  async function elige() {
+    if (!$("mue-elige").hidden) { cierraElige(); return; }
+    const msg = $("mue-gps-msg");
+    if (navigator.onLine === false) { msg.textContent = T("Sin internet no se puede ver el mapa. Puedes escribir la latitud y la longitud a mano."); return; }
+    msg.textContent = T("Cargando el mapa…");
+    let L; try { L = await cargaLeaflet(); } catch (e) { msg.textContent = T("No se ha podido cargar el mapa. Comprueba que tienes internet o escribe la latitud y la longitud a mano."); return; }
+    msg.textContent = "";
+    $("mue-elige").hidden = false;
+    $("mue-elegir").setAttribute("aria-expanded", "true");
+    const p = puntoForm(), otro = conCoord().slice(-1)[0];
+    if (!ELIGE) {
+      const tactil = L.Browser.mobile || "ontouchstart" in window;
+      const mapa = L.map($("mue-elige-mapa"), { zoomControl: true, dragging: !tactil, tap: true });
+      mapa.attributionControl.setPrefix(false);
+      let fallos = 0;
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' })
+        .on("tileerror", () => { if (++fallos === 3) msg.textContent = T("El mapa no se ve bien: parece que no hay internet. Puedes escribir la latitud y la longitud a mano."); })
+        .on("tileload", () => { if (fallos) { fallos = 0; msg.textContent = ""; } })
+        .addTo(mapa);
+      mapa.on("click", (e) => { ponPunto(e.latlng.lat, e.latlng.lng); rellena(e.latlng.lat, e.latlng.lng); });
+      ELIGE = { mapa, punto: null };
+      if (tactil) {
+        const caja = $("mue-elige-mapa"), av = L.DomUtil.create("div", "apc-dos-dedos", caja); av.textContent = T("Usa dos dedos para mover el mapa");
+        let t = null;
+        caja.addEventListener("touchmove", (e) => { if (e.touches.length !== 1) return; av.classList.add("ver"); clearTimeout(t); t = setTimeout(() => av.classList.remove("ver"), 1600); }, { passive: true });
+      }
+    } else ELIGE.mapa.invalidateSize();
+    // Dónde empieza: el punto ya escrito; si no, el último cliente con posición; si no, España entera
+    if (p) { ponPunto(p.lat, p.lon); ELIGE.mapa.setView([p.lat, p.lon], 16); }
+    else {
+      if (ELIGE.punto) { ELIGE.punto.remove(); ELIGE.punto = null; }
+      if (otro) ELIGE.mapa.setView([otro.lat, otro.lon], 12); else ELIGE.mapa.setView([40.2, -3.6], 5);
+    }
+    $("mue-elige").scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+  // Si se escriben los números a mano con el mapa abierto, el punto se mueve
+  function sigueNumeros() {
+    if (!ELIGE || $("mue-elige").hidden) return;
+    const p = puntoForm();
+    if (p) { ponPunto(p.lat, p.lon); ELIGE.mapa.panTo([p.lat, p.lon]); }
   }
 
   // Copiar: si el móvil no deja, se enseña el texto para copiarlo a mano
@@ -312,6 +386,11 @@
   $("mue-cancela").addEventListener("click", cierra);
   $("mue-form").addEventListener("submit", guardaForm);
   $("mue-gps").addEventListener("click", posicion);
+  $("mue-elegir").addEventListener("click", elige);
+  $("mue-quita-punto").addEventListener("click", quitaPunto);
+  $("mue-elige-cierra").addEventListener("click", cierraElige);
+  $("mue-lat").addEventListener("change", sigueNumeros);
+  $("mue-lon").addEventListener("change", sigueNumeros);
   $("mue-q").addEventListener("input", lista);
   $("mue-niveles").addEventListener("click", (e) => { const b = e.target.closest("[data-nivel]"); if (!b) return; filtro = b.dataset.nivel; chips(); lista(); });
   $("mue-lista").addEventListener("click", (e) => {

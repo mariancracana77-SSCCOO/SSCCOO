@@ -3147,3 +3147,17 @@ label.cg-huecos { margin: 0 0 12px; }
 .subpest-caja.cond .subpestanas a[data-v="ganancias"] { background: url("billete-onda.svg") 0 0 / 24px 12px repeat, linear-gradient(90deg, #eef6e4, #b9d99a); border-color: #a9cf86; color: #14300b; }
 .subpest-caja.cond .subpestanas a[data-v="ganancias"]:hover { border-color: #fff; filter: brightness(1.05); }
 .subpest-caja.cond .subpestanas a[data-v="ganancias"].activa { border-color: #fff; color: #14300b; box-shadow: 0 0 0 2px #fff; }
+
+/* v192 (petición n.º 60): «Elegir en el mapa» en el formulario de Accesos y muelles */
+.mue-pos-bots { display: flex; flex-wrap: wrap; gap: 8px; }
+.mue-pos-bots .btn { flex: 1 1 200px; display: inline-flex; justify-content: center; align-items: center; gap: 8px; }
+.mue-elige { margin-top: 12px; }
+.mue-elige .zc-pista { margin: 0 0 8px; }
+.mue-elige-mapa { position: relative; height: min(55vh, 380px); min-height: 260px; border-radius: 12px; border: 1px solid var(--linea); overflow: hidden; background: #e8e4dc; margin-bottom: 10px; cursor: crosshair; }
+.mue-elige-mapa .leaflet-control-attribution { font-size: .72rem; }
+.mue-elige-mapa .leaflet-bar a { width: 40px; height: 40px; line-height: 40px; font-size: 22px; color: #15191E; background: #fff; text-decoration: none; }
+.mue-pin-puerta { background: none; border: 0; }
+.mue-pin-puerta span { position: relative; display: block; width: 34px; height: 34px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: #2b46a4; border: 3px solid #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, .45); }
+.mue-pin-puerta span::after { content: ""; position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: #fff; }
+.mue-elige-mapa .leaflet-control-attribution { background: rgba(255, 255, 255, .88); color: #15191E; }
+.mue-elige-mapa .leaflet-control-attribution a { color: #1d3f8f; }
