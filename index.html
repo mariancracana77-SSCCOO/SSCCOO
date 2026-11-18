@@ -25,10 +25,10 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="fuentes.css?v=189">
-<script src="lectura.js?v=189"></script>
-<link rel="stylesheet" href="styles.css?v=189">
-<link rel="stylesheet" href="web-pc.css?v=189" media="(min-width: 1000px) and (display-mode: browser)">
+<link rel="stylesheet" href="fuentes.css?v=190">
+<script src="lectura.js?v=190"></script>
+<link rel="stylesheet" href="styles.css?v=190">
+<link rel="stylesheet" href="web-pc.css?v=190" media="(min-width: 1000px) and (display-mode: browser)">
 </head>
 <body class="publica">
 
@@ -803,6 +803,64 @@
     </div>
     <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Los resultados se redondean a dos decimales. Para la presión de los neumáticos, manda lo que diga el fabricante.</span></p>
   </section>
+  <!-- ACCESOS Y MUELLES (Zona Conductores > Utilidades en ruta, petición n.º 58, v190): idea del archivo del padre hecha libreta personal; guarda las fichas solo en el móvil, «ccoo-muelles» (muelles.js) -->
+  <section class="vista zc-herr" id="v-muelles">
+    <h1 class="titulo-vista">Accesos y muelles</h1>
+    <p class="intro-vista">Tu libreta de clientes difíciles: por dónde se entra, cómo se maniobra y qué hay en el muelle.</p>
+    <div class="zc-aviso"><b>Lo apuntas tú y se guarda solo en este móvil.</b> No está comprobado por nadie: sigue siempre las señales y el GPS de camión.</div>
+    <div id="mue-msg" class="zc-ok" role="status" hidden></div>
+    <button type="button" class="btn zc-btn mue-nuevo" id="mue-nuevo"><svg class="icono p" aria-hidden="true"><use href="#i-mas"/></svg>Añadir un cliente</button>
+    <form class="panel zc-caja mue-form" id="mue-form" hidden novalidate>
+      <h2 id="mue-form-t">Añadir un cliente</h2>
+      <label for="mue-nombre">Cliente o empresa</label>
+      <input id="mue-nombre" type="text" maxlength="80" required autocomplete="off">
+      <label for="mue-lugar">Pueblo, polígono o país</label>
+      <input id="mue-lugar" type="text" maxlength="80" autocomplete="off">
+      <label for="mue-nivel">¿Cómo de difícil es?</label>
+      <select id="mue-nivel"><option value="dificil">Difícil</option><option value="cuidado">Con cuidado</option><option value="facil">Fácil</option></select>
+      <label for="mue-truco">Cómo entrar y maniobrar</label>
+      <textarea id="mue-truco" rows="4" maxlength="800" required placeholder="Por qué calle entrar, si hay un puente bajo, si se entra marcha atrás…"></textarea>
+      <div class="zc-dos">
+        <div><label for="mue-maniobra">Maniobra</label>
+          <select id="mue-maniobra"><option value="">No lo sé</option><option value="mano">De mano (lado del conductor)</option><option value="contramano">A contramano (lado ciego)</option><option value="atras">Marcha atrás desde la calle</option><option value="facil">Muelle amplio, fácil</option></select></div>
+        <div><label for="mue-dormir">Dormir</label>
+          <select id="mue-dormir"><option value="">No lo sé</option><option value="prohibido">Prohibido dormir fuera</option><option value="calle">Se puede dormir en la calle o el polígono</option><option value="dentro">Aparcamiento dentro del recinto</option></select></div>
+        <div><label for="mue-banos">Baños</label>
+          <select id="mue-banos"><option value="">No lo sé</option><option value="bano">Baño, sin ducha</option><option value="ducha">Baño y ducha</option><option value="no">No dejan usar el baño</option></select></div>
+        <div><label for="mue-espera">Espera</label>
+          <input id="mue-espera" type="text" maxlength="40" placeholder="Para descargar, ej.: 1 h 30 min" autocomplete="off"></div>
+      </div>
+      <label for="mue-epis">EPIs que piden</label>
+      <input id="mue-epis" type="text" maxlength="80" placeholder="Chaleco, botas, casco…" autocomplete="off">
+      <label for="mue-dibujo">Dibujo de la maniobra</label>
+      <select id="mue-dibujo"><option value="">Sin dibujo</option><option value="atras">Marcha atrás desde la calle</option><option value="porteria">Puerta de camiones distinta de las oficinas</option><option value="patio">Patio estrecho con ángulo ciego</option></select>
+      <fieldset class="mue-pos">
+        <legend>Puerta de camiones en el mapa (si quieres)</legend>
+        <button type="button" class="btn sec" id="mue-gps"><svg class="icono p" aria-hidden="true"><use href="#i-lugar"/></svg>Usar mi posición ahora</button>
+        <div class="zc-dos">
+          <div><label for="mue-lat">Latitud</label><input id="mue-lat" type="text" inputmode="decimal" autocomplete="off"></div>
+          <div><label for="mue-lon">Longitud</label><input id="mue-lon" type="text" inputmode="decimal" autocomplete="off"></div>
+        </div>
+        <p class="zc-pista" id="mue-gps-msg" aria-live="polite"></p>
+      </fieldset>
+      <div class="mue-bots"><button type="submit" class="btn zc-btn">Guardar</button><button type="button" class="btn sec" id="mue-cancela">Cancelar</button></div>
+    </form>
+    <div id="mue-buscar" hidden>
+      <input id="mue-q" class="zc-busca" type="search" placeholder="Busca: cliente, pueblo, país…" autocomplete="off" aria-label="Buscar en mi libreta">
+      <div class="zc-chips" id="mue-niveles" role="group" aria-label="Filtrar por dificultad"></div>
+      <p class="zc-pista" id="mue-cuenta" aria-live="polite"></p>
+    </div>
+    <div id="mue-lista"></div>
+    <details class="panel zc-caja mue-pasar" id="mue-pasar">
+      <summary>Pasar mi libreta a otro móvil</summary>
+      <p>Copia tu libreta y pégala aquí en el otro móvil. Lo pegado se añade: no se borra nada de lo que ya tengas.</p>
+      <button type="button" class="btn sec" id="mue-exporta"><svg class="icono p" aria-hidden="true"><use href="#i-copia"/></svg>Copiar mi libreta</button>
+      <label for="mue-texto">Pega aquí la libreta o la ficha que te han pasado</label>
+      <textarea id="mue-texto" rows="3" autocomplete="off" translate="no"></textarea>
+      <button type="button" class="btn zc-btn" id="mue-importa">Añadir lo pegado</button>
+    </details>
+  </section>
+
 
   <!-- UTILIDADES EN RUTA (Zona Conductores, v187, petición n.º 56 del padre): las 8 herramientas de UTIL en app.js (tarjetas de TARJETAS_COND) -->
   <section class="vista" id="v-utilidades">
@@ -920,25 +978,26 @@
 <div class="barra-acciones" id="barra-acciones"></div>
 <button class="arriba-btn" id="arriba" type="button" aria-label="Volver arriba" title="Volver arriba"><svg class="arriba-aro" viewBox="0 0 52 52" aria-hidden="true"><circle class="aro-fondo" cx="26" cy="26" r="23"/><circle class="aro-prog" cx="26" cy="26" r="23" pathLength="100"/></svg><span data-i="arriba"></span></button>
 
-<script src="lib/supabase.js?v=189"></script>
-<script src="iconos.js?v=189"></script>
-<script src="config.js?v=189"></script>
-<script src="render.js?v=189"></script>
-<script src="app.js?v=189"></script>
-<script src="descansos.js?v=189"></script>
-<script src="ganancias.js?v=189"></script>
-<script src="aparcar.js?v=189"></script>
-<script src="zona-idioma.js?v=189"></script>
-<script src="convenio-girona.js?v=189"></script>
-<script src="finiquito.js?v=189"></script>
-<script src="adr.js?v=189"></script>
-<script src="hora.js?v=189"></script>
-<script src="diccionario.js?v=189"></script>
-<script src="carga.js?v=189"></script>
-<script src="ejes.js?v=189"></script>
-<script src="multas.js?v=189"></script>
-<script src="sobresale.js?v=189"></script>
-<script src="conversor.js?v=189"></script>
-<script src="web-pc.js?v=189"></script>
+<script src="lib/supabase.js?v=190"></script>
+<script src="iconos.js?v=190"></script>
+<script src="config.js?v=190"></script>
+<script src="render.js?v=190"></script>
+<script src="app.js?v=190"></script>
+<script src="descansos.js?v=190"></script>
+<script src="ganancias.js?v=190"></script>
+<script src="aparcar.js?v=190"></script>
+<script src="zona-idioma.js?v=190"></script>
+<script src="convenio-girona.js?v=190"></script>
+<script src="finiquito.js?v=190"></script>
+<script src="adr.js?v=190"></script>
+<script src="hora.js?v=190"></script>
+<script src="diccionario.js?v=190"></script>
+<script src="carga.js?v=190"></script>
+<script src="ejes.js?v=190"></script>
+<script src="multas.js?v=190"></script>
+<script src="sobresale.js?v=190"></script>
+<script src="conversor.js?v=190"></script>
+<script src="muelles.js?v=190"></script>
+<script src="web-pc.js?v=190"></script>
 </body>
 </html>

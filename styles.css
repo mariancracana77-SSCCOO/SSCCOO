@@ -3050,3 +3050,59 @@ label.cg-huecos { margin: 0 0 12px; }
 .desc-promo.cond.util > .icono:first-child, .desc-promo.cond.util > .icono:last-child { color: #1d1a10; }
 .desc-promo.cond.util small { color: #3d3420; }
 .desc-promo.cond.util:hover { background: #ffdc66; }
+
+/* v190 (petición n.º 58 del padre): «Accesos y muelles» (muelles.js), libreta del conductor en Utilidades en ruta. El nivel va con forma y texto, no solo con color */
+.mue-nuevo { display: flex; justify-content: center; align-items: center; gap: 8px; margin: 0 0 14px; }
+.mue-form textarea, .mue-pasar textarea { width: 100%; }
+.mue-pos { border: 1px solid var(--linea); border-radius: 12px; padding: 10px 12px 12px; margin: 14px 0 0; min-width: 0; }
+.mue-pos legend { font-weight: 800; padding: 0 4px; }
+.mue-bots { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.mue-bots .btn { display: inline-flex; align-items: center; gap: 6px; min-height: 48px; margin: 0; text-decoration: none; }
+.mue-bots .btn.zc-btn { width: auto; flex: 1 1 160px; justify-content: center; }
+.mue-ficha { border-left: 6px solid var(--verde); padding: 14px 16px; margin: 0 0 14px; }
+.panel.mue-vacio { padding: 14px 16px; }
+.mue-ficha.cuidado { border-left-color: var(--ambar-rotulo); }
+.mue-ficha.dificil { border-left-color: var(--rojo); }
+.mue-cab h3 { margin: 6px 0 0; font-size: 1.2rem; overflow-wrap: anywhere; }
+.mue-lugar { margin: 2px 0 0; color: var(--suave); overflow-wrap: anywhere; }
+.mue-nivel { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-weight: 800; font-size: .95rem; background: var(--verde-suave); color: var(--tinta); }
+.mue-nivel.cuidado { background: var(--ambar-suave); }
+.mue-nivel.dificil { background: var(--rojo-suave); }
+.mue-s { width: 20px; height: 20px; flex: none; fill: var(--verde); stroke: none; }
+.mue-nivel.cuidado .mue-s, .zc-chip .mue-s.cuidado { fill: var(--ambar-rotulo); }
+.mue-nivel.dificil .mue-s { fill: var(--rojo); }
+.mue-s .mue-s-l { fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.zc-chip .mue-s { width: 18px; height: 18px; vertical-align: -3px; margin-right: 6px; fill: currentColor; }
+.zc-chip .mue-s .mue-s-l { stroke: var(--tarjeta); }
+.zc-chip.activa .mue-s .mue-s-l { stroke: var(--cond-azul); }
+.mue-truco { background: var(--fondo); border: 1px solid var(--linea); border-radius: 12px; padding: 10px 12px; margin: 12px 0 0; }
+.mue-truco b { color: var(--cond-azul-ic); }
+.mue-truco p { margin: 4px 0 0; overflow-wrap: anywhere; }
+.mue-datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 8px; margin: 12px 0 0; }
+.mue-datos div { min-width: 0; background: var(--fondo); border-radius: 10px; padding: 8px 10px; }
+.mue-datos dt { font-size: .85rem; color: var(--suave); font-weight: 700; }
+.mue-datos dd { margin: 2px 0 0; font-weight: 700; overflow-wrap: anywhere; }
+.mue-ver { margin-top: 12px; }
+.mue-ver summary { cursor: pointer; font-weight: 800; color: var(--cond-azul-ic); min-height: 44px; display: flex; align-items: center; }
+.mue-dib { display: block; width: 100%; height: auto; max-height: 260px; background: #1e293b; border-radius: 12px; }
+.mue-d-calle { fill: #475569; }
+.mue-d-raya { stroke: #cbd5e1; stroke-width: 1.5; stroke-dasharray: 8 6; fill: none; }
+.mue-d-nave { fill: #1e4fa8; stroke: #93c5fd; stroke-width: 1.5; }
+.mue-d-isla { fill: #16a34a; }
+.mue-d-ofi { fill: #64748b; }
+.mue-d-ok { fill: #15803d; stroke: #86efac; stroke-width: 1.5; }
+.mue-d-patio { fill: #273449; stroke: #64748b; stroke-width: 2; }
+.mue-d-col { fill: #dc2626; stroke: #fff; }
+.mue-d-bien { fill: none; stroke: #4ade80; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+.mue-d-ojo { fill: none; stroke: #fbbf24; stroke-width: 3; stroke-dasharray: 5 3; }
+.mue-d-flecha { fill: #4ade80; }
+.mue-d-flecha.ojo { fill: #fbbf24; }
+.mue-d-t { fill: #e2e8f0; font: 700 11px/1 system-ui, sans-serif; text-anchor: middle; }
+.mue-d-t.claro { fill: #fff; }
+.mue-d-t.mal { fill: #fca5a5; }
+.mue-conf { margin: 12px 0 0; }
+.btn.mue-si { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+.mue-vacio { color: var(--suave); }
+.panel.mue-vacio p { margin: 6px 0 0; }
+.mue-pasar summary { cursor: pointer; font-weight: 800; min-height: 44px; display: flex; align-items: center; }
+.mue-pasar .btn { display: inline-flex; align-items: center; gap: 6px; }

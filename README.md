@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 190: «Accesos y muelles» en Utilidades en ruta
+- Petición n.º 58 del padre (su archivo «Accesos y Muelles Difíciles», pasado por Lorena): herramienta nueva `muelles.js`, vista `#muelles` dentro de «Utilidades en ruta». Es la libreta de cada conductor: añadir, cambiar, borrar, buscar y filtrar por nivel (con forma y texto, no solo color), cómo entrar y maniobrar, dormir, baños, espera, EPIs, dibujo genérico de la maniobra, «Usar mi posición ahora» (solo si lo pide) y enlace al mapa. Se guarda solo en el móvil (`ccoo-muelles`); se puede copiar una ficha para un compañero y pasar la libreta a otro móvil (lo pegado se añade, no se borra nada). Sin los 5 clientes inventados del archivo, sin autores ni coordenadas falsas, sin emojis ni CDN. Icono `muelle`, grupo `muelles` en la función `traducir` y prueba `pruebas/muelles.cjs`.
+
 ## Versión 189: sin pantalla de bienvenida en el ordenador
 - Lo pidió Lorena: en la vista web del ordenador (`web-pc.css`/`web-pc.js`) ya no sale la pantalla de bienvenida (logo que se forma, camión que llega y logo que vuela a la cabecera). Las demás animaciones siguen. El móvil y la app siguen igual.
 

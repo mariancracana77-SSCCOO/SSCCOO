@@ -11,6 +11,7 @@
 // v178 (petición n.º 46 del padre): grupo «carga» (Simulador de carga). Copia de la v177 en privado.respaldo_funciones (nombre traducir-v177).
 // v181 (petición n.º 50 del padre): grupo «ejes» (Peso por ejes y estiba). Copia de la v178 en privado.respaldo_funciones (nombre traducir-v178).
 // v182 (petición n.º 49 del padre): grupo «multas» (Multas en Europa), con los textos visibles de la tabla multas_paises.
+// v190 (petición n.º 58 del padre): grupo «muelles» (Accesos y muelles). Copia de la v186 en privado.respaldo_funciones (nombre traducir-v186).
 // v186 (petición n.º 55 del padre): grupos «sobresale» (Cargas que sobresalen) y «conversor» (Conversor rápido). Copia de la v182 en privado.respaldo_funciones (nombre traducir-v182).
 // Además de T("...") sacan las cadenas de entre /* textos */ y /* fin textos */ de sus .js y el texto que se ve en su
 // sección de index.html («textosVista»: misma forma de partirlo que zona-idioma.js en la web). Copia de antes en privado.respaldo_funciones (id 14).
@@ -43,6 +44,7 @@ const GRUPOS: Record<string, { archivo: string; tema: string; mas?: string[]; vi
   multas: { archivo: "multas.js", vista: "v-multas", tema: "una guía para conductores de camión con las multas de tráfico y de transporte más habituales en cada país de Europa (velocidad, tacógrafo, tiempos de conducción y descanso, exceso de peso, alcohol, móvil, peajes y viñetas, zonas de bajas emisiones, pago en el acto e inmovilización del camión)" },
   sobresale: { archivo: "sobresale.js", vista: "v-sobresale", tema: "una herramienta para conductores de camión: cuánto puede sobresalir una carga indivisible por delante, por detrás o por los lados según el artículo 15 del Reglamento General de Circulación de España, y cómo se señaliza (panel V-20, luz roja detrás, luz blanca delante, autorización de transporte especial). Usa las palabras del transporte en ese idioma" },
   conversor: { archivo: "conversor.js", vista: "v-conversor", tema: "un conversor de unidades para conductores de camión (presión de neumáticos en bar y PSI, kilómetros y millas, km/h y mph, kilos y libras, litros y galones del Reino Unido y de Estados Unidos, grados Celsius y Fahrenheit, metros y pies, centímetros y pulgadas). Deja igual los símbolos de las unidades (bar, PSI, km/h, mph, °C, °F)" },
+  muelles: { archivo: "muelles.js", vista: "v-muelles", tema: "una libreta personal para conductores de camión con los clientes y muelles de descarga difíciles: nivel de dificultad, cómo entrar y maniobrar (de mano, a contramano o lado ciego, marcha atrás), si se puede dormir, baños y duchas, espera para descargar, EPIs (equipos de protección individual) y dibujos de la maniobra. EPIs y GPS se dejan como siglas" },
 };
 const CORS = {
   "Access-Control-Allow-Origin": "*",

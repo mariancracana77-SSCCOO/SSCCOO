@@ -1,0 +1,30 @@
+// v190 (petición n.º 58): «Accesos y muelles» (muelles.js) sin navegador: limpiar fichas, pasar la libreta a otro
+// móvil (exporta/importa), buscar y el enlace del mapa. Uso: node pruebas/muelles.cjs
+const fs = require("fs"), path = require("path");
+global.window = global; global.document = { getElementById: () => null };
+new Function(fs.readFileSync(path.join(__dirname, "..", "muelles.js"), "utf8"))();
+const M = window.MuellesCuentas;
+let mal = 0;
+const ok = (c, t) => { console.log((c ? "OK  " : "MAL ") + t); if (!c) mal++; };
+ok(M.limpia({ nombre: "", truco: "x" }) === null, "sin nombre no vale");
+ok(M.limpia({ nombre: "A", truco: "  " }) === null, "sin truco no vale");
+const f = M.limpia({ nombre: "  Nave 3  ", truco: "Entra por detrás", nivel: "raro", maniobra: "otra", lat: "41,98", lon: "2.82", extra: "<script>" });
+ok(f && f.nombre === "Nave 3" && f.nivel === "cuidado" && f.maniobra === "" && f.lat === 41.98 && f.lon === 2.82 && !("extra" in f), "limpia recorta, valida opciones y coordenadas");
+ok(M.limpia({ nombre: "A", truco: "b", lat: "200", lon: "2" }).lat === undefined, "coordenadas imposibles fuera");
+ok(M.limpia({ nombre: "x".repeat(500), truco: "b" }).nombre.length === 80, "nombre como mucho 80");
+ok(M.mapa(f) === "https://www.google.com/maps/search/?api=1&query=41.98,2.82" && M.mapa({}) === "", "enlace del mapa solo con coordenadas");
+const l = [f, M.limpia({ nombre: "Almacén Sur", lugar: "Lleida", truco: "Puerta 4", nivel: "dificil" })];
+ok(M.busca(l, "almacen", "").length === 1 && M.busca(l, "", "dificil").length === 1 && M.busca(l, "nave lleida", "").length === 0, "buscar sin acentos y por nivel");
+const t = M.exporta(l);
+ok(t.startsWith(M.PREFIJO), "exporta con su prefijo");
+let r = M.importa("Mira esto:\n" + t, []);
+ok(r.nuevas === 2 && r.lista.length === 2, "importa en un móvil vacío");
+r = M.importa(t, l);
+ok(r.nuevas === 0 && r.repes === 2 && r.lista.length === 2, "lo repetido no se duplica");
+ok(M.importa("hola", l).error === "codigo" && M.importa(M.PREFIJO + "{mal", l).error === "codigo", "texto que no es una libreta");
+r = M.importa(M.PREFIJO + JSON.stringify([{ id: f.id, nombre: "Otro", truco: "Otro truco" }]), l);
+ok(r.nuevas === 1 && new Set(r.lista.map(x => x.id)).size === 3, "id repetido con otra ficha: se le da otro id y no se pisa nada");
+const muchas = Array.from({ length: M.TOPE }, (_, i) => M.limpia({ nombre: "C" + i, truco: "t" }));
+r = M.importa(M.exporta([M.limpia({ nombre: "Nueva", truco: "t" })]), muchas);
+ok(r.nuevas === 0 && r.sobran === 1, "con la libreta llena no se añade más");
+process.exit(mal ? 1 : 0);
