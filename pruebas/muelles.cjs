@@ -27,4 +27,7 @@ ok(r.nuevas === 1 && new Set(r.lista.map(x => x.id)).size === 3, "id repetido co
 const muchas = Array.from({ length: M.TOPE }, (_, i) => M.limpia({ nombre: "C" + i, truco: "t" }));
 r = M.importa(M.exporta([M.limpia({ nombre: "Nueva", truco: "t" })]), muchas);
 ok(r.nuevas === 0 && r.sobran === 1, "con la libreta llena no se añade más");
+const r2 = M.rutas(f);
+ok(r2 && r2.google === "https://www.google.com/maps/dir/?api=1&destination=41.98,2.82&travelmode=driving" && r2.waze === "https://waze.com/ul?ll=41.98,2.82&navigate=yes" && r2.osm.startsWith("https://www.openstreetmap.org/directions?to=41.98%2C2.82"), "«Ir allí»: Google Maps, Waze y OpenStreetMap con https");
+ok(M.rutas({ nombre: "A", truco: "b" }) === null, "sin posición no hay «Ir allí»");
 process.exit(mal ? 1 : 0);

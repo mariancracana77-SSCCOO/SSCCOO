@@ -61,11 +61,18 @@
   };
   // Enlace al mapa solo con números ya comprobados (y aun así pasa por urlSegura al pintarlo)
   const mapa = (f) => f.lat != null && f.lon != null ? `https://www.google.com/maps/search/?api=1&query=${f.lat},${f.lon}` : "";
-  window.MuellesCuentas = { limpia, exporta, importa, busca, mapa, TOPE, PREFIJO };
+  // v190 (Lorena: «añade la 1 y la 2»): «Ir allí» con la app que elija el conductor. Solo enlaces https (urlSegura no deja
+  // geo:): en el móvil, Google Maps y Waze abren su app si está instalada.
+  const rutas = (f) => f.lat == null || f.lon == null ? null : {
+    google: `https://www.google.com/maps/dir/?api=1&destination=${f.lat},${f.lon}&travelmode=driving`,
+    waze: `https://waze.com/ul?ll=${f.lat},${f.lon}&navigate=yes`,
+    osm: `https://www.openstreetmap.org/directions?to=${f.lat}%2C${f.lon}`,
+  };
+  window.MuellesCuentas = { limpia, exporta, importa, busca, mapa, rutas, TOPE, PREFIJO };
 
   const $ = (i) => document.getElementById(i);
   if (!$("v-muelles")) return;
-  const Z = typeof ZonaIdioma === "function" ? ZonaIdioma("muelles", "v-muelles", () => { chips(); lista(); }) : { T: (x, v) => x.replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m) };
+  const Z = typeof ZonaIdioma === "function" ? ZonaIdioma("muelles", "v-muelles", () => { leyenda(); chips(); lista(); }) : { T: (x, v) => x.replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m) };
   const T = Z.T;
   /* textos */
   const NOMBRE_NIVEL = { dificil: "Difícil", cuidado: "Con cuidado", facil: "Fácil" };
@@ -138,7 +145,7 @@
   function ficha(f) {
     const datos = ["maniobra", "dormir", "banos"].filter(k => f[k]).map(k => [k, T(NOMBRE_OPC[k][f[k]])])
       .concat(["espera", "epis"].filter(k => f[k]).map(k => [k, f[k]]));
-    const m = mapa(f);
+    const r = rutas(f);
     const conf = borrando === f.id ? `<div class="zc-aviso mue-conf" role="alert"><b>${esc(T("¿Borrar esta ficha? No se puede deshacer."))}</b>
       <div class="mue-bots"><button type="button" class="btn mue-si" data-si="${esc(f.id)}">${esc(T("Sí, borrarla"))}</button><button type="button" class="btn sec" data-no="1">${esc(T("No"))}</button></div></div>` : "";
     return `<article class="panel mue-ficha ${f.nivel}" id="mue-${esc(f.id)}">
@@ -146,8 +153,11 @@
       <div class="mue-truco"><b>${esc(T("Cómo entrar y maniobrar"))}</b><p translate="no">${esc(f.truco).replace(/\n/g, "<br>")}</p></div>
       ${datos.length ? `<dl class="mue-datos">${datos.map(([k, v]) => `<div><dt>${esc(T(NOMBRE_DATO[k]))}</dt><dd${["espera", "epis"].includes(k) ? ' translate="no"' : ""}>${esc(v)}</dd></div>`).join("")}</dl>` : ""}
       ${f.dibujo ? `<details class="mue-ver"><summary>${esc(T("Ver el dibujo de la maniobra"))}</summary>${dibujo(f.dibujo)}<p class="zc-pista">${esc(T("Dibujo de ejemplo: no es el plano de este cliente."))}</p></details>` : ""}
+      ${r ? `<details class="mue-ir"><summary>${icono("lugar", "p")}${esc(T("Ir allí"))}</summary>
+        <p class="zc-pista">${esc(T("Elige con qué app quieres ir. Sigue siempre las señales y el GPS de camión: estas apps pueden llevarte por donde no cabe un camión."))}</p>
+        <div class="mue-bots">${[["google", "Google Maps"], ["waze", "Waze"], ["osm", "OpenStreetMap"]].map(([k, n]) => `<a class="btn sec" href="${esc(urlSegura(r[k]))}" target="_blank" rel="noopener noreferrer" translate="no">${esc(n)}</a>`).join("")}</div></details>` : ""}
       <div class="mue-bots">
-        ${m ? `<a class="btn sec" href="${esc(urlSegura(m))}" target="_blank" rel="noopener noreferrer">${icono("lugar", "p")}${esc(T("Ver en el mapa"))}</a>` : ""}
+        ${r ? `<button type="button" class="btn sec" data-vermapa="${esc(f.id)}">${icono("lugar", "p")}${esc(T("Ver en el mapa"))}</button>` : ""}
         <button type="button" class="btn sec" data-copia="${esc(f.id)}">${icono("copia", "p")}${esc(T("Copiar para un compañero"))}</button>
         <button type="button" class="btn sec" data-edita="${esc(f.id)}">${icono("editar", "p")}${esc(T("Cambiar"))}</button>
         <button type="button" class="btn sec" data-borra="${esc(f.id)}">${icono("borrar", "p")}${esc(T("Borrar"))}</button>
@@ -160,6 +170,87 @@
       ? `<div class="panel mue-vacio"><b>${esc(T("Tu libreta está vacía."))}</b><p>${esc(T("Cuando descargues en un sitio difícil, apunta aquí cómo se entra para la próxima vez."))}</p></div>`
       : l.length ? l.map(ficha).join("") : `<p class="mue-vacio">${esc(T("No hay ningún cliente con eso. Prueba con otra palabra o quita el filtro."))}</p>`;
     $("mue-buscar").hidden = !fichas.length;
+    cajaMapa();
+  }
+
+  // ---------- Mapa de mis clientes (v190, Lorena: «añade la 1 y la 2») ----------
+  // Como en «Aparcamientos en mi ruta»: Leaflet alojado aquí (lib/leaflet.js) y el mapa de OpenStreetMap
+  // (tile.openstreetmap.org, ya en la CSP). Solo se carga al tocar «Ver el mapa»; sin internet lo dice y la libreta sigue.
+  // Solo salen las fichas con posición apuntada (nunca se inventa una). Al tocar un punto se abre su ficha.
+  let LEAF = null, MAPA = null;
+  const conCoord = () => fichas.filter(f => f.lat != null && f.lon != null);
+  function cargaLeaflet() {
+    if (window.L && window.L.map) return Promise.resolve(window.L);
+    if (LEAF) return LEAF;
+    return (LEAF = new Promise((ok, mal) => {
+      const v = typeof VERSION_WEB !== "undefined" ? VERSION_WEB : "";
+      if (!document.querySelector('link[href^="lib/leaflet.css"]')) { const css = document.createElement("link"); css.rel = "stylesheet"; css.href = "lib/leaflet.css?v=" + v; document.head.appendChild(css); }
+      const js = document.createElement("script"); js.src = "lib/leaflet.js?v=" + v;
+      js.onload = () => ok(window.L); js.onerror = () => { LEAF = null; js.remove(); mal(new Error("sin-mapa")); };
+      document.head.appendChild(js);
+    }));
+  }
+  function mapaMsg(t) { const m = $("mue-mapa-msg"); m.textContent = t || ""; m.hidden = !t; }
+  function leyenda() {
+    $("mue-ley").innerHTML = NIVELES.map(n => `<li class="mue-nivel ${n}">${senal(n)}${esc(T(NOMBRE_NIVEL[n]))}</li>`).join("");
+  }
+  // Se llama cada vez que cambia la libreta: esconde la caja si no hay posiciones y repinta los puntos si el mapa está abierto
+  function cajaMapa() {
+    const l = conCoord();
+    $("mue-mapa-caja").hidden = !l.length;
+    if (!l.length && MAPA) { $("mue-mapa").hidden = true; }
+    if (MAPA && !$("mue-mapa").hidden) puntos(false);
+  }
+  function puntos(encuadra) {
+    const L = window.L, l = conCoord();
+    MAPA.capa.clearLayers();
+    for (const f of l) {
+      const nombre = f.nombre.length > 22 ? f.nombre.slice(0, 21) + "…" : f.nombre;
+      const ic = L.divIcon({ className: "mue-pin-w", html: `<span class="mue-pin ${f.nivel}">${senal(f.nivel)}<b translate="no">${esc(nombre)}</b></span>`, iconSize: null, iconAnchor: [14, 14] });
+      const mk = L.marker([f.lat, f.lon], { icon: ic, title: f.nombre + " · " + T(NOMBRE_NIVEL[f.nivel]), alt: f.nombre, keyboard: true, riseOnHover: true });
+      mk.on("click", () => abreFicha(f.id));
+      mk.addTo(MAPA.capa);
+    }
+    if (encuadra && l.length) {
+      if (l.length === 1) MAPA.mapa.setView([l[0].lat, l[0].lon], 14);
+      else MAPA.mapa.fitBounds(l.map(f => [f.lat, f.lon]), { padding: [40, 40], maxZoom: 14 });
+    }
+  }
+  async function verMapa(centro) {
+    const caja = $("mue-mapa");
+    if (navigator.onLine === false) { mapaMsg(T("Sin internet no se puede ver el mapa. La libreta sí funciona.")); return; }
+    mapaMsg(T("Cargando el mapa…"));
+    let L; try { L = await cargaLeaflet(); } catch (e) { mapaMsg(T("No se ha podido cargar el mapa. Comprueba que tienes internet. La libreta sí funciona.")); return; }
+    mapaMsg("");
+    caja.hidden = false;
+    $("mue-ver-mapa").hidden = true;
+    if (!MAPA) {
+      const tactil = L.Browser.mobile || "ontouchstart" in window;
+      const mapa = L.map(caja, { zoomControl: true, dragging: !tactil, tap: true });
+      mapa.attributionControl.setPrefix(false);
+      let fallos = 0;
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' })
+        .on("tileerror", () => { if (++fallos === 3) mapaMsg(T("El mapa no se ve bien: parece que no hay internet. Los puntos de tus clientes siguen ahí.")); })
+        .on("tileload", () => { if (fallos) { fallos = 0; mapaMsg(""); } })
+        .addTo(mapa);
+      MAPA = { mapa, capa: L.layerGroup().addTo(mapa) };
+      if (tactil) {
+        const av = L.DomUtil.create("div", "apc-dos-dedos", caja); av.textContent = T("Usa dos dedos para mover el mapa");
+        let t = null;
+        caja.addEventListener("touchmove", (e) => { if (e.touches.length !== 1) return; av.classList.add("ver"); clearTimeout(t); t = setTimeout(() => av.classList.remove("ver"), 1600); }, { passive: true });
+      }
+      puntos(true);
+    } else { MAPA.mapa.invalidateSize(); puntos(!centro); }
+    if (centro) MAPA.mapa.setView([centro.lat, centro.lon], 15);
+  }
+  // Desde el mapa a la ficha: quita búsqueda y filtro si la escondían, la enseña y la resalta un momento
+  function abreFicha(id) {
+    let el = $("mue-" + id);
+    if (!el) { filtro = ""; $("mue-q").value = ""; chips(); lista(); el = $("mue-" + id); }
+    if (!el) return;
+    el.scrollIntoView({ block: "start", behavior: "smooth" });
+    el.classList.add("mue-resalta"); setTimeout(() => el.classList.remove("mue-resalta"), 2200);
+    el.setAttribute("tabindex", "-1"); el.focus({ preventScroll: true });
   }
 
   // Formulario (añadir o cambiar)
@@ -215,7 +306,8 @@
     return l.join("\n") + "\n\n" + T("Apuntado por un conductor, sin comprobar. Para meterlo en tu libreta de la web de CCOO:") + "\n" + exporta([f]);
   }
 
-  lee(); chips(); lista();
+  lee(); leyenda(); chips(); lista();
+  $("mue-ver-mapa").addEventListener("click", () => verMapa(null));
   $("mue-nuevo").addEventListener("click", () => abre(null));
   $("mue-cancela").addEventListener("click", cierra);
   $("mue-form").addEventListener("submit", guardaForm);
@@ -225,6 +317,7 @@
   $("mue-lista").addEventListener("click", (e) => {
     const b = e.target.closest("button"); if (!b) return;
     const f = fichas.find(x => x.id === (b.dataset.copia || b.dataset.edita || b.dataset.borra || b.dataset.si));
+    if (b.dataset.vermapa) { const g = fichas.find(x => x.id === b.dataset.vermapa); if (g) { $("mue-mapa-caja").scrollIntoView({ block: "start", behavior: "smooth" }); verMapa(g); } return; }
     if (b.dataset.edita && f) abre(f);
     else if (b.dataset.copia && f) copia(textoFicha(f), T("Copiado. Pégalo en un mensaje para tu compañero."));
     else if (b.dataset.borra && f) { borrando = f.id; lista(); $("mue-lista").querySelector(".mue-si")?.focus(); }

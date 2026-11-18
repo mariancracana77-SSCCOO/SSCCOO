@@ -3052,6 +3052,7 @@ label.cg-huecos { margin: 0 0 12px; }
 .desc-promo.cond.util:hover { background: #ffdc66; }
 
 /* v190 (petición n.º 58 del padre): «Accesos y muelles» (muelles.js), libreta del conductor en Utilidades en ruta. El nivel va con forma y texto, no solo con color */
+.mue-nuevo[hidden], .mue-mapa-caja .zc-btn[hidden] { display: none; }
 .mue-nuevo { display: flex; justify-content: center; align-items: center; gap: 8px; margin: 0 0 14px; }
 .mue-form textarea, .mue-pasar textarea { width: 100%; }
 .mue-pos { border: 1px solid var(--linea); border-radius: 12px; padding: 10px 12px 12px; margin: 14px 0 0; min-width: 0; }
@@ -3061,7 +3062,7 @@ label.cg-huecos { margin: 0 0 12px; }
 .mue-bots .btn.zc-btn { width: auto; flex: 1 1 160px; justify-content: center; }
 .mue-ficha { border-left: 6px solid var(--verde); padding: 14px 16px; margin: 0 0 14px; }
 .panel.mue-vacio { padding: 14px 16px; }
-.mue-ficha.cuidado { border-left-color: var(--ambar-rotulo); }
+.mue-ficha.cuidado { border-left-color: var(--ambar); }
 .mue-ficha.dificil { border-left-color: var(--rojo); }
 .mue-cab h3 { margin: 6px 0 0; font-size: 1.2rem; overflow-wrap: anywhere; }
 .mue-lugar { margin: 2px 0 0; color: var(--suave); overflow-wrap: anywhere; }
@@ -3069,7 +3070,7 @@ label.cg-huecos { margin: 0 0 12px; }
 .mue-nivel.cuidado { background: var(--ambar-suave); }
 .mue-nivel.dificil { background: var(--rojo-suave); }
 .mue-s { width: 20px; height: 20px; flex: none; fill: var(--verde); stroke: none; }
-.mue-nivel.cuidado .mue-s, .zc-chip .mue-s.cuidado { fill: var(--ambar-rotulo); }
+.mue-nivel.cuidado .mue-s, .zc-chip .mue-s.cuidado { fill: var(--ambar); }
 .mue-nivel.dificil .mue-s { fill: var(--rojo); }
 .mue-s .mue-s-l { fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .zc-chip .mue-s { width: 18px; height: 18px; vertical-align: -3px; margin-right: 6px; fill: currentColor; }
@@ -3106,3 +3107,24 @@ label.cg-huecos { margin: 0 0 12px; }
 .panel.mue-vacio p { margin: 6px 0 0; }
 .mue-pasar summary { cursor: pointer; font-weight: 800; min-height: 44px; display: flex; align-items: center; }
 .mue-pasar .btn { display: inline-flex; align-items: center; gap: 6px; }
+/* v190: «Ir allí» y mapa de mis clientes (Leaflet como en Aparcamientos) */
+.mue-ir { margin-top: 12px; border: 1px solid var(--linea); border-radius: 12px; padding: 0 12px; }
+.mue-ir summary { cursor: pointer; font-weight: 800; color: var(--cond-azul-ic); min-height: 48px; display: flex; align-items: center; gap: 8px; }
+.mue-ir[open] { padding-bottom: 12px; }
+.mue-ir .zc-pista { margin: 0; }
+.mue-ley { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 10px 0 0; }
+.mue-mapa-caja .zc-btn { display: flex; justify-content: center; align-items: center; gap: 8px; }
+.mue-mapa-caja .zc-aviso { margin: 12px 0 0; }
+.mue-mapa { position: relative; height: min(60vh, 460px); min-height: 300px; margin-top: 12px; border-radius: 12px; border: 1px solid var(--linea); overflow: hidden; background: #e8e4dc; }
+.mue-mapa .leaflet-control-attribution { font-size: .72rem; }
+.mue-mapa .leaflet-bar a { width: 40px; height: 40px; line-height: 40px; font-size: 22px; color: #15191E; background: #fff; text-decoration: none; }
+.mue-pin-w { background: none; border: 0; }
+.mue-pin { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px 3px 3px; border-radius: 999px; background: #fff; color: #15191E; border: 2px solid var(--verde); box-shadow: 0 1px 4px rgba(0, 0, 0, .35); white-space: nowrap; font: 700 13px/1.1 system-ui, sans-serif; }
+.mue-pin.cuidado { border-color: var(--ambar); }
+.mue-pin.dificil { border-color: var(--rojo); }
+.mue-pin .mue-s { width: 22px; height: 22px; }
+.mue-pin.cuidado .mue-s { fill: var(--ambar); }
+.mue-pin.dificil .mue-s { fill: var(--rojo); }
+.mue-ficha.mue-resalta { outline: 4px solid var(--cond-azul-ic); outline-offset: 2px; }
+.mue-ficha:focus { outline: none; }
+.mue-ficha.mue-resalta:focus { outline: 4px solid var(--cond-azul-ic); }
