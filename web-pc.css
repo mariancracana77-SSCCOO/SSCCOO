@@ -510,3 +510,10 @@ body.publica a { text-underline-offset: 4px; }
 #bienvenida { display: none !important; }
 :root .cab-logo.bv-oculto { opacity: 1; }
 :root .cab-logo.bv-aterriza { animation: none; }
+/* v191 (petición n.º 59 del padre): «Mis incentivos» como un billete de 100 euros también en el PC (como «Utilidades en ruta» en amarillo) */
+:root:root #v-apartado .desc-promo[href="#ganancias"], :root:root #v-apartado .desc-promo[href="#ganancias"]:hover { background: var(--billete); box-shadow: var(--billete-marco); border-radius: 10px; border-bottom: 0; padding: 18px 16px; margin-top: 10px; color: #14300b; }
+:root:root #v-apartado .desc-promo[href="#ganancias"] small { color: #24461a; }
+:root:root .subpest-caja.cond .subpestanas a[data-v="ganancias"] { background: url("billete-onda.svg") 0 0 / 24px 12px repeat, linear-gradient(90deg, #eef6e4, #b9d99a); color: #14300b; padding: 9px 14px; margin: 3px 0; border-bottom: 0; }
+:root:root .subpest-caja.cond .subpestanas a[data-v="ganancias"]:hover { color: #14300b; filter: brightness(1.05); }
+:root:root .subpest-caja.cond .subpestanas a[data-v="ganancias"].activa { color: #14300b; box-shadow: inset 0 -3px 0 #14300b; }
+

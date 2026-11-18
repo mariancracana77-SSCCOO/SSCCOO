@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 140">
+  <!-- v191 (petición n.º 59 del padre): dibujo de la parte derecha del billete de 100 euros para el fondo de «Mis incentivos»
+       («100», €, un arco y estrellas). Es un DIBUJO con la idea del billete, no una copia del billete de verdad.
+       El fondo verde con ondas va aparte (billete-onda.svg), para que cubra la tarjeta entera. -->
+  <defs>
+    <linearGradient id="f" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#a9cf86" stop-opacity="0"/>
+      <stop offset=".45" stop-color="#a9cf86" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#93c26c" stop-opacity=".9"/>
+    </linearGradient>
+  </defs>
+  <rect width="300" height="140" fill="url(#f)"/>
+  <g fill="none" stroke="#3f6e27" opacity=".3">
+    <path d="M30 140 V78 A38 38 0 0 1 106 78 V140" stroke-width="4"/>
+    <path d="M41 140 V82 A27 27 0 0 1 95 82 V140" stroke-width="1.6"/>
+  </g>
+  <g fill="#3f6e27" opacity=".35">
+    <circle cx="68" cy="20" r="2.2"/><circle cx="81" cy="24" r="2.2"/><circle cx="90" cy="33" r="2.2"/><circle cx="93" cy="46" r="2.2"/>
+    <circle cx="55" cy="24" r="2.2"/><circle cx="46" cy="33" r="2.2"/><circle cx="43" cy="46" r="2.2"/>
+  </g>
+  <text x="248" y="66" text-anchor="end" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="800" font-size="62" fill="#2f5a1c" opacity=".75">100</text>
+  <text x="248" y="128" text-anchor="end" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="800" font-size="56" fill="#2f5a1c" opacity=".5">€</text>
+</svg>
