@@ -10,6 +10,21 @@
 // juntados) es la misma que la de la función (herramientas/funciones/traducir.ts, «textosVista»). Si se cambia una, la otra.
 // Lo único que guarda en el móvil es la caché de la traducción («ccoo-textos-<herramienta>», como Mis descansos).
 (function () {
+  // v190 (orden de Lorena: «que esté en español, pero con opción de otros idiomas»): junto a cada selector de idioma de
+  // Zona Conductores sale el botón «Español» para volver de un toque. Solo se ve si hay otro idioma elegido. La elección
+  // sigue en «ccoo-mi-idioma» (solo el idioma; no toca los datos de las herramientas) y por defecto es SIEMPRE español:
+  // nunca se mira el idioma del móvil.
+  const ponVolver = (label) => {
+    if (!label || label.nextElementSibling?.classList.contains("vuelve-es")) return;
+    label.insertAdjacentHTML("afterend", `<button type="button" class="vuelve-es" translate="no" lang="es" dir="ltr" hidden>Español</button>`);
+    label.nextElementSibling.hidden = !(typeof miIdioma === "function" && miIdioma());
+  };
+  const pintaVolver = () => document.querySelectorAll(".vuelve-es").forEach(b => { b.hidden = !miIdioma(); });
+  window.ZonaVolverEs = ponVolver;
+  document.querySelectorAll(".desc-idioma").forEach(ponVolver);
+  addEventListener("mi-idioma", pintaVolver);
+  document.addEventListener("click", (ev) => { if (ev.target.closest?.(".vuelve-es")) { ponMiIdioma(""); pintaVolver(); } });
+  setTimeout(pintaVolver, 0);
   const EN_LINEA = { B: "**", STRONG: "**", I: "", EM: "" };
   const SALTA = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, INPUT: 1, TEMPLATE: 1, svg: 1, SVG: 1 };
   const ATRIBUTOS = ["placeholder", "aria-label", "title"];
@@ -45,6 +60,7 @@
     caja.className = "zc-idioma"; caja.setAttribute("translate", "no");
     caja.innerHTML = `<label class="desc-idioma"><svg class="icono p" aria-hidden="true"><use href="#i-idioma"/></svg><span>Idioma · Language</span><select aria-label="Idioma · Language"><option value="">Español</option>${Object.entries(IDIOMAS).map(([k, n]) => `<option value="${esc(k)}">${esc(n)}</option>`).join("")}</select></label><p class="msg" role="status"></p>`;
     (intro || vista.firstElementChild).after(caja);
+    ponVolver(caja.querySelector(".desc-idioma"));
     const sel = caja.querySelector("select"), msg = caja.querySelector(".msg");
     sel.value = miIdioma();
     sel.addEventListener("change", () => ponMiIdioma(sel.value));

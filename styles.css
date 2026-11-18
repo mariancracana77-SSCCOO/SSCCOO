@@ -3128,3 +3128,9 @@ label.cg-huecos { margin: 0 0 12px; }
 .mue-ficha.mue-resalta { outline: 4px solid var(--cond-azul-ic); outline-offset: 2px; }
 .mue-ficha:focus { outline: none; }
 .mue-ficha.mue-resalta:focus { outline: 4px solid var(--cond-azul-ic); }
+
+/* v190: idiomas en Zona Conductores (orden de Lorena): botón «Español» para volver y el nombre del selector siempre visible */
+.vuelve-es { min-height: 40px; padding: 6px 14px; border-radius: 10px; border: 1.5px solid var(--rojo-ic); background: var(--tarjeta); color: var(--tinta); font: inherit; font-weight: 700; cursor: pointer; }
+.vuelve-es[hidden] { display: none; }
+@media (max-width: 420px) { .zc-idioma .desc-idioma > span, .apc-guia-idioma > span { display: inline; } }
+.mue-no-traduce[hidden] { display: none; }

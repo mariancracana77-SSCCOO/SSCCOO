@@ -67,6 +67,25 @@ const { chromium } = require('playwright');
   await c2.setOffline(true); await p2.click('#mue-ver-mapa'); await p2.waitForTimeout(500);
   ok((await p2.textContent('#mue-mapa-msg')).includes('Sin internet') && await p2.locator('.mue-ficha').count() === 1, 'sin internet: mensaje claro y la libreta sigue');
   await c2.close();
+  // v190 idiomas (orden de Lorena): por defecto español aunque el móvil esté en rumano; botón «Español» para volver
+  const c3 = await b.newContext({ viewport: { width: 360, height: 740 }, locale: 'ro-RO' });
+  await c3.route('**/lib/supabase.js*', r => r.fulfill({ path: require('path').join(__dirname, 'mock-supabase.js'), contentType: 'application/javascript' }));
+  await c3.addInitScript(() => { try { localStorage.setItem('ccoo-aviso-privacidad', '1'); } catch (e) {} });
+  const p3 = await c3.newPage(); p3.on('pageerror', e => errs.push('idioma: ' + e.message));
+  await p3.goto((process.env.BASE || 'http://localhost:8765/') + '#muelles'); await p3.waitForTimeout(1500);
+  try { await p3.locator('#bienvenida').click({ timeout: 1500 }); } catch {}
+  const sel = p3.locator('#v-muelles .zc-idioma select');
+  ok(await sel.inputValue() === '' && await p3.locator('#v-muelles .vuelve-es').isHidden() && await p3.locator('#mue-no-traduce').isHidden(), 'móvil en rumano: la herramienta sale en español');
+  ok((await sel.locator('option').allTextContents()).includes('Română'), 'cada idioma con su nombre en su idioma');
+  await sel.selectOption('ro'); await p3.waitForTimeout(600);
+  ok(await p3.evaluate(() => localStorage.getItem('ccoo-mi-idioma')) === 'ro' && await p3.locator('#v-muelles .vuelve-es').isVisible() && await p3.locator('#mue-no-traduce').isVisible(), 'rumano: se recuerda, sale «Español» y el aviso de que la libreta no se traduce');
+  await p3.selectOption('#v-muelles .zc-idioma select', 'ar'); await p3.waitForTimeout(600);
+  ok(await p3.getAttribute('#v-muelles', 'dir') === 'rtl', 'árabe de derecha a izquierda');
+  await p3.click('#v-muelles .vuelve-es'); await p3.waitForTimeout(600);
+  ok(await p3.evaluate(() => localStorage.getItem('ccoo-mi-idioma')) === null && await sel.inputValue() === '' && await p3.locator('#v-muelles .vuelve-es').isHidden() && await p3.getAttribute('#v-muelles', 'dir') !== 'rtl', '«Español» vuelve al español y lo recuerda');
+  await p3.goto((process.env.BASE || 'http://localhost:8765/') + '#descansos'); await p3.waitForTimeout(800);
+  ok(await p3.locator('#v-descansos .vuelve-es').count() === 1, '«Español» también en Mis descansos');
+  await c3.close();
   ok(errs.length === 0, 'sin errores ni ventanas: ' + errs.join(' | '));
   await b.close(); process.exit(mal ? 1 : 0);
 })();

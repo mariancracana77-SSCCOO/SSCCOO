@@ -72,7 +72,7 @@
 
   const $ = (i) => document.getElementById(i);
   if (!$("v-muelles")) return;
-  const Z = typeof ZonaIdioma === "function" ? ZonaIdioma("muelles", "v-muelles", () => { leyenda(); chips(); lista(); }) : { T: (x, v) => x.replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m) };
+  const Z = typeof ZonaIdioma === "function" ? ZonaIdioma("muelles", "v-muelles", () => { const n = document.getElementById("mue-no-traduce"); if (n) n.hidden = !miIdioma(); leyenda(); chips(); lista(); }) : { T: (x, v) => x.replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m) };
   const T = Z.T;
   /* textos */
   const NOMBRE_NIVEL = { dificil: "Difícil", cuidado: "Con cuidado", facil: "Fácil" };
