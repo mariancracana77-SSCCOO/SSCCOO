@@ -123,9 +123,9 @@
     } else if (tipo === "patio") {
       s += '<rect class="mue-d-patio" x="20" y="14" width="320" height="162" rx="8"/>' +
         '<rect class="mue-d-nave" x="60" y="14" width="40" height="14"/><rect class="mue-d-nave" x="115" y="14" width="40" height="14"/><rect class="mue-d-nave" x="170" y="14" width="40" height="14"/>' +
-        '<rect class="mue-d-col" x="218" y="22" width="14" height="14"/><rect class="mue-d-ofi" x="60" y="146" width="150" height="20" rx="3"/>' +
+        '<rect class="mue-d-col" x="218" y="22" width="14" height="14"/><rect class="mue-d-ofi" x="36" y="144" width="198" height="22" rx="3"/>' +
         '<path class="mue-d-ojo" d="M310 110h-90q-30 0-30-74"/><path class="mue-d-flecha ojo" d="m190 30-5 10h10Z"/>' +
-        t(135, 46, T("MUELLES")) + t(285, 31, T("Columna: ángulo ciego"), "mal") + t(135, 160, T("Coches: poco sitio para girar"), "claro") + t(290, 100, T("Entra despacio"));
+        t(135, 46, T("MUELLES")) + t(262, 56, T("Columna: ángulo ciego"), "mal") + t(135, 159, T("Coches: poco sitio para girar"), "claro") + t(290, 100, T("Entra despacio"));
     }
     return s + "</svg>";
   }
