@@ -204,7 +204,7 @@
   function cajaMapa() {
     const l = conCoord();
     $("mue-mapa-caja").hidden = !l.length;
-    if (!l.length && MAPA) { $("mue-mapa").hidden = true; }
+    if (!l.length && MAPA) cierraMapa(false);
     if (MAPA && !$("mue-mapa").hidden) puntos(false);
   }
   function puntos(encuadra) {
@@ -230,6 +230,7 @@
     mapaMsg("");
     caja.hidden = false;
     $("mue-ver-mapa").hidden = true;
+    $("mue-cierra-mapa").hidden = false;
     if (!MAPA) {
       const tactil = L.Browser.mobile || "ontouchstart" in window;
       const mapa = L.map(caja, { zoomControl: true, dragging: !tactil, tap: true });
@@ -270,6 +271,13 @@
     if (MAPA.tactil) g ? MAPA.mapa.dragging.enable() : MAPA.mapa.dragging.disable();
     pintaGrande(); setTimeout(() => MAPA.mapa.invalidateSize(), 80);
     if (g) MAPA.btn?.focus(); else caja.scrollIntoView({ block: "center" });
+  }
+  // v194 (petición n.º 62): «Cerrar el mapa» debajo del mapa. Lo esconde (sale de pantalla completa si hace falta)
+  // y vuelve «Ver el mapa». El mapa no se destruye: al volver a abrirlo sale enseguida.
+  function cierraMapa(foco) {
+    pantalla(false);
+    $("mue-mapa").hidden = true; $("mue-cierra-mapa").hidden = true; $("mue-ver-mapa").hidden = false;
+    if (foco) { $("mue-ver-mapa").focus({ preventScroll: true }); $("mue-mapa-caja").scrollIntoView({ block: "nearest" }); }
   }
   // Desde el mapa a la ficha: quita búsqueda y filtro si la escondían, la abre, la enseña y la resalta un momento
   function abreFicha(id) {
@@ -419,6 +427,7 @@
   addEventListener("keydown", (e) => { if (e.key === "Escape") pantalla(false); });
   addEventListener("hashchange", () => pantalla(false));
   $("mue-ver-mapa").addEventListener("click", () => verMapa(null));
+  $("mue-cierra-mapa").addEventListener("click", () => cierraMapa(true));
   $("mue-nuevo").addEventListener("click", () => abre(null));
   $("mue-cancela").addEventListener("click", cierra);
   $("mue-form").addEventListener("submit", guardaForm);

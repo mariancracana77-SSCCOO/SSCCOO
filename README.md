@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 194: «Cerrar el mapa» en el mapa de clientes
+- Petición n.º 62 del padre: en «Accesos y muelles», debajo del «Mapa de mis clientes», botón «Cerrar el mapa» (`#mue-cierra-mapa`, `cierraMapa` en `muelles.js`): esconde el mapa (y sale de pantalla completa si hacía falta) y vuelve «Ver el mapa». El mapa no se destruye, así que al volver a abrirlo sale enseguida. No cambia lo guardado en el móvil. Pruebas en `pruebas/muelles-navegador.cjs`.
+
 ## Versión 193: mapa de clientes a pantalla completa y fichas plegadas en Accesos y muelles
 - Petición n.º 61 del padre: en «Mapa de mis clientes», botón «Pantalla completa» dentro del mapa (como en «Aparcamientos en mi ruta»): el mapa ocupa todo el móvil y se mueve con un dedo; «Cerrar mapa», Esc o cambiar de apartado vuelven, y al tocar un punto se cierra y se abre su ficha. Las fichas de la lista salen plegadas (`<details>`: nivel, nombre y sitio, con «Ver detalles»); al tocarlas se ven los detalles. Lo abierto se recuerda mientras la página sigue abierta (`ABIERTAS`); se abren solas la recién guardada, la que se busca si sale una sola y la que se toca en el mapa. No cambia lo guardado en el móvil. Icono nuevo `grande`. Pruebas en `pruebas/muelles-navegador.cjs`.
 

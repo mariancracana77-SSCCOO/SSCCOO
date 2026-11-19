@@ -71,6 +71,12 @@ const { chromium } = require('playwright');
   await p.click('#mue-mapa .mue-grande-btn'); await p.waitForTimeout(300);
   await p.click('#mue-mapa .mue-grande-btn'); await p.waitForTimeout(200);
   ok(await p.locator('#mue-mapa.completa').count() === 0, '«Cerrar mapa» vuelve a como estaba');
+  // v194 (petición n.º 62): «Cerrar el mapa» debajo del mapa
+  ok(await p.locator('#mue-cierra-mapa').isVisible() && !(await p.locator('#mue-ver-mapa').isVisible()), 'con el mapa abierto sale «Cerrar el mapa» y no «Ver el mapa»');
+  await p.click('#mue-cierra-mapa'); await p.waitForTimeout(200);
+  ok(!(await p.locator('#mue-mapa').isVisible()) && !(await p.locator('#mue-cierra-mapa').isVisible()) && await p.locator('#mue-ver-mapa').isVisible(), '«Cerrar el mapa» lo esconde y vuelve «Ver el mapa»');
+  await p.click('#mue-ver-mapa'); await p.waitForTimeout(500);
+  ok(await p.locator('#mue-mapa').isVisible() && await p.locator('#mue-mapa .mue-pin').count() === 2 && await p.locator('#mue-cierra-mapa').isVisible(), 'se vuelve a abrir con sus puntos');
   await p.click('#mue-mapa .mue-grande-btn'); await p.waitForTimeout(300);
   await p.fill('#mue-q', 'zzz'); await p.waitForTimeout(100);
   await p.locator('#mue-mapa .leaflet-marker-icon').first().click(); await p.waitForTimeout(700);

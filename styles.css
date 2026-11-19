@@ -3183,3 +3183,6 @@ label.cg-huecos { margin: 0 0 12px; }
 .mue-mapa.completa .mue-grande-btn { background: var(--cond-azul); color: #fff; border-color: #fff; font-size: 1.1rem; min-height: 52px; padding: 8px 18px; }
 .mue-mapa .leaflet-control-attribution { background: rgba(255, 255, 255, .88); color: #15191E; }
 .mue-mapa .leaflet-control-attribution a { color: #1d3f8f; }
+/* v194 (petición n.º 62): «Cerrar el mapa» debajo del mapa de clientes */
+.mue-mapa-caja .mue-cierra-mapa { display: flex; justify-content: center; align-items: center; gap: 8px; width: 100%; min-height: 48px; margin-top: 10px; font-weight: 800; }
+.mue-mapa-caja .mue-cierra-mapa[hidden] { display: none; }
