@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 193: mapa de clientes a pantalla completa y fichas plegadas en Accesos y muelles
+- Petición n.º 61 del padre: en «Mapa de mis clientes», botón «Pantalla completa» dentro del mapa (como en «Aparcamientos en mi ruta»): el mapa ocupa todo el móvil y se mueve con un dedo; «Cerrar mapa», Esc o cambiar de apartado vuelven, y al tocar un punto se cierra y se abre su ficha. Las fichas de la lista salen plegadas (`<details>`: nivel, nombre y sitio, con «Ver detalles»); al tocarlas se ven los detalles. Lo abierto se recuerda mientras la página sigue abierta (`ABIERTAS`); se abren solas la recién guardada, la que se busca si sale una sola y la que se toca en el mapa. No cambia lo guardado en el móvil. Icono nuevo `grande`. Pruebas en `pruebas/muelles-navegador.cjs`.
+
 ## Versión 192: «Elegir en el mapa» en Accesos y muelles
 - Petición n.º 60 del padre: en el formulario de un cliente, junto a «Usar mi posición ahora», el botón «Elegir en el mapa» abre un mapa dentro de la ficha (el mismo Leaflet de `lib/` y las mismas teselas de OpenStreetMap). Se toca la puerta de camiones (o se arrastra el punto) y se rellenan latitud y longitud; «Quitar el punto» las vacía y, si se escriben a mano, el punto se mueve. Se guarda con «Guardar», como siempre, solo en el móvil. Sin internet lo dice y se pueden escribir los números. Empieza en el punto ya escrito, si no en el último cliente con posición, si no en España. Icono nuevo `mapa`. Pruebas en `pruebas/muelles-navegador.cjs`.
 

@@ -148,9 +148,13 @@
     const r = rutas(f);
     const conf = borrando === f.id ? `<div class="zc-aviso mue-conf" role="alert"><b>${esc(T("¿Borrar esta ficha? No se puede deshacer."))}</b>
       <div class="mue-bots"><button type="button" class="btn mue-si" data-si="${esc(f.id)}">${esc(T("Sí, borrarla"))}</button><button type="button" class="btn sec" data-no="1">${esc(T("No"))}</button></div></div>` : "";
-    return `<article class="panel mue-ficha ${f.nivel}" id="mue-${esc(f.id)}">
-      <div class="mue-cab">${nivelHTML(f.nivel)}<h3 translate="no">${esc(f.nombre)}</h3>${f.lugar ? `<p class="mue-lugar" translate="no">${esc(f.lugar)}</p>` : ""}</div>
-      <div class="mue-truco"><b>${esc(T("Cómo entrar y maniobrar"))}</b><p translate="no">${esc(f.truco).replace(/\n/g, "<br>")}</p></div>
+    // v193 (petición n.º 61): cada ficha sale plegada (nombre, nivel y sitio); al tocarla se ven los detalles.
+    // Lo abierto se recuerda mientras la página está abierta (ABIERTAS) para que no se cierre al repintar.
+    const abierta = ABIERTAS.has(f.id) || borrando === f.id;
+    return `<details class="panel mue-ficha ${f.nivel}" id="mue-${esc(f.id)}" data-ficha="${esc(f.id)}"${abierta ? " open" : ""}>
+      <summary class="mue-cab"><span class="mue-cab-t">${nivelHTML(f.nivel)}<h3 translate="no">${esc(f.nombre)}</h3>${f.lugar ? `<p class="mue-lugar" translate="no">${esc(f.lugar)}</p>` : ""}</span>
+        <span class="mue-abre">${icono("abajo", "p")}<span class="mue-abre-t">${esc(T("Ver detalles"))}</span><span class="mue-cierra-t">${esc(T("Cerrar"))}</span></span></summary>
+      <div class="mue-cuerpo"><div class="mue-truco"><b>${esc(T("Cómo entrar y maniobrar"))}</b><p translate="no">${esc(f.truco).replace(/\n/g, "<br>")}</p></div>
       ${datos.length ? `<dl class="mue-datos">${datos.map(([k, v]) => `<div><dt>${esc(T(NOMBRE_DATO[k]))}</dt><dd${["espera", "epis"].includes(k) ? ' translate="no"' : ""}>${esc(v)}</dd></div>`).join("")}</dl>` : ""}
       ${f.dibujo ? `<details class="mue-ver"><summary>${esc(T("Ver el dibujo de la maniobra"))}</summary>${dibujo(f.dibujo)}<p class="zc-pista">${esc(T("Dibujo de ejemplo: no es el plano de este cliente."))}</p></details>` : ""}
       ${r ? `<details class="mue-ir"><summary>${icono("lugar", "p")}${esc(T("Ir allí"))}</summary>
@@ -161,10 +165,12 @@
         <button type="button" class="btn sec" data-copia="${esc(f.id)}">${icono("copia", "p")}${esc(T("Copiar para un compañero"))}</button>
         <button type="button" class="btn sec" data-edita="${esc(f.id)}">${icono("editar", "p")}${esc(T("Cambiar"))}</button>
         <button type="button" class="btn sec" data-borra="${esc(f.id)}">${icono("borrar", "p")}${esc(T("Borrar"))}</button>
-      </div>${conf}</article>`;
+      </div>${conf}</div></details>`;
   }
+  const ABIERTAS = new Set();
   function lista() {
     const l = busca(fichas, $("mue-q").value, filtro).sort((a, b) => NIVELES.indexOf(a.nivel) - NIVELES.indexOf(b.nivel) || a.nombre.localeCompare(b.nombre, "es"));
+    if ($("mue-q").value.trim() && l.length === 1) ABIERTAS.add(l[0].id); // al buscar y salir solo uno, se abre
     $("mue-cuenta").textContent = fichas.length ? T("{n} de {t} clientes", { n: l.length, t: fichas.length }) : "";
     $("mue-lista").innerHTML = !fichas.length
       ? `<div class="panel mue-vacio"><b>${esc(T("Tu libreta está vacía."))}</b><p>${esc(T("Cuando descargues en un sitio difícil, apunta aquí cómo se entra para la próxima vez."))}</p></div>`
@@ -208,7 +214,7 @@
       const nombre = f.nombre.length > 22 ? f.nombre.slice(0, 21) + "…" : f.nombre;
       const ic = L.divIcon({ className: "mue-pin-w", html: `<span class="mue-pin ${f.nivel}">${senal(f.nivel)}<b translate="no">${esc(nombre)}</b></span>`, iconSize: null, iconAnchor: [14, 14] });
       const mk = L.marker([f.lat, f.lon], { icon: ic, title: f.nombre + " · " + T(NOMBRE_NIVEL[f.nivel]), alt: f.nombre, keyboard: true, riseOnHover: true });
-      mk.on("click", () => abreFicha(f.id));
+      mk.on("click", () => { pantalla(false); abreFicha(f.id); });
       mk.addTo(MAPA.capa);
     }
     if (encuadra && l.length) {
@@ -233,21 +239,45 @@
         .on("tileerror", () => { if (++fallos === 3) mapaMsg(T("El mapa no se ve bien: parece que no hay internet. Los puntos de tus clientes siguen ahí.")); })
         .on("tileload", () => { if (fallos) { fallos = 0; mapaMsg(""); } })
         .addTo(mapa);
-      MAPA = { mapa, capa: L.layerGroup().addTo(mapa) };
+      MAPA = { mapa, capa: L.layerGroup().addTo(mapa), tactil, btn: null };
+      // v193 (petición n.º 61): «Pantalla completa», como en «Aparcamientos en mi ruta»: el mapa ocupa toda la pantalla
+      // y se mueve con un dedo; «Cerrar mapa», Esc o cambiar de apartado vuelven a como estaba.
+      const Grande = L.Control.extend({ options: { position: "topright" }, onAdd() {
+        const b = L.DomUtil.create("button", "apc-yo-btn mue-grande-btn"); b.type = "button";
+        L.DomEvent.disableClickPropagation(b); L.DomEvent.on(b, "click", () => pantalla(!caja.classList.contains("completa")));
+        MAPA.btn = b; pintaGrande(); return b;
+      } });
+      new Grande().addTo(mapa);
       if (tactil) {
-        const av = L.DomUtil.create("div", "apc-dos-dedos", caja); av.textContent = T("Usa dos dedos para mover el mapa");
+        const av = L.DomUtil.create("div", "apc-dos-dedos", caja); av.textContent = T("Usa dos dedos para mover el mapa, o toca «Pantalla completa»");
         let t = null;
-        caja.addEventListener("touchmove", (e) => { if (e.touches.length !== 1) return; av.classList.add("ver"); clearTimeout(t); t = setTimeout(() => av.classList.remove("ver"), 1600); }, { passive: true });
+        caja.addEventListener("touchmove", (e) => { if (e.touches.length !== 1 || caja.classList.contains("completa")) return; av.classList.add("ver"); clearTimeout(t); t = setTimeout(() => av.classList.remove("ver"), 1600); }, { passive: true });
       }
       puntos(true);
     } else { MAPA.mapa.invalidateSize(); puntos(!centro); }
     if (centro) MAPA.mapa.setView([centro.lat, centro.lon], 15);
   }
-  // Desde el mapa a la ficha: quita búsqueda y filtro si la escondían, la enseña y la resalta un momento
+  function pintaGrande() {
+    const b = MAPA && MAPA.btn; if (!b) return;
+    const g = $("mue-mapa").classList.contains("completa");
+    b.innerHTML = g ? icono("cerrar", "p") + `<span>${esc(T("Cerrar mapa"))}</span>` : icono("grande", "p") + `<span>${esc(T("Pantalla completa"))}</span>`;
+    b.setAttribute("aria-pressed", String(g));
+  }
+  function pantalla(g) {
+    const caja = $("mue-mapa");
+    if (!MAPA || caja.classList.contains("completa") === g) return;
+    caja.classList.toggle("completa", g); document.documentElement.classList.toggle("mapa-completo", g);
+    if (MAPA.tactil) g ? MAPA.mapa.dragging.enable() : MAPA.mapa.dragging.disable();
+    pintaGrande(); setTimeout(() => MAPA.mapa.invalidateSize(), 80);
+    if (g) MAPA.btn?.focus(); else caja.scrollIntoView({ block: "center" });
+  }
+  // Desde el mapa a la ficha: quita búsqueda y filtro si la escondían, la abre, la enseña y la resalta un momento
   function abreFicha(id) {
+    ABIERTAS.add(id);
     let el = $("mue-" + id);
     if (!el) { filtro = ""; $("mue-q").value = ""; chips(); lista(); el = $("mue-" + id); }
     if (!el) return;
+    el.open = true;
     el.scrollIntoView({ block: "start", behavior: "smooth" });
     el.classList.add("mue-resalta"); setTimeout(() => el.classList.remove("mue-resalta"), 2200);
     el.setAttribute("tabindex", "-1"); el.focus({ preventScroll: true });
@@ -280,7 +310,7 @@
     const copia = fichas.slice();
     if (antes) fichas[fichas.indexOf(antes)] = f; else fichas.push(f);
     if (!guarda()) { fichas = copia; aviso(T("No se ha podido guardar en este móvil. Mira si el navegador está en modo privado o sin espacio."), true); return; }
-    cierra(); chips(); lista();
+    ABIERTAS.add(f.id); cierra(); chips(); lista();
     aviso(antes ? T("Ficha cambiada. Está guardada en este móvil.") : T("Cliente añadido. Está guardado en este móvil."));
     $("mue-" + f.id)?.scrollIntoView({ block: "center" });
   }
@@ -381,6 +411,13 @@
   }
 
   lee(); leyenda(); chips(); lista();
+  // Recordar qué fichas están abiertas (el evento «toggle» no sube: se escucha en la fase de captura)
+  $("mue-lista").addEventListener("toggle", (e) => {
+    const d = e.target; if (!d.matches || !d.matches("details.mue-ficha")) return;
+    if (d.open) ABIERTAS.add(d.dataset.ficha); else ABIERTAS.delete(d.dataset.ficha);
+  }, true);
+  addEventListener("keydown", (e) => { if (e.key === "Escape") pantalla(false); });
+  addEventListener("hashchange", () => pantalla(false));
   $("mue-ver-mapa").addEventListener("click", () => verMapa(null));
   $("mue-nuevo").addEventListener("click", () => abre(null));
   $("mue-cancela").addEventListener("click", cierra);

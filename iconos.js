@@ -64,6 +64,7 @@
     euro: '<path d="M18 6.3A7 7 0 1 0 18 17.7"/><path d="M4 10.5h9.5M4 13.5h9.5"/>',
     carpeta:'<path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H10l2 2.5h7.5A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5Z"/>',
     mapa: '<path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4Z"/><path d="M9 4v14"/><path d="M15 6v14"/>',
+    grande: '<path d="M4 9V4h5"/><path d="M15 4h5v5"/><path d="M20 15v5h-5"/><path d="M9 20H4v-5"/>',
     muelle: '<path d="M2.5 21V9.5L12 4l9.5 5.5V21"/><path d="M6.5 21v-8h11v8"/><path d="M6.5 16.5h11"/><path d="M9.5 9.5h5"/>',
   };
   const svg = '<svg xmlns="http://www.w3.org/2000/svg" style="display:none">' +

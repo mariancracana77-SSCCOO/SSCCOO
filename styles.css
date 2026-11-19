@@ -3161,3 +3161,25 @@ label.cg-huecos { margin: 0 0 12px; }
 .mue-pin-puerta span::after { content: ""; position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: #fff; }
 .mue-elige-mapa .leaflet-control-attribution { background: rgba(255, 255, 255, .88); color: #15191E; }
 .mue-elige-mapa .leaflet-control-attribution a { color: #1d3f8f; }
+/* v193 (petición n.º 61): fichas de Accesos y muelles plegadas (se abren al tocarlas) y mapa de clientes a pantalla completa */
+.mue-ficha { padding: 0; }
+.mue-ficha > .mue-cab { display: flex; align-items: center; gap: 12px; padding: 14px 16px; min-height: 56px; cursor: pointer; list-style: none; border-radius: inherit; }
+.mue-ficha > .mue-cab::-webkit-details-marker { display: none; }
+.mue-ficha > .mue-cab:focus-visible { outline: 3px solid var(--cond-azul-ic); outline-offset: -3px; }
+.mue-cab-t { flex: 1 1 auto; min-width: 0; }
+.mue-abre { flex: none; display: inline-flex; flex-direction: column; align-items: center; gap: 2px; min-width: 64px; color: var(--cond-azul-ic); font-weight: 700; font-size: .9rem; text-align: center; }
+.mue-abre .icono { width: 26px; height: 26px; transition: transform .2s; }
+.mue-ficha[open] > .mue-cab .mue-abre .icono { transform: rotate(180deg); }
+.mue-cierra-t, .mue-ficha[open] > .mue-cab .mue-abre-t { display: none; }
+.mue-ficha[open] > .mue-cab .mue-cierra-t { display: inline; }
+.mue-cuerpo { padding: 0 16px 14px; }
+.mue-cuerpo > .mue-truco { margin-top: 0; }
+@media (prefers-reduced-motion: reduce) { .mue-abre .icono { transition: none; } }
+.mue-mapa.completa { position: fixed; inset: 0; z-index: 2000; height: 100vh; height: 100dvh; min-height: 0; margin: 0; border-radius: 0; border: 0; }
+.mue-mapa.completa .leaflet-top { top: env(safe-area-inset-top, 0px); }
+.mue-mapa.completa .leaflet-right { right: env(safe-area-inset-right, 0px); }
+.mue-grande-btn { margin-top: 10px !important; margin-right: 10px !important; }
+.mue-grande-btn .icono { width: 20px; height: 20px; }
+.mue-mapa.completa .mue-grande-btn { background: var(--cond-azul); color: #fff; border-color: #fff; font-size: 1.1rem; min-height: 52px; padding: 8px 18px; }
+.mue-mapa .leaflet-control-attribution { background: rgba(255, 255, 255, .88); color: #15191E; }
+.mue-mapa .leaflet-control-attribution a { color: #1d3f8f; }

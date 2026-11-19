@@ -517,3 +517,6 @@ body.publica a { text-underline-offset: 4px; }
 :root:root .subpest-caja.cond .subpestanas a[data-v="ganancias"]:hover { color: #14300b; filter: brightness(1.05); }
 :root:root .subpest-caja.cond .subpestanas a[data-v="ganancias"].activa { color: #14300b; box-shadow: inset 0 -3px 0 #14300b; }
 
+/* v193 (petición n.º 61): la animación de entrada de la vista (con «both») deja un transform y entonces un mapa en
+   «Pantalla completa» (position: fixed) solo ocupaba la vista. Con un mapa a pantalla completa, sin animación. */
+html.mapa-completo .vista.activa, html.mapa-completo .vista.activa.desde-der, html.mapa-completo .vista.activa.desde-izq { animation: none; }
