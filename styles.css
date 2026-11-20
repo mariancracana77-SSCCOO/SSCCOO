@@ -3186,3 +3186,8 @@ label.cg-huecos { margin: 0 0 12px; }
 /* v194 (petición n.º 62): «Cerrar el mapa» debajo del mapa de clientes */
 .mue-mapa-caja .mue-cierra-mapa { display: flex; justify-content: center; align-items: center; gap: 8px; width: 100%; min-height: 48px; margin-top: 10px; font-weight: 800; }
 .mue-mapa-caja .mue-cierra-mapa[hidden] { display: none; }
+/* v195 (petición n.º 63): foto de cada cliente en Accesos y muelles (se guarda solo en el móvil) */
+.mue-foto { margin: 0 0 12px; }
+.mue-foto img { display: block; width: 100%; max-width: 560px; max-height: 420px; object-fit: contain; border-radius: 10px; border: 1px solid var(--linea); background: var(--fondo); }
+.mue-foto img:not([src]) { min-height: 120px; }
+#mue-foto-in[hidden] { display: none; }

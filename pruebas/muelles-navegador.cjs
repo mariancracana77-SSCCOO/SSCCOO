@@ -131,6 +131,56 @@ const { chromium } = require('playwright');
   await p3.goto((process.env.BASE || 'http://localhost:8765/') + '#descansos'); await p3.waitForTimeout(800);
   ok(await p3.locator('#v-descansos .vuelve-es').count() === 1, '«Español» también en Mis descansos');
   await c3.close();
+  // v195 (petición n.º 63): foto de cada cliente, guardada solo en el móvil (IndexedDB), sin tocar «ccoo-muelles»
+  const LIB = { v: 1, fichas: [{ id: 'mfa01', nombre: 'Uno', truco: 't1', nivel: 'dificil' }, { id: 'mfa02', nombre: 'Dos', truco: 't2', nivel: 'facil' }] };
+  const c4 = await b.newContext({ viewport: { width: 360, height: 740 } });
+  await c4.route('**/lib/supabase.js*', r => r.fulfill({ path: require('path').join(__dirname, 'mock-supabase.js'), contentType: 'application/javascript' }));
+  await c4.addInitScript(d => { try { localStorage.setItem('ccoo-aviso-privacidad', '1'); if (!localStorage.getItem('ccoo-muelles')) localStorage.setItem('ccoo-muelles', d); } catch (e) {} }, JSON.stringify(LIB));
+  const p4 = await c4.newPage(); p4.on('console', m => m.type() === 'error' && errs.push('foto: ' + m.text())); p4.on('pageerror', e => errs.push('foto: ' + e.message));
+  await p4.goto((process.env.BASE || 'http://localhost:8765/') + '#muelles'); await p4.waitForTimeout(1500);
+  try { await p4.locator('#bienvenida').click({ timeout: 1500 }); } catch {}
+  const antesLS = await p4.evaluate(() => localStorage.getItem('ccoo-muelles'));
+  const foto = Buffer.from(await p4.evaluate(() => { const c = document.createElement('canvas'); c.width = 2400; c.height = 1600; const x = c.getContext('2d'); x.fillStyle = '#c33'; x.fillRect(0, 0, 2400, 1600); x.fillStyle = '#33c'; x.fillRect(600, 400, 1200, 800); return c.toDataURL('image/png').split(',')[1]; }), 'base64');
+  await p4.locator('.mue-ficha[data-ficha=mfa01] > summary').click();
+  ok(await p4.locator('.mue-ficha[data-ficha=mfa01] [data-foto]').isVisible() && (await p4.textContent('.mue-ficha[data-ficha=mfa01] [data-foto]')).includes('Añadir una foto') && await p4.locator('.mue-ficha[data-ficha=mfa01] [data-quitafoto]').count() === 0, 'foto: botón «Añadir una foto» en la ficha abierta');
+  let fc = p4.waitForEvent('filechooser'); await p4.click('.mue-ficha[data-ficha=mfa01] [data-foto]'); await (await fc).setFiles({ name: 'muelle.png', mimeType: 'image/png', buffer: foto }); await p4.waitForTimeout(900);
+  ok(await p4.locator('.mue-ficha[data-ficha=mfa01] .mue-foto img[src^="blob:"]').count() === 1 && (await p4.textContent('#mue-msg')).includes('Foto guardada'), 'foto: se ve en la ficha y dice que está guardada');
+  const guardada = await p4.evaluate(() => new Promise(ok => { const r = indexedDB.open('ccoo-muelles-fotos'); r.onsuccess = () => { const g = r.result.transaction('fotos').objectStore('fotos').get('mfa01'); g.onsuccess = async () => { const b = g.result; if (!b) return ok(null); const im = await createImageBitmap(b); ok({ tipo: b.type, w: im.width, h: im.height }); }; }; }));
+  ok(guardada && guardada.tipo === 'image/jpeg' && guardada.w === 1280 && guardada.h === 853, 'foto: reducida a 1280 px en JPEG (sin datos de la foto) ' + JSON.stringify(guardada));
+  ok(await p4.evaluate(() => localStorage.getItem('ccoo-muelles')) === antesLS, 'foto: la libreta del móvil (ccoo-muelles) no cambia nada');
+  ok((await p4.textContent('.mue-ficha[data-ficha=mfa01] [data-foto]')).includes('Cambiar la foto') && await p4.locator('.mue-ficha[data-ficha=mfa01] [data-quitafoto]').isVisible(), 'foto: salen «Cambiar la foto» y «Quitar la foto»');
+  ok(!(await p4.evaluate(() => MuellesCuentas.exporta(JSON.parse(localStorage.getItem('ccoo-muelles')).fichas))).includes('blob'), 'foto: no va al pasar la libreta');
+  await p4.reload(); await p4.waitForTimeout(1500);
+  await p4.locator('.mue-ficha[data-ficha=mfa01] > summary').click(); await p4.waitForTimeout(400);
+  ok(await p4.locator('.mue-ficha[data-ficha=mfa01] .mue-foto img[src^="blob:"]').count() === 1 && await p4.locator('.mue-ficha[data-ficha=mfa02] .mue-foto').count() === 0, 'foto: sigue tras recargar y solo en su cliente');
+  const w = await p4.evaluate(() => document.querySelector('.mue-ficha[data-ficha=mfa01] .mue-foto img').getBoundingClientRect().right <= document.documentElement.clientWidth && document.documentElement.scrollWidth <= document.documentElement.clientWidth);
+  ok(w, 'foto: cabe en 360 px sin scroll lateral');
+  // Dos ventanas: la otra ventana también la ve; al quitarla en una, la otra la pierde al recargar
+  const q4 = await c4.newPage(); q4.on('pageerror', e => errs.push('foto 2: ' + e.message));
+  await q4.goto((process.env.BASE || 'http://localhost:8765/') + '#muelles'); await q4.waitForTimeout(1500);
+  try { await q4.locator('#bienvenida').click({ timeout: 1500 }); } catch {}
+  await q4.locator('.mue-ficha[data-ficha=mfa01] > summary').click(); await q4.waitForTimeout(400);
+  ok(await q4.locator('.mue-ficha[data-ficha=mfa01] .mue-foto img[src^="blob:"]').count() === 1, 'foto: dos ventanas, la otra también la ve');
+  // Cambiar la foto: se sustituye
+  fc = p4.waitForEvent('filechooser'); await p4.click('.mue-ficha[data-ficha=mfa01] [data-foto]'); await (await fc).setFiles({ name: 'otra.png', mimeType: 'image/png', buffer: foto }); await p4.waitForTimeout(900);
+  ok(await p4.locator('.mue-ficha[data-ficha=mfa01] .mue-foto img').count() === 1, 'foto: cambiarla deja una sola');
+  // Algo que no es una foto
+  fc = p4.waitForEvent('filechooser'); await p4.click('.mue-ficha[data-ficha=mfa01] [data-foto]'); await (await fc).setFiles({ name: 'x.txt', mimeType: 'text/plain', buffer: Buffer.from('hola') }); await p4.waitForTimeout(400);
+  ok((await p4.textContent('#mue-msg')).includes('no es una foto') && await p4.locator('.mue-ficha[data-ficha=mfa01] .mue-foto img').count() === 1, 'foto: un archivo que no es foto no se guarda y no quita la de antes');
+  await p4.click('.mue-ficha[data-ficha=mfa01] [data-quitafoto]'); await p4.waitForTimeout(400);
+  ok(await p4.locator('.mue-ficha[data-ficha=mfa01] .mue-foto').count() === 0 && (await p4.textContent('.mue-ficha[data-ficha=mfa01] [data-foto]')).includes('Añadir una foto'), 'foto: «Quitar la foto» la quita');
+  await q4.reload(); await q4.waitForTimeout(1500); await q4.locator('.mue-ficha[data-ficha=mfa01] > summary').click();
+  ok(await q4.locator('.mue-ficha .mue-foto').count() === 0 && await q4.locator('.mue-ficha').count() === 2, 'foto: la otra ventana al recargar ya no la tiene y las fichas siguen');
+  // Borrar la ficha borra su foto; la otra ficha y su foto se quedan
+  fc = p4.waitForEvent('filechooser'); await p4.click('.mue-ficha[data-ficha=mfa01] [data-foto]'); await (await fc).setFiles({ name: 'm.png', mimeType: 'image/png', buffer: foto }); await p4.waitForTimeout(900);
+  await p4.locator('.mue-ficha[data-ficha=mfa02] > summary').click();
+  fc = p4.waitForEvent('filechooser'); await p4.click('.mue-ficha[data-ficha=mfa02] [data-foto]'); await (await fc).setFiles({ name: 'm2.png', mimeType: 'image/png', buffer: foto }); await p4.waitForTimeout(900);
+  await p4.click('.mue-ficha[data-ficha=mfa01] [data-borra]'); await p4.click('.mue-si'); await p4.waitForTimeout(500);
+  const claves = await p4.evaluate(() => new Promise(ok => { const r = indexedDB.open('ccoo-muelles-fotos'); r.onsuccess = () => { const g = r.result.transaction('fotos').objectStore('fotos').getAllKeys(); g.onsuccess = () => ok(g.result); }; }));
+  ok(JSON.stringify(claves) === '["mfa02"]' && await p4.locator('.mue-ficha[data-ficha=mfa02] .mue-foto img').count() === 1, 'foto: borrar la ficha borra su foto y la otra se queda ' + JSON.stringify(claves));
+  const ls = await p4.evaluate(() => JSON.parse(localStorage.getItem('ccoo-muelles')));
+  ok(ls.v === 1 && ls.fichas.length === 1 && ls.fichas[0].id === 'mfa02' && Object.keys(ls.fichas[0]).every(k => ['id','nombre','lugar','nivel','truco','maniobra','dormir','banos','espera','epis','dibujo','lat','lon','cambiado'].includes(k)), 'foto: la libreta guarda lo mismo que antes (mismas claves)');
+  await c4.close();
   ok(errs.length === 0, 'sin errores ni ventanas: ' + errs.join(' | '));
   await b.close(); process.exit(mal ? 1 : 0);
 })();

@@ -154,7 +154,7 @@
     return `<details class="panel mue-ficha ${f.nivel}" id="mue-${esc(f.id)}" data-ficha="${esc(f.id)}"${abierta ? " open" : ""}>
       <summary class="mue-cab"><span class="mue-cab-t">${nivelHTML(f.nivel)}<h3 translate="no">${esc(f.nombre)}</h3>${f.lugar ? `<p class="mue-lugar" translate="no">${esc(f.lugar)}</p>` : ""}</span>
         <span class="mue-abre">${icono("abajo", "p")}<span class="mue-abre-t">${esc(T("Ver detalles"))}</span><span class="mue-cierra-t">${esc(T("Cerrar"))}</span></span></summary>
-      <div class="mue-cuerpo"><div class="mue-truco"><b>${esc(T("Cómo entrar y maniobrar"))}</b><p translate="no">${esc(f.truco).replace(/\n/g, "<br>")}</p></div>
+      <div class="mue-cuerpo">${FOTOS.has(f.id) ? `<figure class="mue-foto"><img alt="${esc(T("Foto de {n}", { n: f.nombre }))}" data-foto-de="${esc(f.id)}"${URLS.has(f.id) ? ` src="${esc(URLS.get(f.id))}"` : ""}></figure>` : ""}<div class="mue-truco"><b>${esc(T("Cómo entrar y maniobrar"))}</b><p translate="no">${esc(f.truco).replace(/\n/g, "<br>")}</p></div>
       ${datos.length ? `<dl class="mue-datos">${datos.map(([k, v]) => `<div><dt>${esc(T(NOMBRE_DATO[k]))}</dt><dd${["espera", "epis"].includes(k) ? ' translate="no"' : ""}>${esc(v)}</dd></div>`).join("")}</dl>` : ""}
       ${f.dibujo ? `<details class="mue-ver"><summary>${esc(T("Ver el dibujo de la maniobra"))}</summary>${dibujo(f.dibujo)}<p class="zc-pista">${esc(T("Dibujo de ejemplo: no es el plano de este cliente."))}</p></details>` : ""}
       ${r ? `<details class="mue-ir"><summary>${icono("lugar", "p")}${esc(T("Ir allí"))}</summary>
@@ -162,11 +162,98 @@
         <div class="mue-bots">${[["google", "Google Maps"], ["waze", "Waze"], ["osm", "OpenStreetMap"]].map(([k, n]) => `<a class="btn sec" href="${esc(urlSegura(r[k]))}" target="_blank" rel="noopener noreferrer" translate="no">${esc(n)}</a>`).join("")}</div></details>` : ""}
       <div class="mue-bots">
         ${r ? `<button type="button" class="btn sec" data-vermapa="${esc(f.id)}">${icono("lugar", "p")}${esc(T("Ver en el mapa"))}</button>` : ""}
+        <button type="button" class="btn sec" data-foto="${esc(f.id)}">${icono("camara", "p")}${esc(FOTOS.has(f.id) ? T("Cambiar la foto") : T("Añadir una foto"))}</button>
+        ${FOTOS.has(f.id) ? `<button type="button" class="btn sec" data-quitafoto="${esc(f.id)}">${icono("borrar", "p")}${esc(T("Quitar la foto"))}</button>` : ""}
         <button type="button" class="btn sec" data-copia="${esc(f.id)}">${icono("copia", "p")}${esc(T("Copiar para un compañero"))}</button>
         <button type="button" class="btn sec" data-edita="${esc(f.id)}">${icono("editar", "p")}${esc(T("Cambiar"))}</button>
         <button type="button" class="btn sec" data-borra="${esc(f.id)}">${icono("borrar", "p")}${esc(T("Borrar"))}</button>
       </div>${conf}</div></details>`;
   }
+  // ---------- Foto de cada cliente (v195, petición n.º 63) ----------
+  // La foto se guarda SOLO en este móvil, en IndexedDB (base «ccoo-muelles-fotos», almacén «fotos», clave = id de la ficha),
+  // aparte de la libreta: «ccoo-muelles» de localStorage no cambia nada (ni su formato ni sus claves), y si el móvil no deja
+  // usar IndexedDB la libreta sigue igual y solo se avisa. Antes de guardarla se reduce con un canvas a 1280 px en JPEG, lo
+  // que también quita los datos de la foto (EXIF, posición GPS). La foto no va en «Copiar para un compañero» ni al pasar la
+  // libreta a otro móvil (son textos). Al borrar la ficha, se borra su foto.
+  const FOTOS = new Set(), URLS = new Map();
+  let fotoPara = null, fotoBD = null;
+  function bd() {
+    if (fotoBD) return fotoBD;
+    fotoBD = new Promise((ok, mal) => {
+      try {
+        const r = indexedDB.open("ccoo-muelles-fotos", 1);
+        r.onupgradeneeded = () => { if (!r.result.objectStoreNames.contains("fotos")) r.result.createObjectStore("fotos"); };
+        r.onsuccess = () => ok(r.result);
+        r.onerror = () => mal(r.error);
+      } catch (e) { mal(e); }
+    });
+    fotoBD.catch(() => { fotoBD = null; });
+    return fotoBD;
+  }
+  async function fotoOp(modo, fn) {
+    const db = await bd();
+    return new Promise((ok, mal) => {
+      const tx = db.transaction("fotos", modo), st = tx.objectStore("fotos");
+      let res; const r = fn(st); if (r) r.onsuccess = () => { res = r.result; };
+      tx.oncomplete = () => ok(res); tx.onerror = () => mal(tx.error); tx.onabort = () => mal(tx.error);
+    });
+  }
+  const fotoLee = (id) => fotoOp("readonly", st => st.get(id));
+  const fotoPon = (id, blob) => fotoOp("readwrite", st => st.put(blob, id));
+  const fotoQuita = (id) => fotoOp("readwrite", st => st.delete(id));
+  function soltarURL(id) { const u = URLS.get(id); if (u) { URL.revokeObjectURL(u); URLS.delete(id); } }
+  async function cargaFotos() {
+    try {
+      const ids = await fotoOp("readonly", st => st.getAllKeys());
+      // Solo cuentan las de fichas que existen; las demás no se tocan (nunca se borra nada al abrir la página)
+      FOTOS.clear(); (ids || []).forEach(id => { if (fichas.some(f => f.id === id)) FOTOS.add(id); });
+    } catch (e) { FOTOS.clear(); }
+  }
+  // Pone las fotos en las fichas pintadas (se leen solo cuando hace falta)
+  async function pintaFotos() {
+    for (const img of $("mue-lista").querySelectorAll("img[data-foto-de]")) {
+      const id = img.dataset.fotoDe;
+      if (!URLS.has(id)) {
+        try { const b = await fotoLee(id); if (!b) continue; URLS.set(id, URL.createObjectURL(b)); } catch (e) { continue; }
+      }
+      if (img.isConnected && img.getAttribute("src") !== URLS.get(id)) img.src = URLS.get(id);
+    }
+  }
+  function reduceFoto(archivo) {
+    return new Promise((ok, mal) => {
+      const u = URL.createObjectURL(archivo), im = new Image();
+      im.onload = () => {
+        URL.revokeObjectURL(u);
+        const k = Math.min(1, 1280 / Math.max(im.naturalWidth, im.naturalHeight));
+        const c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(im.naturalWidth * k)); c.height = Math.max(1, Math.round(im.naturalHeight * k));
+        const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height);
+        c.toBlob(b => b ? ok(b) : mal(new Error("sin foto")), "image/jpeg", 0.82);
+      };
+      im.onerror = () => { URL.revokeObjectURL(u); mal(new Error("no es una foto")); };
+      im.src = u;
+    });
+  }
+  async function fotoElegida() {
+    const inp = $("mue-foto-in"), archivo = inp.files && inp.files[0], id = fotoPara;
+    inp.value = ""; fotoPara = null;
+    if (!archivo || !id || !fichas.some(f => f.id === id)) return;
+    if (!/^image\//.test(archivo.type || "image/")) { aviso(T("Ese archivo no es una foto."), true); return; }
+    aviso(T("Preparando la foto…"));
+    let b;
+    try { b = await reduceFoto(archivo); } catch (e) { aviso(T("No se ha podido abrir esa foto. Prueba con otra."), true); return; }
+    try { await fotoPon(id, b); } catch (e) { aviso(T("No se ha podido guardar la foto en este móvil. Mira si el navegador está en modo privado o sin espacio."), true); return; }
+    soltarURL(id); FOTOS.add(id); ABIERTAS.add(id); lista();
+    aviso(T("Foto guardada. Solo está en este móvil."));
+    $("mue-" + id)?.querySelector("[data-foto]")?.focus();
+  }
+  async function quitaFoto(id) {
+    try { await fotoQuita(id); } catch (e) { aviso(T("No se ha podido quitar la foto."), true); return; }
+    soltarURL(id); FOTOS.delete(id); lista();
+    aviso(T("Foto quitada."));
+    $("mue-" + id)?.querySelector("[data-foto]")?.focus();
+  }
+
   const ABIERTAS = new Set();
   function lista() {
     const l = busca(fichas, $("mue-q").value, filtro).sort((a, b) => NIVELES.indexOf(a.nivel) - NIVELES.indexOf(b.nivel) || a.nombre.localeCompare(b.nombre, "es"));
@@ -177,6 +264,7 @@
       : l.length ? l.map(ficha).join("") : `<p class="mue-vacio">${esc(T("No hay ningún cliente con eso. Prueba con otra palabra o quita el filtro."))}</p>`;
     $("mue-buscar").hidden = !fichas.length;
     cajaMapa();
+    if (FOTOS.size) pintaFotos();
   }
 
   // ---------- Mapa de mis clientes (v190, Lorena: «añade la 1 y la 2») ----------
@@ -419,6 +507,7 @@
   }
 
   lee(); leyenda(); chips(); lista();
+  cargaFotos().then(() => { if (FOTOS.size) lista(); });
   // Recordar qué fichas están abiertas (el evento «toggle» no sube: se escucha en la fase de captura)
   $("mue-lista").addEventListener("toggle", (e) => {
     const d = e.target; if (!d.matches || !d.matches("details.mue-ficha")) return;
@@ -429,6 +518,7 @@
   $("mue-ver-mapa").addEventListener("click", () => verMapa(null));
   $("mue-cierra-mapa").addEventListener("click", () => cierraMapa(true));
   $("mue-nuevo").addEventListener("click", () => abre(null));
+  $("mue-foto-in").addEventListener("change", fotoElegida);
   $("mue-cancela").addEventListener("click", cierra);
   $("mue-form").addEventListener("submit", guardaForm);
   $("mue-gps").addEventListener("click", posicion);
@@ -443,6 +533,8 @@
     const b = e.target.closest("button"); if (!b) return;
     const f = fichas.find(x => x.id === (b.dataset.copia || b.dataset.edita || b.dataset.borra || b.dataset.si));
     if (b.dataset.vermapa) { const g = fichas.find(x => x.id === b.dataset.vermapa); if (g) { $("mue-mapa-caja").scrollIntoView({ block: "start", behavior: "smooth" }); verMapa(g); } return; }
+    if (b.dataset.foto) { if (fichas.some(x => x.id === b.dataset.foto)) { fotoPara = b.dataset.foto; $("mue-foto-in").click(); } return; }
+    if (b.dataset.quitafoto) { quitaFoto(b.dataset.quitafoto); return; }
     if (b.dataset.edita && f) abre(f);
     else if (b.dataset.copia && f) copia(textoFicha(f), T("Copiado. Pégalo en un mensaje para tu compañero."));
     else if (b.dataset.borra && f) { borrando = f.id; lista(); $("mue-lista").querySelector(".mue-si")?.focus(); }
@@ -450,7 +542,10 @@
     else if (b.dataset.si && f) {
       const copiaL = fichas.slice(); fichas = fichas.filter(x => x !== f); borrando = null;
       if (!guarda()) { fichas = copiaL; aviso(T("No se ha podido guardar en este móvil. Mira si el navegador está en modo privado o sin espacio."), true); }
-      else aviso(T("Ficha borrada."));
+      else {
+        aviso(T("Ficha borrada."));
+        if (FOTOS.has(f.id)) { FOTOS.delete(f.id); soltarURL(f.id); fotoQuita(f.id).catch(() => {}); }
+      }
       chips(); lista();
     }
   });

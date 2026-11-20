@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 195: foto en las fichas de clientes de Accesos y muelles
+- Petición n.º 63 del padre: en cada ficha abierta, botón «Añadir una foto» (luego «Cambiar la foto» y «Quitar la foto»). La foto se reduce en el móvil a 1280 px en JPEG (así también pierde los datos de la foto, como la posición GPS) y se guarda solo en ese móvil, en IndexedDB (`ccoo-muelles-fotos`, almacén `fotos`, clave = id de la ficha). La libreta (`ccoo-muelles` de localStorage) no cambia nada. La foto no va al copiar una ficha para un compañero ni al pasar la libreta a otro móvil (lo dice «Pasar mi libreta»). Al borrar la ficha se borra su foto. Pruebas en `pruebas/muelles-navegador.cjs` (también con dos ventanas).
+
 ## Versión 194: «Cerrar el mapa» en el mapa de clientes
 - Petición n.º 62 del padre: en «Accesos y muelles», debajo del «Mapa de mis clientes», botón «Cerrar el mapa» (`#mue-cierra-mapa`, `cierraMapa` en `muelles.js`): esconde el mapa (y sale de pantalla completa si hacía falta) y vuelve «Ver el mapa». El mapa no se destruye, así que al volver a abrirlo sale enseguida. No cambia lo guardado en el móvil. Pruebas en `pruebas/muelles-navegador.cjs`.
 
