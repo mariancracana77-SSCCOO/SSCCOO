@@ -149,7 +149,34 @@ const { chromium } = require('playwright');
   ok(guardada && guardada.tipo === 'image/jpeg' && guardada.w === 1280 && guardada.h === 853, 'foto: reducida a 1280 px en JPEG (sin datos de la foto) ' + JSON.stringify(guardada));
   ok(await p4.evaluate(() => localStorage.getItem('ccoo-muelles')) === antesLS, 'foto: la libreta del móvil (ccoo-muelles) no cambia nada');
   ok((await p4.textContent('.mue-ficha[data-ficha=mfa01] [data-foto]')).includes('Cambiar la foto') && await p4.locator('.mue-ficha[data-ficha=mfa01] [data-quitafoto]').isVisible(), 'foto: salen «Cambiar la foto» y «Quitar la foto»');
-  ok(!(await p4.evaluate(() => MuellesCuentas.exporta(JSON.parse(localStorage.getItem('ccoo-muelles')).fichas))).includes('blob'), 'foto: no va al pasar la libreta');
+  // La foto pasa con la ficha a un compañero (lo pidió el padre): se copia en el texto y el otro móvil la recibe
+  await c4.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await p4.click('.mue-ficha[data-ficha=mfa01] [data-copia]'); await p4.waitForTimeout(1200);
+  const pasado = await p4.evaluate(() => navigator.clipboard.readText());
+  const codP = pasado.slice(pasado.indexOf('CCOO-MUELLES:'));
+  const datosP = JSON.parse(codP.slice('CCOO-MUELLES:'.length));
+  ok((await p4.textContent('#mue-msg')).includes('con la foto') && /^data:image\/jpeg;base64,/.test(datosP[0].foto) && datosP[0].foto.length <= 40000, 'foto: «Copiar para un compañero» lleva la foto en pequeño (' + (datosP[0].foto || '').length + ' letras)');
+  ok(await p4.evaluate(() => localStorage.getItem('ccoo-muelles')) === antesLS, 'foto: copiar no cambia la libreta');
+  const c5 = await b.newContext({ viewport: { width: 360, height: 740 } });
+  await c5.route('**/lib/supabase.js*', r => r.fulfill({ path: require('path').join(__dirname, 'mock-supabase.js'), contentType: 'application/javascript' }));
+  await c5.addInitScript(() => { try { localStorage.setItem('ccoo-aviso-privacidad', '1'); } catch (e) {} });
+  const p5 = await c5.newPage(); p5.on('console', m => m.type() === 'error' && errs.push('compañero: ' + m.text())); p5.on('pageerror', e => errs.push('compañero: ' + e.message));
+  await p5.goto((process.env.BASE || 'http://localhost:8765/') + '#muelles'); await p5.waitForTimeout(1500);
+  try { await p5.locator('#bienvenida').click({ timeout: 1500 }); } catch {}
+  await p5.locator('#mue-pasar summary').click(); await p5.fill('#mue-texto', pasado); await p5.click('#mue-importa'); await p5.waitForTimeout(1200);
+  await p5.locator('.mue-ficha > summary').first().click(); await p5.waitForTimeout(400);
+  const ls5 = await p5.evaluate(() => localStorage.getItem('ccoo-muelles'));
+  ok(await p5.locator('.mue-ficha .mue-foto img[src^="blob:"]').count() === 1 && (await p5.textContent('#mue-msg')).includes('Con su foto') && !ls5.includes('foto') && !ls5.includes('base64'), 'foto: el compañero la pega y su ficha llega con la foto (la libreta no guarda la foto como texto)');
+  // Pegarlo otra vez cuando ya tiene el cliente pero le falta la foto: se la añade
+  const idC = await p5.evaluate(() => JSON.parse(localStorage.getItem('ccoo-muelles')).fichas[0].id);
+  await p5.click(`.mue-ficha[data-ficha=${idC}] [data-quitafoto]`); await p5.waitForTimeout(400);
+  await p5.locator('#mue-pasar').evaluate(d => { d.open = true; }); await p5.fill('#mue-texto', pasado); await p5.click('#mue-importa'); await p5.waitForTimeout(1200);
+  ok(await p5.locator('.mue-ficha').count() === 1 && await p5.locator('.mue-ficha .mue-foto img').count() === 1 && (await p5.textContent('#mue-msg')).includes('la foto que le faltaba'), 'foto: si ya tenía el cliente sin foto, se la añade sin duplicar');
+  // Una «foto» falsa en lo pegado no entra
+  const falso = 'CCOO-MUELLES:' + JSON.stringify([{ nombre: 'Falso', truco: 't', nivel: 'facil', foto: 'data:text/html;base64,PHNjcmlwdD4=' }, { nombre: 'Roto', truco: 't', nivel: 'facil', foto: 'data:image/jpeg;base64,AAAA' }]);
+  await p5.fill('#mue-texto', falso); await p5.click('#mue-importa'); await p5.waitForTimeout(800);
+  ok(await p5.locator('.mue-ficha').count() === 3 && await p5.locator('.mue-ficha[open] .mue-foto, .mue-ficha .mue-foto').count() === 1, 'foto: una foto falsa o rota no entra y la ficha sí');
+  await c5.close();
   await p4.reload(); await p4.waitForTimeout(1500);
   await p4.locator('.mue-ficha[data-ficha=mfa01] > summary').click(); await p4.waitForTimeout(400);
   ok(await p4.locator('.mue-ficha[data-ficha=mfa01] .mue-foto img[src^="blob:"]').count() === 1 && await p4.locator('.mue-ficha[data-ficha=mfa02] .mue-foto').count() === 0, 'foto: sigue tras recargar y solo en su cliente');

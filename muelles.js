@@ -34,7 +34,9 @@
     return r;
   }
   // Libreta a texto para otro móvil, y al revés (añade, no quita nada; lo repetido no se duplica)
-  const exporta = (l) => PREFIJO + JSON.stringify(l.map(f => limpia(f)).filter(Boolean));
+  // v195 (petición n.º 63): con `fotos` (id -> «data:image/jpeg;base64,…», ya pequeña), cada ficha lleva también su foto
+  const FOTO_OK = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/, FOTO_MAX = 120000;
+  const exporta = (l, fotos) => PREFIJO + JSON.stringify(l.map(f => { const r = limpia(f); if (r && fotos && fotos[f.id]) r.foto = fotos[f.id]; return r; }).filter(Boolean));
   function importa(texto, actual) {
     const t = String(texto || "").trim(), i = t.indexOf(PREFIJO);
     if (i < 0) return { error: "codigo" };
@@ -44,15 +46,20 @@
     const l = actual.slice(), ids = new Set(l.map(f => f.id));
     const igual = (a, b) => ["nombre", "lugar", "truco"].every(k => a[k] === b[k]);
     let nuevas = 0, repes = 0, sobran = 0;
+    // Fotos que venían en lo pegado: {id de la ficha aquí, data, siFalta (cliente que ya tenías: solo si no tiene foto)}
+    const fotos = [];
+    const foto = (d) => typeof d.foto === "string" && d.foto.length <= FOTO_MAX && FOTO_OK.test(d.foto) ? d.foto : null;
     for (const d of datos) {
       const f = limpia(d);
       if (!f) continue;
-      if (l.some(x => igual(x, f))) { repes++; continue; }
+      const ya = l.find(x => igual(x, f));
+      if (ya) { repes++; if (foto(d)) fotos.push({ id: ya.id, data: foto(d), siFalta: true }); continue; }
       if (l.length >= TOPE) { sobran++; continue; }
       if (ids.has(f.id)) f.id = nuevoId();
       ids.add(f.id); l.push(f); nuevas++;
+      if (foto(d)) fotos.push({ id: f.id, data: foto(d) });
     }
-    return { lista: l, nuevas, repes, sobran };
+    return { lista: l, nuevas, repes, sobran, fotos };
   }
   const plano = (s) => String(s || "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
   const busca = (l, q, nivel) => {
@@ -173,8 +180,11 @@
   // La foto se guarda SOLO en este móvil, en IndexedDB (base «ccoo-muelles-fotos», almacén «fotos», clave = id de la ficha),
   // aparte de la libreta: «ccoo-muelles» de localStorage no cambia nada (ni su formato ni sus claves), y si el móvil no deja
   // usar IndexedDB la libreta sigue igual y solo se avisa. Antes de guardarla se reduce con un canvas a 1280 px en JPEG, lo
-  // que también quita los datos de la foto (EXIF, posición GPS). La foto no va en «Copiar para un compañero» ni al pasar la
-  // libreta a otro móvil (son textos). Al borrar la ficha, se borra su foto.
+  // que también quita los datos de la foto (EXIF, posición GPS). Al borrar la ficha, se borra su foto.
+  // El padre pidió (mensajes 3 y 5 de la petición) que la foto pase con la ficha: «Copiar para un compañero» y «Copiar mi
+  // libreta» meten la foto en el texto, más pequeña (480 px o menos, como mucho 40.000 letras), en el campo `foto` de cada
+  // ficha (`fotosParaPasar`). Al pegar, `importa` solo acepta «data:image/…;base64» de hasta FOTO_MAX y `guardaFotosPegadas`
+  // la vuelve a dibujar en un canvas antes de guardarla (solo entra una imagen limpia). La libreta (`limpia`) nunca guarda `foto`.
   const FOTOS = new Set(), URLS = new Map();
   let fotoPara = null, fotoBD = null;
   function bd() {
@@ -219,16 +229,16 @@
       if (img.isConnected && img.getAttribute("src") !== URLS.get(id)) img.src = URLS.get(id);
     }
   }
-  function reduceFoto(archivo) {
+  function reduceFoto(archivo, lado = 1280, calidad = 0.82) {
     return new Promise((ok, mal) => {
       const u = URL.createObjectURL(archivo), im = new Image();
       im.onload = () => {
         URL.revokeObjectURL(u);
-        const k = Math.min(1, 1280 / Math.max(im.naturalWidth, im.naturalHeight));
+        const k = Math.min(1, lado / Math.max(im.naturalWidth, im.naturalHeight));
         const c = document.createElement("canvas");
         c.width = Math.max(1, Math.round(im.naturalWidth * k)); c.height = Math.max(1, Math.round(im.naturalHeight * k));
         const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height);
-        c.toBlob(b => b ? ok(b) : mal(new Error("sin foto")), "image/jpeg", 0.82);
+        c.toBlob(b => b ? ok(b) : mal(new Error("sin foto")), "image/jpeg", calidad);
       };
       im.onerror = () => { URL.revokeObjectURL(u); mal(new Error("no es una foto")); };
       im.src = u;
@@ -246,6 +256,38 @@
     soltarURL(id); FOTOS.add(id); ABIERTAS.add(id); lista();
     aviso(T("Foto guardada. Solo está en este móvil."));
     $("mue-" + id)?.querySelector("[data-foto]")?.focus();
+  }
+  // Para pasar la foto con la ficha: más pequeña (que quepa en un mensaje), como texto «data:image/jpeg;base64,…»
+  const aTexto = (b) => new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = () => mal(r.error); r.readAsDataURL(b); });
+  async function fotosParaPasar(lista) {
+    const fotos = {};
+    for (const f of lista) {
+      if (!FOTOS.has(f.id)) continue;
+      try {
+        const b = await fotoLee(f.id); if (!b) continue;
+        for (const [lado, cal] of [[480, 0.6], [360, 0.5], [260, 0.45]]) {
+          const t = await aTexto(await reduceFoto(b, lado, cal));
+          if (t.length <= 40000) { fotos[f.id] = t; break; }
+        }
+      } catch (e) { /* sin foto: la ficha pasa igual */ }
+    }
+    return fotos;
+  }
+  // Guarda las fotos que venían en lo pegado (se vuelven a dibujar en un canvas: solo entra una imagen limpia)
+  async function guardaFotosPegadas(lista) {
+    let n = 0;
+    for (const x of lista || []) {
+      if (x.siFalta && FOTOS.has(x.id)) continue;
+      try {
+        // Sin fetch (la CSP no deja leer «data:»): se pasa el base64 a bytes a mano
+        const [cab, b64] = x.data.split(","), bin = atob(b64), u8 = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+        const b = new Blob([u8], { type: cab.slice(5, cab.indexOf(";")) });
+        await fotoPon(x.id, await reduceFoto(b));
+        soltarURL(x.id); FOTOS.add(x.id); n++;
+      } catch (e) { /* esa foto no se ha podido leer: la ficha se queda sin foto */ }
+    }
+    return n;
   }
   async function quitaFoto(id) {
     try { await fotoQuita(id); } catch (e) { aviso(T("No se ha podido quitar la foto."), true); return; }
@@ -498,12 +540,12 @@
     try { await navigator.clipboard.writeText(t); aviso(ok); }
     catch (e) { $("mue-texto").value = t; $("mue-pasar").open = true; $("mue-texto").focus(); $("mue-texto").select(); aviso(T("No se ha podido copiar solo: mantén pulsado el texto de abajo y cópialo."), true); }
   }
-  function textoFicha(f) {
+  function textoFicha(f, fotos) {
     const l = [f.nombre + (f.lugar ? " (" + f.lugar + ")" : ""), T("Nivel") + ": " + T(NOMBRE_NIVEL[f.nivel]), T("Cómo entrar y maniobrar") + ": " + f.truco];
     for (const k of ["maniobra", "dormir", "banos"]) if (f[k]) l.push(T(NOMBRE_DATO[k]) + ": " + T(NOMBRE_OPC[k][f[k]]));
     for (const k of ["espera", "epis"]) if (f[k]) l.push(T(NOMBRE_DATO[k]) + ": " + f[k]);
     if (mapa(f)) l.push(T("Mapa") + ": " + mapa(f));
-    return l.join("\n") + "\n\n" + T("Apuntado por un conductor, sin comprobar. Para meterlo en tu libreta de la web de CCOO:") + "\n" + exporta([f]);
+    return l.join("\n") + "\n\n" + T("Apuntado por un conductor, sin comprobar. Para meterlo en tu libreta de la web de CCOO:") + "\n" + exporta([f], fotos);
   }
 
   lee(); leyenda(); chips(); lista();
@@ -536,7 +578,10 @@
     if (b.dataset.foto) { if (fichas.some(x => x.id === b.dataset.foto)) { fotoPara = b.dataset.foto; $("mue-foto-in").click(); } return; }
     if (b.dataset.quitafoto) { quitaFoto(b.dataset.quitafoto); return; }
     if (b.dataset.edita && f) abre(f);
-    else if (b.dataset.copia && f) copia(textoFicha(f), T("Copiado. Pégalo en un mensaje para tu compañero."));
+    else if (b.dataset.copia && f) {
+      if (!FOTOS.has(f.id)) copia(textoFicha(f), T("Copiado. Pégalo en un mensaje para tu compañero."));
+      else fotosParaPasar([f]).then(fo => copia(textoFicha(f, fo), fo[f.id] ? T("Copiado con la foto. Pégalo en un mensaje para tu compañero.") : T("Copiado sin la foto (no se ha podido preparar). Pégalo en un mensaje para tu compañero.")));
+    }
     else if (b.dataset.borra && f) { borrando = f.id; lista(); $("mue-lista").querySelector(".mue-si")?.focus(); }
     else if (b.dataset.no) { const id = borrando; borrando = null; lista(); $("mue-lista").querySelector(`[data-borra="${CSS.escape(id || "")}"]`)?.focus(); }
     else if (b.dataset.si && f) {
@@ -551,15 +596,26 @@
   });
   $("mue-exporta").addEventListener("click", () => {
     if (!fichas.length) { aviso(T("Tu libreta está vacía."), true); return; }
-    copia(exporta(fichas), T("Copiado. Pégalo en «Pasar mi libreta» del otro móvil."));
+    if (!FOTOS.size) { copia(exporta(fichas), T("Copiado. Pégalo en «Pasar mi libreta» del otro móvil.")); return; }
+    aviso(T("Preparando las fotos…"));
+    fotosParaPasar(fichas).then(fo => {
+      const t = exporta(fichas, fo);
+      copia(t, T("Copiado con las fotos. Pégalo en «Pasar mi libreta» del otro móvil.") + (t.length > 60000 ? " " + T("Es un texto largo por las fotos: si tu app de mensajes lo corta, pasa los clientes de uno en uno con «Copiar para un compañero».") : ""));
+    });
   });
   $("mue-importa").addEventListener("click", () => {
     const r = importa($("mue-texto").value, fichas);
     if (r.error) { aviso(T("Ese texto no es una libreta ni una ficha de Accesos y muelles."), true); return; }
-    if (!r.nuevas) { aviso(T("No había nada nuevo: ya tenías todo eso.")); return; }
+    if (!r.nuevas) {
+      aviso(T("No había nada nuevo: ya tenías todo eso."));
+      if (r.fotos.length) guardaFotosPegadas(r.fotos).then(n => { if (n) { lista(); aviso(n === 1 ? T("Ya tenías ese cliente. Se ha añadido la foto que le faltaba.") : T("Ya tenías esos clientes. Se han añadido {n} fotos que te faltaban.", { n })); } });
+      return;
+    }
     const copiaL = fichas; fichas = r.lista;
     if (!guarda()) { fichas = copiaL; aviso(T("No se ha podido guardar en este móvil. Mira si el navegador está en modo privado o sin espacio."), true); return; }
     $("mue-texto").value = ""; chips(); lista();
-    aviso(T("Añadidos {n} clientes.", { n: r.nuevas }) + (r.repes ? " " + T("{n} ya los tenías.", { n: r.repes }) : "") + (r.sobran ? " " + T("{n} no caben (máximo {t}).", { n: r.sobran, t: TOPE }) : ""));
+    const msg = T("Añadidos {n} clientes.", { n: r.nuevas }) + (r.repes ? " " + T("{n} ya los tenías.", { n: r.repes }) : "") + (r.sobran ? " " + T("{n} no caben (máximo {t}).", { n: r.sobran, t: TOPE }) : "");
+    aviso(msg);
+    if (r.fotos.length) guardaFotosPegadas(r.fotos).then(n => { if (n) { lista(); aviso(msg + " " + (n === 1 ? T("Con su foto.") : T("Con {n} fotos.", { n }))); } });
   });
 })();
