@@ -106,7 +106,7 @@
     dormir: { prohibido: "Prohibido dormir fuera", calle: "Se puede dormir en la calle o el polígono", dentro: "Aparcamiento dentro del recinto" },
     banos: { bano: "Baño, sin ducha", ducha: "Baño y ducha", no: "No dejan usar el baño" },
   };
-  const NOMBRE_DATO = { maniobra: "Maniobra", dormir: "Dormir", banos: "Baños", espera: "Espera", epis: "EPIs" };
+  const NOMBRE_DATO = { maniobra: "Maniobra", dormir: "Dormir", banos: "Baños", espera: "Espera", epis: "Horario" };
   /* fin textos */
 
   let fichas = [], filtro = "", borrando = null, editando = null;

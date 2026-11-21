@@ -690,7 +690,7 @@ const TARJETAS_COND = [
   ["multas", "alerta", "Multas en Europa", "País por país, cuánto te pueden multar por velocidad, tacógrafo, descansos, peso, alcohol, móvil o peajes, y si hay que pagar en el acto."],
   ["sobresale", "medida", "Cargas que sobresalen", "Cuánto puede sobresalir tu carga por delante, por detrás o por los lados, y cómo señalizarla con el panel V-20."],
   ["conversor", "cambio", "Conversor rápido", "Bar y PSI, kilómetros y millas, litros y galones, grados, pies y pulgadas: escribe un número y se cambia solo."],
-  ["muelles", "muelle", "Accesos y muelles", "Tu libreta de clientes difíciles: por dónde se entra, cómo se maniobra, dónde dormir y qué EPIs piden."],
+  ["muelles", "muelle", "Accesos y muelles", "Tu libreta de clientes difíciles: por dónde se entra, cómo se maniobra, dónde dormir y su horario."],
   ["ferry", "barco", "Ferry y tren", "Mira si el descanso que haces con el camión en un barco o en un tren vale según la norma europea."],
   ["testigos", "testigo", "Guía de testigos", "Qué quiere decir cada luz del cuadro y qué hacer. De momento, DAF."],
 ];
