@@ -66,6 +66,7 @@
     mapa: '<path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4Z"/><path d="M9 4v14"/><path d="M15 6v14"/>',
     grande: '<path d="M4 9V4h5"/><path d="M15 4h5v5"/><path d="M20 15v5h-5"/><path d="M9 20H4v-5"/>',
     barco: '<path d="M3 15.5h18l-2.5 4.5h-13Z"/><path d="M6 15.5V11h12v4.5"/><path d="M9 11V7.5h6V11"/><path d="M12 4v3.5"/>',
+    tunel: '<path d="M3 20V12a9 9 0 0 1 18 0v8"/><path d="M7.5 20v-7a4.5 4.5 0 0 1 9 0v7"/><path d="M2 20h20"/>',
     testigo: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5.5"/><path d="M12 16.2v.3"/>',
     tunel: '<path d="M3 20V12a9 9 0 0 1 18 0v8"/><path d="M7 20v-7.5a5 5 0 0 1 10 0V20"/><path d="M2 20h20"/>',
     muelle: '<path d="M2.5 21V9.5L12 4l9.5 5.5V21"/><path d="M6.5 21v-8h11v8"/><path d="M6.5 16.5h11"/><path d="M9.5 9.5h5"/>',

@@ -3263,3 +3263,26 @@ label.cg-huecos { margin: 0 0 12px; }
 .mue-hor [hidden], #mue-abiertos[hidden] { display: none !important; }
 .mue-abiertos { margin: 6px 0 0; }
 .mue-hor-pista { margin: 6px 0 0; }
+
+/* v199: Gálibos y túneles (petición n.º 66) */
+.ga-caja select, .ga-caja input[type=text] { width: 100%; }
+.ga-tunel { margin-bottom: 12px; padding: 14px 16px; border-left: 6px solid var(--cond-azul); }
+.ga-tunel.no { border-left-color: var(--rojo); }
+.ga-tunel h3 { margin: 0 0 2px; text-wrap: balance; }
+.ga-donde { margin: 0 0 4px; font-weight: 700; }
+.ga-datos { display: grid; gap: 8px; margin: 10px 0; }
+.ga-datos > div { min-width: 0; }
+.ga-datos dt { font-weight: 700; font-size: .9em; color: var(--tinta-2, inherit); }
+.ga-datos dd { margin: 2px 0 0; }
+.ga-num { font-size: 1.15em; }
+.ga-normas { margin: 6px 0; padding-left: 1.2em; }
+.ga-fuente { display: block; margin-top: 2px; font-size: .8em; font-weight: 400; line-height: 1.35; }
+.ga-fuente.ok { color: var(--verde-texto, var(--verde)); }
+.ga-fuente.sin { font-style: italic; }
+.ga-res { margin: 8px 0; padding: 8px 12px; border-radius: 10px; border: 2px solid var(--linea); }
+.ga-res b { display: block; }
+.ga-res.si { border-color: var(--verde); background: var(--verde-suave, transparent); }
+.ga-res.no { border-color: var(--rojo); background: var(--rojo-suave); }
+.ga-res.duda, .ga-res.justo { border-color: var(--ambar); background: var(--ambar-suave); }
+.ga-tels { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+@media (min-width: 700px) { .ga-datos { grid-template-columns: 1fr 1fr; } }

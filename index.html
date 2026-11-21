@@ -25,10 +25,10 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="fuentes.css?v=198">
-<script src="lectura.js?v=198"></script>
-<link rel="stylesheet" href="styles.css?v=198">
-<link rel="stylesheet" href="web-pc.css?v=198" media="(min-width: 1000px) and (display-mode: browser)">
+<link rel="stylesheet" href="fuentes.css?v=199">
+<script src="lectura.js?v=199"></script>
+<link rel="stylesheet" href="styles.css?v=199">
+<link rel="stylesheet" href="web-pc.css?v=199" media="(min-width: 1000px) and (display-mode: browser)">
 </head>
 <body class="publica">
 
@@ -956,6 +956,46 @@
     <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Son los testigos más habituales. El dibujo puede cambiar algo según el año y el modelo: ante la duda, mira el manual del camión o llama al taller. Si se enciende uno rojo, para en cuanto puedas hacerlo con seguridad.</span></p>
   </section>
 
+  <!-- GÁLIBOS Y TÚNELES (Zona Conductores > Utilidades en ruta, petición n.º 66, v199): lo primero, la información de cada túnel (galibos-datos.js); «¿Puedo pasar con mi carga?» con el código de túnel ADR y, plegado, la altura del camión; guarda {codigo, cisterna, mucho, alto} en «ccoo-galibos» (galibos.js) -->
+  <section class="vista zc-herr" id="v-galibos">
+    <h1 class="titulo-vista">Gálibos y túneles</h1>
+    <p class="intro-vista">Lo que tienes que saber de los túneles grandes de tu ruta: altura máxima, mercancías peligrosas, velocidad y normas.</p>
+    <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Información orientativa. Sigue siempre las señales, el GPS de camión y las indicaciones oficiales del túnel o el peaje. Puede haber cambios.</span></p>
+    <div class="panel zc-caja ga-caja">
+      <h2>¿Puedo pasar con mi carga?</h2>
+      <label for="ga-codigo">Código de restricción en túneles (en la carta de porte, entre paréntesis)</label>
+      <select id="ga-codigo"></select>
+      <p class="zc-pista">Ejemplo: «UN 1202 Gasóleo, 3, III, (D/E)». El código es lo de entre paréntesis del final.</p>
+      <div id="ga-cis-caja" hidden><label class="check"><input type="checkbox" id="ga-cisterna"><span>Lo llevo en cisterna</span></label>
+        <p class="zc-pista">Con barra, como (D/E): la primera letra vale si vas en cisterna y la segunda si no.</p></div>
+      <div id="ga-mucho-caja" hidden><label for="ga-mucho">¿Llevas más de <span id="ga-mucho-kg"></span> kg de masa neta de explosivo?</label>
+        <select id="ga-mucho"><option value="">No lo sé</option><option value="si">Sí, más</option><option value="no">No, menos</option></select></div>
+    </div>
+    <details class="panel zc-caja ga-caja" id="ga-altura">
+      <summary>Comprobar la altura de mi camión</summary>
+      <label for="ga-alto">Altura de mi camión con la carga (metros)</label>
+      <input id="ga-alto" type="text" inputmode="decimal" placeholder="Ej.: 4,00" autocomplete="off">
+      <p class="zc-pista" id="ga-alto-res" aria-live="polite"></p>
+      <p class="zc-pista">Es la altura máxima de cada túnel, no la altura legal del país (por ejemplo, en Suiza un camión no puede pasar de 4,00 m en ninguna carretera).</p>
+    </details>
+    <input id="ga-busca" class="zc-busca" type="search" placeholder="Busca: Fréjus, Somport, Suiza…" autocomplete="off" aria-label="Buscar un túnel">
+    <div class="zc-chips" id="ga-zonas" role="group" aria-label="Filtrar por zona"></div>
+    <p class="zc-pista" id="ga-cuenta" aria-live="polite"></p>
+    <div id="ga-lista"></div>
+    <p class="zc-pista" id="ga-revisado"></p>
+    <details class="panel zc-caja">
+      <summary>Las categorías de túnel (ADR)</summary>
+      <ul>
+        <li><b>A:</b> sin restricción para mercancías peligrosas.</li>
+        <li><b>B:</b> prohibido lo que puede provocar una explosión muy grande.</li>
+        <li><b>C:</b> lo de la B y además lo que puede provocar una explosión grande o una fuga tóxica grande.</li>
+        <li><b>D:</b> lo de la C y además lo que puede provocar un incendio grande.</li>
+        <li><b>E:</b> prohibidas casi todas las mercancías peligrosas con panel naranja.</li>
+        <li>Tu código dice desde qué letra no puedes pasar: <b>(B)</b> no pasa por B, C, D ni E; <b>(C)</b> no pasa por C, D ni E; <b>(D)</b> no pasa por D ni E; <b>(E)</b> no pasa por E. Con <b>(D/E)</b> en cisterna puedes pasar por A, B y C; sin cisterna, por A, B, C y D. <span class="ga-fuente ok">ADR, capítulo 8.6.</span></li>
+      </ul>
+    </details>
+  </section>
+
   <!-- UTILIDADES EN RUTA (Zona Conductores, v187, petición n.º 56 del padre): las 8 herramientas de UTIL en app.js (tarjetas de TARJETAS_COND) -->
   <section class="vista" id="v-utilidades">
     <h1 class="titulo-vista">Utilidades en ruta</h1>
@@ -1072,28 +1112,30 @@
 <div class="barra-acciones" id="barra-acciones"></div>
 <button class="arriba-btn" id="arriba" type="button" aria-label="Volver arriba" title="Volver arriba"><svg class="arriba-aro" viewBox="0 0 52 52" aria-hidden="true"><circle class="aro-fondo" cx="26" cy="26" r="23"/><circle class="aro-prog" cx="26" cy="26" r="23" pathLength="100"/></svg><span data-i="arriba"></span></button>
 
-<script src="lib/supabase.js?v=198"></script>
-<script src="iconos.js?v=198"></script>
-<script src="config.js?v=198"></script>
-<script src="render.js?v=198"></script>
-<script src="app.js?v=198"></script>
-<script src="descansos.js?v=198"></script>
-<script src="ganancias.js?v=198"></script>
-<script src="aparcar.js?v=198"></script>
-<script src="zona-idioma.js?v=198"></script>
-<script src="convenio-girona.js?v=198"></script>
-<script src="finiquito.js?v=198"></script>
-<script src="adr.js?v=198"></script>
-<script src="hora.js?v=198"></script>
-<script src="diccionario.js?v=198"></script>
-<script src="carga.js?v=198"></script>
-<script src="ejes.js?v=198"></script>
-<script src="multas.js?v=198"></script>
-<script src="sobresale.js?v=198"></script>
-<script src="conversor.js?v=198"></script>
-<script src="muelles.js?v=198"></script>
-<script src="ferry.js?v=198"></script>
-<script src="testigos.js?v=198"></script>
-<script src="web-pc.js?v=198"></script>
+<script src="lib/supabase.js?v=199"></script>
+<script src="iconos.js?v=199"></script>
+<script src="config.js?v=199"></script>
+<script src="render.js?v=199"></script>
+<script src="app.js?v=199"></script>
+<script src="descansos.js?v=199"></script>
+<script src="ganancias.js?v=199"></script>
+<script src="aparcar.js?v=199"></script>
+<script src="zona-idioma.js?v=199"></script>
+<script src="convenio-girona.js?v=199"></script>
+<script src="finiquito.js?v=199"></script>
+<script src="adr.js?v=199"></script>
+<script src="hora.js?v=199"></script>
+<script src="diccionario.js?v=199"></script>
+<script src="carga.js?v=199"></script>
+<script src="ejes.js?v=199"></script>
+<script src="multas.js?v=199"></script>
+<script src="sobresale.js?v=199"></script>
+<script src="conversor.js?v=199"></script>
+<script src="muelles.js?v=199"></script>
+<script src="ferry.js?v=199"></script>
+<script src="testigos.js?v=199"></script>
+<script src="galibos-datos.js?v=199"></script>
+<script src="galibos.js?v=199"></script>
+<script src="web-pc.js?v=199"></script>
 </body>
 </html>
