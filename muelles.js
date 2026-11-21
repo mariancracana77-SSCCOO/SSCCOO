@@ -401,7 +401,8 @@
     $("mue-abiertos").hidden = !conHor && !soloAbiertos;
     $("mue-abiertos").setAttribute("aria-pressed", String(soloAbiertos));
     $("mue-abiertos").classList.toggle("activa", soloAbiertos);
-    $("mue-exporta").hidden = $("mue-foto-pista").hidden = !FOTOS.size;
+    $("mue-exporta").hidden = $("mue-descarga-sin").hidden = $("mue-foto-pista").hidden = !FOTOS.size;
+    pintaTam();
     pintaRepes();
     cajaMapa();
     if (FOTOS.size) pintaFotos();
@@ -735,10 +736,41 @@
     }
   });
   // v197 (lo pidió el padre: con fotos el texto era tan largo que WhatsApp y Telegram no lo aceptaban): «Copiar sin fotos»
-  // (texto corto), «Copiar con fotos» (dice el tamaño) y «Mandar como archivo» (con fotos, por el menú de compartir del
-  // móvil; si el navegador no deja, se descarga el archivo). Al otro lado: pegar el texto o «Abrir un archivo».
+  // (texto corto) y «Copiar con fotos» (dice el tamaño). Al otro lado: pegar el texto o cargar el archivo.
+  // v200 (petición n.º 67, ampliación pasada por Lorena: «quiere que se pueda DESCARGAR, no mandar»): «Descargar archivo»
+  // (con fotos) y «Descargar sin fotos» guardan el archivo directamente en Descargas (Blob + <a download>), sin el menú de
+  // compartir. Antes de descargar se comprueba que el archivo se vuelve a leer entero (`importa` con la libreta vacía:
+  // nuevas + repetidas + las que no caben = todas las fichas; las repetidas cuentan porque la libreta puede tenerlas).
+  // «Compartir» (menú del móvil) queda aparte; si el móvil no deja, lo dice y remite a «Descargar archivo».
+  // El archivo es el mismo texto que «Copiar»: sirve para pasarla a otro móvil y como copia de seguridad.
   const kb = (t) => Math.max(1, Math.round(new Blob([t]).size / 1024));
   const conFotos = () => FOTOS.size ? (aviso(T("Preparando las fotos…")), fotosParaPasar(fichas)) : Promise.resolve(null);
+  const hoyTxt = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+  const nombreArchivo = (sin) => "libreta-muelles-" + hoyTxt() + (sin ? "-sin-fotos" : "") + ".txt";
+  // El archivo se tiene que poder volver a leer entero antes de darlo por bueno
+  const archivoBien = (t) => { const r = importa(t, []); return !r.error && r.nuevas > 0 && r.nuevas + r.repes + r.sobran === fichas.map(limpia).filter(Boolean).length; };
+  const puedeDescargar = () => "download" in document.createElement("a") && typeof URL.createObjectURL === "function";
+  function pintaTam() {
+    const el = $("mue-tam");
+    if (!fichas.length) { el.hidden = true; return; }
+    // (se llama desde lista() al arrancar, antes de que exista «kb»: por eso calcula aquí el tamaño)
+    const sin = Math.max(1, Math.round(new Blob([exporta(fichas)]).size / 1024));
+    el.textContent = FOTOS.size
+      ? T("Tamaño del archivo: sin fotos, unos {s} KB; con fotos ({f}), hasta unos {c} KB.", { s: sin, f: FOTOS.size, c: sin + FOTOS.size * 40 })
+      : T("Tamaño del archivo: unos {s} KB.", { s: sin });
+    el.hidden = false;
+  }
+  function descarga(t, sin) {
+    if (!archivoBien(t)) { aviso(T("No se ha podido preparar bien el archivo. No se ha descargado nada: prueba otra vez."), true); return; }
+    const nombre = nombreArchivo(sin);
+    if (!puedeDescargar()) { aviso(T("Este navegador no deja descargar archivos. Prueba con «Compartir» o con «Copiar»."), true); return; }
+    try {
+      const u = URL.createObjectURL(new Blob([t], { type: "text/plain" })), a = document.createElement("a");
+      a.href = u; a.download = nombre; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(u), 30000);
+    } catch (e) { aviso(T("Este navegador no deja descargar archivos. Prueba con «Compartir» o con «Copiar»."), true); return; }
+    aviso(T("Descargado «{f}» ({n} KB). Lo tienes en la carpeta Descargas del móvil: desde ahí lo puedes mandar por WhatsApp, Telegram o correo, o guardarlo como copia.", { f: nombre, n: kb(t) }));
+  }
   $("mue-exporta-sin").addEventListener("click", () => {
     if (!fichas.length) { aviso(T("Tu libreta está vacía."), true); return; }
     copia(exporta(fichas), T("Copiado sin fotos. Pégalo en «Pasar mi libreta» del otro móvil."));
@@ -747,23 +779,26 @@
     if (!fichas.length) { aviso(T("Tu libreta está vacía."), true); return; }
     conFotos().then(fo => {
       const t = exporta(fichas, fo);
-      copia(t, T("Copiado con las fotos ({n} KB). Pégalo en «Pasar mi libreta» del otro móvil.", { n: kb(t) }) + (t.length > 60000 ? " " + T("Si WhatsApp o Telegram no lo aceptan, pásala sin fotos o con «Mandar como archivo».") : ""));
+      copia(t, T("Copiado con las fotos ({n} KB). Pégalo en «Pasar mi libreta» del otro móvil.", { n: kb(t) }) + (t.length > 60000 ? " " + T("Si WhatsApp o Telegram no lo aceptan, usa «Descargar archivo» y manda el archivo.") : ""));
     });
+  });
+  $("mue-descarga").addEventListener("click", () => {
+    if (!fichas.length) { aviso(T("Tu libreta está vacía."), true); return; }
+    conFotos().then(fo => descarga(exporta(fichas, fo), false));
+  });
+  $("mue-descarga-sin").addEventListener("click", () => {
+    if (!fichas.length) { aviso(T("Tu libreta está vacía."), true); return; }
+    descarga(exporta(fichas), true);
   });
   $("mue-archivo").addEventListener("click", () => {
     if (!fichas.length) { aviso(T("Tu libreta está vacía."), true); return; }
     conFotos().then(async fo => {
-      const t = exporta(fichas, fo), nombre = "libreta-muelles-" + new Date().toISOString().slice(0, 10) + ".txt";
+      const t = exporta(fichas, fo), nombre = nombreArchivo(false);
       let arch = null;
       try { arch = new File([t], nombre, { type: "text/plain" }); } catch (e) { /* navegador viejo */ }
-      if (arch && navigator.canShare && navigator.canShare({ files: [arch] })) {
-        try { await navigator.share({ files: [arch], title: T("Mi libreta de Accesos y muelles") }); aviso(T("Listo. En el otro móvil, abre «Pasar mi libreta» y pulsa «Abrir un archivo».")); return; }
-        catch (e) { if (e && e.name === "AbortError") return; }
-      }
-      const u = URL.createObjectURL(new Blob([t], { type: "text/plain" })), a = document.createElement("a");
-      a.href = u; a.download = nombre; document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(u), 10000);
-      aviso(T("Se ha guardado el archivo «{f}» ({n} KB) en tus descargas. Mándalo por WhatsApp o Telegram como documento.", { f: nombre, n: kb(t) }));
+      if (!(arch && navigator.canShare && navigator.canShare({ files: [arch] }))) { aviso(T("Este móvil no deja compartir archivos desde aquí. Usa «Descargar archivo» y mándalo desde la carpeta Descargas."), true); return; }
+      try { await navigator.share({ files: [arch], title: T("Mi libreta de Accesos y muelles") }); aviso(T("Listo. En el otro móvil, abre «Pasar mi libreta» y pulsa «Cargar archivo de libreta».")); }
+      catch (e) { if (!e || e.name !== "AbortError") aviso(T("No se ha podido compartir. Usa «Descargar archivo» y mándalo desde la carpeta Descargas."), true); }
     });
   });
   $("mue-abre-archivo").addEventListener("click", () => $("mue-archivo-in").click());
