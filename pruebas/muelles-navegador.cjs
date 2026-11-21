@@ -206,7 +206,7 @@ const { chromium } = require('playwright');
   const claves = await p4.evaluate(() => new Promise(ok => { const r = indexedDB.open('ccoo-muelles-fotos'); r.onsuccess = () => { const g = r.result.transaction('fotos').objectStore('fotos').getAllKeys(); g.onsuccess = () => ok(g.result); }; }));
   ok(JSON.stringify(claves) === '["mfa02"]' && await p4.locator('.mue-ficha[data-ficha=mfa02] .mue-foto img').count() === 1, 'foto: borrar la ficha borra su foto y la otra se queda ' + JSON.stringify(claves));
   const ls = await p4.evaluate(() => JSON.parse(localStorage.getItem('ccoo-muelles')));
-  ok(ls.v === 1 && ls.fichas.length === 1 && ls.fichas[0].id === 'mfa02' && Object.keys(ls.fichas[0]).every(k => ['id','nombre','lugar','nivel','truco','maniobra','dormir','banos','espera','epis','dibujo','lat','lon','cambiado'].includes(k)), 'foto: la libreta guarda lo mismo que antes (mismas claves)');
+  ok(ls.v === 1 && ls.fichas.length === 1 && ls.fichas[0].id === 'mfa02' && Object.keys(ls.fichas[0]).every(k => ['id','nombre','lugar','nivel','truco','maniobra','dormir','banos','espera','epis','hor','dibujo','lat','lon','cambiado'].includes(k)), 'foto: la libreta guarda lo mismo que antes (mismas claves)');
   await c4.close();
   ok(errs.length === 0, 'sin errores ni ventanas: ' + errs.join(' | '));
   await b.close(); process.exit(mal ? 1 : 0);

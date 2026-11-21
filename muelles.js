@@ -20,6 +20,66 @@
   const coord = (x, max) => { const n = parseFloat(String(x ?? "").replace(",", ".")); return isFinite(n) && Math.abs(n) <= max ? Math.round(n * 1e6) / 1e6 : null; };
   const nuevoId = () => "m" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
+  // ---------- Horario de cada cliente (v199, petición n.º 67: «en lugar de EPIs, añadir horario») ----------
+  // f.hor = {h24: true} (abierto siempre) o {b: [{d: [1..7] (1 = lunes), t: [[desde, hasta], …]}]} en minutos del día
+  // (0–1439; «hasta» menor que «desde» = pasa la medianoche). Hasta 4 grupos de días y 2 turnos por grupo. Lo apunta el
+  // conductor: la ficha dice «Abierto ahora» o «Cerrado ahora · abre…» con la hora del móvil. El texto que ya hubiera en
+  // «epis» (antes «EPIs que piden») no se toca: sale como «Nota del horario».
+  const DIAS = ["L", "M", "X", "J", "V", "S", "D"];
+  function limpiaHor(h) {
+    if (!h || typeof h !== "object") return null;
+    if (h.h24 === true) return { h24: true };
+    if (!Array.isArray(h.b)) return null;
+    const b = [];
+    for (const g of h.b.slice(0, 4)) {
+      if (!g || !Array.isArray(g.d) || !Array.isArray(g.t)) continue;
+      const d = [...new Set(g.d.map(Number).filter(x => Number.isInteger(x) && x >= 1 && x <= 7))].sort();
+      const t = g.t.slice(0, 2).filter(x => Array.isArray(x) && x.length === 2).map(x => x.map(Number))
+        .filter(([a, z]) => [a, z].every(v => Number.isInteger(v) && v >= 0 && v < 1440) && a !== z);
+      if (d.length && t.length) b.push({ d, t });
+    }
+    return b.length ? { b } : null;
+  }
+  const hhmm = (m) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, "0")}`;
+  // Tramos abiertos de un día de la semana (1–7): [[desde, hasta]] con hasta hasta 1440
+  function tramos(h, dia) {
+    const r = [];
+    for (const g of h.b || []) for (const [a, z] of g.t) {
+      if (z > a) { if (g.d.includes(dia)) r.push([a, z]); }
+      else { if (g.d.includes(dia)) r.push([a, 1440]); if (g.d.includes(dia === 1 ? 7 : dia - 1)) r.push([0, z]); }
+    }
+    return r.sort((x, y) => x[0] - y[0]);
+  }
+  // Estado a una hora dada: {abierto, cierra: {dia: 0|1, m}, abre: {dentro: días, dia, m}} o null sin horario
+  function estado(h, fecha) {
+    if (!h) return null;
+    if (h.h24) return { abierto: true, h24: true };
+    const hoy = ((fecha.getDay() + 6) % 7) + 1, m = fecha.getHours() * 60 + fecha.getMinutes();
+    const dia = (k) => ((hoy - 1 + k) % 7) + 1;
+    const ya = tramos(h, hoy).find(([a, z]) => a <= m && m < z);
+    if (ya) {
+      let cierra = { dentro: 0, m: ya[1] };
+      if (ya[1] === 1440) { const sig = tramos(h, dia(1)).find(([a]) => a === 0); cierra = sig ? { dentro: 1, m: sig[1] === 1440 ? 0 : sig[1] } : { dentro: 1, m: 0 }; }
+      return { abierto: true, cierra };
+    }
+    for (let k = 0; k <= 7; k++) {
+      const t = tramos(h, dia(k)).find(([a]) => k > 0 || a > m);
+      if (t) return { abierto: false, abre: { dentro: k, dia: dia(k), m: t[0] } };
+    }
+    return { abierto: false };
+  }
+  // «L–V 6:00–14:00 y 15:00–20:00 · S 6:00–12:00»
+  function horTexto(h) {
+    if (!h) return "";
+    if (h.h24) return "24 h";
+    const dias = (d) => {
+      const tr = []; let i = 0;
+      while (i < d.length) { let j = i; while (j + 1 < d.length && d[j + 1] === d[j] + 1) j++; tr.push(j - i >= 2 ? `${DIAS[d[i] - 1]}–${DIAS[d[j] - 1]}` : d.slice(i, j + 1).map(x => DIAS[x - 1]).join(", ")); i = j + 1; }
+      return tr.join(", ");
+    };
+    return h.b.map(g => `${dias(g.d)} ${g.t.map(([a, z]) => `${hhmm(a)}–${hhmm(z)}`).join(" y ")}`).join(" · ");
+  }
+
   // Deja una ficha solo con lo que se espera (lo que venga de fuera, de un móvil viejo o pegado, pasa por aquí)
   function limpia(f) {
     if (!f || typeof f !== "object") return null;
@@ -30,6 +90,8 @@
     for (const k of Object.keys(OPC)) r[k] = OPC[k].includes(f[k]) ? f[k] : "";
     const lat = coord(f.lat, 90), lon = coord(f.lon, 180);
     if (lat !== null && lon !== null) { r.lat = lat; r.lon = lon; }
+    const h = limpiaHor(f.hor);
+    if (h) r.hor = h;
     r.cambiado = typeof f.cambiado === "string" && /^\d{4}-\d{2}-\d{2}$/.test(f.cambiado) ? f.cambiado : new Date().toISOString().slice(0, 10);
     return r;
   }
@@ -93,7 +155,7 @@
     waze: `https://waze.com/ul?ll=${f.lat},${f.lon}&navigate=yes`,
     osm: `https://www.openstreetmap.org/directions?to=${f.lat}%2C${f.lon}`,
   };
-  window.MuellesCuentas = { limpia, exporta, importa, busca, mapa, rutas, repetidas, TOPE, PREFIJO };
+  window.MuellesCuentas = { limpia, exporta, importa, busca, mapa, rutas, repetidas, limpiaHor, estado, horTexto, TOPE, PREFIJO };
 
   const $ = (i) => document.getElementById(i);
   if (!$("v-muelles")) return;
@@ -106,10 +168,21 @@
     dormir: { prohibido: "Prohibido dormir fuera", calle: "Se puede dormir en la calle o el polígono", dentro: "Aparcamiento dentro del recinto" },
     banos: { bano: "Baño, sin ducha", ducha: "Baño y ducha", no: "No dejan usar el baño" },
   };
-  const NOMBRE_DATO = { maniobra: "Maniobra", dormir: "Dormir", banos: "Baños", espera: "Espera", epis: "Horario" };
+  const NOMBRE_DATO = { maniobra: "Maniobra", dormir: "Dormir", banos: "Baños", espera: "Espera", epis: "Nota del horario", hor: "Horario" };
   /* fin textos */
 
-  let fichas = [], filtro = "", borrando = null, editando = null;
+  const NOMBRE_DIA = ["el lunes", "el martes", "el miércoles", "el jueves", "el viernes", "el sábado", "el domingo"];
+  // v199: «Abierto ahora · cierra a las 14:00» / «Cerrado ahora · abre mañana a las 6:00»
+  function estadoTexto(f) {
+    const e = estado(f.hor, new Date());
+    if (!e) return null;
+    if (e.h24) return { abierto: true, t: T("Abierto 24 h") };
+    if (e.abierto) return { abierto: true, t: e.cierra.dentro ? T("Abierto ahora · cierra mañana a las {h}", { h: hhmm(e.cierra.m) }) : T("Abierto ahora · cierra a las {h}", { h: hhmm(e.cierra.m) }) };
+    if (!e.abre) return { abierto: false, t: T("Cerrado ahora") };
+    const cuando = e.abre.dentro === 0 ? T("hoy") : e.abre.dentro === 1 ? T("mañana") : T(NOMBRE_DIA[e.abre.dia - 1]);
+    return { abierto: false, t: T("Cerrado ahora · abre {c} a las {h}", { c: cuando, h: hhmm(e.abre.m) }) };
+  }
+  let fichas = [], filtro = "", borrando = null, editando = null, soloAbiertos = false;
   function lee() {
     try {
       const d = JSON.parse(localStorage.getItem(KEY) || "null");
@@ -169,18 +242,19 @@
   }
   function ficha(f) {
     const datos = ["maniobra", "dormir", "banos"].filter(k => f[k]).map(k => [k, T(NOMBRE_OPC[k][f[k]])])
+      .concat(f.hor ? [["hor", horTexto(f.hor)]] : [])
       .concat(["espera", "epis"].filter(k => f[k]).map(k => [k, f[k]]));
-    const r = rutas(f);
+    const r = rutas(f), et = estadoTexto(f);
     const conf = borrando === f.id ? `<div class="zc-aviso mue-conf" role="alert"><b>${esc(T("¿Borrar esta ficha? No se puede deshacer."))}</b>
       <div class="mue-bots"><button type="button" class="btn mue-si" data-si="${esc(f.id)}">${esc(T("Sí, borrarla"))}</button><button type="button" class="btn sec" data-no="1">${esc(T("No"))}</button></div></div>` : "";
     // v193 (petición n.º 61): cada ficha sale plegada (nombre, nivel y sitio); al tocarla se ven los detalles.
     // Lo abierto se recuerda mientras la página está abierta (ABIERTAS) para que no se cierre al repintar.
     const abierta = ABIERTAS.has(f.id) || borrando === f.id;
     return `<details class="panel mue-ficha ${f.nivel}" id="mue-${esc(f.id)}" data-ficha="${esc(f.id)}"${abierta ? " open" : ""}>
-      <summary class="mue-cab"><span class="mue-cab-t">${nivelHTML(f.nivel)}<h3 translate="no">${esc(f.nombre)}</h3>${f.lugar ? `<p class="mue-lugar" translate="no">${esc(f.lugar)}</p>` : ""}</span>
+      <summary class="mue-cab"><span class="mue-cab-t">${nivelHTML(f.nivel)}<h3 translate="no">${esc(f.nombre)}</h3>${f.lugar ? `<p class="mue-lugar" translate="no">${esc(f.lugar)}</p>` : ""}${et ? `<p class="mue-estado ${et.abierto ? "abierto" : "cerrado"}">${esc(et.t)}</p>` : ""}</span>
         <span class="mue-abre">${icono("abajo", "p")}<span class="mue-abre-t">${esc(T("Ver detalles"))}</span><span class="mue-cierra-t">${esc(T("Cerrar"))}</span></span></summary>
       <div class="mue-cuerpo">${FOTOS.has(f.id) ? `<figure class="mue-foto"><img alt="${esc(T("Foto de {n}", { n: f.nombre }))}" data-foto-de="${esc(f.id)}"${URLS.has(f.id) ? ` src="${esc(URLS.get(f.id))}"` : ""}></figure>` : ""}<div class="mue-truco"><b>${esc(T("Cómo entrar y maniobrar"))}</b><p translate="no">${esc(f.truco).replace(/\n/g, "<br>")}</p></div>
-      ${datos.length ? `<dl class="mue-datos">${datos.map(([k, v]) => `<div><dt>${esc(T(NOMBRE_DATO[k]))}</dt><dd${["espera", "epis"].includes(k) ? ' translate="no"' : ""}>${esc(v)}</dd></div>`).join("")}</dl>` : ""}
+      ${f.hor ? `<p class="zc-pista mue-hor-pista">${esc(T("Horario apuntado por ti con la hora de este móvil: puede cambiar en festivos."))}</p>` : ""}${datos.length ? `<dl class="mue-datos">${datos.map(([k, v]) => `<div><dt>${esc(T(NOMBRE_DATO[k]))}</dt><dd${["espera", "epis", "hor"].includes(k) ? ' translate="no"' : ""}>${esc(v)}</dd></div>`).join("")}</dl>` : ""}
       ${f.dibujo ? `<details class="mue-ver"><summary>${esc(T("Ver el dibujo de la maniobra"))}</summary>${dibujo(f.dibujo)}<p class="zc-pista">${esc(T("Dibujo de ejemplo: no es el plano de este cliente."))}</p></details>` : ""}
       ${r ? `<details class="mue-ir"><summary>${icono("lugar", "p")}${esc(T("Ir allí"))}</summary>
         <p class="zc-pista">${esc(T("Elige con qué app quieres ir. Sigue siempre las señales y el GPS de camión: estas apps pueden llevarte por donde no cabe un camión."))}</p>
@@ -316,13 +390,17 @@
 
   const ABIERTAS = new Set();
   function lista() {
-    const l = busca(fichas, $("mue-q").value, filtro).sort((a, b) => NIVELES.indexOf(a.nivel) - NIVELES.indexOf(b.nivel) || a.nombre.localeCompare(b.nombre, "es"));
+    const l = busca(fichas, $("mue-q").value, filtro).filter(f => !soloAbiertos || (estadoTexto(f) || {}).abierto).sort((a, b) => NIVELES.indexOf(a.nivel) - NIVELES.indexOf(b.nivel) || a.nombre.localeCompare(b.nombre, "es"));
     if ($("mue-q").value.trim() && l.length === 1) ABIERTAS.add(l[0].id); // al buscar y salir solo uno, se abre
     $("mue-cuenta").textContent = fichas.length ? T("{n} de {t} clientes", { n: l.length, t: fichas.length }) : "";
     $("mue-lista").innerHTML = !fichas.length
       ? `<div class="panel mue-vacio"><b>${esc(T("Tu libreta está vacía."))}</b><p>${esc(T("Cuando descargues en un sitio difícil, apunta aquí cómo se entra para la próxima vez."))}</p></div>`
       : l.length ? l.map(ficha).join("") : `<p class="mue-vacio">${esc(T("No hay ningún cliente con eso. Prueba con otra palabra o quita el filtro."))}</p>`;
     $("mue-buscar").hidden = !fichas.length;
+    const conHor = fichas.some(f => f.hor);
+    $("mue-abiertos").hidden = !conHor && !soloAbiertos;
+    $("mue-abiertos").setAttribute("aria-pressed", String(soloAbiertos));
+    $("mue-abiertos").classList.toggle("activa", soloAbiertos);
     $("mue-exporta").hidden = $("mue-foto-pista").hidden = !FOTOS.size;
     pintaRepes();
     cajaMapa();
@@ -443,9 +521,34 @@
 
   // Formulario (añadir o cambiar)
   const CAMPOS = ["nombre", "lugar", "nivel", "truco", "maniobra", "dormir", "banos", "espera", "epis", "dibujo", "lat", "lon"];
+  // v199: horario en el formulario. HB = grupos de días que se están escribiendo [{d: Set, t: [["06:00","14:00"], ["",""]]}]
+  let HB = [];
+  const aMin = (v) => { const m = /^(\d{1,2}):(\d{2})$/.exec(v || ""); return m && +m[1] < 24 && +m[2] < 60 ? +m[1] * 60 + +m[2] : null; };
+  const nuevoGrupo = () => ({ d: new Set(), t: [["", ""], ["", ""]] });
+  function pintaHor() {
+    const h24 = $("mue-h24").checked;
+    $("mue-hor-bloques").hidden = $("mue-hor-mas").hidden = h24;
+    $("mue-hor-mas").hidden = h24 || HB.length >= 4;
+    $("mue-hor-bloques").innerHTML = HB.map((g, i) => `<div class="mue-hor-g" data-g="${i}">
+      <div class="mue-hor-dias" role="group" aria-label="${esc(T("Días"))}">${DIAS.map((x, j) => `<button type="button" class="zc-chip${g.d.has(j + 1) ? " activa" : ""}" data-hd="${j + 1}" aria-pressed="${g.d.has(j + 1)}" aria-label="${esc(T(NOMBRE_DIA[j].replace(/^el /, "")))}">${esc(T(x))}</button>`).join("")}</div>
+      ${g.t.map((t, k) => `<div class="mue-hor-t"><span>${esc(k ? T("Tarde (si cierra a mediodía)") : T("Abre y cierra"))}</span><input type="time" data-ht="${k}" data-hx="0" value="${esc(t[0])}" aria-label="${esc(T("Abre"))}"><span aria-hidden="true">–</span><input type="time" data-ht="${k}" data-hx="1" value="${esc(t[1])}" aria-label="${esc(T("Cierra"))}"></div>`).join("")}
+      ${HB.length > 1 ? `<button type="button" class="btn sec mue-hor-quita" data-hq="${i}">${esc(T("Quitar estos días"))}</button>` : ""}</div>`).join("");
+  }
+  function leeHor() {
+    if ($("mue-h24").checked) return { h24: true };
+    return limpiaHor({ b: HB.map(g => ({ d: [...g.d], t: g.t.map(t => t.map(aMin)).filter(t => t[0] !== null && t[1] !== null) })) });
+  }
+  function horIncompleto() {
+    if ($("mue-h24").checked) return false;
+    return HB.some(g => { const algo = g.d.size || g.t.some(t => t[0] || t[1]); const t1 = g.t.some(t => aMin(t[0]) !== null && aMin(t[1]) !== null && aMin(t[0]) !== aMin(t[1])); return algo && (!g.d.size || !t1); });
+  }
   function abre(f) {
     editando = f ? f.id : null;
     for (const k of CAMPOS) $("mue-" + k).value = f && f[k] != null ? f[k] : (k === "nivel" ? "cuidado" : "");
+    $("mue-h24").checked = !!(f && f.hor && f.hor.h24);
+    HB = f && f.hor && f.hor.b ? f.hor.b.map(g => ({ d: new Set(g.d), t: [0, 1].map(k => g.t[k] ? g.t[k].map(hhmm).map(x => x.padStart(5, "0")) : ["", ""]) })) : [nuevoGrupo()];
+    $("mue-hor-msg").textContent = "";
+    pintaHor();
     $("mue-form-t").textContent = f ? T("Cambiar la ficha") : T("Añadir un cliente");
     $("mue-gps-msg").textContent = "";
     cierraElige();
@@ -459,6 +562,9 @@
   function guardaForm(e) {
     e.preventDefault();
     const d = {}; for (const k of CAMPOS) d[k] = $("mue-" + k).value;
+    if (horIncompleto()) { $("mue-hor-msg").textContent = T("Al horario le falta algo: marca los días y pon a qué hora abre y cierra (o déjalo vacío)."); $("mue-hor-msg").scrollIntoView({ block: "center" }); return; }
+    $("mue-hor-msg").textContent = "";
+    d.hor = leeHor();
     const lat = d.lat.trim(), lon = d.lon.trim();
     if ((lat || lon) && (coord(lat, 90) === null || coord(lon, 180) === null)) { $("mue-gps-msg").textContent = T("La posición no está bien escrita: déjala vacía o pulsa «Usar mi posición ahora» o «Elegir en el mapa»."); $("mue-lat").focus(); return; }
     const antes = fichas.find(f => f.id === editando);
@@ -590,6 +696,20 @@
   $("mue-lat").addEventListener("change", sigueNumeros);
   $("mue-lon").addEventListener("change", sigueNumeros);
   $("mue-q").addEventListener("input", lista);
+  $("mue-h24").addEventListener("change", pintaHor);
+  $("mue-hor-mas").addEventListener("click", () => { if (HB.length < 4) { HB.push(nuevoGrupo()); pintaHor(); } });
+  $("mue-hor-bloques").addEventListener("click", (e) => {
+    const g = e.target.closest("[data-g]"); if (!g) return; const grupo = HB[+g.dataset.g];
+    const d = e.target.closest("[data-hd]");
+    if (d) { const n = +d.dataset.hd; grupo.d.has(n) ? grupo.d.delete(n) : grupo.d.add(n); pintaHor(); return; }
+    const q = e.target.closest("[data-hq]");
+    if (q) { HB.splice(+q.dataset.hq, 1); pintaHor(); }
+  });
+  $("mue-hor-bloques").addEventListener("input", (e) => {
+    const i = e.target.closest("[data-ht]"), g = e.target.closest("[data-g]"); if (!i || !g) return;
+    HB[+g.dataset.g].t[+i.dataset.ht][+i.dataset.hx] = i.value;
+  });
+  $("mue-abiertos").addEventListener("click", () => { soloAbiertos = !soloAbiertos; lista(); });
   $("mue-niveles").addEventListener("click", (e) => { const b = e.target.closest("[data-nivel]"); if (!b) return; filtro = b.dataset.nivel; chips(); lista(); });
   $("mue-lista").addEventListener("click", (e) => {
     const b = e.target.closest("button"); if (!b) return;

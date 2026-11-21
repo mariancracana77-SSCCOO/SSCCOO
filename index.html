@@ -831,8 +831,16 @@
         <div><label for="mue-espera">Espera</label>
           <input id="mue-espera" type="text" maxlength="40" placeholder="Para descargar, ej.: 1 h 30 min" autocomplete="off"></div>
       </div>
-      <label for="mue-epis">Horario</label>
-      <input id="mue-epis" type="text" maxlength="80" placeholder="Lunes a viernes de 6:00 a 14:00…" autocomplete="off">
+      <fieldset class="mue-hor">
+        <legend>Horario</legend>
+        <p class="zc-pista">Marca los días y pon a qué hora abre y cierra. Si los sábados es distinto, pulsa «Añadir otros días».</p>
+        <label class="mue-check"><input type="checkbox" id="mue-h24"> Abierto las 24 horas</label>
+        <div id="mue-hor-bloques"></div>
+        <button type="button" class="btn sec" id="mue-hor-mas">Añadir otros días</button>
+        <p class="zc-pista mue-hor-msg" id="mue-hor-msg" aria-live="polite"></p>
+        <label for="mue-epis">Nota del horario</label>
+        <input id="mue-epis" type="text" maxlength="80" placeholder="Festivos cerrado, agosto solo mañanas…" autocomplete="off">
+      </fieldset>
       <label for="mue-dibujo">Dibujo de la maniobra</label>
       <select id="mue-dibujo"><option value="">Sin dibujo</option><option value="atras">Marcha atrás desde la calle</option><option value="porteria">Puerta de camiones distinta de las oficinas</option><option value="patio">Patio estrecho con ángulo ciego</option></select>
       <fieldset class="mue-pos">
@@ -857,6 +865,7 @@
     <div id="mue-buscar" hidden>
       <input id="mue-q" class="zc-busca" type="search" placeholder="Busca: cliente, pueblo, país…" autocomplete="off" aria-label="Buscar en mi libreta">
       <div class="zc-chips" id="mue-niveles" role="group" aria-label="Filtrar por dificultad"></div>
+      <button type="button" class="zc-chip mue-abiertos" id="mue-abiertos" aria-pressed="false" hidden>Solo los abiertos ahora</button>
       <p class="zc-pista" id="mue-cuenta" aria-live="polite"></p>
     </div>
     <div class="panel zc-caja mue-mapa-caja" id="mue-mapa-caja" hidden>

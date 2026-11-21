@@ -3242,3 +3242,24 @@ label.cg-huecos { margin: 0 0 12px; }
 .fe-fuente { display: block; font-size: .9em; opacity: .85; margin-top: 2px; }
 .fe-copia { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 14px; }
 .fe-copia .btn { margin: 0; min-height: 48px; }
+
+/* v199: horario de cada cliente en Accesos y muelles (petición 67) */
+.mue-estado { margin: 4px 0 0; font-weight: 700; font-size: .95em; }
+.mue-estado.abierto { color: var(--verde); }
+.mue-estado.cerrado { color: var(--suave); }
+.mue-hor { border: 1px solid var(--linea); border-radius: 12px; padding: 10px 12px 12px; margin: 14px 0 4px; min-width: 0; }
+.mue-hor legend { font-weight: 800; padding: 0 6px; }
+.mue-check { display: flex; gap: 10px; align-items: center; font-weight: 700; margin: 8px 0; min-height: 44px; }
+.mue-check input { width: 24px; height: 24px; flex: none; }
+.mue-hor-g { border-top: 1px dashed var(--linea); padding-top: 10px; margin-top: 10px; }
+.mue-hor-dias { display: flex; flex-wrap: wrap; gap: 6px; }
+.mue-hor-dias .zc-chip { min-width: 44px; padding: 8px 10px; justify-content: center; }
+.mue-hor-t { display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px 8px; align-items: center; margin-top: 8px; }
+.mue-hor-t > span:first-child { grid-column: 1 / -1; font-weight: 700; font-size: .95em; }
+.mue-hor-t input { min-width: 0; width: 100%; }
+.mue-hor-quita, #mue-hor-mas { margin: 10px 0 0; min-height: 44px; }
+.mue-hor-msg:empty { display: none; }
+.mue-hor-msg { color: var(--rojo); font-weight: 700; }
+.mue-hor [hidden], #mue-abiertos[hidden] { display: none !important; }
+.mue-abiertos { margin: 6px 0 0; }
+.mue-hor-pista { margin: 6px 0 0; }

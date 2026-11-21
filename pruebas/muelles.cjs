@@ -38,6 +38,28 @@ ok(r.nuevas === 1 && new Set(r.lista.map(x => x.id)).size === 3, "id repetido co
   ok(JSON.stringify(M.repetidas(rep, new Set(["r3"])).sort()) === '["r1","r2"]', "repetidas: se queda la que tiene foto (r3)");
   ok(M.repetidas(rep.slice(3)).length === 0, "sin repetidas no sobra nada");
 }
+// v199 (petición n.º 67): horario de cada cliente
+{
+  const h = M.limpiaHor({ b: [{ d: [1, 2, 3, 4, 5], t: [[360, 840], [900, 1200]] }, { d: [6], t: [[360, 720]] }] });
+  ok(M.horTexto(h) === "L–V 6:00–14:00 y 15:00–20:00 · S 6:00–12:00", "horario escrito en corto");
+  const E = (s) => M.estado(h, new Date(s));
+  ok(E("2026-11-23T07:00").abierto && E("2026-11-23T07:00").cierra.m === 840, "lunes 7:00: abierto, cierra a las 14:00");
+  ok(!E("2026-11-23T14:30").abierto && E("2026-11-23T14:30").abre.m === 900 && E("2026-11-23T14:30").abre.dentro === 0, "lunes 14:30: cerrado, abre hoy a las 15:00");
+  ok(E("2026-11-23T21:00").abre.dentro === 1 && E("2026-11-23T21:00").abre.m === 360, "lunes 21:00: abre mañana a las 6:00");
+  ok(E("2026-11-21T13:00").abre.dentro === 2 && E("2026-11-21T13:00").abre.dia === 1, "sábado 13:00: abre el lunes");
+  ok(!E("2026-11-23T20:00").abierto && E("2026-11-23T19:59").abierto, "a las 20:00 ya está cerrado; a las 19:59 aún abierto");
+  const n = M.limpiaHor({ b: [{ d: [5], t: [[1320, 360]] }] });
+  ok(M.estado(n, new Date("2026-11-21T03:00")).abierto && M.estado(n, new Date("2026-11-20T23:00")).cierra.dentro === 1, "turno de noche (viernes 22:00–6:00) pasa la medianoche");
+  ok(M.estado({ h24: true }, new Date()).abierto && M.horTexto({ h24: true }) === "24 h", "24 horas");
+  ok(M.estado(null, new Date()) === null && M.horTexto(null) === "", "sin horario no dice nada");
+  ok(M.limpiaHor({ b: [{ d: [9, "x"], t: [[10, 10]] }] }) === null && M.limpiaHor("hola") === null, "horario mal escrito: fuera");
+  ok(M.limpiaHor({ b: [{ d: [1, 1, 3], t: [[60, 120], [200, 300], [400, 500]] }] }).b[0].t.length === 2, "como mucho 2 turnos y días sin repetir");
+  const f = M.limpia({ id: "hhhh1", nombre: "A", truco: "b", epis: "Casco y chaleco", hor: h });
+  ok(f.epis === "Casco y chaleco" && f.hor.b.length === 2, "lo que había en EPIs se queda (nota) y el horario se guarda");
+  const ida = M.importa(M.exporta([f]), []).lista[0];
+  ok(JSON.stringify(ida.hor) === JSON.stringify(f.hor), "el horario pasa al otro móvil con la libreta");
+  ok(!("hor" in M.limpia({ nombre: "A", truco: "b" })), "ficha sin horario: no se añade nada");
+}
 const muchas = Array.from({ length: M.TOPE }, (_, i) => M.limpia({ nombre: "C" + i, truco: "t" }));
 r = M.importa(M.exporta([M.limpia({ nombre: "Nueva", truco: "t" })]), muchas);
 ok(r.nuevas === 0 && r.sobran === 1, "con la libreta llena no se añade más");
