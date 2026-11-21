@@ -15,7 +15,7 @@ $("version-web").textContent = "Versión " + VERSION_WEB;
 document.querySelector(".contacto-btn").innerHTML = icono("correo", "p") + "Escribir a la Sección Sindical";
 
 // ---------- Navegación ----------
-const VISTAS = ["inicio", "avisos", "calendario", "convenio", "calcula", "actas", "documentos", "preguntas", "info", "buscar", "legal", "descansos", "ganancias", "aparcar", "restricciones", "finiquito", "adr", "hora", "diccionario", "carga", "ejes", "multas", "sobresale", "conversor", "muelles", "ferry", "testigos", "galibos", "utilidades"];
+const VISTAS = ["inicio", "avisos", "calendario", "convenio", "calcula", "actas", "documentos", "preguntas", "info", "buscar", "legal", "descansos", "ganancias", "aparcar", "restricciones", "finiquito", "adr", "hora", "diccionario", "carga", "ejes", "multas", "sobresale", "conversor", "muelles", "ferry", "testigos", "utilidades"];
 // Título de la pestaña del navegador según la sección (se ve en el historial, al compartir y con lector de pantalla)
 const TITULO_WEB = document.title;
 const ponTitulo = (nombre) => { document.title = nombre ? nombre + " · CCOO Calsina Carré" : TITULO_WEB; };
@@ -91,12 +91,12 @@ document.querySelector("[data-saltar]").addEventListener("click", (ev) => { ev.p
 // Arriba solo salen los apartados principales; lo que va dentro (Actas en «Comité de empresa», los subapartados
 // que crea el admin…) sale en una segunda fila (#subpestanas). Las direcciones de siempre (#actas, #ap-…) siguen valiendo.
 // Si falta el apartado de arriba (borrado u oculto), lo de dentro vuelve a salir arriba.
-const DENTRO_DE = { actas: "comite", convenio: "convenio-y-leyes", calcula: "convenio-y-leyes", descansos: "zona-conductores", ganancias: "zona-conductores", aparcar: "zona-conductores", restricciones: "zona-conductores", finiquito: "zona-conductores", adr: "zona-conductores", hora: "zona-conductores", utilidades: "zona-conductores", diccionario: "zona-conductores", carga: "zona-conductores", ejes: "zona-conductores", multas: "zona-conductores", sobresale: "zona-conductores", conversor: "zona-conductores", muelles: "zona-conductores", ferry: "zona-conductores", testigos: "zona-conductores", galibos: "zona-conductores", preguntas: "@info" };
+const DENTRO_DE = { actas: "comite", convenio: "convenio-y-leyes", calcula: "convenio-y-leyes", descansos: "zona-conductores", ganancias: "zona-conductores", aparcar: "zona-conductores", restricciones: "zona-conductores", finiquito: "zona-conductores", adr: "zona-conductores", hora: "zona-conductores", utilidades: "zona-conductores", diccionario: "zona-conductores", carga: "zona-conductores", ejes: "zona-conductores", multas: "zona-conductores", sobresale: "zona-conductores", conversor: "zona-conductores", muelles: "zona-conductores", ferry: "zona-conductores", testigos: "zona-conductores", preguntas: "@info" };
 const APARTADO_AFILIATE = "afiliate"; // va el último, al lado de «Nosotros», para animar a afiliarse
-const NOMBRE_FIJO = { inicio: "Inicio", avisos: "Avisos", calendario: "Calendario", actas: "Actas", documentos: "Documentos", convenio: "Convenio", calcula: "Calcula", preguntas: "Dudas", info: "Nosotros", descansos: "Mis descansos", ganancias: "Mis incentivos", aparcar: "Aparcamientos en mi ruta", restricciones: "Restricciones en mi ruta", finiquito: "Mi finiquito", adr: "Test de ADR", hora: "Mi hora ordinaria", utilidades: "Utilidades en ruta", diccionario: "Diccionario del conductor", carga: "Simulador de carga", ejes: "Peso por ejes y estiba", multas: "Multas en Europa", sobresale: "Cargas que sobresalen", conversor: "Conversor rápido", muelles: "Accesos y muelles", ferry: "Ferry y tren", testigos: "Guía de testigos", galibos: "Gálibos y túneles" };
+const NOMBRE_FIJO = { inicio: "Inicio", avisos: "Avisos", calendario: "Calendario", actas: "Actas", documentos: "Documentos", convenio: "Convenio", calcula: "Calcula", preguntas: "Dudas", info: "Nosotros", descansos: "Mis descansos", ganancias: "Mis incentivos", aparcar: "Aparcamientos en mi ruta", restricciones: "Restricciones en mi ruta", finiquito: "Mi finiquito", adr: "Test de ADR", hora: "Mi hora ordinaria", utilidades: "Utilidades en ruta", diccionario: "Diccionario del conductor", carga: "Simulador de carga", ejes: "Peso por ejes y estiba", multas: "Multas en Europa", sobresale: "Cargas que sobresalen", conversor: "Conversor rápido", muelles: "Accesos y muelles", ferry: "Ferry y tren", testigos: "Guía de testigos" };
 // v187 (petición n.º 56 del padre): estas 8 herramientas van dentro de «Utilidades en ruta» (#utilidades, tarjeta amarilla).
 // Siguen siendo de Zona Conductores (enlaces directos, buscador y miga), pero no salen en su segunda fila ni en los accesos de Inicio.
-const UTIL = ["restricciones", "adr", "diccionario", "carga", "ejes", "multas", "sobresale", "conversor", "muelles", "ferry", "testigos", "galibos"];
+const UTIL = ["restricciones", "adr", "diccionario", "carga", "ejes", "multas", "sobresale", "conversor", "muelles", "ferry", "testigos"];
 let GRUPOS = [], GRUPO_DE = {};
 const padreValido = (a) => !!a.padre_id && D.apartados.some(p => p.id === a.padre_id && !p.padre_id);
 function montaGrupos() {
@@ -358,7 +358,7 @@ function pintaInicio() {
   if ($("ver-mas")) $("ver-mas").onclick = () => { estado.feedMax = max + 20; pintaInicio(); };
   if (aparece) $("inicio-feed").querySelectorAll(".item-tablon").forEach(el => { if (el.getBoundingClientRect().top > innerHeight) { el.classList.add("por-ver"); aparece.observe(el); } });
   // Accesos
-  const IC_FIJO = { descansos: "reloj", ganancias: "euro", aparcar: "lugar", restricciones: "alerta", finiquito: "hoja", adr: "escudo", hora: "euro", diccionario: "texto", carga: "archivo", ejes: "check", multas: "alerta", sobresale: "medida", conversor: "cambio", muelles: "muelle", ferry: "barco", testigos: "testigo", galibos: "tunel", utilidades: "ajustes", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta" };
+  const IC_FIJO = { descansos: "reloj", ganancias: "euro", aparcar: "lugar", restricciones: "alerta", finiquito: "hoja", adr: "escudo", hora: "euro", diccionario: "texto", carga: "archivo", ejes: "check", multas: "alerta", sobresale: "medida", conversor: "cambio", muelles: "muelle", ferry: "barco", testigos: "testigo", utilidades: "ajustes", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta" };
   const acc = GRUPOS.flatMap(g => g.miembros).filter(m => m.clave !== "inicio" && m.clave !== "info" && !UTIL.includes(m.clave))
     .map(m => [m.clave, IC_FIJO[m.clave] || D.apartados.find(a => "ap-" + a.slug === m.clave)?.icono || "carpeta", m.titulo]);
   // v163 (lo pidió Lorena): los 4 más usados primero y en grande; color por grupo (azul = Zona Conductores, gris = documentación)
@@ -693,12 +693,11 @@ const TARJETAS_COND = [
   ["muelles", "muelle", "Accesos y muelles", "Tu libreta de clientes difíciles: por dónde se entra, cómo se maniobra, dónde dormir y qué EPIs piden."],
   ["ferry", "barco", "Ferry y tren", "Mira si el descanso que haces con el camión en un barco o en un tren vale según la norma europea."],
   ["testigos", "testigo", "Guía de testigos", "Qué quiere decir cada luz del cuadro y qué hacer. De momento, DAF."],
-  ["galibos", "tunel", "Gálibos y túneles", "¿Cabes por debajo? Y qué túneles puedes pasar con mercancías peligrosas (ADR)."],
 ];
 const tarjetasCond = (l, amarillas) => l.map(([h, ic, b, sm]) => h === "utilidades"
   ? `<a class="panel desc-promo cond util" href="#utilidades">${icono(ic)}<span><b>${esc(b)}</b><small>${esc(sm)}</small></span>${icono("der", "p")}</a>`
   : `<a class="panel desc-promo cond${amarillas ? " util" : ""}" href="#${esc(h)}">${icono(ic)}<span><b>${esc(b)}</b><small>${esc(sm)}</small></span>${icono("der", "p")}</a>`).join("");
-TARJETAS_COND.splice(TARJETAS_COND.findIndex(t => t[0] === "hora") + 1, 0, ["utilidades", "ajustes", "Utilidades en ruta", "Restricciones, test de ADR, diccionario, simulador de carga, peso por ejes, multas en Europa, cargas que sobresalen, conversor, accesos y muelles, ferry y tren, guía de testigos y gálibos y túneles."]);
+TARJETAS_COND.splice(TARJETAS_COND.findIndex(t => t[0] === "hora") + 1, 0, ["utilidades", "ajustes", "Utilidades en ruta", "Restricciones, test de ADR, diccionario, simulador de carga, peso por ejes, multas en Europa, cargas que sobresalen, conversor, accesos y muelles, ferry y tren y guía de testigos."]);
 function pintaApartado() {
   const a = D.apartados.find(x => x.slug === estado.ap);
   if (!a) { $("ap-extra").innerHTML = ""; $("ap-titulo").textContent = D.apartados.length || !cargar.listo ? "Cargando…" : "Apartado no encontrado"; $("lista-ap").innerHTML = ""; $("ap-desc").textContent = ""; $("fechas-ap").innerHTML = ""; return; }
@@ -1583,11 +1582,10 @@ const PALABRAS_VISTA = { inicio: "inicio portada principal", avisos: "avisos com
   diccionario: "diccionario glosario siglas palabras significado que significa cmr albaran tacografo cap mma tara dieta prorrata cabotaje",
   carga: "simulador de carga remolque trailer semirremolque palets europalet industrial medio palet huecos apilar metros cargar recogida peso",
   sobresale: "cargas que sobresalen sobresalir carga larga ancha voladizo panel v-20 v20 luz roja articulo 15 transporte especial viga tubo",
-  utilidades: "utilidades ruta herramientas restricciones adr diccionario simulador carga peso ejes multas sobresale conversor accesos muelles ferry tren testigos galibos tuneles",
+  utilidades: "utilidades ruta herramientas restricciones adr diccionario simulador carga peso ejes multas sobresale conversor accesos muelles ferry tren testigos",
   muelles: "accesos muelles muelle clientes cliente dificil descarga maniobra marcha atras porteria puerta camiones dormir pernocta banos duchas epis libreta trucos",
   ferry: "ferry tren barco eurotunel descanso a bordo camarote litera embarcar desembarcar 561/2006",
   testigos: "testigos luces cuadro salpicadero averia daf aceite freno adblue motor bateria stop",
-  galibos: "galibos galibo altura maxima puente tunel tuneles adr mercancias peligrosas categoria quepo",
   conversor: "conversor convertir unidades bar psi presion neumaticos millas mph libras galones grados fahrenheit pies pulgadas",
   multas: "multas europa sanciones policia velocidad tacografo descanso cabina alcohol movil peaje vineta maut zona bajas emisiones deposito inmovilizacion francia alemania",
   ejes: "peso por ejes reparto eje motriz delantero tridem bascula sobrepeso 40 toneladas estiba cinchas trincaje amarre sujetar carga EN 12195",
@@ -1636,7 +1634,7 @@ function buscarTodo() {
   const sitiosExtra = sitiosWeb().filter(x => !vistas.includes(x.h));
   const secciones = [...lista(sitiosExtra, x => ({ n: nota(x.t, x.p), h: x.h, t: x.t, donde: x.donde, ic: "lugar", sinEnlace: !x.h })), ...lista(vistas, c => {
     const ap = c.startsWith("ap-") ? D.apartados.find(a => "ap-" + a.slug === c) : null;
-    return { n: nota(nomVista(c), ap?.descripcion, PALABRAS_VISTA[c], GRUPO_DE[c]?.titulo), h: c, t: nomVista(c), s: ap?.descripcion || "", donde: rutaDe(c), ic: ap?.icono || { descansos: "reloj", ganancias: "euro", aparcar: "lugar", restricciones: "alerta", finiquito: "hoja", adr: "escudo", hora: "euro", diccionario: "texto", carga: "archivo", ejes: "check", multas: "alerta", sobresale: "medida", conversor: "cambio", muelles: "muelle", ferry: "barco", testigos: "testigo", galibos: "tunel", utilidades: "ajustes", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta", info: "grupo", inicio: "inicio" }[c] || "carpeta" };
+    return { n: nota(nomVista(c), ap?.descripcion, PALABRAS_VISTA[c], GRUPO_DE[c]?.titulo), h: c, t: nomVista(c), s: ap?.descripcion || "", donde: rutaDe(c), ic: ap?.icono || { descansos: "reloj", ganancias: "euro", aparcar: "lugar", restricciones: "alerta", finiquito: "hoja", adr: "escudo", hora: "euro", diccionario: "texto", carga: "archivo", ejes: "check", multas: "alerta", sobresale: "medida", conversor: "cambio", muelles: "muelle", ferry: "barco", testigos: "testigo", utilidades: "ajustes", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta", info: "grupo", inicio: "inicio" }[c] || "carpeta" };
   })].sort((a, b) => b.n - a.n);
   // Archivos: los de Documentos y los adjuntos de avisos, actas y publicaciones
   const arch = [];

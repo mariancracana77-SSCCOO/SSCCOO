@@ -929,29 +929,6 @@
     </div>
     <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Son los testigos más habituales. El dibujo puede cambiar algo según el año y el modelo: ante la duda, mira el manual del camión o llama al taller. Si se enciende uno rojo, para en cuanto puedas hacerlo con seguridad.</span></p>
   </section>
-  <!-- GÁLIBOS Y TÚNELES (Zona Conductores > Utilidades en ruta, petición n.º 66, v196): ¿quepo? y túneles ADR (ADR 8.6.4); guarda altura y código en «ccoo-galibos» (galibos.js) -->
-  <section class="vista zc-herr" id="v-galibos">
-    <h1 class="titulo-vista">Gálibos y túneles</h1>
-    <p class="intro-vista">Mira si cabes por debajo de un puente o un túnel, y si puedes pasar un túnel con mercancías peligrosas.</p>
-    <div class="panel zc-caja">
-      <h2>¿Quepo?</h2>
-      <div class="zc-dos">
-        <div><label for="ga-alto">Altura de mi camión con la carga (m)</label><input id="ga-alto" type="text" inputmode="decimal" autocomplete="off" placeholder="4,00"></div>
-        <div><label for="ga-senal">Altura máxima de la señal (m)</label><input id="ga-senal" type="text" inputmode="decimal" autocomplete="off" placeholder="3,80"></div>
-      </div>
-      <div id="ga-out" aria-live="polite"></div>
-    </div>
-    <div class="panel zc-caja">
-      <h2>Túneles con mercancías peligrosas (ADR)</h2>
-      <p class="zc-pista">A la entrada del túnel, debajo de la señal de mercancías peligrosas, hay un panel con una letra: B, C, D o E. Si no hay, es A.</p>
-      <p class="ga-et">Código de túnel de tu carga</p>
-      <div class="zc-chips" id="ga-cod" role="group" aria-label="Código de túnel de tu carga"></div>
-      <label class="ga-pregunta" id="ga-pregunta" hidden><input type="checkbox" id="ga-si"> <span id="ga-pregunta-t"></span></label>
-      <div id="ga-adr" aria-live="polite"></div>
-      <p class="zc-pista">Si llevas varias mercancías, mira el código más estricto. Las prohibiciones valen cuando el camión tiene que llevar los paneles naranja; si no los lleva, pregunta en tu empresa.</p>
-    </div>
-    <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Basado en el ADR (capítulos 1.9.5 y 8.6). Orientativo: manda siempre la señal que veas y la carta de porte. Ante la duda, pregunta a tu empresa o al consejero de seguridad.</span></p>
-  </section>
 
   <!-- UTILIDADES EN RUTA (Zona Conductores, v187, petición n.º 56 del padre): las 8 herramientas de UTIL en app.js (tarjetas de TARJETAS_COND) -->
   <section class="vista" id="v-utilidades">
@@ -1091,7 +1068,6 @@
 <script src="muelles.js?v=196"></script>
 <script src="ferry.js?v=196"></script>
 <script src="testigos.js?v=196"></script>
-<script src="galibos.js?v=196"></script>
 <script src="web-pc.js?v=196"></script>
 </body>
 </html>
