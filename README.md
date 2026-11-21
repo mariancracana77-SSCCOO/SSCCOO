@@ -77,6 +77,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 198: Ferry y tren rehecho (arreglo urgente de la petición 64)
+- El padre dijo que «no da resultado de nada»: pedía cuatro fechas con día y hora y, hasta tenerlas todas, solo decía «Pon las cuatro horas». Ahora va como la calculadora de Gemini que usaba: trae valores de ejemplo y siempre enseña el resultado (semáforo «Descanso válido» / «No vale así», hora a la que puede volver a conducir, pasos, barra de interrupciones de 1 h como mucho).
+- Hora de empezar a descansar y minutos (descanso en tierra antes de embarcar, embarcar, viaje y desembarcar) con botones −5/+5; travesías de ejemplo (Calais–Dover, Barcelona–Civitavecchia, Algeciras–Tánger Med, Eurotúnel), con duración aproximada; «Copiar resumen».
+- Reglas del art. 9.1 del Reg. 561/2006 (cambiado por el 2020/1054) comprobadas en EUR-Lex, cada una con su fuente; lo dudoso (parte de 9 h del descanso en dos partes, cómo se marca en cada tacógrafo) sale como «sin comprobar». Sin la «regla D» de 24 h de Gemini (contaba desde el sitio equivocado).
+- Pruebas: pruebas/ferry-v198.cjs (39 casos).
+
 ## Versión 197: Accesos y muelles sin fichas repetidas y libreta con o sin fotos
 - Lo vio el padre (le salían clientes repetidos hasta 15 veces y WhatsApp no aceptaba la libreta con fotos). En `muelles.js`:
   - Al pegar, una ficha con el mismo id y el mismo nombre que una tuya es la misma (aunque se cambiara «Cómo entrar»): no se añade y se queda la tuya. Al comparar no cuentan espacios, mayúsculas ni acentos. Pegar nunca borra nada.

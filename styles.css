@@ -3220,3 +3220,25 @@ label.cg-huecos { margin: 0 0 12px; }
 .mue-repes .mue-bots { margin-top: 10px; }
 .mue-deshacer { margin: 8px 0 0; min-height: 44px; }
 #mue-archivo-in[hidden] { display: none; }
+
+/* v198: Ferry y tren rehecho (petición 64): resultado siempre a la vista */
+.fe-h2 { margin-top: 18px; }
+.fe-ej-h { font-weight: 400; opacity: .8; }
+.fe-dur { display: flex; gap: 6px; align-items: stretch; }
+.fe-dur input { flex: 1 1 auto; min-width: 0; text-align: center; }
+.fe-dur .btn { min-width: 52px; min-height: 48px; margin: 0; padding: 0 8px; justify-content: center; }
+.fe-dur-t { display: block; min-height: 1.3em; font-size: .9em; color: var(--suave, inherit); }
+.fe-semaforo .fe-sem-t { font-size: 1.5em; font-weight: 800; margin: 0 0 6px; }
+.fe-semaforo p { margin: 6px 0; }
+.fe-barra-t { margin-top: 10px; font-weight: 700; }
+.fe-barra { height: 12px; border-radius: 999px; background: var(--linea); overflow: hidden; margin: 4px 0 8px; }
+.fe-barra span { display: block; height: 100%; background: var(--verde, #1e7b34); }
+.fe-barra.pasa span { background: var(--rojo); }
+.fe-pasos { margin: 10px 0 0; padding-left: 22px; }
+.fe-pasos li { margin-bottom: 6px; }
+.fe-pasos li.no { opacity: .85; }
+.fe-h { font-variant-numeric: tabular-nums; }
+.fe-duda { font-style: italic; }
+.fe-fuente { display: block; font-size: .9em; opacity: .85; margin-top: 2px; }
+.fe-copia { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 14px; }
+.fe-copia .btn { margin: 0; min-height: 48px; }
