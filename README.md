@@ -77,6 +77,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 198: Ferry y tren rehecho (arreglo urgente de la petición 64)
+- El padre dijo que «no da resultado de nada»: pedía cuatro fechas con día y hora y, hasta tenerlas todas, solo decía «Pon las cuatro horas». Ahora va como la calculadora de Gemini que usaba: trae valores de ejemplo y siempre enseña el resultado (semáforo «Descanso válido» / «No vale así», hora a la que puede volver a conducir, pasos, barra de interrupciones de 1 h como mucho).
+- Hora de empezar a descansar y minutos (descanso en tierra antes de embarcar, embarcar, viaje y desembarcar) con botones −5/+5; travesías de ejemplo (Calais–Dover, Barcelona–Civitavecchia, Algeciras–Tánger Med, Eurotúnel), con duración aproximada; «Copiar resumen».
+- Reglas del art. 9.1 del Reg. 561/2006 (cambiado por el 2020/1054) comprobadas en EUR-Lex, cada una con su fuente; lo dudoso (parte de 9 h del descanso en dos partes, cómo se marca en cada tacógrafo) sale como «sin comprobar». Sin la «regla D» de 24 h de Gemini (contaba desde el sitio equivocado).
+- Pruebas: pruebas/ferry-v198.cjs (39 casos).
+
 ## Versión 196: Ferry y tren y Guía de testigos
 - Peticiones n.º 64 y 65 del padre: dos herramientas nuevas en Zona Conductores > Utilidades en ruta (solo en español; las cuentas se prueban sin navegador en `pruebas/utilidades-v196.cjs`).
 - «Ferry y tren» (`ferry.js`, `#ferry`): dice si el descanso a bordo vale según el art. 9 del Reglamento 561/2006 (cambiado por el 2020/1054): cortes de como mucho 1 hora para embarcar y desembarcar, litera o camarote, el semanal normal solo con viaje de 8 h o más y camarote, el diario reducido sin cortes; y a qué hora puedes volver a conducir. Guarda el tipo, la litera y los minutos en `ccoo-ferry`.
