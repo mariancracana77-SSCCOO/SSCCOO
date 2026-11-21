@@ -148,7 +148,7 @@
     $("ga-cuenta").textContent = resumen;
     $("ga-lista").innerHTML = l.length ? l.map(tarjeta).join("") : `<div class="zc-aviso">No hay ningún túnel que coincida. Prueba con otro nombre o país.</div>`;
     const ah = $("ga-alto-res");
-    ah.textContent = ca > 0 ? (ca > 4.5 ? `Ojo: ${m2(ca)} es más de lo normal. La altura máxima de un camión en la mayoría de países es 4,00 m (en España, Francia e Italia sin límite general fijo, pero cuentan los gálibos). Comprueba que lo has escrito bien.` : `Altura de tu camión: ${m2(ca)}. Los túneles a los que no llegas salen en rojo y los que van justos (menos de ${Math.round(MARGEN * 100)} cm) en ámbar.`) : "";
+    ah.textContent = ca > 0 ? (ca > 4.5 ? `Ojo: ${m2(ca)} es más de lo normal. La altura máxima de un camión en la mayoría de países es 4,00 m (Francia y Reino Unido no tienen límite general, pero cuentan los gálibos). Comprueba que lo has escrito bien.` : `Altura de tu camión: ${m2(ca)}. Los túneles a los que no llegas salen en rojo y los que van justos (menos de ${Math.round(MARGEN * 100)} cm) en ámbar.`) : "";
   }
 
   $("ga-codigo").innerHTML = CODIGOS.map(c => `<option value="${esc(c.v)}">${esc(c.t)}</option>`).join("");
