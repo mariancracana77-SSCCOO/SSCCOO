@@ -25,10 +25,10 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="fuentes.css?v=195">
-<script src="lectura.js?v=195"></script>
-<link rel="stylesheet" href="styles.css?v=195">
-<link rel="stylesheet" href="web-pc.css?v=195" media="(min-width: 1000px) and (display-mode: browser)">
+<link rel="stylesheet" href="fuentes.css?v=196">
+<script src="lectura.js?v=196"></script>
+<link rel="stylesheet" href="styles.css?v=196">
+<link rel="stylesheet" href="web-pc.css?v=196" media="(min-width: 1000px) and (display-mode: browser)">
 </head>
 <body class="publica">
 
@@ -881,6 +881,77 @@
     </details>
   </section>
 
+  <!-- FERRY Y TREN (Zona Conductores > Utilidades en ruta, petición n.º 64, v196): descanso a bordo según el art. 9 del Reglamento 561/2006; guarda tipo, litera y cortes en «ccoo-ferry» (ferry.js) -->
+  <section class="vista zc-herr" id="v-ferry">
+    <h1 class="titulo-vista">Ferry y tren</h1>
+    <p class="intro-vista">Si tu camión va en barco o en tren, mira si el descanso que haces a bordo vale.</p>
+    <div class="panel zc-caja fe-caja">
+      <h2>¿Qué descanso haces?</h2>
+      <div class="zc-chips" id="fe-tipo" role="group" aria-label="Qué descanso haces"></div>
+      <label for="fe-litera">¿Qué tienes a bordo?</label>
+      <select id="fe-litera"><option value="camarote">Camarote (cabina con cama)</option><option value="litera">Litera o asiento-cama</option><option value="no">Nada, solo asiento</option></select>
+      <div class="zc-dos">
+        <div><label for="fe-ini">Empiezo a descansar</label><input id="fe-ini" type="datetime-local"></div>
+        <div><label for="fe-fin">Termino de descansar</label><input id="fe-fin" type="datetime-local"></div>
+        <div><label for="fe-emb">Embarco</label><input id="fe-emb" type="datetime-local"></div>
+        <div><label for="fe-des">Desembarco</label><input id="fe-des" type="datetime-local"></div>
+        <div><label for="fe-m1">Minutos para embarcar</label><input id="fe-m1" type="number" inputmode="numeric" min="0" max="180" value="30"></div>
+        <div><label for="fe-m2">Minutos para desembarcar</label><input id="fe-m2" type="number" inputmode="numeric" min="0" max="180" value="30"></div>
+      </div>
+      <p class="zc-pista">Los minutos de embarcar y desembarcar son el tiempo que conduces o haces trámites en el puerto o la estación. No cuentan como descanso.</p>
+    </div>
+    <div id="fe-out" aria-live="polite"></div>
+    <details class="panel zc-caja">
+      <summary>Lo que dice la norma</summary>
+      <ul>
+        <li>El descanso diario normal (11 h), la parte de 9 h del descanso en dos partes y el semanal reducido (24 h) se pueden cortar <b>como mucho 2 veces</b> para embarcar y desembarcar, y los cortes juntos no pueden pasar de <b>1 hora</b>.</li>
+        <li>Mientras descansas a bordo tienes que tener <b>litera o camarote</b>.</li>
+        <li>El descanso semanal normal (45 h) solo vale a bordo si el viaje está previsto de <b>8 h o más</b> y tienes <b>camarote</b>.</li>
+        <li>El descanso diario reducido (9 h) no se puede cortar.</li>
+      </ul>
+    </details>
+    <a class="btn zc-delegado" href="#delegados"><svg class="icono p" aria-hidden="true"><use href="#i-telefono"/></svg>Hablar con un delegado</a>
+    <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Basado en el artículo 9 del Reglamento (CE) 561/2006, cambiado por el Reglamento (UE) 2020/1054. Orientativo: no sustituye a la norma. Haz siempre las anotaciones que pida el tacógrafo.</span></p>
+  </section>
+  <!-- GUÍA DE TESTIGOS (Zona Conductores > Utilidades en ruta, petición n.º 65, v196): carpetas por marca (DAF); guarda la carpeta abierta en «ccoo-testigos» (testigos.js) -->
+  <section class="vista zc-herr" id="v-testigos">
+    <h1 class="titulo-vista">Guía de testigos</h1>
+    <p class="intro-vista">Qué quiere decir cada luz del cuadro y qué tienes que hacer.</p>
+    <div id="te-marcas"></div>
+    <div id="te-carpeta" hidden>
+      <button type="button" class="btn sec te-volver" id="te-volver"><svg class="icono p" aria-hidden="true"><use href="#i-izq"/></svg>Todas las marcas</button>
+      <h2 class="te-titulo" id="te-nombre"></h2>
+      <p class="zc-pista" id="te-sub"></p>
+      <input id="te-busca" class="zc-busca" type="search" placeholder="Busca: aceite, freno, AdBlue…" autocomplete="off" aria-label="Buscar un testigo">
+      <div class="zc-chips" id="te-colores" role="group" aria-label="Filtrar por color"></div>
+      <p class="zc-pista" id="te-cuenta" aria-live="polite"></p>
+      <div id="te-lista"></div>
+    </div>
+    <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Son los testigos más habituales. El dibujo puede cambiar algo según el año y el modelo: ante la duda, mira el manual del camión o llama al taller. Si se enciende uno rojo, para en cuanto puedas hacerlo con seguridad.</span></p>
+  </section>
+  <!-- GÁLIBOS Y TÚNELES (Zona Conductores > Utilidades en ruta, petición n.º 66, v196): ¿quepo? y túneles ADR (ADR 8.6.4); guarda altura y código en «ccoo-galibos» (galibos.js) -->
+  <section class="vista zc-herr" id="v-galibos">
+    <h1 class="titulo-vista">Gálibos y túneles</h1>
+    <p class="intro-vista">Mira si cabes por debajo de un puente o un túnel, y si puedes pasar un túnel con mercancías peligrosas.</p>
+    <div class="panel zc-caja">
+      <h2>¿Quepo?</h2>
+      <div class="zc-dos">
+        <div><label for="ga-alto">Altura de mi camión con la carga (m)</label><input id="ga-alto" type="text" inputmode="decimal" autocomplete="off" placeholder="4,00"></div>
+        <div><label for="ga-senal">Altura máxima de la señal (m)</label><input id="ga-senal" type="text" inputmode="decimal" autocomplete="off" placeholder="3,80"></div>
+      </div>
+      <div id="ga-out" aria-live="polite"></div>
+    </div>
+    <div class="panel zc-caja">
+      <h2>Túneles con mercancías peligrosas (ADR)</h2>
+      <p class="zc-pista">A la entrada del túnel, debajo de la señal de mercancías peligrosas, hay un panel con una letra: B, C, D o E. Si no hay, es A.</p>
+      <p class="ga-et">Código de túnel de tu carga</p>
+      <div class="zc-chips" id="ga-cod" role="group" aria-label="Código de túnel de tu carga"></div>
+      <label class="ga-pregunta" id="ga-pregunta" hidden><input type="checkbox" id="ga-si"> <span id="ga-pregunta-t"></span></label>
+      <div id="ga-adr" aria-live="polite"></div>
+      <p class="zc-pista">Si llevas varias mercancías, mira el código más estricto. Las prohibiciones valen cuando el camión tiene que llevar los paneles naranja; si no los lleva, pregunta en tu empresa.</p>
+    </div>
+    <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Basado en el ADR (capítulos 1.9.5 y 8.6). Orientativo: manda siempre la señal que veas y la carta de porte. Ante la duda, pregunta a tu empresa o al consejero de seguridad.</span></p>
+  </section>
 
   <!-- UTILIDADES EN RUTA (Zona Conductores, v187, petición n.º 56 del padre): las 8 herramientas de UTIL en app.js (tarjetas de TARJETAS_COND) -->
   <section class="vista" id="v-utilidades">
@@ -998,26 +1069,29 @@
 <div class="barra-acciones" id="barra-acciones"></div>
 <button class="arriba-btn" id="arriba" type="button" aria-label="Volver arriba" title="Volver arriba"><svg class="arriba-aro" viewBox="0 0 52 52" aria-hidden="true"><circle class="aro-fondo" cx="26" cy="26" r="23"/><circle class="aro-prog" cx="26" cy="26" r="23" pathLength="100"/></svg><span data-i="arriba"></span></button>
 
-<script src="lib/supabase.js?v=195"></script>
-<script src="iconos.js?v=195"></script>
-<script src="config.js?v=195"></script>
-<script src="render.js?v=195"></script>
-<script src="app.js?v=195"></script>
-<script src="descansos.js?v=195"></script>
-<script src="ganancias.js?v=195"></script>
-<script src="aparcar.js?v=195"></script>
-<script src="zona-idioma.js?v=195"></script>
-<script src="convenio-girona.js?v=195"></script>
-<script src="finiquito.js?v=195"></script>
-<script src="adr.js?v=195"></script>
-<script src="hora.js?v=195"></script>
-<script src="diccionario.js?v=195"></script>
-<script src="carga.js?v=195"></script>
-<script src="ejes.js?v=195"></script>
-<script src="multas.js?v=195"></script>
-<script src="sobresale.js?v=195"></script>
-<script src="conversor.js?v=195"></script>
-<script src="muelles.js?v=195"></script>
-<script src="web-pc.js?v=195"></script>
+<script src="lib/supabase.js?v=196"></script>
+<script src="iconos.js?v=196"></script>
+<script src="config.js?v=196"></script>
+<script src="render.js?v=196"></script>
+<script src="app.js?v=196"></script>
+<script src="descansos.js?v=196"></script>
+<script src="ganancias.js?v=196"></script>
+<script src="aparcar.js?v=196"></script>
+<script src="zona-idioma.js?v=196"></script>
+<script src="convenio-girona.js?v=196"></script>
+<script src="finiquito.js?v=196"></script>
+<script src="adr.js?v=196"></script>
+<script src="hora.js?v=196"></script>
+<script src="diccionario.js?v=196"></script>
+<script src="carga.js?v=196"></script>
+<script src="ejes.js?v=196"></script>
+<script src="multas.js?v=196"></script>
+<script src="sobresale.js?v=196"></script>
+<script src="conversor.js?v=196"></script>
+<script src="muelles.js?v=196"></script>
+<script src="ferry.js?v=196"></script>
+<script src="testigos.js?v=196"></script>
+<script src="galibos.js?v=196"></script>
+<script src="web-pc.js?v=196"></script>
 </body>
 </html>

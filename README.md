@@ -77,6 +77,13 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 196: Ferry y tren, Guía de testigos y Gálibos y túneles
+- Peticiones n.º 64, 65 y 66 del padre: tres herramientas nuevas en Zona Conductores > Utilidades en ruta (solo en español; las cuentas se prueban sin navegador en `pruebas/utilidades-v196.cjs`).
+- «Ferry y tren» (`ferry.js`, `#ferry`): dice si el descanso a bordo vale según el art. 9 del Reglamento 561/2006 (cambiado por el 2020/1054): cortes de como mucho 1 hora para embarcar y desembarcar, litera o camarote, el semanal normal solo con viaje de 8 h o más y camarote, el diario reducido sin cortes; y a qué hora puedes volver a conducir. Guarda el tipo, la litera y los minutos en `ccoo-ferry`.
+- «Guía de testigos» (`testigos.js`, `#testigos`): carpetas por marca (de momento DAF, 40 testigos) con cómo se ve, color, qué significa y qué hacer; buscador y filtro por color. Para otra marca, otra entrada en `MARCAS`. Guarda la carpeta abierta en `ccoo-testigos`.
+- «Gálibos y túneles» (`galibos.js`, `#galibos`): «¿Quepo?» (tu altura contra la de la señal, aviso con menos de 10 cm) y túneles con mercancías peligrosas: categoría A–E y código de túnel de la carga (tabla del ADR 8.6.4). Guarda la altura y el código en `ccoo-galibos`. La lista de túneles concretos se añadirá con los datos que pase el padre.
+- Iconos nuevos `barco`, `testigo` y `tunel` en `iconos.js`.
+
 ## Versión 195: foto en las fichas de clientes de Accesos y muelles
 - Petición n.º 63 del padre: en cada ficha abierta, botón «Añadir una foto» (luego «Cambiar la foto» y «Quitar la foto»). La foto se reduce en el móvil a 1280 px en JPEG (así también pierde los datos de la foto, como la posición GPS) y se guarda solo en ese móvil, en IndexedDB (`ccoo-muelles-fotos`, almacén `fotos`, clave = id de la ficha). La libreta (`ccoo-muelles` de localStorage) no cambia nada. La foto pasa con la ficha (lo pidió el padre): «Copiar para un compañero» y «Copiar mi libreta» la meten en el texto en pequeño (480 px o menos) y, al pegarlo en otro móvil, la ficha llega con su foto (también a un cliente que ya tenías sin foto). Si la libreta con fotos es muy larga para la app de mensajes, la web lo avisa. Al borrar la ficha se borra su foto. Pruebas en `pruebas/muelles-navegador.cjs` (también con dos ventanas).
 

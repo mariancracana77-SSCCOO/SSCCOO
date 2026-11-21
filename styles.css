@@ -3191,3 +3191,34 @@ label.cg-huecos { margin: 0 0 12px; }
 .mue-foto img { display: block; width: 100%; max-width: 560px; max-height: 420px; object-fit: contain; border-radius: 10px; border: 1px solid var(--linea); background: var(--fondo); }
 .mue-foto img:not([src]) { min-height: 120px; }
 #mue-foto-in[hidden] { display: none; }
+/* v196 (peticiones n.º 64, 65 y 66): Ferry y tren (ferry.js), Guía de testigos (testigos.js) y Gálibos y túneles (galibos.js) */
+.zc-ok ul { margin: 6px 0 8px; padding-left: 20px; }
+.fe-vuelve { margin: 8px 0 0; }
+.te-marca { margin-bottom: 12px; }
+.te-volver { margin: 0 0 12px; }
+.te-titulo { margin: 4px 0 2px; }
+.te-item { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 12px; border-left: 6px solid var(--linea); }
+.te-item.rojo { border-left-color: #d32f2f; }
+.te-item.ambar { border-left-color: var(--ambar); }
+.te-item.verde { border-left-color: var(--verde); }
+.te-item.azul { border-left-color: #1e6fd9; }
+.te-item > div { min-width: 0; }
+.te-item h3 { margin: 0 0 2px; }
+.te-item p { margin: 4px 0; }
+.te-item .te-color { margin: 0 0 6px; font-weight: 700; color: var(--tinta-2, inherit); }
+.te-luz { flex: 0 0 auto; min-width: 64px; max-width: 92px; padding: 10px 6px; border-radius: 10px; text-align: center; font-weight: 800; font-size: .8em; line-height: 1.15; word-break: break-word; background: #1b1b1b; border: 2px solid #1b1b1b; }
+.te-luz.rojo { color: #ff4d4d; box-shadow: 0 0 0 2px #ff4d4d inset; }
+.te-luz.ambar { color: #ffb300; box-shadow: 0 0 0 2px #ffb300 inset; }
+.te-luz.verde { color: #3ddc84; box-shadow: 0 0 0 2px #3ddc84 inset; }
+.te-luz.azul { color: #5aa9ff; box-shadow: 0 0 0 2px #5aa9ff inset; }
+.ga-et { margin: 8px 0 0; font-weight: 700; }
+.ga-pregunta { display: flex; gap: 10px; align-items: center; margin: 8px 0 12px; font-weight: 700; }
+.ga-pregunta[hidden] { display: none; }
+.ga-pregunta input { width: 24px; height: 24px; flex: 0 0 auto; }
+.ga-cats { list-style: none; margin: 8px 0 12px; padding: 0; display: grid; gap: 8px; }
+.ga-cats li { display: flex; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 10px; }
+.ga-cats li.si { background: var(--verde-suave); }
+.ga-cats li.no { background: var(--rojo-suave); }
+.ga-cats li > span:last-child { min-width: 0; }
+.ga-cats small { display: block; }
+.ga-letra { flex: 0 0 auto; width: 40px; height: 40px; display: grid; place-items: center; border: 3px solid #1b1b1b; border-radius: 6px; background: #fff; color: #1b1b1b; font-weight: 800; font-size: 1.2em; }
