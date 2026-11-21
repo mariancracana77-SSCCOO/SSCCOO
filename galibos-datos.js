@@ -98,7 +98,7 @@ window.GalibosDatos = {
    "alto": 4,
    "altoNota": "",
    "adr": "E",
-   "adrNota": "Categoría E: prohibidas casi todas las mercancías peligrosas con panel naranja.",
+   "adrNota": "",
    "vel": "",
    "dist": "",
    "normas": [
@@ -150,7 +150,7 @@ window.GalibosDatos = {
    "alto": 4.2,
    "altoNota": "",
    "adr": "E",
-   "adrNota": "Categoría E: prohibidas casi todas las mercancías peligrosas con panel naranja.",
+   "adrNota": "",
    "vel": "",
    "dist": "",
    "normas": [
@@ -176,7 +176,7 @@ window.GalibosDatos = {
    "alto": 4.3,
    "altoNota": "",
    "adr": "C",
-   "adrNota": "Categoría C: prohibido explosivos grandes y gases/líquidos muy tóxicos en cisterna; permitido gasoil/gasolina (D).",
+   "adrNota": "Prohibido explosivos grandes y gases/líquidos muy tóxicos en cisterna; permitido gasoil/gasolina (D).",
    "vel": "",
    "dist": "",
    "normas": [
@@ -197,7 +197,7 @@ window.GalibosDatos = {
    "alto": 4.7,
    "altoNota": "",
    "adr": "E",
-   "adrNota": "Categoría E y además, por las rampas de acceso, prohibidos también los n.º ONU 2919, 3077, 3082, 3291, 3331, 3359 y 3373.",
+   "adrNota": "Además, por las rampas de acceso, están prohibidos también los n.º ONU 2919, 3077, 3082, 3291, 3331, 3359 y 3373.",
    "vel": "Mínimo 50 km/h (máximo 70 km/h: sin comprobar).",
    "dist": "150 m (sin comprobar).",
    "normas": [
@@ -228,7 +228,7 @@ window.GalibosDatos = {
    "alto": 4.3,
    "altoNota": "",
    "adr": "C",
-   "adrNota": "Categoría C adaptada: lo que no puede pasar por un túnel C está prohibido (salvo algunos gases de clase 2 en cisterna: 2A, 2O, 3A y 3O). Las mercancías peligrosas que sí pueden pasar van siempre acompañadas por los vehículos de patrulla del túnel.",
+   "adrNota": "Adaptada: lo que no puede pasar por un túnel C está prohibido (salvo algunos gases de clase 2 en cisterna: 2A, 2O, 3A y 3O). Las mercancías peligrosas que sí pueden pasar van siempre acompañadas por los vehículos de patrulla del túnel.",
    "vel": "Entre 50 y 70 km/h (sin comprobar).",
    "dist": "150 m (sin comprobar).",
    "normas": [
@@ -323,7 +323,7 @@ window.GalibosDatos = {
    "alto": 4,
    "altoNota": "",
    "adr": "B",
-   "adrNota": "Categoría B: ruta principal permitida en Suiza para la mayoría de mercancías peligrosas ADR (gasoil, químicos, etc.).",
+   "adrNota": "Ruta principal permitida en Suiza para la mayoría de mercancías peligrosas ADR (gasoil, químicos, etc.).",
    "vel": "",
    "dist": "",
    "normas": [
@@ -365,7 +365,7 @@ window.GalibosDatos = {
    "alto": 4.2,
    "altoNota": "",
    "adr": "A",
-   "adrNota": "Categoría A (admitido ADR), sujeto a restricciones nocturnas y sectoriales del Tirol.",
+   "adrNota": "Admitido ADR. Sujeto a restricciones nocturnas y sectoriales del Tirol.",
    "vel": "",
    "dist": "",
    "normas": [
@@ -387,7 +387,7 @@ window.GalibosDatos = {
    "alto": 4,
    "altoNota": "",
    "adr": "D",
-   "adrNota": "Categoría D: prohibido transporte de explosivos, gases tóxicos y líquidos/gases altamente inflamables en cisterna.",
+   "adrNota": "Prohibido transporte de explosivos, gases tóxicos y líquidos/gases altamente inflamables en cisterna.",
    "vel": "",
    "dist": "",
    "normas": [
@@ -409,7 +409,7 @@ window.GalibosDatos = {
    "alto": 4.2,
    "altoNota": "",
    "adr": "A",
-   "adrNota": "Categoría A (permitido ADR). Peaje especial de tramo en ASFINAG.",
+   "adrNota": "Permitido ADR. Peaje especial de tramo en ASFINAG.",
    "vel": "",
    "dist": "",
    "normas": [
@@ -430,7 +430,7 @@ window.GalibosDatos = {
    "alto": 4.2,
    "altoNota": "",
    "adr": "A",
-   "adrNota": "Categoría A (permitido ADR). Obligatorio dispositivo GO-Box en Austria desde la frontera.",
+   "adrNota": "Permitido ADR. Obligatorio dispositivo GO-Box en Austria desde la frontera.",
    "vel": "",
    "dist": "",
    "normas": [
@@ -451,7 +451,7 @@ window.GalibosDatos = {
    "alto": 4.2,
    "altoNota": "",
    "adr": "D",
-   "adrNota": "Categoría D: prohibidos explosivos, gases tóxicos y cisternas inflamables (gasolina/GLP).",
+   "adrNota": "Prohibidos explosivos, gases tóxicos y cisternas inflamables (gasolina/GLP).",
    "vel": "",
    "dist": "",
    "normas": [
@@ -472,7 +472,7 @@ window.GalibosDatos = {
    "alto": 4,
    "altoNota": "",
    "adr": "D",
-   "adrNota": "Categoría D: prohibidas cisternas de combustibles inflamables (UN 1202/1203), GLP y explosivos. Control automático de altura en pórticos.",
+   "adrNota": "Prohibidas cisternas de combustibles inflamables (UN 1202/1203), GLP y explosivos. Control automático de altura en pórticos.",
    "vel": "",
    "dist": "",
    "normas": [
@@ -493,7 +493,7 @@ window.GalibosDatos = {
    "alto": 4.3,
    "altoNota": "",
    "adr": "A",
-   "adrNota": "Categoría A: es el túnel obligatorio para mercancías peligrosas ADR en Amberes (ya que el Kennedy está prohibido para ADR).",
+   "adrNota": "Es el túnel obligatorio para mercancías peligrosas ADR en Amberes (ya que el Kennedy está prohibido para ADR).",
    "vel": "",
    "dist": "",
    "normas": [
@@ -514,7 +514,7 @@ window.GalibosDatos = {
    "alto": 4.2,
    "altoNota": "",
    "adr": "E",
-   "adrNota": "Categoría E: prohibido todo transporte ADR con panel naranja (multa automática por cámaras ANPR).",
+   "adrNota": "Prohibido todo transporte ADR con panel naranja (multa automática por cámaras ANPR).",
    "vel": "",
    "dist": "",
    "normas": [
@@ -535,7 +535,7 @@ window.GalibosDatos = {
    "alto": 4.3,
    "altoNota": "",
    "adr": "C",
-   "adrNota": "Categoría C: prohibido explosivos grandes y tóxicos masivos; admitidos combustibles (D) y carga general.",
+   "adrNota": "Prohibido explosivos grandes y tóxicos masivos; admitidos combustibles (D) y carga general.",
    "vel": "",
    "dist": "",
    "normas": [
