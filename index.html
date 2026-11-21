@@ -25,10 +25,10 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="fuentes.css?v=196">
-<script src="lectura.js?v=196"></script>
-<link rel="stylesheet" href="styles.css?v=196">
-<link rel="stylesheet" href="web-pc.css?v=196" media="(min-width: 1000px) and (display-mode: browser)">
+<link rel="stylesheet" href="fuentes.css?v=197">
+<script src="lectura.js?v=197"></script>
+<link rel="stylesheet" href="styles.css?v=197">
+<link rel="stylesheet" href="web-pc.css?v=197" media="(min-width: 1000px) and (display-mode: browser)">
 </head>
 <body class="publica">
 
@@ -868,16 +868,29 @@
       <div class="mue-mapa" id="mue-mapa" hidden></div>
       <button type="button" class="btn sec mue-cierra-mapa" id="mue-cierra-mapa" hidden><svg class="icono p" aria-hidden="true"><use href="#i-cerrar"/></svg>Cerrar el mapa</button>
     </div>
+    <div class="zc-aviso mue-repes" id="mue-repes" hidden>
+      <p id="mue-repes-t"></p>
+      <div class="mue-bots" id="mue-repes-bots"><button type="button" class="btn sec" id="mue-repes-quita">Quitar las repetidas</button></div>
+      <div class="mue-bots" id="mue-repes-seguro" hidden><button type="button" class="btn zc-btn" id="mue-repes-si">Sí, quitarlas</button><button type="button" class="btn sec" id="mue-repes-no">Cancelar</button></div>
+    </div>
     <div id="mue-lista"></div>
     <input type="file" id="mue-foto-in" accept="image/*" hidden aria-hidden="true" tabindex="-1">
+    <input type="file" id="mue-archivo-in" accept=".txt,text/plain" hidden aria-hidden="true" tabindex="-1">
     <details class="panel zc-caja mue-pasar" id="mue-pasar">
       <summary>Pasar mi libreta a otro móvil</summary>
-      <p>Copia tu libreta y pégala aquí en el otro móvil. Lo pegado se añade: no se borra nada de lo que ya tengas.</p>
-      <p class="zc-pista mue-foto-pista">Las fotos de los clientes también pasan, en tamaño más pequeño.</p>
-      <button type="button" class="btn sec" id="mue-exporta"><svg class="icono p" aria-hidden="true"><use href="#i-copia"/></svg>Copiar mi libreta</button>
+      <p>Copia tu libreta y pégala aquí en el otro móvil. Lo pegado se añade: no se borra nada de lo que ya tengas, y lo que ya tenías no se repite.</p>
+      <div class="mue-pasar-bots">
+        <button type="button" class="btn sec" id="mue-exporta-sin"><svg class="icono p" aria-hidden="true"><use href="#i-copia"/></svg>Copiar sin fotos</button>
+        <button type="button" class="btn sec" id="mue-exporta" hidden><svg class="icono p" aria-hidden="true"><use href="#i-copia"/></svg>Copiar con fotos</button>
+        <button type="button" class="btn sec" id="mue-archivo"><svg class="icono p" aria-hidden="true"><use href="#i-descargar"/></svg>Mandar como archivo</button>
+      </div>
+      <p class="zc-pista mue-foto-pista" id="mue-foto-pista" hidden>Con fotos el texto es muy largo y WhatsApp o Telegram pueden no aceptarlo. Pásala sin fotos o, si quieres las fotos, con «Mandar como archivo».</p>
       <label for="mue-texto">Pega aquí la libreta o la ficha que te han pasado</label>
       <textarea id="mue-texto" rows="3" autocomplete="off" translate="no"></textarea>
-      <button type="button" class="btn zc-btn" id="mue-importa">Añadir lo pegado</button>
+      <div class="mue-pasar-bots">
+        <button type="button" class="btn zc-btn" id="mue-importa">Añadir lo pegado</button>
+        <button type="button" class="btn sec" id="mue-abre-archivo"><svg class="icono p" aria-hidden="true"><use href="#i-subir"/></svg>Abrir un archivo</button>
+      </div>
     </details>
   </section>
 
@@ -1046,28 +1059,28 @@
 <div class="barra-acciones" id="barra-acciones"></div>
 <button class="arriba-btn" id="arriba" type="button" aria-label="Volver arriba" title="Volver arriba"><svg class="arriba-aro" viewBox="0 0 52 52" aria-hidden="true"><circle class="aro-fondo" cx="26" cy="26" r="23"/><circle class="aro-prog" cx="26" cy="26" r="23" pathLength="100"/></svg><span data-i="arriba"></span></button>
 
-<script src="lib/supabase.js?v=196"></script>
-<script src="iconos.js?v=196"></script>
-<script src="config.js?v=196"></script>
-<script src="render.js?v=196"></script>
-<script src="app.js?v=196"></script>
-<script src="descansos.js?v=196"></script>
-<script src="ganancias.js?v=196"></script>
-<script src="aparcar.js?v=196"></script>
-<script src="zona-idioma.js?v=196"></script>
-<script src="convenio-girona.js?v=196"></script>
-<script src="finiquito.js?v=196"></script>
-<script src="adr.js?v=196"></script>
-<script src="hora.js?v=196"></script>
-<script src="diccionario.js?v=196"></script>
-<script src="carga.js?v=196"></script>
-<script src="ejes.js?v=196"></script>
-<script src="multas.js?v=196"></script>
-<script src="sobresale.js?v=196"></script>
-<script src="conversor.js?v=196"></script>
-<script src="muelles.js?v=196"></script>
-<script src="ferry.js?v=196"></script>
-<script src="testigos.js?v=196"></script>
-<script src="web-pc.js?v=196"></script>
+<script src="lib/supabase.js?v=197"></script>
+<script src="iconos.js?v=197"></script>
+<script src="config.js?v=197"></script>
+<script src="render.js?v=197"></script>
+<script src="app.js?v=197"></script>
+<script src="descansos.js?v=197"></script>
+<script src="ganancias.js?v=197"></script>
+<script src="aparcar.js?v=197"></script>
+<script src="zona-idioma.js?v=197"></script>
+<script src="convenio-girona.js?v=197"></script>
+<script src="finiquito.js?v=197"></script>
+<script src="adr.js?v=197"></script>
+<script src="hora.js?v=197"></script>
+<script src="diccionario.js?v=197"></script>
+<script src="carga.js?v=197"></script>
+<script src="ejes.js?v=197"></script>
+<script src="multas.js?v=197"></script>
+<script src="sobresale.js?v=197"></script>
+<script src="conversor.js?v=197"></script>
+<script src="muelles.js?v=197"></script>
+<script src="ferry.js?v=197"></script>
+<script src="testigos.js?v=197"></script>
+<script src="web-pc.js?v=197"></script>
 </body>
 </html>

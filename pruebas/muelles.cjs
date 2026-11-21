@@ -24,6 +24,20 @@ ok(r.nuevas === 0 && r.repes === 2 && r.lista.length === 2, "lo repetido no se d
 ok(M.importa("hola", l).error === "codigo" && M.importa(M.PREFIJO + "{mal", l).error === "codigo", "texto que no es una libreta");
 r = M.importa(M.PREFIJO + JSON.stringify([{ id: f.id, nombre: "Otro", truco: "Otro truco" }]), l);
 ok(r.nuevas === 1 && new Set(r.lista.map(x => x.id)).size === 3, "id repetido con otra ficha: se le da otro id y no se pisa nada");
+// v197: el caso del padre (3 clientes; se cambia uno y se pega varias veces una copia vieja)
+{
+  let mia = M.importa(M.exporta([{ id: "aaaa1", nombre: "Brotte SA", truco: "Entrar por detrás" }, { id: "bbbb2", nombre: "Max Plastic", truco: "Marcha atrás" }, { id: "cccc3", nombre: "Faca", truco: "Fácil" }]), []).lista;
+  const vieja = M.exporta(mia);
+  mia = mia.map(x => x.id === "aaaa1" ? { ...x, truco: "Entrar por detrás, puerta 2" } : x);
+  for (let i = 0; i < 15; i++) { const q = M.importa(vieja, mia); mia = q.lista; ok(q.nuevas === 0, `copia vieja pegada (vez ${i + 1}): no añade nada`); if (q.nuevas) break; }
+  ok(mia.length === 3 && mia.find(x => x.id === "aaaa1").truco === "Entrar por detrás, puerta 2", "siguen 3 clientes y se queda lo cambiado en este móvil");
+  const q = M.importa(M.PREFIJO + JSON.stringify([{ id: "zzzz9", nombre: "  brotte sa ", truco: "ENTRAR por   detrás, puerta 2" }]), mia);
+  ok(q.nuevas === 0 && q.repes === 1, "espacios y mayúsculas no hacen una ficha nueva");
+  const rep = [{ id: "r1", nombre: "A", truco: "x", cambiado: "2026-11-01" }, { id: "r2", nombre: "a ", truco: "X", cambiado: "2026-11-05" }, { id: "r3", nombre: "A", truco: "x", cambiado: "2026-11-02" }, { id: "r4", nombre: "B", truco: "y" }];
+  ok(JSON.stringify(M.repetidas(rep).sort()) === '["r1","r3"]', "repetidas: se queda la más reciente (r2)");
+  ok(JSON.stringify(M.repetidas(rep, new Set(["r3"])).sort()) === '["r1","r2"]', "repetidas: se queda la que tiene foto (r3)");
+  ok(M.repetidas(rep.slice(3)).length === 0, "sin repetidas no sobra nada");
+}
 const muchas = Array.from({ length: M.TOPE }, (_, i) => M.limpia({ nombre: "C" + i, truco: "t" }));
 r = M.importa(M.exporta([M.limpia({ nombre: "Nueva", truco: "t" })]), muchas);
 ok(r.nuevas === 0 && r.sobran === 1, "con la libreta llena no se añade más");

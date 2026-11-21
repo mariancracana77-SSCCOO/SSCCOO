@@ -3211,3 +3211,12 @@ label.cg-huecos { margin: 0 0 12px; }
 .te-luz.ambar { color: #ffb300; box-shadow: 0 0 0 2px #ffb300 inset; }
 .te-luz.verde { color: #3ddc84; box-shadow: 0 0 0 2px #3ddc84 inset; }
 .te-luz.azul { color: #5aa9ff; box-shadow: 0 0 0 2px #5aa9ff inset; }
+/* v197 (fichas repetidas y pasar la libreta con o sin fotos, Accesos y muelles) */
+.mue-pasar .btn[hidden], .mue-repes .btn[hidden], .mue-repes [hidden], .mue-foto-pista[hidden] { display: none !important; }
+.mue-pasar-bots { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 12px; }
+.mue-pasar-bots .btn { min-height: 48px; margin: 0; flex: 1 1 160px; justify-content: center; }
+.mue-pasar-bots .btn.zc-btn { width: auto; }
+.mue-repes p { margin: 0; font-weight: 700; }
+.mue-repes .mue-bots { margin-top: 10px; }
+.mue-deshacer { margin: 8px 0 0; min-height: 44px; }
+#mue-archivo-in[hidden] { display: none; }

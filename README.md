@@ -77,6 +77,13 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 197: Accesos y muelles sin fichas repetidas y libreta con o sin fotos
+- Lo vio el padre (le salían clientes repetidos hasta 15 veces y WhatsApp no aceptaba la libreta con fotos). En `muelles.js`:
+  - Al pegar, una ficha con el mismo id y el mismo nombre que una tuya es la misma (aunque se cambiara «Cómo entrar»): no se añade y se queda la tuya. Al comparar no cuentan espacios, mayúsculas ni acentos. Pegar nunca borra nada.
+  - Si ya hay repetidas (nombre, sitio y «Cómo entrar» iguales), aviso «Tienes N fichas repetidas» con «Quitar las repetidas» (pide confirmación; se queda la que tiene foto o la más reciente; copia antes en `ccoo-muelles-copia` y botón «Deshacer»; las fotos no se borran).
+  - «Pasar mi libreta»: «Copiar sin fotos», «Copiar con fotos» (dice los KB) y «Mandar como archivo» (menú de compartir del móvil; si no, se descarga un .txt). Al recibir: pegar o «Abrir un archivo».
+  - `ccoo-muelles` y las fotos (IndexedDB) no cambian de formato. Pruebas en `pruebas/muelles.cjs` (el caso del padre: 3 clientes y una copia vieja pegada 15 veces).
+
 ## Versión 196: Ferry y tren y Guía de testigos
 - Peticiones n.º 64 y 65 del padre: dos herramientas nuevas en Zona Conductores > Utilidades en ruta (solo en español; las cuentas se prueban sin navegador en `pruebas/utilidades-v196.cjs`).
 - «Ferry y tren» (`ferry.js`, `#ferry`): dice si el descanso a bordo vale según el art. 9 del Reglamento 561/2006 (cambiado por el 2020/1054): cortes de como mucho 1 hora para embarcar y desembarcar, litera o camarote, el semanal normal solo con viaje de 8 h o más y camarote, el diario reducido sin cortes; y a qué hora puedes volver a conducir. Guarda el tipo, la litera y los minutos en `ccoo-ferry`.

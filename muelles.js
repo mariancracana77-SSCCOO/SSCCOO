@@ -44,7 +44,10 @@
     try { datos = JSON.parse(t.slice(i + PREFIJO.length)); } catch (e) { return { error: "codigo" }; }
     if (!Array.isArray(datos)) return { error: "codigo" };
     const l = actual.slice(), ids = new Set(l.map(f => f.id));
-    const igual = (a, b) => ["nombre", "lugar", "truco"].every(k => a[k] === b[k]);
+    // v197 (fichas repetidas que vio el padre): la misma ficha (mismo id y mismo nombre) que ya tienes no se vuelve a
+    // añadir aunque se haya cambiado «Cómo entrar» en un móvil o en el otro (se queda la tuya, no se pisa nada), y al
+    // comparar el texto no cuentan los espacios, las mayúsculas ni los acentos.
+    const igual = (a, b) => ["nombre", "lugar", "truco"].every(k => norm(a[k]) === norm(b[k]));
     let nuevas = 0, repes = 0, sobran = 0;
     // Fotos que venían en lo pegado: {id de la ficha aquí, data, siFalta (cliente que ya tenías: solo si no tiene foto)}
     const fotos = [];
@@ -52,7 +55,7 @@
     for (const d of datos) {
       const f = limpia(d);
       if (!f) continue;
-      const ya = l.find(x => igual(x, f));
+      const ya = l.find(x => x.id === f.id && norm(x.nombre) === norm(f.nombre)) || l.find(x => igual(x, f));
       if (ya) { repes++; if (foto(d)) fotos.push({ id: ya.id, data: foto(d), siFalta: true }); continue; }
       if (l.length >= TOPE) { sobran++; continue; }
       if (ids.has(f.id)) f.id = nuevoId();
@@ -62,6 +65,21 @@
     return { lista: l, nuevas, repes, sobran, fotos };
   }
   const plano = (s) => String(s || "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+  const norm = (s) => plano(s).replace(/\s+/g, " ").trim();
+  // v197: fichas repetidas que ya están en la libreta (nombre, sitio y «Cómo entrar» iguales). De cada grupo se queda la
+  // que tiene foto (conFoto: Set de ids) o, si no, la cambiada más tarde. Devuelve los ids que sobran (no borra nada).
+  function repetidas(l, conFoto) {
+    const grupos = new Map();
+    for (const f of l) { const k = ["nombre", "lugar", "truco"].map(c => norm(f[c])).join("|"); if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(f); }
+    const sobran = [];
+    for (const g of grupos.values()) {
+      if (g.length < 2) continue;
+      const tiene = (f) => conFoto && conFoto.has(f.id) ? 1 : 0;
+      const queda = g.slice().sort((a, b) => tiene(b) - tiene(a) || String(b.cambiado).localeCompare(String(a.cambiado)))[0];
+      for (const f of g) if (f !== queda) sobran.push(f.id);
+    }
+    return sobran;
+  }
   const busca = (l, q, nivel) => {
     const p = plano(q).split(/\s+/).filter(Boolean);
     return l.filter(f => (!nivel || f.nivel === nivel) && p.every(w => plano([f.nombre, f.lugar, f.truco, f.epis].join(" ")).includes(w)));
@@ -75,7 +93,7 @@
     waze: `https://waze.com/ul?ll=${f.lat},${f.lon}&navigate=yes`,
     osm: `https://www.openstreetmap.org/directions?to=${f.lat}%2C${f.lon}`,
   };
-  window.MuellesCuentas = { limpia, exporta, importa, busca, mapa, rutas, TOPE, PREFIJO };
+  window.MuellesCuentas = { limpia, exporta, importa, busca, mapa, rutas, repetidas, TOPE, PREFIJO };
 
   const $ = (i) => document.getElementById(i);
   if (!$("v-muelles")) return;
@@ -305,6 +323,8 @@
       ? `<div class="panel mue-vacio"><b>${esc(T("Tu libreta está vacía."))}</b><p>${esc(T("Cuando descargues en un sitio difícil, apunta aquí cómo se entra para la próxima vez."))}</p></div>`
       : l.length ? l.map(ficha).join("") : `<p class="mue-vacio">${esc(T("No hay ningún cliente con eso. Prueba con otra palabra o quita el filtro."))}</p>`;
     $("mue-buscar").hidden = !fichas.length;
+    $("mue-exporta").hidden = $("mue-foto-pista").hidden = !FOTOS.size;
+    pintaRepes();
     cajaMapa();
     if (FOTOS.size) pintaFotos();
   }
@@ -594,14 +614,75 @@
       chips(); lista();
     }
   });
+  // v197 (lo pidió el padre: con fotos el texto era tan largo que WhatsApp y Telegram no lo aceptaban): «Copiar sin fotos»
+  // (texto corto), «Copiar con fotos» (dice el tamaño) y «Mandar como archivo» (con fotos, por el menú de compartir del
+  // móvil; si el navegador no deja, se descarga el archivo). Al otro lado: pegar el texto o «Abrir un archivo».
+  const kb = (t) => Math.max(1, Math.round(new Blob([t]).size / 1024));
+  const conFotos = () => FOTOS.size ? (aviso(T("Preparando las fotos…")), fotosParaPasar(fichas)) : Promise.resolve(null);
+  $("mue-exporta-sin").addEventListener("click", () => {
+    if (!fichas.length) { aviso(T("Tu libreta está vacía."), true); return; }
+    copia(exporta(fichas), T("Copiado sin fotos. Pégalo en «Pasar mi libreta» del otro móvil."));
+  });
   $("mue-exporta").addEventListener("click", () => {
     if (!fichas.length) { aviso(T("Tu libreta está vacía."), true); return; }
-    if (!FOTOS.size) { copia(exporta(fichas), T("Copiado. Pégalo en «Pasar mi libreta» del otro móvil.")); return; }
-    aviso(T("Preparando las fotos…"));
-    fotosParaPasar(fichas).then(fo => {
+    conFotos().then(fo => {
       const t = exporta(fichas, fo);
-      copia(t, T("Copiado con las fotos. Pégalo en «Pasar mi libreta» del otro móvil.") + (t.length > 60000 ? " " + T("Es un texto largo por las fotos: si tu app de mensajes lo corta, pasa los clientes de uno en uno con «Copiar para un compañero».") : ""));
+      copia(t, T("Copiado con las fotos ({n} KB). Pégalo en «Pasar mi libreta» del otro móvil.", { n: kb(t) }) + (t.length > 60000 ? " " + T("Si WhatsApp o Telegram no lo aceptan, pásala sin fotos o con «Mandar como archivo».") : ""));
     });
+  });
+  $("mue-archivo").addEventListener("click", () => {
+    if (!fichas.length) { aviso(T("Tu libreta está vacía."), true); return; }
+    conFotos().then(async fo => {
+      const t = exporta(fichas, fo), nombre = "libreta-muelles-" + new Date().toISOString().slice(0, 10) + ".txt";
+      let arch = null;
+      try { arch = new File([t], nombre, { type: "text/plain" }); } catch (e) { /* navegador viejo */ }
+      if (arch && navigator.canShare && navigator.canShare({ files: [arch] })) {
+        try { await navigator.share({ files: [arch], title: T("Mi libreta de Accesos y muelles") }); aviso(T("Listo. En el otro móvil, abre «Pasar mi libreta» y pulsa «Abrir un archivo».")); return; }
+        catch (e) { if (e && e.name === "AbortError") return; }
+      }
+      const u = URL.createObjectURL(new Blob([t], { type: "text/plain" })), a = document.createElement("a");
+      a.href = u; a.download = nombre; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(u), 10000);
+      aviso(T("Se ha guardado el archivo «{f}» ({n} KB) en tus descargas. Mándalo por WhatsApp o Telegram como documento.", { f: nombre, n: kb(t) }));
+    });
+  });
+  $("mue-abre-archivo").addEventListener("click", () => $("mue-archivo-in").click());
+  $("mue-archivo-in").addEventListener("change", () => {
+    const a = $("mue-archivo-in").files && $("mue-archivo-in").files[0];
+    $("mue-archivo-in").value = "";
+    if (!a) return;
+    if (a.size > 20 * 1024 * 1024) { aviso(T("Ese archivo es demasiado grande."), true); return; }
+    a.text().then(t => { $("mue-texto").value = t; $("mue-importa").click(); }).catch(() => aviso(T("No se ha podido leer el archivo."), true));
+  });
+  // v197: fichas repetidas que ya están en la libreta (de antes del arreglo). Se quitan solo si el conductor lo confirma,
+  // con copia antes (localStorage «ccoo-muelles-copia») y «Deshacer».
+  const KEY_COPIA = "ccoo-muelles-copia";
+  function pintaRepes() {
+    const n = repetidas(fichas, FOTOS).length;
+    $("mue-repes").hidden = !n;
+    if (n) $("mue-repes-t").textContent = n === 1 ? T("Tienes 1 ficha repetida (igual que otra).") : T("Tienes {n} fichas repetidas (iguales que otra).", { n });
+    $("mue-repes-bots").hidden = false; $("mue-repes-seguro").hidden = true;
+  }
+  $("mue-repes-quita").addEventListener("click", () => { $("mue-repes-bots").hidden = true; $("mue-repes-seguro").hidden = false; $("mue-repes-si").focus(); });
+  $("mue-repes-no").addEventListener("click", pintaRepes);
+  $("mue-repes-si").addEventListener("click", () => {
+    const sobran = new Set(repetidas(fichas, FOTOS));
+    if (!sobran.size) { pintaRepes(); return; }
+    try { localStorage.setItem(KEY_COPIA, JSON.stringify({ v: 1, fichas })); } catch (e) { aviso(T("No se ha podido guardar en este móvil. Mira si el navegador está en modo privado o sin espacio."), true); return; }
+    const copiaL = fichas; fichas = fichas.filter(f => !sobran.has(f.id));
+    if (!guarda()) { fichas = copiaL; aviso(T("No se ha podido guardar en este móvil. Mira si el navegador está en modo privado o sin espacio."), true); return; }
+    chips(); lista();
+    aviso(sobran.size === 1 ? T("Quitada 1 ficha repetida.") : T("Quitadas {n} fichas repetidas.", { n: sobran.size }));
+    $("mue-msg").insertAdjacentHTML("beforeend", ` <button type="button" class="btn sec mue-deshacer" id="mue-deshacer">${esc(T("Deshacer"))}</button>`);
+  });
+  $("mue-msg").addEventListener("click", (e) => {
+    if (!e.target.closest("#mue-deshacer")) return;
+    let c = null;
+    try { c = JSON.parse(localStorage.getItem(KEY_COPIA) || "null"); } catch (e2) { /* sin copia */ }
+    if (!c || !Array.isArray(c.fichas)) { aviso(T("No se ha podido deshacer."), true); return; }
+    const copiaL = fichas; fichas = c.fichas.map(limpia).filter(Boolean);
+    if (!guarda()) { fichas = copiaL; aviso(T("No se ha podido guardar en este móvil. Mira si el navegador está en modo privado o sin espacio."), true); return; }
+    chips(); lista(); aviso(T("Hecho: vuelven a estar todas."));
   });
   $("mue-importa").addEventListener("click", () => {
     const r = importa($("mue-texto").value, fichas);
