@@ -3307,3 +3307,7 @@ label.cg-huecos { margin: 0 0 12px; }
 .mue-pasa-f { display: flex; align-items: center; gap: 10px; min-height: 44px; overflow-wrap: anywhere; }
 .mue-pasa-f input { width: 22px; height: 22px; flex: 0 0 auto; }
 .mue-pasa-elige[hidden] { display: none !important; }
+/* v205 (lo vio el padre: al subir la pantalla, el mapa pasaba POR ENCIMA de la cabecera y de la barra de abajo).
+   Leaflet pone sus capas con z-index 400–1000; sin un contexto propio competían con la cabecera (z-index 20).
+   Cada mapa encierra ahora sus capas (isolation) y queda por debajo de todo lo fijo; a pantalla completa sigue arriba. */
+.mue-mapa:not(.completa), .mue-elige-mapa, .apc-mapa:not(.completa), .leaflet-container:not(.completa) { position: relative; z-index: 0; isolation: isolate; }
