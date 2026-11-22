@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 203: «Accesos y muelles» en segundo lugar
+- Lo pidió el padre (pasado por Lorena, 22/11/2026): en «Utilidades en ruta», la tarjeta morada «Accesos y muelles» sale la segunda, justo después de «Restricciones en mi ruta». Cambiado el orden en el origen (`TARJETAS_COND` y `UTIL` de `app.js`), no con CSS, así el lector de pantalla y el tabulador siguen el mismo orden. También en la descripción de la tarjeta «Utilidades en ruta».
+
 ## Versión 202: arreglo urgente, cargar la libreta de Accesos y muelles en el móvil del compañero
 - Aviso del padre: los compañeros descargaban el archivo pero no lo podían cargar. El selector ya no filtra por tipo (WhatsApp lo cambia a «.bin», sin extensión o «.json.txt») y el archivo se reconoce por lo que lleva dentro: quita BOM y caracteres invisibles, lee UTF-16, saltos de Windows, comillas tipográficas, texto de más alrededor y prefijo en minúsculas. Archivos de versiones anteriores siguen valiendo.
 - Nunca en silencio: mensaje claro si es una foto, un PDF, un ZIP, está vacío, ha llegado cortado o no es una libreta (con la pista de pedirlo otra vez o de pulsar «Actualizar» si el compañero tiene una versión vieja). No se borra ni se repite nada.

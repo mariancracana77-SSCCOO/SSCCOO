@@ -96,7 +96,7 @@ const APARTADO_AFILIATE = "afiliate"; // va el último, al lado de «Nosotros»,
 const NOMBRE_FIJO = { inicio: "Inicio", avisos: "Avisos", calendario: "Calendario", actas: "Actas", documentos: "Documentos", convenio: "Convenio", calcula: "Calcula", preguntas: "Dudas", info: "Nosotros", descansos: "Mis descansos", ganancias: "Mis incentivos", aparcar: "Aparcamientos en mi ruta", restricciones: "Restricciones en mi ruta", finiquito: "Mi finiquito", adr: "Test de ADR", hora: "Mi hora ordinaria", utilidades: "Utilidades en ruta", diccionario: "Diccionario del conductor", carga: "Simulador de carga", ejes: "Peso por ejes y estiba", multas: "Multas en Europa", sobresale: "Cargas que sobresalen", conversor: "Conversor rápido", muelles: "Accesos y muelles", ferry: "Ferry y tren", testigos: "Guía de testigos", galibos: "Gálibos y túneles" };
 // v187 (petición n.º 56 del padre): estas 8 herramientas van dentro de «Utilidades en ruta» (#utilidades, tarjeta amarilla).
 // Siguen siendo de Zona Conductores (enlaces directos, buscador y miga), pero no salen en su segunda fila ni en los accesos de Inicio.
-const UTIL = ["restricciones", "adr", "diccionario", "carga", "ejes", "multas", "sobresale", "conversor", "muelles", "ferry", "testigos", "galibos"];
+const UTIL = ["restricciones", "muelles", "adr", "diccionario", "carga", "ejes", "multas", "sobresale", "conversor", "ferry", "testigos", "galibos"];
 let GRUPOS = [], GRUPO_DE = {};
 const padreValido = (a) => !!a.padre_id && D.apartados.some(p => p.id === a.padre_id && !p.padre_id);
 function montaGrupos() {
@@ -681,6 +681,7 @@ const TARJETAS_COND = [
   ["ganancias", "euro", "Mis incentivos", "Lo que ganas cada día, semana y mes: dietas, suplementos, pluses y kilómetros."],
   ["aparcar", "lugar", "Aparcamientos en mi ruta", "Ruta para tu camión y, mientras conduces, los aparcamientos que tienes por delante, cortes y dónde te toca parar."],
   ["restricciones", "alerta", "Restricciones en mi ruta", "Pon de dónde sales y adónde llegas y te digo si en esa ruta hay prohibiciones de circular para camiones o cortes. Gratis."],
+  ["muelles", "muelle", "Accesos y muelles", "Tu libreta de clientes difíciles: por dónde se entra, cómo se maniobra, dónde dormir y su horario."],
   ["finiquito", "hoja", "Mi finiquito", "Cuánto te toca si te despiden o te vas: finiquito, pagas, vacaciones e indemnización según el convenio de Girona."],
   ["adr", "escudo", "Test de ADR", "Practica para el examen de mercancías peligrosas, descifra la placa naranja y mira cómo sacar o renovar el carnet."],
   ["hora", "euro", "Mi hora ordinaria", "Cuánto vale tu hora normal según el convenio de Girona y si tu hora extra está bien pagada."],
@@ -690,7 +691,6 @@ const TARJETAS_COND = [
   ["multas", "alerta", "Multas en Europa", "País por país, cuánto te pueden multar por velocidad, tacógrafo, descansos, peso, alcohol, móvil o peajes, y si hay que pagar en el acto."],
   ["sobresale", "medida", "Cargas que sobresalen", "Cuánto puede sobresalir tu carga por delante, por detrás o por los lados, y cómo señalizarla con el panel V-20."],
   ["conversor", "cambio", "Conversor rápido", "Bar y PSI, kilómetros y millas, litros y galones, grados, pies y pulgadas: escribe un número y se cambia solo."],
-  ["muelles", "muelle", "Accesos y muelles", "Tu libreta de clientes difíciles: por dónde se entra, cómo se maniobra, dónde dormir y su horario."],
   ["ferry", "barco", "Ferry y tren", "Mira si el descanso que haces con el camión en un barco o en un tren vale según la norma europea."],
   ["testigos", "testigo", "Guía de testigos", "Qué quiere decir cada luz del cuadro y qué hacer. De momento, DAF."],
   ["galibos", "tunel", "Gálibos y túneles", "Altura, mercancías peligrosas, velocidad y normas de los túneles grandes. Y si puedes pasar con tu carga."],
@@ -698,7 +698,7 @@ const TARJETAS_COND = [
 const tarjetasCond = (l, amarillas) => l.map(([h, ic, b, sm]) => h === "utilidades"
   ? `<a class="panel desc-promo cond util" href="#utilidades">${icono(ic)}<span><b>${esc(b)}</b><small>${esc(sm)}</small></span>${icono("der", "p")}</a>`
   : `<a class="panel desc-promo cond${amarillas ? " util" : ""}" href="#${esc(h)}">${icono(ic)}<span><b>${esc(b)}</b><small>${esc(sm)}</small></span>${icono("der", "p")}</a>`).join("");
-TARJETAS_COND.splice(TARJETAS_COND.findIndex(t => t[0] === "hora") + 1, 0, ["utilidades", "ajustes", "Utilidades en ruta", "Restricciones, test de ADR, diccionario, simulador de carga, peso por ejes, multas en Europa, cargas que sobresalen, conversor, accesos y muelles, ferry y tren, guía de testigos y gálibos y túneles."]);
+TARJETAS_COND.splice(TARJETAS_COND.findIndex(t => t[0] === "hora") + 1, 0, ["utilidades", "ajustes", "Utilidades en ruta", "Restricciones, accesos y muelles, test de ADR, diccionario, simulador de carga, peso por ejes, multas en Europa, cargas que sobresalen, conversor, ferry y tren, guía de testigos y gálibos y túneles."]);
 function pintaApartado() {
   const a = D.apartados.find(x => x.slug === estado.ap);
   if (!a) { $("ap-extra").innerHTML = ""; $("ap-titulo").textContent = D.apartados.length || !cargar.listo ? "Cargando…" : "Apartado no encontrado"; $("lista-ap").innerHTML = ""; $("ap-desc").textContent = ""; $("fechas-ap").innerHTML = ""; return; }
