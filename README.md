@@ -77,6 +77,11 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 201: dibujos de la Guía de testigos como los de Gemini
+- Petición n.º 65 (orden de Lorena: «los iconos de Gemini tal cual»). Cada testigo lleva su dibujo en una caja oscura redondeada (como el cuadro del camión), en claro y en oscuro.
+- `testigos-iconos.js`: los 24 dibujos de la guía de Gemini copiados tal cual y 17 más hechos con el mismo estilo. Son dibujos fijos del archivo (nunca datos de nadie).
+- Dos testigos nuevos que tenía la guía de Gemini: «Frenada de emergencia (AEBS) o radar no disponible» y «Eje elevable subido». El buscador y los filtros siguen igual.
+
 ## Versión 200: descargar la libreta de Accesos y muelles
 - Petición n.º 67 (ampliación pasada por Lorena: «quiere que se pueda DESCARGAR, no mandar»). En «Pasar mi libreta a otro móvil»: «Descargar archivo» (con fotos) y «Descargar sin fotos» guardan `libreta-muelles-AAAA-MM-DD[-sin-fotos].txt` directamente en Descargas (Blob + `<a download>`, sin el menú de compartir), con el tamaño aproximado antes y un mensaje al acabar. Antes de descargar se comprueba que el archivo se vuelve a leer entero. Si el navegador no deja descargar, lo dice y ofrece «Compartir» o «Copiar».
 - «Compartir» (menú del móvil) queda aparte y secundario; fuera la palabra «Mandar». «Abrir un archivo» pasa a «Cargar archivo de libreta» (acepta .txt y .json): añade sin repetir ni borrar y dice cuántos son nuevos y cuántos ya estaban.
