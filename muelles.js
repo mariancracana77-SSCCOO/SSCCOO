@@ -93,18 +93,40 @@
     const h = limpiaHor(f.hor);
     if (h) r.hor = h;
     r.cambiado = typeof f.cambiado === "string" && /^\d{4}-\d{2}-\d{2}$/.test(f.cambiado) ? f.cambiado : new Date().toISOString().slice(0, 10);
+    // v202: «Recibida de un compañero» (solo una marca, sin nombres): la pone `importa` en las fichas nuevas que entran
+    if (f.rec === 1 || f.rec === true) r.rec = 1;
     return r;
   }
   // Libreta a texto para otro móvil, y al revés (añade, no quita nada; lo repetido no se duplica)
   // v195 (petición n.º 63): con `fotos` (id -> «data:image/jpeg;base64,…», ya pequeña), cada ficha lleva también su foto
   const FOTO_OK = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/, FOTO_MAX = 120000;
-  const exporta = (l, fotos) => PREFIJO + JSON.stringify(l.map(f => { const r = limpia(f); if (r && fotos && fotos[f.id]) r.foto = fotos[f.id]; return r; }).filter(Boolean));
-  function importa(texto, actual) {
-    const t = String(texto || "").trim(), i = t.indexOf(PREFIJO);
-    if (i < 0) return { error: "codigo" };
-    let datos;
-    try { datos = JSON.parse(t.slice(i + PREFIJO.length)); } catch (e) { return { error: "codigo" }; }
+  const exporta = (l, fotos) => PREFIJO + JSON.stringify(l.map(f => { const r = limpia(f); if (r) delete r.rec; if (r && fotos && fotos[f.id]) r.foto = fotos[f.id]; return r; }).filter(Boolean));
+  // v202 (arreglo urgente: a los compañeros no se les cargaba el archivo): se lee aunque venga con BOM, caracteres
+  // invisibles, saltos de línea de Windows, comillas «tipográficas» (las cambian algunos teclados y apps al pegar),
+  // el prefijo en minúsculas o sin él (solo la lista), o con texto de más detrás. Nunca falla en silencio: devuelve
+  // `error` = "vacio" | "codigo" (no es una libreta) | "cortado" (empieza bien pero no llega entero) | "nada" (no hay
+  // ninguna ficha que se pueda leer). Las fichas nuevas entran con la marca `rec` (recibida).
+  const COMILLAS = /[\u201C\u201D\u201E\u201F\u2033\u00AB\u00BB]/g;
+  function leeDatos(texto) {
+    const t = String(texto || "").replace(/[\uFEFF\u200B-\u200D\u2060\u00AD]/g, "").replace(/\r\n?/g, "\n").trim();
+    if (!t) return { error: "vacio" };
+    const i = t.toUpperCase().indexOf(PREFIJO);
+    let cuerpo = i >= 0 ? t.slice(i + PREFIJO.length).trim() : t;
+    if (i < 0 && !/^\[\s*\{/.test(cuerpo)) return { error: "codigo" };
+    const prueba = (c) => { try { return JSON.parse(c); } catch (e) { return undefined; } };
+    let datos = prueba(cuerpo);
+    if (datos === undefined) { const z = cuerpo.lastIndexOf("]"); if (z > 0) datos = prueba(cuerpo.slice(0, z + 1)); }
+    if (datos === undefined) { const c2 = cuerpo.replace(COMILLAS, '"'); datos = prueba(c2); if (datos === undefined) { const z = c2.lastIndexOf("]"); if (z > 0) datos = prueba(c2.slice(0, z + 1)); } }
+    if (datos === undefined) return { error: /^\[\s*\{/.test(cuerpo) ? "cortado" : "codigo" };
+    if (datos && !Array.isArray(datos) && typeof datos === "object") datos = [datos];
     if (!Array.isArray(datos)) return { error: "codigo" };
+    return { datos };
+  }
+  function importa(texto, actual) {
+    const ld = leeDatos(texto);
+    if (ld.error) return { error: ld.error };
+    const datos = ld.datos;
+    if (!datos.some(d => limpia(d))) return { error: "nada" };
     const l = actual.slice(), ids = new Set(l.map(f => f.id));
     // v197 (fichas repetidas que vio el padre): la misma ficha (mismo id y mismo nombre) que ya tienes no se vuelve a
     // añadir aunque se haya cambiado «Cómo entrar» en un móvil o en el otro (se queda la tuya, no se pisa nada), y al
@@ -121,6 +143,7 @@
       if (ya) { repes++; if (foto(d)) fotos.push({ id: ya.id, data: foto(d), siFalta: true }); continue; }
       if (l.length >= TOPE) { sobran++; continue; }
       if (ids.has(f.id)) f.id = nuevoId();
+      f.rec = 1;
       ids.add(f.id); l.push(f); nuevas++;
       if (foto(d)) fotos.push({ id: f.id, data: foto(d) });
     }
@@ -155,7 +178,7 @@
     waze: `https://waze.com/ul?ll=${f.lat},${f.lon}&navigate=yes`,
     osm: `https://www.openstreetmap.org/directions?to=${f.lat}%2C${f.lon}`,
   };
-  window.MuellesCuentas = { limpia, exporta, importa, busca, mapa, rutas, repetidas, limpiaHor, estado, horTexto, TOPE, PREFIJO };
+  window.MuellesCuentas = { limpia, exporta, importa, leeDatos, busca, mapa, rutas, repetidas, limpiaHor, estado, horTexto, TOPE, PREFIJO };
 
   const $ = (i) => document.getElementById(i);
   if (!$("v-muelles")) return;
@@ -183,6 +206,10 @@
     return { abierto: false, t: T("Cerrado ahora · abre {c} a las {h}", { c: cuando, h: hhmm(e.abre.m) }) };
   }
   let fichas = [], filtro = "", borrando = null, editando = null, soloAbiertos = false;
+  // v202: qué fichas se pasan a un compañero (todas o las elegidas); solo mientras la página está abierta
+  let pasaTodas = true;
+  const PASA = new Set();
+  const elegidas = () => pasaTodas ? fichas : fichas.filter(f => PASA.has(f.id));
   function lee() {
     try {
       const d = JSON.parse(localStorage.getItem(KEY) || "null");
@@ -237,8 +264,13 @@
 
   function chips() {
     const n = (k) => k ? fichas.filter(f => f.nivel === k).length : fichas.length;
+    const nr = fichas.filter(f => f.rec).length;
+    if (filtro === "rec" && !nr) filtro = "";
     $("mue-niveles").innerHTML = ["", ...NIVELES].map(k =>
-      `<button type="button" class="zc-chip${filtro === k ? " activa" : ""}" data-nivel="${k}" aria-pressed="${filtro === k}">${k ? senal(k) : ""}${esc(k ? T(NOMBRE_NIVEL[k]) : T("Todos"))} (${n(k)})</button>`).join("");
+      `<button type="button" class="zc-chip${filtro === k ? " activa" : ""}" data-nivel="${k}" aria-pressed="${filtro === k}">${k ? senal(k) : ""}${esc(k ? T(NOMBRE_NIVEL[k]) : T("Todos"))} (${n(k)})</button>`).join("")
+      // v202: las que han llegado de un compañero, para revisarlas o borrarlas
+      + (nr ? `<button type="button" class="zc-chip${filtro === "rec" ? " activa" : ""}" data-nivel="rec" aria-pressed="${filtro === "rec"}">${esc(T("Recibidas"))} (${nr})</button>` : "");
+    pintaPasa();
   }
   function ficha(f) {
     const datos = ["maniobra", "dormir", "banos"].filter(k => f[k]).map(k => [k, T(NOMBRE_OPC[k][f[k]])])
@@ -251,7 +283,7 @@
     // Lo abierto se recuerda mientras la página está abierta (ABIERTAS) para que no se cierre al repintar.
     const abierta = ABIERTAS.has(f.id) || borrando === f.id;
     return `<details class="panel mue-ficha ${f.nivel}" id="mue-${esc(f.id)}" data-ficha="${esc(f.id)}"${abierta ? " open" : ""}>
-      <summary class="mue-cab"><span class="mue-cab-t">${nivelHTML(f.nivel)}<h3 translate="no">${esc(f.nombre)}</h3>${f.lugar ? `<p class="mue-lugar" translate="no">${esc(f.lugar)}</p>` : ""}${et ? `<p class="mue-estado ${et.abierto ? "abierto" : "cerrado"}">${esc(et.t)}</p>` : ""}</span>
+      <summary class="mue-cab"><span class="mue-cab-t">${nivelHTML(f.nivel)}<h3 translate="no">${esc(f.nombre)}</h3>${f.lugar ? `<p class="mue-lugar" translate="no">${esc(f.lugar)}</p>` : ""}${f.rec ? `<p class="mue-rec">${esc(T("Recibida de un compañero"))}</p>` : ""}${et ? `<p class="mue-estado ${et.abierto ? "abierto" : "cerrado"}">${esc(et.t)}</p>` : ""}</span>
         <span class="mue-abre">${icono("abajo", "p")}<span class="mue-abre-t">${esc(T("Ver detalles"))}</span><span class="mue-cierra-t">${esc(T("Cerrar"))}</span></span></summary>
       <div class="mue-cuerpo">${FOTOS.has(f.id) ? `<figure class="mue-foto"><img alt="${esc(T("Foto de {n}", { n: f.nombre }))}" data-foto-de="${esc(f.id)}"${URLS.has(f.id) ? ` src="${esc(URLS.get(f.id))}"` : ""}></figure>` : ""}<div class="mue-truco"><b>${esc(T("Cómo entrar y maniobrar"))}</b><p translate="no">${esc(f.truco).replace(/\n/g, "<br>")}</p></div>
       ${f.hor ? `<p class="zc-pista mue-hor-pista">${esc(T("Horario apuntado por ti con la hora de este móvil: puede cambiar en festivos."))}</p>` : ""}${datos.length ? `<dl class="mue-datos">${datos.map(([k, v]) => `<div><dt>${esc(T(NOMBRE_DATO[k]))}</dt><dd${["espera", "epis", "hor"].includes(k) ? ' translate="no"' : ""}>${esc(v)}</dd></div>`).join("")}</dl>` : ""}
@@ -265,6 +297,7 @@
         ${FOTOS.has(f.id) ? `<button type="button" class="btn sec" data-quitafoto="${esc(f.id)}">${icono("borrar", "p")}${esc(T("Quitar la foto"))}</button>` : ""}
         <button type="button" class="btn sec" data-copia="${esc(f.id)}">${icono("copia", "p")}${esc(T("Copiar para un compañero"))}</button>
         <button type="button" class="btn sec" data-edita="${esc(f.id)}">${icono("editar", "p")}${esc(T("Cambiar"))}</button>
+        ${f.rec ? `<button type="button" class="btn sec" data-quitarec="${esc(f.id)}">${esc(T("Ya la he revisado: quitar la marca"))}</button>` : ""}
         <button type="button" class="btn sec" data-borra="${esc(f.id)}">${icono("borrar", "p")}${esc(T("Borrar"))}</button>
       </div>${conf}</div></details>`;
   }
@@ -390,19 +423,20 @@
 
   const ABIERTAS = new Set();
   function lista() {
-    const l = busca(fichas, $("mue-q").value, filtro).filter(f => !soloAbiertos || (estadoTexto(f) || {}).abierto).sort((a, b) => NIVELES.indexOf(a.nivel) - NIVELES.indexOf(b.nivel) || a.nombre.localeCompare(b.nombre, "es"));
+    const l = busca(fichas, $("mue-q").value, filtro === "rec" ? "" : filtro).filter(f => filtro !== "rec" || f.rec).filter(f => !soloAbiertos || (estadoTexto(f) || {}).abierto).sort((a, b) => NIVELES.indexOf(a.nivel) - NIVELES.indexOf(b.nivel) || a.nombre.localeCompare(b.nombre, "es"));
     if ($("mue-q").value.trim() && l.length === 1) ABIERTAS.add(l[0].id); // al buscar y salir solo uno, se abre
     $("mue-cuenta").textContent = fichas.length ? T("{n} de {t} clientes", { n: l.length, t: fichas.length }) : "";
     $("mue-lista").innerHTML = !fichas.length
-      ? `<div class="panel mue-vacio"><b>${esc(T("Tu libreta está vacía."))}</b><p>${esc(T("Cuando descargues en un sitio difícil, apunta aquí cómo se entra para la próxima vez."))}</p></div>`
+      ? `<div class="panel mue-vacio"><b>${esc(T("Tu libreta está vacía."))}</b><p>${esc(T("Cuando descargues en un sitio difícil, apunta aquí cómo se entra para la próxima vez."))}</p>
+        <p>${esc(T("¿Te ha pasado un compañero su libreta? Pulsa aquí y elige el archivo:"))}</p>
+        <div class="mue-bots"><button type="button" class="btn zc-btn" data-cargar="1">${icono("subir", "p")}${esc(T("Cargar archivo de libreta"))}</button></div></div>`
       : l.length ? l.map(ficha).join("") : `<p class="mue-vacio">${esc(T("No hay ningún cliente con eso. Prueba con otra palabra o quita el filtro."))}</p>`;
     $("mue-buscar").hidden = !fichas.length;
     const conHor = fichas.some(f => f.hor);
     $("mue-abiertos").hidden = !conHor && !soloAbiertos;
     $("mue-abiertos").setAttribute("aria-pressed", String(soloAbiertos));
     $("mue-abiertos").classList.toggle("activa", soloAbiertos);
-    $("mue-exporta").hidden = $("mue-descarga-sin").hidden = $("mue-foto-pista").hidden = !FOTOS.size;
-    pintaTam();
+    pintaPasa();
     pintaRepes();
     cajaMapa();
     if (FOTOS.size) pintaFotos();
@@ -718,6 +752,13 @@
     if (b.dataset.vermapa) { const g = fichas.find(x => x.id === b.dataset.vermapa); if (g) { $("mue-mapa-caja").scrollIntoView({ block: "start", behavior: "smooth" }); verMapa(g); } return; }
     if (b.dataset.foto) { if (fichas.some(x => x.id === b.dataset.foto)) { fotoPara = b.dataset.foto; $("mue-foto-in").click(); } return; }
     if (b.dataset.quitafoto) { quitaFoto(b.dataset.quitafoto); return; }
+    if (b.dataset.cargar) { $("mue-archivo-in").click(); return; }
+    if (b.dataset.quitarec) {
+      const g = fichas.find(x => x.id === b.dataset.quitarec); if (!g) return;
+      delete g.rec;
+      if (!guarda()) { g.rec = 1; aviso(T("No se ha podido guardar en este móvil. Mira si el navegador está en modo privado o sin espacio."), true); return; }
+      chips(); lista(); aviso(T("Hecho: ya no sale como recibida.")); return;
+    }
     if (b.dataset.edita && f) abre(f);
     else if (b.dataset.copia && f) {
       if (!FOTOS.has(f.id)) copia(textoFicha(f), T("Copiado. Pégalo en un mensaje para tu compañero."));
@@ -744,70 +785,149 @@
   // «Compartir» (menú del móvil) queda aparte; si el móvil no deja, lo dice y remite a «Descargar archivo».
   // El archivo es el mismo texto que «Copiar»: sirve para pasarla a otro móvil y como copia de seguridad.
   const kb = (t) => Math.max(1, Math.round(new Blob([t]).size / 1024));
-  const conFotos = () => FOTOS.size ? (aviso(T("Preparando las fotos…")), fotosParaPasar(fichas)) : Promise.resolve(null);
+  // v202 (lo pidió Lorena: «es más que nada para pasárselo a los compañeros»): se puede pasar TODA la libreta o solo
+  // las fichas que elijas (casillas). Por defecto el archivo va SIN fotos (pequeño: cabe en WhatsApp y Telegram);
+  // «Descargar con fotos» aparte. Lo elegido solo vive mientras la página está abierta: no se guarda nada nuevo.
+  const conFotos = (l) => l.some(f => FOTOS.has(f.id)) ? (aviso(T("Preparando las fotos…")), fotosParaPasar(l)) : Promise.resolve(null);
   const hoyTxt = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
-  const nombreArchivo = (sin) => "libreta-muelles-" + hoyTxt() + (sin ? "-sin-fotos" : "") + ".txt";
+  const nombreArchivo = (fotos, n) => "libreta-muelles-" + hoyTxt() + (pasaTodas ? "" : "-" + n + (n === 1 ? "-ficha" : "-fichas")) + (fotos ? "-con-fotos" : "") + ".txt";
   // El archivo se tiene que poder volver a leer entero antes de darlo por bueno
-  const archivoBien = (t) => { const r = importa(t, []); return !r.error && r.nuevas > 0 && r.nuevas + r.repes + r.sobran === fichas.map(limpia).filter(Boolean).length; };
+  const archivoBien = (t, l) => { const r = importa(t, []); return !r.error && r.nuevas > 0 && r.nuevas + r.repes + r.sobran === l.map(limpia).filter(Boolean).length; };
   const puedeDescargar = () => "download" in document.createElement("a") && typeof URL.createObjectURL === "function";
-  function pintaTam() {
+  function pintaPasa() {
+    if (!$("mue-pasa-lista")) return;
+    for (const id of [...PASA]) if (!fichas.some(f => f.id === id)) PASA.delete(id);
+    const l = elegidas(), conF = l.some(f => FOTOS.has(f.id));
+    $("mue-pasa-quien").innerHTML = [[true, T("Toda la libreta ({n})", { n: fichas.length })], [false, T("Elegir fichas")]].map(([v, t]) =>
+      `<button type="button" class="zc-chip${pasaTodas === v ? " activa" : ""}" data-pasa-todas="${v ? 1 : 0}" aria-pressed="${pasaTodas === v}">${esc(t)}</button>`).join("");
+    $("mue-pasa-elige").hidden = pasaTodas;
+    if (!pasaTodas) {
+      const orden = fichas.slice().sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+      $("mue-pasa-lista").innerHTML = orden.map(f => `<label class="mue-pasa-f"><input type="checkbox" data-pasa="${esc(f.id)}"${PASA.has(f.id) ? " checked" : ""}><span translate="no">${esc(f.nombre)}${f.lugar ? " · " + esc(f.lugar) : ""}</span></label>`).join("");
+    }
+    $("mue-pasa-n").textContent = !fichas.length ? "" : T("Vas a pasar {n} de {t} fichas.", { n: l.length, t: fichas.length });
+    $("mue-exporta").hidden = $("mue-descarga-fotos").hidden = $("mue-foto-pista").hidden = !conF;
     const el = $("mue-tam");
-    if (!fichas.length) { el.hidden = true; return; }
-    // (se llama desde lista() al arrancar, antes de que exista «kb»: por eso calcula aquí el tamaño)
-    const sin = Math.max(1, Math.round(new Blob([exporta(fichas)]).size / 1024));
-    el.textContent = FOTOS.size
-      ? T("Tamaño del archivo: sin fotos, unos {s} KB; con fotos ({f}), hasta unos {c} KB.", { s: sin, f: FOTOS.size, c: sin + FOTOS.size * 40 })
+    if (!l.length) { el.hidden = true; return; }
+    const sin = Math.max(1, Math.round(new Blob([exporta(l)]).size / 1024)), nf = l.filter(f => FOTOS.has(f.id)).length;
+    el.textContent = nf
+      ? T("Tamaño del archivo: sin fotos, unos {s} KB; con fotos ({f}), hasta unos {c} KB.", { s: sin, f: nf, c: sin + nf * 40 })
       : T("Tamaño del archivo: unos {s} KB.", { s: sin });
     el.hidden = false;
   }
-  function descarga(t, sin) {
-    if (!archivoBien(t)) { aviso(T("No se ha podido preparar bien el archivo. No se ha descargado nada: prueba otra vez."), true); return; }
-    const nombre = nombreArchivo(sin);
+  $("mue-pasa-quien").addEventListener("click", (e) => { const b = e.target.closest("[data-pasa-todas]"); if (!b) return; pasaTodas = b.dataset.pasaTodas === "1"; pintaPasa(); });
+  $("mue-pasa-lista").addEventListener("change", (e) => { const c = e.target.closest("[data-pasa]"); if (!c) return; c.checked ? PASA.add(c.dataset.pasa) : PASA.delete(c.dataset.pasa); pintaPasa(); });
+  $("mue-pasa-todas").addEventListener("click", () => { fichas.forEach(f => PASA.add(f.id)); pintaPasa(); });
+  $("mue-pasa-ninguna").addEventListener("click", () => { PASA.clear(); pintaPasa(); });
+  // Lo que se va a pasar; si no hay nada, lo dice y devuelve null
+  function aPasar() {
+    if (!fichas.length) { aviso(T("Tu libreta está vacía."), true); return null; }
+    const l = elegidas();
+    if (!l.length) { aviso(T("No has elegido ninguna ficha. Marca las que quieras pasar."), true); return null; }
+    return l;
+  }
+  function descarga(t, fotos, l) {
+    if (!archivoBien(t, l)) { aviso(T("No se ha podido preparar bien el archivo. No se ha descargado nada: prueba otra vez."), true); return; }
+    const nombre = nombreArchivo(fotos, l.length);
     if (!puedeDescargar()) { aviso(T("Este navegador no deja descargar archivos. Prueba con «Compartir» o con «Copiar»."), true); return; }
     try {
       const u = URL.createObjectURL(new Blob([t], { type: "text/plain" })), a = document.createElement("a");
       a.href = u; a.download = nombre; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(u), 30000);
     } catch (e) { aviso(T("Este navegador no deja descargar archivos. Prueba con «Compartir» o con «Copiar»."), true); return; }
-    aviso(T("Descargado «{f}» ({n} KB). Lo tienes en la carpeta Descargas del móvil: desde ahí lo puedes mandar por WhatsApp, Telegram o correo, o guardarlo como copia.", { f: nombre, n: kb(t) }));
+    aviso(T("Descargado «{f}» ({n} KB). Lo tienes en la carpeta Descargas del móvil: desde ahí mándalo por WhatsApp, Telegram o correo como documento. Tu compañero lo guarda y pulsa «Cargar archivo de libreta».", { f: nombre, n: kb(t) }));
   }
   $("mue-exporta-sin").addEventListener("click", () => {
-    if (!fichas.length) { aviso(T("Tu libreta está vacía."), true); return; }
-    copia(exporta(fichas), T("Copiado sin fotos. Pégalo en «Pasar mi libreta» del otro móvil."));
+    const l = aPasar(); if (!l) return;
+    copia(exporta(l), T("Copiado sin fotos. Pégalo en «Pasar fichas» del otro móvil."));
   });
   $("mue-exporta").addEventListener("click", () => {
-    if (!fichas.length) { aviso(T("Tu libreta está vacía."), true); return; }
-    conFotos().then(fo => {
-      const t = exporta(fichas, fo);
-      copia(t, T("Copiado con las fotos ({n} KB). Pégalo en «Pasar mi libreta» del otro móvil.", { n: kb(t) }) + (t.length > 60000 ? " " + T("Si WhatsApp o Telegram no lo aceptan, usa «Descargar archivo» y manda el archivo.") : ""));
+    const l = aPasar(); if (!l) return;
+    conFotos(l).then(fo => {
+      const t = exporta(l, fo);
+      copia(t, T("Copiado con las fotos ({n} KB). Pégalo en «Pasar fichas» del otro móvil.", { n: kb(t) }) + (t.length > 60000 ? " " + T("Si WhatsApp o Telegram no lo aceptan, usa «Descargar archivo» y manda el archivo.") : ""));
     });
   });
-  $("mue-descarga").addEventListener("click", () => {
-    if (!fichas.length) { aviso(T("Tu libreta está vacía."), true); return; }
-    conFotos().then(fo => descarga(exporta(fichas, fo), false));
+  $("mue-descarga").addEventListener("click", () => { const l = aPasar(); if (l) descarga(exporta(l), false, l); });
+  $("mue-descarga-fotos").addEventListener("click", () => { const l = aPasar(); if (l) conFotos(l).then(fo => descarga(exporta(l, fo), !!(fo && Object.keys(fo).length), l)); });
+  $("mue-archivo").addEventListener("click", async () => {
+    const l = aPasar(); if (!l) return;
+    const t = exporta(l), nombre = nombreArchivo(false, l.length);
+    let arch = null;
+    try { arch = new File([t], nombre, { type: "text/plain" }); } catch (e) { /* navegador viejo */ }
+    if (!(arch && navigator.canShare && navigator.canShare({ files: [arch] }))) { aviso(T("Este móvil no deja compartir archivos desde aquí. Usa «Descargar archivo» y mándalo desde la carpeta Descargas."), true); return; }
+    try { await navigator.share({ files: [arch], title: T("Mi libreta de Accesos y muelles") }); aviso(T("Listo. Tu compañero lo guarda en el móvil y pulsa «Cargar archivo de libreta».")); }
+    catch (e) { if (!e || e.name !== "AbortError") aviso(T("No se ha podido compartir. Usa «Descargar archivo» y mándalo desde la carpeta Descargas."), true); }
   });
-  $("mue-descarga-sin").addEventListener("click", () => {
-    if (!fichas.length) { aviso(T("Tu libreta está vacía."), true); return; }
-    descarga(exporta(fichas), true);
-  });
-  $("mue-archivo").addEventListener("click", () => {
-    if (!fichas.length) { aviso(T("Tu libreta está vacía."), true); return; }
-    conFotos().then(async fo => {
-      const t = exporta(fichas, fo), nombre = nombreArchivo(false);
-      let arch = null;
-      try { arch = new File([t], nombre, { type: "text/plain" }); } catch (e) { /* navegador viejo */ }
-      if (!(arch && navigator.canShare && navigator.canShare({ files: [arch] }))) { aviso(T("Este móvil no deja compartir archivos desde aquí. Usa «Descargar archivo» y mándalo desde la carpeta Descargas."), true); return; }
-      try { await navigator.share({ files: [arch], title: T("Mi libreta de Accesos y muelles") }); aviso(T("Listo. En el otro móvil, abre «Pasar mi libreta» y pulsa «Cargar archivo de libreta».")); }
-      catch (e) { if (!e || e.name !== "AbortError") aviso(T("No se ha podido compartir. Usa «Descargar archivo» y mándalo desde la carpeta Descargas."), true); }
-    });
-  });
+  // ---------- Recibir (v202, arreglo urgente) ----------
+  // Se acepta CUALQUIER archivo (sin «accept»: WhatsApp, Telegram o el correo pueden cambiarle el nombre o el tipo) y se
+  // mira por dentro. Se lee como bytes: UTF-16 con BOM o UTF-8. Fotos, PDF y ZIP se reconocen y se dice qué pasa.
+  const MAL_ARCHIVO = {
+    vacio: "Ese archivo está vacío. Pide a tu compañero que te lo mande otra vez.",
+    codigo: "Ese archivo no es una libreta de Accesos y muelles. Elige el archivo que se llama «libreta-muelles-…».",
+    cortado: "El archivo no ha llegado entero. Pide a tu compañero que lo descargue otra vez con «Descargar archivo» y te lo mande como documento.",
+    nada: "En ese archivo no hay ninguna ficha que se pueda leer.",
+    foto: "Has elegido una foto, no la libreta. Elige el archivo que se llama «libreta-muelles-…».",
+    pdf: "Has elegido un PDF, no la libreta. Elige el archivo que se llama «libreta-muelles-…».",
+    zip: "Ese archivo está comprimido (ZIP). Ábrelo antes y elige el archivo «libreta-muelles-…» que hay dentro.",
+    grande: "Ese archivo es demasiado grande para ser una libreta (más de 20 MB).",
+    leer: "No se ha podido abrir el archivo. Si está en WhatsApp o Telegram, guárdalo antes en el móvil (Descargas) y vuelve a pulsar «Cargar archivo de libreta».",
+  };
+  const MAL_TEXTO = {
+    vacio: "No has pegado nada. Mantén pulsado el cuadro y elige «Pegar».",
+    codigo: "Ese texto no es una libreta ni una ficha de Accesos y muelles.",
+    cortado: "El texto no está entero. Cópialo otra vez entero (desde «CCOO-MUELLES:» hasta el final) y pégalo.",
+    nada: "En ese texto no hay ninguna ficha que se pueda leer.",
+  };
+  const bytes = (a) => typeof a.arrayBuffer === "function" ? a.arrayBuffer()
+    : new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => mal(r.error); r.readAsArrayBuffer(a); });
+  async function leeArchivo(a) {
+    if (!a.size) return { error: "vacio" };
+    if (a.size > 20 * 1024 * 1024) return { error: "grande" };
+    let b;
+    try { b = new Uint8Array(await bytes(a)); } catch (e) { return { error: "leer" }; }
+    const empieza = (...x) => x.every((v, i) => b[i] === v);
+    if (empieza(0xFF, 0xD8, 0xFF) || empieza(0x89, 0x50, 0x4E, 0x47) || (empieza(0x52, 0x49, 0x46, 0x46) && b[8] === 0x57) || empieza(0x47, 0x49, 0x46) || /^image\//.test(a.type || "")) return { error: "foto" };
+    if (empieza(0x25, 0x50, 0x44, 0x46)) return { error: "pdf" };
+    if (empieza(0x50, 0x4B, 0x03, 0x04)) return { error: "zip" };
+    try {
+      if (empieza(0xFF, 0xFE)) return { t: new TextDecoder("utf-16le").decode(b.subarray(2)) };
+      if (empieza(0xFE, 0xFF)) return { t: new TextDecoder("utf-16be").decode(b.subarray(2)) };
+      return { t: new TextDecoder("utf-8").decode(b) };
+    } catch (e) { return { error: "leer" }; }
+  }
+  // Mete lo leído en la libreta y SIEMPRE dice qué ha pasado
+  function mete(t, deArchivo) {
+    const r = importa(t, fichas);
+    if (r.error) { aviso(T((deArchivo ? MAL_ARCHIVO : MAL_TEXTO)[r.error] || MAL_TEXTO.codigo), true); return; }
+    if (!r.nuevas) {
+      aviso(r.repes === 1 ? T("No había nada nuevo: ya tenías ese cliente.") : T("No había nada nuevo: ya tenías los {n} clientes.", { n: r.repes }));
+      if (r.fotos.length) guardaFotosPegadas(r.fotos).then(n => { if (n) { lista(); aviso(n === 1 ? T("Ya tenías ese cliente. Se ha añadido la foto que le faltaba.") : T("Ya tenías esos clientes. Se han añadido {n} fotos que te faltaban.", { n })); } });
+      return;
+    }
+    const copiaL = fichas; fichas = r.lista;
+    if (!guarda()) { fichas = copiaL; aviso(T("No se ha podido guardar en este móvil. Mira si el navegador está en modo privado o sin espacio."), true); return; }
+    $("mue-texto").value = ""; chips(); lista();
+    const msg = (r.nuevas === 1 ? T("Se ha añadido 1 cliente nuevo.") : T("Se han añadido {n} clientes nuevos.", { n: r.nuevas }))
+      + " " + T("Salen marcados como «Recibida de un compañero»: revísalos.")
+      + (r.repes ? " " + (r.repes === 1 ? T("1 ya lo tenías.") : T("{n} ya los tenías.", { n: r.repes })) : "")
+      + (r.sobran ? " " + T("{n} no caben (máximo {t}).", { n: r.sobran, t: TOPE }) : "");
+    avisoRec(msg);
+    $("mue-msg").scrollIntoView({ block: "center", behavior: "smooth" });
+    if (r.fotos.length) guardaFotosPegadas(r.fotos).then(n => { if (n) { lista(); avisoRec(msg + " " + (n === 1 ? T("Con su foto.") : T("Con {n} fotos.", { n }))); } });
+  }
+  // Aviso de lo recibido con el botón «Ver las recibidas» (filtra la lista para revisarlas o borrarlas)
+  function avisoRec(msg) {
+    aviso(msg);
+    $("mue-msg").insertAdjacentHTML("beforeend", ` <button type="button" class="btn sec mue-ver-rec" id="mue-ver-rec">${esc(T("Ver las recibidas"))}</button>`);
+  }
   $("mue-abre-archivo").addEventListener("click", () => $("mue-archivo-in").click());
   $("mue-archivo-in").addEventListener("change", () => {
     const a = $("mue-archivo-in").files && $("mue-archivo-in").files[0];
     $("mue-archivo-in").value = "";
     if (!a) return;
-    if (a.size > 20 * 1024 * 1024) { aviso(T("Ese archivo es demasiado grande."), true); return; }
-    a.text().then(t => { $("mue-texto").value = t; $("mue-importa").click(); }).catch(() => aviso(T("No se ha podido leer el archivo."), true));
+    aviso(T("Leyendo el archivo…"));
+    leeArchivo(a).then(r => r.error ? aviso(T(MAL_ARCHIVO[r.error]), true) : mete(r.t, true));
   });
   // v197: fichas repetidas que ya están en la libreta (de antes del arreglo). Se quitan solo si el conductor lo confirma,
   // con copia antes (localStorage «ccoo-muelles-copia») y «Deshacer».
@@ -831,6 +951,7 @@
     $("mue-msg").insertAdjacentHTML("beforeend", ` <button type="button" class="btn sec mue-deshacer" id="mue-deshacer">${esc(T("Deshacer"))}</button>`);
   });
   $("mue-msg").addEventListener("click", (e) => {
+    if (e.target.closest("#mue-ver-rec")) { filtro = "rec"; $("mue-q").value = ""; chips(); lista(); $("mue-niveles").scrollIntoView({ block: "start", behavior: "smooth" }); return; }
     if (!e.target.closest("#mue-deshacer")) return;
     let c = null;
     try { c = JSON.parse(localStorage.getItem(KEY_COPIA) || "null"); } catch (e2) { /* sin copia */ }
@@ -839,19 +960,5 @@
     if (!guarda()) { fichas = copiaL; aviso(T("No se ha podido guardar en este móvil. Mira si el navegador está en modo privado o sin espacio."), true); return; }
     chips(); lista(); aviso(T("Hecho: vuelven a estar todas."));
   });
-  $("mue-importa").addEventListener("click", () => {
-    const r = importa($("mue-texto").value, fichas);
-    if (r.error) { aviso(T("Ese texto no es una libreta ni una ficha de Accesos y muelles."), true); return; }
-    if (!r.nuevas) {
-      aviso(T("No había nada nuevo: ya tenías todo eso."));
-      if (r.fotos.length) guardaFotosPegadas(r.fotos).then(n => { if (n) { lista(); aviso(n === 1 ? T("Ya tenías ese cliente. Se ha añadido la foto que le faltaba.") : T("Ya tenías esos clientes. Se han añadido {n} fotos que te faltaban.", { n })); } });
-      return;
-    }
-    const copiaL = fichas; fichas = r.lista;
-    if (!guarda()) { fichas = copiaL; aviso(T("No se ha podido guardar en este móvil. Mira si el navegador está en modo privado o sin espacio."), true); return; }
-    $("mue-texto").value = ""; chips(); lista();
-    const msg = T("Añadidos {n} clientes.", { n: r.nuevas }) + (r.repes ? " " + T("{n} ya los tenías.", { n: r.repes }) : "") + (r.sobran ? " " + T("{n} no caben (máximo {t}).", { n: r.sobran, t: TOPE }) : "");
-    aviso(msg);
-    if (r.fotos.length) guardaFotosPegadas(r.fotos).then(n => { if (n) { lista(); aviso(msg + " " + (n === 1 ? T("Con su foto.") : T("Con {n} fotos.", { n }))); } });
-  });
+  $("mue-importa").addEventListener("click", () => mete($("mue-texto").value, false));
 })();

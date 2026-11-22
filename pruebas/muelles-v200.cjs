@@ -28,10 +28,10 @@ const fs = require('fs');
   const txt = await p.textContent('#mue-pasar');
   ok(!/Mandar/.test(txt), 'ya no sale la palabra «Mandar»');
   ok(await p.locator('#mue-descarga').isVisible() && (await p.textContent('#mue-descarga')).includes('Descargar archivo'), 'botón «Descargar archivo»');
-  ok(!(await p.locator('#mue-descarga-sin').isVisible()), 'sin fotos en la libreta no sale «Descargar sin fotos»');
+  ok(!(await p.locator('#mue-descarga-fotos').isVisible()), 'sin fotos en la libreta no sale «Descargar con fotos»');
   ok(await p.locator('#mue-archivo').isVisible() && (await p.textContent('#mue-archivo')).trim() === 'Compartir', 'botón aparte «Compartir»');
   ok((await p.textContent('#mue-abre-archivo')).includes('Cargar archivo de libreta'), 'botón «Cargar archivo de libreta»');
-  ok(txt.includes('Haz una copia de tu libreta de vez en cuando'), 'texto de la copia de seguridad');
+  ok(txt.includes('Guárdalo también como copia'), 'texto de la copia de seguridad (v202)');
   ok(await p.locator('#mue-tam').isVisible() && /unos \d+ KB/.test(await p.textContent('#mue-tam')), 'dice el tamaño antes: ' + await p.textContent('#mue-tam'));
   // Descargar (con la libreta que tiene 2 repetidas: no debe bloquearse)
   let dl = p.waitForEvent('download'); await p.click('#mue-descarga'); const d1 = await dl;
@@ -41,15 +41,15 @@ const fs = require('fs');
   ok(f1.startsWith('CCOO-MUELLES:') && JSON.parse(f1.slice(13)).length === 3, 'el archivo lleva las 3 fichas');
   ok((await p.textContent('#mue-msg')).includes('Descargado') && (await p.textContent('#mue-msg')).includes('Descargas'), 'mensaje al acabar: ' + (await p.textContent('#mue-msg')).slice(0, 70));
   ok(await p.evaluate(() => localStorage.getItem('ccoo-muelles')) === antesLS, 'descargar no cambia la libreta guardada');
-  // Con foto: sale «Descargar sin fotos» y los dos archivos se distinguen
+  // Con foto: sale «Descargar con fotos» y los dos archivos se distinguen (v202: «Descargar archivo» va sin fotos)
   const foto = Buffer.from(await p.evaluate(() => { const c = document.createElement('canvas'); c.width = 800; c.height = 600; const x = c.getContext('2d'); x.fillStyle = '#c33'; x.fillRect(0, 0, 800, 600); return c.toDataURL('image/png').split(',')[1]; }), 'base64');
   await p.locator('.mue-ficha[data-ficha=dd02] > summary').click();
   const fc = p.waitForEvent('filechooser'); await p.click('.mue-ficha[data-ficha=dd02] [data-foto]'); await (await fc).setFiles({ name: 'm.png', mimeType: 'image/png', buffer: foto }); await p.waitForTimeout(1200);
-  ok(await p.locator('#mue-descarga-sin').isVisible(), 'con foto sale «Descargar sin fotos»');
+  ok(await p.locator('#mue-descarga-fotos').isVisible(), 'con foto sale «Descargar con fotos»');
   ok(/con fotos \(1\)/.test(await p.textContent('#mue-tam')), 'tamaño con y sin fotos: ' + await p.textContent('#mue-tam'));
-  dl = p.waitForEvent('download'); await p.click('#mue-descarga'); const d2 = await dl; const f2 = fs.readFileSync(await d2.path(), 'utf8');
-  dl = p.waitForEvent('download'); await p.click('#mue-descarga-sin'); const d3 = await dl; const f3 = fs.readFileSync(await d3.path(), 'utf8');
-  ok(d3.suggestedFilename() === 'libreta-muelles-' + hoy + '-sin-fotos.txt', 'nombre sin fotos: ' + d3.suggestedFilename());
+  dl = p.waitForEvent('download'); await p.click('#mue-descarga-fotos'); const d2 = await dl; const f2 = fs.readFileSync(await d2.path(), 'utf8');
+  dl = p.waitForEvent('download'); await p.click('#mue-descarga'); const d3 = await dl; const f3 = fs.readFileSync(await d3.path(), 'utf8');
+  ok(d2.suggestedFilename() === 'libreta-muelles-' + hoy + '-con-fotos.txt' && d3.suggestedFilename() === 'libreta-muelles-' + hoy + '.txt', 'nombres: ' + d2.suggestedFilename() + ' / ' + d3.suggestedFilename());
   ok(JSON.parse(f2.slice(13)).some(x => x.foto && x.foto.startsWith('data:image/')) && !JSON.parse(f3.slice(13)).some(x => x.foto), 'el de fotos lleva la foto y el otro no');
   ok(f2.length > f3.length, 'con fotos pesa más (' + Math.round(f2.length / 1024) + ' KB / ' + Math.round(f3.length / 1024) + ' KB)');
   // Cargar el archivo descargado en otra ventana (otro móvil) con una ficha suya
@@ -58,7 +58,7 @@ const fs = require('fs');
   let ch = p2.waitForEvent('filechooser'); await p2.click('#mue-abre-archivo'); await (await ch).setFiles(await d2.path()); await p2.waitForTimeout(1500);
   let g = await p2.evaluate(() => JSON.parse(localStorage.getItem('ccoo-muelles')));
   ok(g.v === 1 && g.fichas.length === 3 && g.fichas.some(x => x.id === 'zz01'), 'cargar el archivo añade las nuevas y no borra la suya (' + g.fichas.length + ')');
-  ok((await p2.textContent('#mue-msg')).includes('Añadidos 2') && (await p2.textContent('#mue-msg')).includes('ya los tenías'), 'dice cuántas nuevas y cuántas ya estaban: ' + (await p2.textContent('#mue-msg')).slice(0, 80));
+  ok((await p2.textContent('#mue-msg')).includes('Se han añadido 2') && /ya los? tenías/.test(await p2.textContent('#mue-msg')), 'dice cuántas nuevas y cuántas ya estaban: ' + (await p2.textContent('#mue-msg')).slice(0, 80));
   ok(await p2.evaluate(() => new Promise(r => setTimeout(() => r(document.querySelectorAll('.mue-ficha .mue-foto img, .mue-ficha img').length), 800))) >= 1 || await p2.evaluate(() => document.querySelector('.mue-ficha[data-ficha] [data-quitafoto]') !== null), 'la foto llega con el archivo');
   ch = p2.waitForEvent('filechooser'); await p2.click('#mue-abre-archivo'); await (await ch).setFiles(await d2.path()); await p2.waitForTimeout(1000);
   g = await p2.evaluate(() => JSON.parse(localStorage.getItem('ccoo-muelles')));
@@ -72,7 +72,7 @@ const fs = require('fs');
   ok((await p.textContent('#mue-msg')).includes('Descargar archivo'), 'sin compartir: lo dice y ofrece «Descargar archivo»');
   // Navegador que no deja descargar
   await p.evaluate(() => { URL.createObjectURL = undefined; });
-  await p.click('#mue-descarga-sin'); await p.waitForTimeout(300);
+  await p.click('#mue-descarga'); await p.waitForTimeout(300);
   ok((await p.textContent('#mue-msg')).includes('no deja descargar') && (await p.textContent('#mue-msg')).includes('Compartir'), 'si no puede descargar, lo dice: ' + (await p.textContent('#mue-msg')).slice(0, 60));
   // Libreta vacía
   const { c: c3, p: p3 } = await nuevo(null);

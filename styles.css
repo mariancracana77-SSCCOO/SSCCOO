@@ -3296,3 +3296,12 @@ label.cg-huecos { margin: 0 0 12px; }
 .desc-promo.cond.util[href="#muelles"] > .icono:first-child, .desc-promo.cond.util[href="#muelles"] > .icono:last-child { color: #fff; }
 .desc-promo.cond.util[href="#muelles"] small { color: #efe6fa; }
 .desc-promo.cond.util[href="#muelles"]:hover { background: #7a3bbb; }
+/* v202 (Accesos y muelles, arreglo de pasar fichas a compañeros): marca «Recibida de un compañero», ayuda y casillas para elegir qué fichas pasar */
+.mue-rec { display: inline-block; margin: 4px 0 0; padding: 2px 8px; border-radius: 999px; font-size: .85em; font-weight: 700; background: var(--fondo-2, rgba(107,47,168,.12)); color: var(--tinta, inherit); border: 1px solid var(--linea); }
+.mue-ayuda { padding: 10px 12px; border-left: 4px solid var(--linea); margin: 8px 0; }
+.mue-ayuda p { margin: 4px 0; }
+.mue-pasar-h { margin: 16px 0 6px; font-size: 1.05em; }
+.mue-pasa-lista { max-height: 260px; overflow-y: auto; border: 1px solid var(--linea); border-radius: 10px; padding: 4px 8px; margin: 6px 0; }
+.mue-pasa-f { display: flex; align-items: center; gap: 10px; min-height: 44px; overflow-wrap: anywhere; }
+.mue-pasa-f input { width: 22px; height: 22px; flex: 0 0 auto; }
+.mue-pasa-elige[hidden] { display: none !important; }

@@ -77,6 +77,13 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 202: arreglo urgente, cargar la libreta de Accesos y muelles en el móvil del compañero
+- Aviso del padre: los compañeros descargaban el archivo pero no lo podían cargar. El selector ya no filtra por tipo (WhatsApp lo cambia a «.bin», sin extensión o «.json.txt») y el archivo se reconoce por lo que lleva dentro: quita BOM y caracteres invisibles, lee UTF-16, saltos de Windows, comillas tipográficas, texto de más alrededor y prefijo en minúsculas. Archivos de versiones anteriores siguen valiendo.
+- Nunca en silencio: mensaje claro si es una foto, un PDF, un ZIP, está vacío, ha llegado cortado o no es una libreta (con la pista de pedirlo otra vez o de pulsar «Actualizar» si el compañero tiene una versión vieja). No se borra ni se repite nada.
+- Recibir en 2 toques: «Cargar archivo de libreta» también en la libreta vacía. Lo recibido sale marcado «Recibida de un compañero» (campo `rec` en `ccoo-muelles`, que no se pasa al compartir), con el filtro «Recibidas», el botón «Ver las recibidas» y «Ya la he revisado: quitar la marca».
+- «Pasar mis fichas»: todas o elegir con casillas; por defecto archivo pequeño sin fotos y «con fotos» aparte. Texto de ayuda (se traduce al rumano con el selector de idioma).
+- Prueba nueva: `pruebas/muelles-v202.cjs`.
+
 ## Versión 201: dibujos de la Guía de testigos como los de Gemini
 - Petición n.º 65 (orden de Lorena: «los iconos de Gemini tal cual»). Cada testigo lleva su dibujo en una caja oscura redondeada (como el cuadro del camión), en claro y en oscuro.
 - `testigos-iconos.js`: los 24 dibujos de la guía de Gemini copiados tal cual y 17 más hechos con el mismo estilo. Son dibujos fijos del archivo (nunca datos de nadie).
