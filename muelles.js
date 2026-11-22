@@ -102,8 +102,11 @@
   const FOTO_OK = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/, FOTO_MAX = 120000;
   // v205: el primer elemento dice cuántas fichas lleva (y la parte, si va en varias): así al otro lado se sabe si ha llegado
   // todo («Llegaron 40 de 52»). Las versiones de antes lo ignoran (no tiene nombre ni «Cómo entrar»).
+  let tieneFoto = () => false; // v207: lo cambia la parte de las fotos (más abajo) cuando ya existe FOTOS
   const exporta = (l, fotos, parte) => {
-    const fs = l.map(f => { const r = limpia(f); if (r) delete r.rec; if (r && fotos && fotos[f.id]) r.foto = fotos[f.id]; return r; }).filter(Boolean);
+    // v207 (fotos que no llegaban, lo vio el padre): `tf: 1` en la ficha que tiene foto en este móvil pero va sin ella,
+    // para que al otro lado se avise «llegan sin foto». Las versiones de antes lo ignoran.
+    const fs = l.map(f => { const r = limpia(f); if (r) delete r.rec; if (r && fotos && fotos[f.id]) r.foto = fotos[f.id]; else if (r && tieneFoto(f.id)) r.tf = 1; return r; }).filter(Boolean);
     const cab = Object.assign({ libreta: "ccoo-muelles", total: fs.length }, parte || {});
     return PREFIJO + JSON.stringify([cab].concat(fs));
   };
@@ -172,22 +175,24 @@
     // añadir aunque se haya cambiado «Cómo entrar» en un móvil o en el otro (se queda la tuya, no se pisa nada), y al
     // comparar el texto no cuentan los espacios, las mayúsculas ni los acentos.
     const igual = (a, b) => ["nombre", "lugar", "truco"].every(k => norm(a[k]) === norm(b[k]));
-    let nuevas = 0, repes = 0, sobran = 0;
+    let nuevas = 0, repes = 0, sobran = 0, sinFoto = 0;
     // Fotos que venían en lo pegado: {id de la ficha aquí, data, siFalta (cliente que ya tenías: solo si no tiene foto)}
     const fotos = [];
     const foto = (d) => typeof d.foto === "string" && d.foto.length <= FOTO_MAX && FOTO_OK.test(d.foto) ? d.foto : null;
+    // La ficha tenía foto en el otro móvil (o venía una foto que no vale) y aquí no va a tener ninguna
+    const faltaFoto = (d) => !foto(d) && (d.tf === 1 || typeof d.foto === "string");
     for (const d of datos) {
       const f = limpia(d);
       if (!f) continue;
       const ya = l.find(x => x.id === f.id && norm(x.nombre) === norm(f.nombre)) || l.find(x => igual(x, f));
-      if (ya) { repes++; if (foto(d)) fotos.push({ id: ya.id, data: foto(d), siFalta: true }); continue; }
+      if (ya) { repes++; if (foto(d)) fotos.push({ id: ya.id, data: foto(d), siFalta: true }); else if (faltaFoto(d) && !tieneFoto(ya.id)) sinFoto++; continue; }
       if (l.length >= TOPE) { sobran++; continue; }
       if (ids.has(f.id)) f.id = nuevoId();
       f.rec = 1;
       ids.add(f.id); l.push(f); nuevas++;
-      if (foto(d)) fotos.push({ id: f.id, data: foto(d) });
+      if (foto(d)) fotos.push({ id: f.id, data: foto(d) }); else if (faltaFoto(d)) sinFoto++;
     }
-    return { lista: l, nuevas, repes, sobran, fotos, leidas, total: ld.total || 0, cortado: !!ld.cortado };
+    return { lista: l, nuevas, repes, sobran, fotos, sinFoto, leidas, total: ld.total || 0, cortado: !!ld.cortado };
   }
   const plano = (s) => String(s || "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
   const norm = (s) => plano(s).replace(/\s+/g, " ").trim();
@@ -332,7 +337,7 @@
       .concat(f.hor ? [["hor", horTexto(f.hor)]] : [])
       .concat(["espera", "epis"].filter(k => f[k]).map(k => [k, f[k]]));
     const r = rutas(f), et = estadoTexto(f);
-    const conf = borrando === f.id ? `<div class="zc-aviso mue-conf" role="alert"><b>${esc(T("¿Borrar esta ficha? No se puede deshacer."))}</b>
+    const conf = borrando === f.id ? `<div class="zc-aviso mue-conf" role="alert"><b>${esc(FOTOS.has(f.id) ? T("¿Borrar esta ficha y su foto? No se puede deshacer: la foto no vuelve aunque cargues otra vez la libreta.") : T("¿Borrar esta ficha? No se puede deshacer."))}</b>
       <div class="mue-bots"><button type="button" class="btn mue-si" data-si="${esc(f.id)}">${esc(T("Sí, borrarla"))}</button><button type="button" class="btn sec" data-no="1">${esc(T("No"))}</button></div></div>` : "";
     // v193 (petición n.º 61): cada ficha sale plegada (nombre, nivel y sitio); al tocarla se ven los detalles.
     // Lo abierto se recuerda mientras la página está abierta (ABIERTAS) para que no se cierre al repintar.
@@ -366,6 +371,7 @@
   // ficha (`fotosParaPasar`). Al pegar, `importa` solo acepta «data:image/…;base64» de hasta FOTO_MAX y `guardaFotosPegadas`
   // la vuelve a dibujar en un canvas antes de guardarla (solo entra una imagen limpia). La libreta (`limpia`) nunca guarda `foto`.
   const FOTOS = new Set(), URLS = new Map();
+  tieneFoto = (id) => FOTOS.has(id);
   let fotoPara = null, fotoBD = null;
   function bd() {
     if (fotoBD) return fotoBD;
@@ -996,7 +1002,7 @@
       $("mue-pasa-lista").innerHTML = orden.map(f => `<label class="mue-pasa-f"><input type="checkbox" data-pasa="${esc(f.id)}"${PASA.has(f.id) ? " checked" : ""}><span translate="no">${esc(f.nombre)}${f.lugar ? " · " + esc(f.lugar) : ""}</span></label>`).join("");
     }
     $("mue-pasa-n").textContent = !fichas.length ? "" : T("Vas a pasar {n} de {t} fichas.", { n: l.length, t: fichas.length });
-    $("mue-exporta").hidden = $("mue-descarga-fotos").hidden = $("mue-foto-pista").hidden = !conF;
+    $("mue-exporta").hidden = $("mue-descarga-sin").hidden = $("mue-foto-pista").hidden = !conF;
     const el = $("mue-tam");
     if (!l.length) { el.hidden = true; return; }
     const sin = Math.max(1, Math.round(new Blob([exporta(l)]).size / 1024)), nf = l.filter(f => FOTOS.has(f.id)).length;
@@ -1043,8 +1049,10 @@
       copia(t, T("Copiado con las fotos ({n} KB). Pégalo en «Pasar fichas» del otro móvil.", { n: kb(t) }) + (t.length > 60000 ? " " + T("Si WhatsApp o Telegram no lo aceptan, usa «Descargar archivo» y manda el archivo.") : ""));
     });
   });
-  $("mue-descarga").addEventListener("click", () => { const l = aPasar(); if (l) descarga(l, null); });
-  $("mue-descarga-fotos").addEventListener("click", () => { const l = aPasar(); if (l) conFotos(l).then(fo => descarga(l, fo)); });
+  // v207 (lo pidió el padre: «como la primera vez», las fichas le volvían sin fotos): «Descargar archivo» vuelve a llevar
+  // las fotos; «Descargar sin fotos» aparte, para cuando WhatsApp no acepte el archivo grande.
+  $("mue-descarga").addEventListener("click", () => { const l = aPasar(); if (l) conFotos(l).then(fo => descarga(l, fo)); });
+  $("mue-descarga-sin").addEventListener("click", () => { const l = aPasar(); if (l) descarga(l, null); });
   $("mue-archivo").addEventListener("click", async () => {
     const l = aPasar(); if (!l) return;
     const t = exporta(l), nombre = nombreArchivo(false, l.length);
@@ -1152,7 +1160,9 @@
   function mete(t, deArchivo) {
     const r = importaVarios(Array.isArray(t) ? t : [t]);
     if (r.error) { aviso(T((deArchivo ? MAL_ARCHIVO : MAL_TEXTO)[r.error] || MAL_TEXTO.codigo), true); return; }
-    const fa = falta(r);
+    const fa = falta(r) + (r.sinFoto ? " " + (r.sinFoto === 1
+      ? T("1 ficha tenía foto en el otro móvil pero llega sin ella: pide que te lo manden con «Descargar archivo», que lleva las fotos.")
+      : T("{n} fichas tenían foto en el otro móvil pero llegan sin ella: pide que te lo manden con «Descargar archivo», que lleva las fotos.", { n: r.sinFoto })) : "");
     if (!r.nuevas) {
       aviso((r.repes === 1 ? T("No había nada nuevo: ya tenías ese cliente.") : T("No había nada nuevo: ya tenías los {n} clientes.", { n: r.repes })) + fa, !!fa);
       if (r.fotos.length) guardaFotosPegadas(r.fotos).then(n => { if (n) { lista(); aviso(n === 1 ? T("Ya tenías ese cliente. Se ha añadido la foto que le faltaba.") : T("Ya tenías esos clientes. Se han añadido {n} fotos que te faltaban.", { n })); } });
@@ -1172,11 +1182,11 @@
   // Varios textos (los archivos de un ZIP): se cargan uno detrás de otro y se suman; si ninguno vale, el primer motivo.
   function importaVarios(textos) {
     let base = fichas, error = null;
-    const r = { nuevas: 0, repes: 0, sobran: 0, fotos: [], leidas: 0, total: 0, cortado: false };
+    const r = { nuevas: 0, repes: 0, sobran: 0, fotos: [], sinFoto: 0, leidas: 0, total: 0, cortado: false };
     for (const t of textos) {
       const x = importa(t, base);
       if (x.error) { error = error || x.error; if (x.error === "cortado") r.cortado = true; continue; }
-      base = x.lista; r.nuevas += x.nuevas; r.repes += x.repes; r.sobran += x.sobran; r.fotos.push(...x.fotos); r.vale = true;
+      base = x.lista; r.nuevas += x.nuevas; r.repes += x.repes; r.sobran += x.sobran; r.fotos.push(...x.fotos); r.sinFoto += x.sinFoto || 0; r.vale = true;
       r.leidas += x.leidas; r.total = Math.max(r.total, x.total); if (x.cortado) r.cortado = true;
     }
     return r.vale ? Object.assign(r, { lista: base }) : { error: error || "codigo" };
