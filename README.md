@@ -77,6 +77,14 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 207: buscar un sitio en el mapa de muelles, «Estoy aquí» y «Cerca de mí»
+- Lo pidió el padre (nota 071 del vault). Sin tocar la CSP: el buscador de pueblos usa la misma función «ruta» de Supabase que «Aparcamientos en mi ruta» (pueblo, ciudad o código postal; si hay varios, pregunta cuál). Las coordenadas («41.98, 2.82», «41,98 2,82») y los enlaces de Google Maps, OpenStreetMap o `geo:` se leen en el móvil sin enviar nada. Un enlace corto sin posición lo explica.
+- Buscador encima del mapa de «Elegir en el mapa» y del mapa de clientes. Con coordenadas pone el punto; con un pueblo lleva el mapa allí y dice «Ahora toca justo en la puerta de camiones». Enter en el buscador no guarda la ficha.
+- «Estoy aquí: marcar mi posición» (antes «Usar mi posición ahora») y el botón de al lado pasa a «Mover el punto en el mapa». Botón de la diana en los dos mapas: «Mi posición» y, en el de clientes, «Cerca de mí» (cuántos clientes hay a menos de 50 km).
+- En la lista, «Cerca de mí (50 km)»: solo los clientes a menos de 50 km, del más cerca al más lejos, con «A N km de ti».
+- La posición solo se pide al pulsar y se queda en memoria mientras la página está abierta: no se guarda ni se envía (nota en el formulario). Errores con una sola acción (sin permiso, ubicación apagada).
+- Prueba nueva: `pruebas/muelles-v207.cjs` (ubicación permitida y sin permiso, 320/412 px, claro y oscuro).
+
 ## Versión 206: la libreta que el móvil convierte en un documento de Word se carga igual
 - El padre vio que el archivo que llega por WhatsApp (`DOC-20261122-WA0060`, sin extensión) el móvil lo convierte en un Word («Documento (1) (4)», OneDrive) al guardarlo o abrirlo. Ahora «Cargar archivo de libreta» también abre un .docx: saca el texto de `word/document.xml` (párrafos y trozos `<w:t>`, entidades XML) y busca la libreta dentro.
 - Las comillas que cambia Word (“ ”) se arreglan antes que las «…», así un «…» escrito dentro de una ficha se respeta.

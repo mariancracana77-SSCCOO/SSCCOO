@@ -25,10 +25,10 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="fuentes.css?v=206">
-<script src="lectura.js?v=206"></script>
-<link rel="stylesheet" href="styles.css?v=206">
-<link rel="stylesheet" href="web-pc.css?v=206" media="(min-width: 1000px) and (display-mode: browser)">
+<link rel="stylesheet" href="fuentes.css?v=207">
+<script src="lectura.js?v=207"></script>
+<link rel="stylesheet" href="styles.css?v=207">
+<link rel="stylesheet" href="web-pc.css?v=207" media="(min-width: 1000px) and (display-mode: browser)">
 </head>
 <body class="publica">
 
@@ -846,11 +846,16 @@
       <fieldset class="mue-pos">
         <legend>Puerta de camiones en el mapa (si quieres)</legend>
         <div class="mue-pos-bots">
-          <button type="button" class="btn sec" id="mue-gps"><svg class="icono p" aria-hidden="true"><use href="#i-lugar"/></svg>Usar mi posición ahora</button>
+          <button type="button" class="btn zc-btn" id="mue-gps"><svg class="icono p" aria-hidden="true"><use href="#i-lugar"/></svg>Estoy aquí: marcar mi posición</button>
           <button type="button" class="btn sec" id="mue-elegir" aria-expanded="false" aria-controls="mue-elige"><svg class="icono p" aria-hidden="true"><use href="#i-mapa"/></svg>Elegir en el mapa</button>
         </div>
         <div class="mue-elige" id="mue-elige" hidden>
           <p class="zc-pista">Busca el sitio en el mapa (acerca con dos dedos) y toca justo en la puerta de camiones. Puedes arrastrar el punto para afinarlo.</p>
+          <div class="mue-sitio" role="search" data-sitio="elige">
+            <label for="mue-sitio-elige">Buscar un pueblo o un código postal, o pegar unas coordenadas o un enlace de mapa</label>
+            <div class="mue-sitio-fila"><input id="mue-sitio-elige" type="search" enterkeyhint="search" autocomplete="off" placeholder="Torelló, 17600 o 41.98, 2.82"><button type="button" class="btn sec" data-sitio-buscar="elige">Buscar</button></div>
+            <div class="mue-sitio-res" data-sitio-res="elige" aria-live="polite"></div>
+          </div>
           <div class="mue-elige-mapa" id="mue-elige-mapa" role="application" aria-label="Mapa para elegir la puerta de camiones"></div>
           <div class="mue-pos-bots"><button type="button" class="btn sec" id="mue-quita-punto">Quitar el punto</button><button type="button" class="btn sec" id="mue-elige-cierra">Cerrar el mapa</button></div>
         </div>
@@ -859,6 +864,7 @@
           <div><label for="mue-lon">Longitud</label><input id="mue-lon" type="text" inputmode="decimal" autocomplete="off"></div>
         </div>
         <p class="zc-pista" id="mue-gps-msg" aria-live="polite"></p>
+        <p class="zc-pista mue-priv">Tu posición solo se usa en este móvil para el mapa y las distancias: no se envía a nadie ni se guarda.</p>
       </fieldset>
       <div class="mue-bots"><button type="submit" class="btn zc-btn">Guardar</button><button type="button" class="btn sec" id="mue-cancela">Cancelar</button></div>
     </form>
@@ -866,6 +872,8 @@
       <input id="mue-q" class="zc-busca" type="search" placeholder="Busca: cliente, pueblo, país…" autocomplete="off" aria-label="Buscar en mi libreta">
       <div class="zc-chips" id="mue-niveles" role="group" aria-label="Filtrar por dificultad"></div>
       <button type="button" class="zc-chip mue-abiertos" id="mue-abiertos" aria-pressed="false" hidden>Solo los abiertos ahora</button>
+      <button type="button" class="zc-chip mue-cerca" id="mue-cerca" aria-pressed="false" hidden><svg class="icono p" aria-hidden="true"><use href="#i-lugar"/></svg>Cerca de mí (50 km)</button>
+      <p class="zc-pista" id="mue-cerca-msg" aria-live="polite"></p>
       <p class="zc-pista" id="mue-cuenta" aria-live="polite"></p>
     </div>
     <div class="panel zc-caja mue-mapa-caja" id="mue-mapa-caja" hidden>
@@ -874,6 +882,11 @@
       <ul class="mue-ley" id="mue-ley" aria-label="Qué quiere decir cada punto"></ul>
       <button type="button" class="btn zc-btn" id="mue-ver-mapa"><svg class="icono p" aria-hidden="true"><use href="#i-lugar"/></svg>Ver el mapa</button>
       <p class="zc-aviso" id="mue-mapa-msg" role="status" hidden></p>
+      <div class="mue-sitio" role="search" data-sitio="mapa" id="mue-sitio-mapa-caja" hidden>
+        <label for="mue-sitio-mapa">Buscar un sitio en el mapa</label>
+        <div class="mue-sitio-fila"><input id="mue-sitio-mapa" type="search" enterkeyhint="search" autocomplete="off" placeholder="Pueblo, código postal o coordenadas"><button type="button" class="btn sec" data-sitio-buscar="mapa">Buscar</button></div>
+        <div class="mue-sitio-res" data-sitio-res="mapa" aria-live="polite"></div>
+      </div>
       <div class="mue-mapa" id="mue-mapa" hidden></div>
       <button type="button" class="btn sec mue-cierra-mapa" id="mue-cierra-mapa" hidden><svg class="icono p" aria-hidden="true"><use href="#i-cerrar"/></svg>Cerrar el mapa</button>
     </div>
@@ -1134,31 +1147,31 @@
 <div class="barra-acciones" id="barra-acciones"></div>
 <button class="arriba-btn" id="arriba" type="button" aria-label="Volver arriba" title="Volver arriba"><svg class="arriba-aro" viewBox="0 0 52 52" aria-hidden="true"><circle class="aro-fondo" cx="26" cy="26" r="23"/><circle class="aro-prog" cx="26" cy="26" r="23" pathLength="100"/></svg><span data-i="arriba"></span></button>
 
-<script src="lib/supabase.js?v=206"></script>
-<script src="iconos.js?v=206"></script>
-<script src="config.js?v=206"></script>
-<script src="render.js?v=206"></script>
-<script src="app.js?v=206"></script>
-<script src="descansos.js?v=206"></script>
-<script src="ganancias.js?v=206"></script>
-<script src="aparcar.js?v=206"></script>
-<script src="zona-idioma.js?v=206"></script>
-<script src="convenio-girona.js?v=206"></script>
-<script src="finiquito.js?v=206"></script>
-<script src="adr.js?v=206"></script>
-<script src="hora.js?v=206"></script>
-<script src="diccionario.js?v=206"></script>
-<script src="carga.js?v=206"></script>
-<script src="ejes.js?v=206"></script>
-<script src="multas.js?v=206"></script>
-<script src="sobresale.js?v=206"></script>
-<script src="conversor.js?v=206"></script>
-<script src="muelles.js?v=206"></script>
-<script src="ferry.js?v=206"></script>
-<script src="testigos-iconos.js?v=206"></script>
-<script src="testigos.js?v=206"></script>
-<script src="galibos-datos.js?v=206"></script>
-<script src="galibos.js?v=206"></script>
-<script src="web-pc.js?v=206"></script>
+<script src="lib/supabase.js?v=207"></script>
+<script src="iconos.js?v=207"></script>
+<script src="config.js?v=207"></script>
+<script src="render.js?v=207"></script>
+<script src="app.js?v=207"></script>
+<script src="descansos.js?v=207"></script>
+<script src="ganancias.js?v=207"></script>
+<script src="aparcar.js?v=207"></script>
+<script src="zona-idioma.js?v=207"></script>
+<script src="convenio-girona.js?v=207"></script>
+<script src="finiquito.js?v=207"></script>
+<script src="adr.js?v=207"></script>
+<script src="hora.js?v=207"></script>
+<script src="diccionario.js?v=207"></script>
+<script src="carga.js?v=207"></script>
+<script src="ejes.js?v=207"></script>
+<script src="multas.js?v=207"></script>
+<script src="sobresale.js?v=207"></script>
+<script src="conversor.js?v=207"></script>
+<script src="muelles.js?v=207"></script>
+<script src="ferry.js?v=207"></script>
+<script src="testigos-iconos.js?v=207"></script>
+<script src="testigos.js?v=207"></script>
+<script src="galibos-datos.js?v=207"></script>
+<script src="galibos.js?v=207"></script>
+<script src="web-pc.js?v=207"></script>
 </body>
 </html>

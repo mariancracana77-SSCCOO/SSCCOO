@@ -96,7 +96,7 @@ const { chromium } = require('playwright');
   ok(pp, 'escribir los números a mano mueve el punto');
   await p.click('#mue-quita-punto');
   ok((await p.inputValue('#mue-lat')) === '' && await p.locator('#mue-elige-mapa .mue-pin-puerta').count() === 0, 'quitar el punto vacía la posición');
-  await p.mouse.click(caja.x + caja.width / 2, caja.y + caja.height / 2); await p.waitForTimeout(200);
+  { const c2 = await p.locator('#mue-elige-mapa').boundingBox(); await p.mouse.click(c2.x + c2.width / 2, c2.y + c2.height / 2); } await p.waitForTimeout(200); // v207: el formulario es más alto, se mide otra vez
   await p.fill('#mue-nombre', 'Elegido en mapa'); await p.fill('#mue-truco', 'Por la puerta de atrás');
   await p.click('#mue-form button[type=submit]'); await p.waitForTimeout(300);
   const nueva = await p.evaluate(() => JSON.parse(localStorage.getItem('ccoo-muelles')).fichas.find(f => f.nombre === 'Elegido en mapa'));

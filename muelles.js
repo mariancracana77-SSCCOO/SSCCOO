@@ -338,7 +338,7 @@
     // Lo abierto se recuerda mientras la página está abierta (ABIERTAS) para que no se cierre al repintar.
     const abierta = ABIERTAS.has(f.id) || borrando === f.id;
     return `<details class="panel mue-ficha ${f.nivel}" id="mue-${esc(f.id)}" data-ficha="${esc(f.id)}"${abierta ? " open" : ""}>
-      <summary class="mue-cab"><span class="mue-cab-t">${nivelHTML(f.nivel)}<h3 translate="no">${esc(f.nombre)}</h3>${f.lugar ? `<p class="mue-lugar" translate="no">${esc(f.lugar)}</p>` : ""}${f.rec ? `<p class="mue-rec">${esc(T("Recibida de un compañero"))}</p>` : ""}${et ? `<p class="mue-estado ${et.abierto ? "abierto" : "cerrado"}">${esc(et.t)}</p>` : ""}</span>
+      <summary class="mue-cab"><span class="mue-cab-t">${nivelHTML(f.nivel)}<h3 translate="no">${esc(f.nombre)}</h3>${f.lugar ? `<p class="mue-lugar" translate="no">${esc(f.lugar)}</p>` : ""}${DIST.has(f.id) ? `<p class="mue-dist">${esc(T("A {n} km de ti", { n: kmTexto(DIST.get(f.id)) }))}</p>` : ""}${f.rec ? `<p class="mue-rec">${esc(T("Recibida de un compañero"))}</p>` : ""}${et ? `<p class="mue-estado ${et.abierto ? "abierto" : "cerrado"}">${esc(et.t)}</p>` : ""}</span>
         <span class="mue-abre">${icono("abajo", "p")}<span class="mue-abre-t">${esc(T("Ver detalles"))}</span><span class="mue-cierra-t">${esc(T("Cerrar"))}</span></span></summary>
       <div class="mue-cuerpo">${FOTOS.has(f.id) ? `<figure class="mue-foto"><img alt="${esc(T("Foto de {n}", { n: f.nombre }))}" data-foto-de="${esc(f.id)}"${URLS.has(f.id) ? ` src="${esc(URLS.get(f.id))}"` : ""}></figure>` : ""}<div class="mue-truco"><b>${esc(T("Cómo entrar y maniobrar"))}</b><p translate="no">${esc(f.truco).replace(/\n/g, "<br>")}</p></div>
       ${f.hor ? `<p class="zc-pista mue-hor-pista">${esc(T("Horario apuntado por ti con la hora de este móvil: puede cambiar en festivos."))}</p>` : ""}${datos.length ? `<dl class="mue-datos">${datos.map(([k, v]) => `<div><dt>${esc(T(NOMBRE_DATO[k]))}</dt><dd${["espera", "epis", "hor"].includes(k) ? ' translate="no"' : ""}>${esc(v)}</dd></div>`).join("")}</dl>` : ""}
@@ -478,19 +478,28 @@
 
   const ABIERTAS = new Set();
   function lista() {
-    const l = busca(fichas, $("mue-q").value, filtro === "rec" ? "" : filtro).filter(f => filtro !== "rec" || f.rec).filter(f => !soloAbiertos || (estadoTexto(f) || {}).abierto).sort((a, b) => NIVELES.indexOf(a.nivel) - NIVELES.indexOf(b.nivel) || a.nombre.localeCompare(b.nombre, "es"));
+    let l = busca(fichas, $("mue-q").value, filtro === "rec" ? "" : filtro).filter(f => filtro !== "rec" || f.rec).filter(f => !soloAbiertos || (estadoTexto(f) || {}).abierto).sort((a, b) => NIVELES.indexOf(a.nivel) - NIVELES.indexOf(b.nivel) || a.nombre.localeCompare(b.nombre, "es"));
+    // v207: «Cerca de mí»: solo los que están a menos de 50 km de tu posición, del más cerca al más lejos, con los km
+    DIST.clear();
+    if (cerca && YO) {
+      for (const f of l) if (f.lat != null && f.lon != null) DIST.set(f.id, km(YO.lat, YO.lon, f.lat, f.lon));
+      l = l.filter(f => DIST.has(f.id) && DIST.get(f.id) <= CERCA_KM).sort((a, b) => DIST.get(a.id) - DIST.get(b.id));
+    }
     if ($("mue-q").value.trim() && l.length === 1) ABIERTAS.add(l[0].id); // al buscar y salir solo uno, se abre
-    $("mue-cuenta").textContent = fichas.length ? T("{n} de {t} clientes", { n: l.length, t: fichas.length }) : "";
+    $("mue-cuenta").textContent = !fichas.length ? "" : cerca && YO ? T("{n} clientes a menos de {k} km de ti", { n: l.length, k: CERCA_KM }) : T("{n} de {t} clientes", { n: l.length, t: fichas.length });
     $("mue-lista").innerHTML = !fichas.length
       ? `<div class="panel mue-vacio"><b>${esc(T("Tu libreta está vacía."))}</b><p>${esc(T("Cuando descargues en un sitio difícil, apunta aquí cómo se entra para la próxima vez."))}</p>
         <p>${esc(T("¿Te ha pasado un compañero su libreta? Pulsa aquí y elige el archivo:"))}</p>
         <div class="mue-bots"><button type="button" class="btn zc-btn" data-cargar="1">${icono("subir", "p")}${esc(T("Cargar archivo de libreta"))}</button></div></div>`
-      : l.length ? l.map(ficha).join("") : `<p class="mue-vacio">${esc(T("No hay ningún cliente con eso. Prueba con otra palabra o quita el filtro."))}</p>`;
+      : l.length ? l.map(ficha).join("") : `<p class="mue-vacio">${esc(cerca && YO ? T("No tienes ningún cliente apuntado a menos de {k} km de aquí. Pulsa «Cerca de mí» otra vez para verlos todos.", { k: CERCA_KM }) : T("No hay ningún cliente con eso. Prueba con otra palabra o quita el filtro."))}</p>`;
     $("mue-buscar").hidden = !fichas.length;
     const conHor = fichas.some(f => f.hor);
     $("mue-abiertos").hidden = !conHor && !soloAbiertos;
     $("mue-abiertos").setAttribute("aria-pressed", String(soloAbiertos));
     $("mue-abiertos").classList.toggle("activa", soloAbiertos);
+    $("mue-cerca").hidden = !conCoord().length && !cerca;
+    $("mue-cerca").setAttribute("aria-pressed", String(cerca));
+    $("mue-cerca").classList.toggle("activa", cerca);
     pintaPasa();
     pintaRepes();
     cajaMapa();
@@ -549,6 +558,7 @@
     caja.hidden = false;
     $("mue-ver-mapa").hidden = true;
     $("mue-cierra-mapa").hidden = false;
+    $("mue-sitio-mapa-caja").hidden = false;
     if (!MAPA) {
       const tactil = L.Browser.mobile || "ontouchstart" in window;
       const mapa = L.map(caja, { zoomControl: true, dragging: !tactil, tap: true });
@@ -558,7 +568,8 @@
         .on("tileerror", () => { if (++fallos === 3) mapaMsg(T("El mapa no se ve bien: parece que no hay internet. Los puntos de tus clientes siguen ahí.")); })
         .on("tileload", () => { if (fallos) { fallos = 0; mapaMsg(""); } })
         .addTo(mapa);
-      MAPA = { mapa, capa: L.layerGroup().addTo(mapa), tactil, btn: null };
+      MAPA = { mapa, capa: L.layerGroup().addTo(mapa), tactil, btn: null, yo: null };
+      controlYo(mapa, "mapa");
       // v193 (petición n.º 61): «Pantalla completa», como en «Aparcamientos en mi ruta»: el mapa ocupa toda la pantalla
       // y se mueve con un dedo; «Cerrar mapa», Esc o cambiar de apartado vuelven a como estaba.
       const Grande = L.Control.extend({ options: { position: "topright" }, onAdd() {
@@ -594,7 +605,7 @@
   // y vuelve «Ver el mapa». El mapa no se destruye: al volver a abrirlo sale enseguida.
   function cierraMapa(foco) {
     pantalla(false);
-    $("mue-mapa").hidden = true; $("mue-cierra-mapa").hidden = true; $("mue-ver-mapa").hidden = false;
+    $("mue-mapa").hidden = true; $("mue-cierra-mapa").hidden = true; $("mue-ver-mapa").hidden = false; $("mue-sitio-mapa-caja").hidden = true;
     if (foco) { $("mue-ver-mapa").focus({ preventScroll: true }); $("mue-mapa-caja").scrollIntoView({ block: "nearest" }); }
   }
   // Desde el mapa a la ficha: quita búsqueda y filtro si la escondían, la abre, la enseña y la resalta un momento
@@ -641,7 +652,7 @@
     pintaHor();
     $("mue-form-t").textContent = f ? T("Cambiar la ficha") : T("Añadir un cliente");
     $("mue-gps-msg").textContent = "";
-    cierraElige();
+    cierraElige(); pintaElegir();
     $("mue-form").hidden = false;
     $("mue-nuevo").hidden = true;
     $("mue-msg").hidden = true;
@@ -656,7 +667,7 @@
     $("mue-hor-msg").textContent = "";
     d.hor = leeHor();
     const lat = d.lat.trim(), lon = d.lon.trim();
-    if ((lat || lon) && (coord(lat, 90) === null || coord(lon, 180) === null)) { $("mue-gps-msg").textContent = T("La posición no está bien escrita: déjala vacía o pulsa «Usar mi posición ahora» o «Elegir en el mapa»."); $("mue-lat").focus(); return; }
+    if ((lat || lon) && (coord(lat, 90) === null || coord(lon, 180) === null)) { $("mue-gps-msg").textContent = T("La posición no está bien escrita: déjala vacía o pulsa «Estoy aquí: marcar mi posición» o «Elegir en el mapa»."); $("mue-lat").focus(); return; }
     const antes = fichas.find(f => f.id === editando);
     if (!antes && fichas.length >= TOPE) { aviso(T("Ya tienes {n} clientes: borra alguno para poder añadir más.", { n: TOPE }), true); return; }
     const f = limpia({ ...d, id: editando || nuevoId(), cambiado: "" });
@@ -668,15 +679,16 @@
     aviso(antes ? T("Ficha cambiada. Está guardada en este móvil.") : T("Cliente añadido. Está guardado en este móvil."));
     $("mue-" + f.id)?.scrollIntoView({ block: "center" });
   }
+  // v207 (petición n.º 71): «Estoy aquí: marcar mi posición». La posición solo se pide al pulsar y no sale del móvil.
+  // Pone el punto donde estás; el botón de al lado pasa a «Mover el punto en el mapa» para afinarlo.
   function posicion() {
     const msg = $("mue-gps-msg");
-    if (!("geolocation" in navigator)) { msg.textContent = T("Este móvil no deja saber dónde estás. Puedes dejarlo vacío."); return; }
     msg.textContent = T("Buscando tu posición…");
-    navigator.geolocation.getCurrentPosition(p => {
-      $("mue-lat").value = coord(p.coords.latitude, 90); $("mue-lon").value = coord(p.coords.longitude, 180);
-      msg.textContent = T("Hecho. Comprueba que estás en la puerta de camiones.");
-      sigueNumeros();
-    }, () => { msg.textContent = T("No se ha podido saber tu posición. Puedes dejarlo vacío."); }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+    miPosicion().then(p => {
+      $("mue-lat").value = coord(p.lat, 90); $("mue-lon").value = coord(p.lon, 180);
+      msg.textContent = T("Hecho: punto puesto donde estás. Si no es justo la puerta de camiones, pulsa «Mover el punto en el mapa» y arrástralo.");
+      pintaElegir(); sigueNumeros();
+    }, e => { msg.textContent = e === "permiso" ? T("No has dado permiso de ubicación. Busca el sitio con «Elegir en el mapa».") : e === "apagada" ? T("No se ha podido saber dónde estás. Activa la ubicación del móvil y vuelve a pulsar.") : T("Este móvil no deja saber dónde estás. Busca el sitio con «Elegir en el mapa»."); });
   }
 
   // v192 (petición n.º 60): «Elegir en el mapa». Mapa pequeño dentro del formulario (el mismo Leaflet y las mismas
@@ -699,11 +711,13 @@
   function rellena(lat, lon) {
     $("mue-lat").value = coord(lat, 90); $("mue-lon").value = coord(lon, 180);
     $("mue-gps-msg").textContent = T("Punto puesto. Comprueba que es la puerta de camiones y pulsa «Guardar».");
+    pintaElegir();
   }
   function quitaPunto() {
     if (ELIGE?.punto) { ELIGE.punto.remove(); ELIGE.punto = null; }
     $("mue-lat").value = ""; $("mue-lon").value = "";
     $("mue-gps-msg").textContent = T("Punto quitado.");
+    pintaElegir();
   }
   function cierraElige() {
     $("mue-elige").hidden = true;
@@ -729,18 +743,20 @@
         .on("tileload", () => { if (fallos) { fallos = 0; msg.textContent = ""; } })
         .addTo(mapa);
       mapa.on("click", (e) => { ponPunto(e.latlng.lat, e.latlng.lng); rellena(e.latlng.lat, e.latlng.lng); });
-      ELIGE = { mapa, punto: null };
+      ELIGE = { mapa, punto: null, yo: null };
+      controlYo(mapa, "elige");
       if (tactil) {
         const caja = $("mue-elige-mapa"), av = L.DomUtil.create("div", "apc-dos-dedos", caja); av.textContent = T("Usa dos dedos para mover el mapa");
         let t = null;
         caja.addEventListener("touchmove", (e) => { if (e.touches.length !== 1) return; av.classList.add("ver"); clearTimeout(t); t = setTimeout(() => av.classList.remove("ver"), 1600); }, { passive: true });
       }
     } else ELIGE.mapa.invalidateSize();
-    // Dónde empieza: el punto ya escrito; si no, el último cliente con posición; si no, España entera
+    // Dónde empieza: el punto ya escrito; si no, tu posición (si la has pedido antes); si no, el último cliente con posición; si no, España entera
     if (p) { ponPunto(p.lat, p.lon); ELIGE.mapa.setView([p.lat, p.lon], 16); }
     else {
       if (ELIGE.punto) { ELIGE.punto.remove(); ELIGE.punto = null; }
-      if (otro) ELIGE.mapa.setView([otro.lat, otro.lon], 12); else ELIGE.mapa.setView([40.2, -3.6], 5);
+      if (YO) { pinYo(ELIGE, YO); ELIGE.mapa.setView([YO.lat, YO.lon], 15); }
+      else if (otro) ELIGE.mapa.setView([otro.lat, otro.lon], 12); else ELIGE.mapa.setView([40.2, -3.6], 5);
     }
     $("mue-elige").scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
@@ -749,6 +765,115 @@
     if (!ELIGE || $("mue-elige").hidden) return;
     const p = puntoForm();
     if (p) { ponPunto(p.lat, p.lon); ELIGE.mapa.panTo([p.lat, p.lon]); }
+  }
+
+  // ---------- v207 (petición n.º 71): buscar un sitio en el mapa, «Estoy aquí» y «Cerca de mí» ----------
+  // La posición del móvil solo se pide al pulsar un botón y se queda en memoria (YO) mientras la página está abierta:
+  // no se guarda ni se envía a nadie. Las distancias se calculan aquí. El buscador de pueblos usa la misma función «ruta»
+  // de nuestro Supabase que «Aparcamientos en mi ruta» (sin dominios nuevos en la CSP); las coordenadas y los enlaces
+  // de mapa pegados se leen aquí mismo, sin enviar nada.
+  let YO = null, cerca = false;
+  const DIST = new Map(), CERCA_KM = 50, SITIO = {};
+  function km(a, b, c, d) { const r = Math.PI / 180, x = Math.sin((c - a) * r / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin((d - b) * r / 2) ** 2; return 12742 * Math.asin(Math.min(1, Math.sqrt(x))); }
+  const kmTexto = (d) => d < 10 ? d.toFixed(1).replace(".", ",") : String(Math.round(d));
+  // Promesa con {lat, lon}; si falla: "permiso" (no dio permiso), "apagada" (ubicación apagada o sin señal) o "no" (el móvil no puede)
+  function miPosicion() {
+    return new Promise((ok, mal) => {
+      if (!("geolocation" in navigator)) { mal("no"); return; }
+      navigator.geolocation.getCurrentPosition(p => { YO = { lat: p.coords.latitude, lon: p.coords.longitude }; ok(YO); },
+        e => mal(e && e.code === 1 ? "permiso" : "apagada"), { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+    });
+  }
+  function pintaElegir() {
+    $("mue-elegir").innerHTML = icono("mapa", "p") + esc(puntoForm() ? T("Mover el punto en el mapa") : T("Elegir en el mapa"));
+  }
+  // Coordenadas escritas («41.98, 2.82», «41,98 2,82») o un enlace de Google Maps, OpenStreetMap, Apple o geo:
+  function leeCoord(t) {
+    const s = String(t || "").trim(); let m;
+    const par = (a, b) => { const la = coord(a, 90), lo = coord(b, 180); return la !== null && lo !== null && (la || lo) ? { lat: la, lon: lo } : null; };
+    const N = "(-?\\d{1,3}(?:\\.\\d+)?)";
+    const RES = [new RegExp("!3d" + N + "!4d" + N), new RegExp("@" + N + "," + N), new RegExp("[?&](?:q|ll|sll|query|destination|daddr|center)=(?:loc:)?" + N + "(?:,|%2C)\\s*\\+?" + N, "i"), new RegExp("#map=\\d+/" + N + "/" + N), new RegExp("^geo:" + N + "," + N, "i")];
+    for (const re of RES) if ((m = s.match(re))) return par(m[1], m[2]);
+    const la = s.match(/[?&]mlat=(-?\d+(?:\.\d+)?)/), lo = s.match(/[?&]mlon=(-?\d+(?:\.\d+)?)/);
+    if (la && lo) return par(la[1], lo[1]);
+    if ((m = s.match(/^(-?\d{1,2}\.\d+)\s*[,;\s]\s*(-?\d{1,3}\.\d+)$/))) return par(m[1], m[2]);
+    if ((m = s.match(/^(-?\d{1,2},\d+)\s*[;\s]\s*(-?\d{1,3},\d+)$/))) return par(m[1], m[2]);
+    return null;
+  }
+  const resSitio = (donde) => document.querySelector(`[data-sitio-res="${donde}"]`);
+  const pistaSitio = (donde, t, mal) => { resSitio(donde).innerHTML = t ? `<p class="${mal ? "msg err" : "zc-pista"}">${esc(t)}</p>` : ""; };
+  async function buscaSitio(donde) {
+    const inp = $("mue-sitio-" + donde), q = inp.value.trim();
+    if (q.length < 2) { pistaSitio(donde, T("Escribe un pueblo, un código postal o unas coordenadas.")); inp.focus(); return; }
+    const c = leeCoord(q);
+    if (c) { pistaSitio(donde, ""); vaSitio(donde, { lat: c.lat, lon: c.lon, nombre: c.lat + ", " + c.lon, exacto: true }); return; }
+    if (/^(https?:|www\.)/i.test(q)) { pistaSitio(donde, T("Ese enlace no lleva la posición dentro. Ábrelo en el mapa, mantén pulsado el sitio y copia aquí los números que salen."), true); return; }
+    if (navigator.onLine === false) { pistaSitio(donde, T("Sin internet no se puede buscar un pueblo. Puedes pegar unas coordenadas."), true); return; }
+    pistaSitio(donde, T("Buscando…"));
+    try {
+      const { data, error } = await window.sb.functions.invoke("ruta", { body: { buscar: q } });
+      if (error || !data || data.error) throw new Error("buscar");
+      const l = (data.lugares || []).filter(x => coord(x.lat, 90) !== null && coord(x.lon, 180) !== null).slice(0, 5);
+      if (!l.length) { pistaSitio(donde, T("No encuentro «{q}». Prueba con el nombre del pueblo y el país, o con el código postal.", { q }), true); return; }
+      if (l.length === 1) { pistaSitio(donde, ""); vaSitio(donde, l[0]); return; }
+      SITIO[donde] = l;
+      resSitio(donde).innerHTML = `<p class="zc-pista">${esc(T("¿Cuál es?"))}</p><div class="mue-sitio-lista">${l.map((x, i) => `<button type="button" class="btn sec" data-sitio-i="${i}" data-sitio-de="${donde}"><b translate="no">${esc(x.nombre || "")}</b>${x.detalle ? `<small translate="no">${esc(x.detalle)}</small>` : ""}</button>`).join("")}</div>`;
+    } catch (e) { pistaSitio(donde, T("No se ha podido buscar. Comprueba que tienes internet o pega unas coordenadas."), true); }
+  }
+  function vaSitio(donde, x) {
+    const la = coord(x.lat, 90), lo = coord(x.lon, 180);
+    if (donde === "elige") {
+      if (!ELIGE) return;
+      if (x.exacto) { ponPunto(la, lo); rellena(la, lo); ELIGE.mapa.setView([la, lo], 17); pistaSitio(donde, T("Punto puesto en esas coordenadas. Arrástralo si hace falta.")); }
+      else { ELIGE.mapa.setView([la, lo], 15); pistaSitio(donde, T("Ya estás en {n}. Ahora toca justo en la puerta de camiones.", { n: x.nombre || "" })); }
+    } else if (MAPA) {
+      MAPA.mapa.setView([la, lo], x.exacto ? 15 : 12);
+      pistaSitio(donde, T("Mapa en {n}. Toca un punto para ver su ficha.", { n: x.nombre || "" }));
+    }
+  }
+  // Botón con la diana en cada mapa: en el de elegir, «Mi posición» (centra); en el de clientes, «Cerca de mí»
+  const DIANA = '<svg class="icono p" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4"/></svg>';
+  function controlYo(mapa, donde) {
+    const L = window.L, txt = donde === "mapa" ? T("Cerca de mí") : T("Mi posición");
+    const Yo = L.Control.extend({ options: { position: "topright" }, onAdd() {
+      const b = L.DomUtil.create("button", "apc-yo-btn mue-yo-btn"); b.type = "button";
+      b.title = T("Centrar en mi posición"); b.setAttribute("aria-label", T("Centrar en mi posición") + (donde === "mapa" ? " · " + txt : ""));
+      b.dataset.yo = donde; b.innerHTML = DIANA + `<span>${esc(txt)}</span>`;
+      L.DomEvent.disableClickPropagation(b); L.DomEvent.on(b, "click", () => centraYo(donde, b));
+      return b;
+    } });
+    new Yo().addTo(mapa);
+  }
+  function pinYo(m, p) {
+    const L = window.L;
+    if (m.yo) m.yo.setLatLng([p.lat, p.lon]);
+    else m.yo = L.circleMarker([p.lat, p.lon], { radius: 9, color: "#fff", weight: 3, fillColor: "#1E4F9C", fillOpacity: 1, interactive: false }).addTo(m.mapa);
+  }
+  function centraYo(donde, b) {
+    const m = donde === "elige" ? ELIGE : MAPA; if (!m) return;
+    b.classList.add("buscando");
+    miPosicion().then(p => {
+      b.classList.remove("buscando"); pinYo(m, p);
+      if (donde === "elige") { m.mapa.setView([p.lat, p.lon], 17); pistaSitio(donde, T("El punto azul eres tú. Toca justo en la puerta de camiones.")); }
+      else {
+        const n = conCoord().filter(f => km(p.lat, p.lon, f.lat, f.lon) <= CERCA_KM).length;
+        m.mapa.setView([p.lat, p.lon], 9);
+        pistaSitio(donde, n ? T("El punto azul eres tú. Tienes {n} clientes a menos de {k} km.", { n, k: CERCA_KM }) : T("El punto azul eres tú. No tienes clientes apuntados a menos de {k} km.", { k: CERCA_KM }));
+      }
+      if (cerca) lista();
+    }, e => {
+      b.classList.remove("buscando");
+      pistaSitio(donde, e === "permiso" ? T("No has dado permiso de ubicación. Busca el sitio en «Buscar», encima del mapa.") : e === "apagada" ? T("No se ha podido saber dónde estás. Activa la ubicación del móvil y vuelve a pulsar.") : T("Este móvil no deja saber dónde estás. Busca el sitio en «Buscar», encima del mapa."), true);
+    });
+  }
+  function pulsaCerca() {
+    const msg = $("mue-cerca-msg");
+    if (cerca) { cerca = false; msg.textContent = ""; lista(); return; }
+    msg.textContent = T("Buscando tu posición…");
+    miPosicion().then(() => { cerca = true; msg.textContent = ""; lista(); }, e => {
+      cerca = false; lista();
+      msg.textContent = e === "permiso" ? T("No has dado permiso de ubicación: dáselo a esta web en los ajustes del navegador y vuelve a pulsar.") : e === "apagada" ? T("No se ha podido saber dónde estás. Activa la ubicación del móvil y vuelve a pulsar.") : T("Este móvil no deja saber dónde estás.");
+    });
   }
 
   // Copiar: si el móvil no deja, se enseña el texto para copiarlo a mano
@@ -783,7 +908,7 @@
   $("mue-elegir").addEventListener("click", elige);
   $("mue-quita-punto").addEventListener("click", quitaPunto);
   $("mue-elige-cierra").addEventListener("click", cierraElige);
-  $("mue-lat").addEventListener("change", sigueNumeros);
+  $("mue-lat").addEventListener("change", sigueNumeros); // el nombre del botón no cambia aquí: al salir del campo moverían los botones justo al pulsar «Guardar»
   $("mue-lon").addEventListener("change", sigueNumeros);
   $("mue-q").addEventListener("input", lista);
   $("mue-h24").addEventListener("change", pintaHor);
@@ -800,6 +925,16 @@
     HB[+g.dataset.g].t[+i.dataset.ht][+i.dataset.hx] = i.value;
   });
   $("mue-abiertos").addEventListener("click", () => { soloAbiertos = !soloAbiertos; lista(); });
+  $("mue-cerca").addEventListener("click", pulsaCerca);
+  document.querySelectorAll(".mue-sitio").forEach(c => {
+    const donde = c.dataset.sitio;
+    c.querySelector("input").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); buscaSitio(donde); } }); // dentro del formulario: Enter no guarda la ficha
+    c.addEventListener("click", (e) => {
+      if (e.target.closest("[data-sitio-buscar]")) { buscaSitio(donde); return; }
+      const b = e.target.closest("[data-sitio-i]"); if (!b) return;
+      const x = (SITIO[donde] || [])[+b.dataset.sitioI]; if (x) vaSitio(donde, x);
+    });
+  });
   $("mue-niveles").addEventListener("click", (e) => { const b = e.target.closest("[data-nivel]"); if (!b) return; filtro = b.dataset.nivel; chips(); lista(); });
   $("mue-lista").addEventListener("click", (e) => {
     const b = e.target.closest("button"); if (!b) return;
