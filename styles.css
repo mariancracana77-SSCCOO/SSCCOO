@@ -3286,3 +3286,9 @@ label.cg-huecos { margin: 0 0 12px; }
 .ga-res.duda, .ga-res.justo { border-color: var(--ambar); background: var(--ambar-suave); }
 .ga-tels { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 @media (min-width: 700px) { .ga-datos { grid-template-columns: 1fr 1fr; } }
+
+/* v200 (petición n.º 68 del padre): en «Utilidades en ruta» la tarjeta de «Accesos y muelles» va en morado; las demás siguen amarillas. Igual en claro y oscuro, como las amarillas */
+.desc-promo.cond.util[href="#muelles"] { background: #6b2fa8; border-color: #4c1d7a; border-left-color: #2e0f4d; color: #fff; }
+.desc-promo.cond.util[href="#muelles"] > .icono:first-child, .desc-promo.cond.util[href="#muelles"] > .icono:last-child { color: #fff; }
+.desc-promo.cond.util[href="#muelles"] small { color: #efe6fa; }
+.desc-promo.cond.util[href="#muelles"]:hover { background: #7a3bbb; }
