@@ -869,8 +869,10 @@
     nada: "En ese archivo no hay ninguna ficha que se pueda leer.",
     foto: "Has elegido una foto, no la libreta. Elige el archivo que se llama «libreta-muelles-…».",
     pdf: "Has elegido un PDF, no la libreta. Elige el archivo que se llama «libreta-muelles-…».",
-    zip: "Ese archivo está comprimido (ZIP). Ábrelo antes y elige el archivo «libreta-muelles-…» que hay dentro.",
-    grande: "Ese archivo es demasiado grande para ser una libreta (más de 20 MB).",
+    zipvacio: "Dentro de ese archivo comprimido no hay ninguna libreta. Pide a tu compañero que te la mande otra vez como archivo, o que te la pegue como texto.",
+    zipmal: "Ese archivo comprimido está estropeado y no se puede abrir. Pide a tu compañero que te lo mande otra vez como archivo.",
+    zipsin: "No se ha podido abrir el archivo comprimido sin conexión. Conéctate a internet y vuelve a pulsar «Cargar archivo de libreta».",
+    grande: "Ese archivo es demasiado grande para ser una libreta. Pide a tu compañero que te la mande sin fotos.",
     leer: "No se ha podido abrir el archivo. Si está en WhatsApp o Telegram, guárdalo antes en el móvil (Descargas) y vuelve a pulsar «Cargar archivo de libreta».",
   };
   const MAL_TEXTO = {
@@ -881,24 +883,62 @@
   };
   const bytes = (a) => typeof a.arrayBuffer === "function" ? a.arrayBuffer()
     : new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => mal(r.error); r.readAsArrayBuffer(a); });
+  // v204 (arreglo urgente, lo vio el padre): lo que llega por WhatsApp puede venir comprimido (ZIP). Se abre aquí mismo con
+  // lib/jszip.min.js (se carga solo al hacer falta) y se leen todos los archivos de dentro (también en subcarpetas y ZIP
+  // dentro de ZIP, un nivel): los que sean libreta se cargan todos. El conductor no tiene que descomprimir nada.
+  const ZIP_MAX = 60 * 1024 * 1024, DENTRO_MAX = 25 * 1024 * 1024;
+  const esZip = (b) => b[0] === 0x50 && b[1] === 0x4B && (b[2] === 0x03 || b[2] === 0x05) && (b[3] === 0x04 || b[3] === 0x06);
+  let zipLib = null;
+  const cargaZip = () => window.JSZip ? Promise.resolve(window.JSZip) : (zipLib = zipLib || new Promise((ok, mal) => {
+    const sc = document.createElement("script"); sc.src = "lib/jszip.min.js?v=" + encodeURIComponent(window.VERSION_WEB || "");
+    sc.onload = () => window.JSZip ? ok(window.JSZip) : mal(new Error("sin JSZip"));
+    sc.onerror = () => { zipLib = null; sc.remove(); mal(new Error("sin red")); };
+    document.head.appendChild(sc);
+  }));
+  // Bytes → texto (UTF-16 con BOM o UTF-8); null si es una foto, un PDF o algo que no es texto
+  function bytesATexto(b) {
+    const empieza = (...x) => x.every((v, i) => b[i] === v);
+    try {
+      if (empieza(0xFF, 0xFE)) return new TextDecoder("utf-16le").decode(b.subarray(2));
+      if (empieza(0xFE, 0xFF)) return new TextDecoder("utf-16be").decode(b.subarray(2));
+      return new TextDecoder("utf-8").decode(b);
+    } catch (e) { return null; }
+  }
+  async function abreZip(b, nivel) {
+    let JSZip;
+    try { JSZip = await cargaZip(); } catch (e) { return { error: "zipsin" }; }
+    let z;
+    try { z = await JSZip.loadAsync(b); } catch (e) { return { error: "zipmal" }; }
+    const textos = [];
+    let total = 0;
+    for (const e of Object.values(z.files)) {
+      if (e.dir || /(^|\/)(__MACOSX\/|\.)/.test(e.name)) continue;
+      let d;
+      try { d = await e.async("uint8array"); } catch (err) { continue; }
+      total += d.length;
+      if (d.length > DENTRO_MAX || total > ZIP_MAX) return { error: "grande" };
+      if (esZip(d)) { if (nivel < 1) { const r = await abreZip(d, nivel + 1); if (r.textos) textos.push(...r.textos); } continue; }
+      const t = bytesATexto(d);
+      if (t && /CCOO-MUELLES:|\[\s*\{/i.test(t)) textos.push(t);
+    }
+    return textos.length ? { textos } : { error: "zipvacio" };
+  }
   async function leeArchivo(a) {
     if (!a.size) return { error: "vacio" };
-    if (a.size > 20 * 1024 * 1024) return { error: "grande" };
+    if (a.size > ZIP_MAX) return { error: "grande" };
     let b;
     try { b = new Uint8Array(await bytes(a)); } catch (e) { return { error: "leer" }; }
     const empieza = (...x) => x.every((v, i) => b[i] === v);
+    if (esZip(b)) return abreZip(b, 0);
     if (empieza(0xFF, 0xD8, 0xFF) || empieza(0x89, 0x50, 0x4E, 0x47) || (empieza(0x52, 0x49, 0x46, 0x46) && b[8] === 0x57) || empieza(0x47, 0x49, 0x46) || /^image\//.test(a.type || "")) return { error: "foto" };
     if (empieza(0x25, 0x50, 0x44, 0x46)) return { error: "pdf" };
-    if (empieza(0x50, 0x4B, 0x03, 0x04)) return { error: "zip" };
-    try {
-      if (empieza(0xFF, 0xFE)) return { t: new TextDecoder("utf-16le").decode(b.subarray(2)) };
-      if (empieza(0xFE, 0xFF)) return { t: new TextDecoder("utf-16be").decode(b.subarray(2)) };
-      return { t: new TextDecoder("utf-8").decode(b) };
-    } catch (e) { return { error: "leer" }; }
+    if (b.length > 20 * 1024 * 1024) return { error: "grande" };
+    const t = bytesATexto(b);
+    return t == null ? { error: "leer" } : { textos: [t] };
   }
   // Mete lo leído en la libreta y SIEMPRE dice qué ha pasado
   function mete(t, deArchivo) {
-    const r = importa(t, fichas);
+    const r = importaVarios(Array.isArray(t) ? t : [t]);
     if (r.error) { aviso(T((deArchivo ? MAL_ARCHIVO : MAL_TEXTO)[r.error] || MAL_TEXTO.codigo), true); return; }
     if (!r.nuevas) {
       aviso(r.repes === 1 ? T("No había nada nuevo: ya tenías ese cliente.") : T("No había nada nuevo: ya tenías los {n} clientes.", { n: r.repes }));
@@ -916,6 +956,17 @@
     $("mue-msg").scrollIntoView({ block: "center", behavior: "smooth" });
     if (r.fotos.length) guardaFotosPegadas(r.fotos).then(n => { if (n) { lista(); avisoRec(msg + " " + (n === 1 ? T("Con su foto.") : T("Con {n} fotos.", { n }))); } });
   }
+  // Varios textos (los archivos de un ZIP): se cargan uno detrás de otro y se suman; si ninguno vale, el primer motivo.
+  function importaVarios(textos) {
+    let base = fichas, error = null;
+    const r = { nuevas: 0, repes: 0, sobran: 0, fotos: [] };
+    for (const t of textos) {
+      const x = importa(t, base);
+      if (x.error) { error = error || x.error; continue; }
+      base = x.lista; r.nuevas += x.nuevas; r.repes += x.repes; r.sobran += x.sobran; r.fotos.push(...x.fotos); r.vale = true;
+    }
+    return r.vale ? Object.assign(r, { lista: base }) : { error: error || "codigo" };
+  }
   // Aviso de lo recibido con el botón «Ver las recibidas» (filtra la lista para revisarlas o borrarlas)
   function avisoRec(msg) {
     aviso(msg);
@@ -927,7 +978,8 @@
     $("mue-archivo-in").value = "";
     if (!a) return;
     aviso(T("Leyendo el archivo…"));
-    leeArchivo(a).then(r => r.error ? aviso(T(MAL_ARCHIVO[r.error]), true) : mete(r.t, true));
+    leeArchivo(a).then(r => r.error ? aviso(T(MAL_ARCHIVO[r.error] || MAL_ARCHIVO.leer), true) : mete(r.textos, true))
+      .catch(() => aviso(T(MAL_ARCHIVO.leer), true));
   });
   // v197: fichas repetidas que ya están en la libreta (de antes del arreglo). Se quitan solo si el conductor lo confirma,
   // con copia antes (localStorage «ccoo-muelles-copia») y «Deshacer».

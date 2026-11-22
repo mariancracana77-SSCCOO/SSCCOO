@@ -77,6 +77,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 204: arreglo urgente, la libreta que llega comprimida por WhatsApp se abre sola
+- El padre vio que lo que le llegaba por WhatsApp la app lo tomaba por un ZIP y pedía «Ábrelo antes»; descargado desde la app sí iba. Ahora «Cargar archivo de libreta» abre el ZIP en el móvil (`lib/jszip.min.js`, se carga solo al hacer falta y está en la caché del service worker), busca dentro todas las libretas (subcarpetas, ZIP dentro de ZIP, UTF-16, archivos de la v190 en adelante) y las carga todas sumando el resultado. Nunca borra ni repite.
+- Mensajes con una sola acción: ZIP sin libreta, estropeado, demasiado grande (60 MB el ZIP, 25 MB cada archivo) o sin conexión para abrirlo. Nada de «descomprimir».
+- Texto de ayuda: «Si te lo han mandado a ti: no hace falta abrir ni descomprimir nada. Pulsa «Cargar archivo de libreta» y elige lo que te llegó» (se traduce al rumano con el selector).
+- Prueba nueva: `pruebas/muelles-v204.cjs` (descarga real → ZIP con varios nombres → cargar con y sin datos, subcarpetas, varias libretas, ZIP dentro de ZIP, UTF-16, vacío, estropeado, muy grande, sin conexión).
+
 ## Versión 203: «Accesos y muelles» en segundo lugar
 - Lo pidió el padre (pasado por Lorena, 22/11/2026): en «Utilidades en ruta», la tarjeta morada «Accesos y muelles» sale la segunda, justo después de «Restricciones en mi ruta». Cambiado el orden en el origen (`TARJETAS_COND` y `UTIL` de `app.js`), no con CSS, así el lector de pantalla y el tabulador siguen el mismo orden. También en la descripción de la tarjeta «Utilidades en ruta».
 

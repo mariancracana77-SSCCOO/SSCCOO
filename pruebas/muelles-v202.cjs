@@ -74,7 +74,7 @@ const fs = require('fs');
     ['vacío', { name: 'x.txt', mimeType: 'text/plain', buffer: Buffer.from('') }, 'vacío'],
     ['una foto', { name: 'IMG-2026.jpg', mimeType: 'image/png', buffer: png }, 'foto'],
     ['un PDF', { name: 'x.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 hola') }, 'PDF'],
-    ['un ZIP', { name: 'x.zip', mimeType: 'application/zip', buffer: Buffer.from([0x50, 0x4B, 3, 4, 0, 0]) }, 'ZIP'],
+    ['un ZIP estropeado', { name: 'x.zip', mimeType: 'application/zip', buffer: Buffer.from([0x50, 0x4B, 3, 4, 0, 0]) }, 'estropeado'],
     ['cortado', { name: 'x.txt', mimeType: 'text/plain', buffer: Buffer.from(archivo.slice(0, Math.floor(archivo.length / 2))) }, 'no ha llegado entero'],
     ['otro texto', { name: 'x.txt', mimeType: 'text/plain', buffer: Buffer.from('Hola, ¿qué tal?') }, 'no es una libreta'],
   ];
