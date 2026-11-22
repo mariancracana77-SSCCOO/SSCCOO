@@ -154,7 +154,7 @@ const { chromium } = require('playwright');
   await p4.click('.mue-ficha[data-ficha=mfa01] [data-copia]'); await p4.waitForTimeout(1200);
   const pasado = await p4.evaluate(() => navigator.clipboard.readText());
   const codP = pasado.slice(pasado.indexOf('CCOO-MUELLES:'));
-  const datosP = JSON.parse(codP.slice('CCOO-MUELLES:'.length));
+  const datosP = JSON.parse(codP.slice('CCOO-MUELLES:'.length)).filter(x => x.nombre);
   ok((await p4.textContent('#mue-msg')).includes('con la foto') && /^data:image\/jpeg;base64,/.test(datosP[0].foto) && datosP[0].foto.length <= 40000, 'foto: «Copiar para un compañero» lleva la foto en pequeño (' + (datosP[0].foto || '').length + ' letras)');
   ok(await p4.evaluate(() => localStorage.getItem('ccoo-muelles')) === antesLS, 'foto: copiar no cambia la libreta');
   const c5 = await b.newContext({ viewport: { width: 360, height: 740 } });

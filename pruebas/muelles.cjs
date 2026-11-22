@@ -21,7 +21,7 @@ let r = M.importa("Mira esto:\n" + t, []);
 ok(r.nuevas === 2 && r.lista.length === 2, "importa en un móvil vacío");
 r = M.importa(t, l);
 ok(r.nuevas === 0 && r.repes === 2 && r.lista.length === 2, "lo repetido no se duplica");
-ok(M.importa("hola", l).error === "codigo" && M.importa(M.PREFIJO + "{mal", l).error === "codigo", "texto que no es una libreta");
+ok(M.importa("hola", l).error === "codigo" && M.importa(M.PREFIJO + "{mal", l).error === "cortado", "texto que no es una libreta");
 r = M.importa(M.PREFIJO + JSON.stringify([{ id: f.id, nombre: "Otro", truco: "Otro truco" }]), l);
 ok(r.nuevas === 1 && new Set(r.lista.map(x => x.id)).size === 3, "id repetido con otra ficha: se le da otro id y no se pisa nada");
 // v197: el caso del padre (3 clientes; se cambia uno y se pega varias veces una copia vieja)

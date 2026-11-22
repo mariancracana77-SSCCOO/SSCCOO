@@ -77,6 +77,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 205: arreglo urgente, la libreta que llega cortada se carga igual
+- Con la v204, al compañero le salía «El archivo no ha llegado entero» y no se cargaba nada. Ahora la libreta se lee ficha a ficha: cada ficha entera vale aunque el resto llegue cortado (WhatsApp corta los mensajes de más de 65.536 letras) o mezclado con otros mensajes («Exportar chat» de WhatsApp: ZIP con un .txt con fecha y nombre delante y más mensajes detrás). También se leen varias libretas en el mismo texto. Nunca borra ni repite.
+- El archivo dice cuántas fichas lleva (primer elemento `{libreta, total}`, que las versiones anteriores ignoran). Así se avisa con «Llegaron N de M fichas» y qué hacer: «Descargar archivo» y mandarlo como documento.
+- Con fotos y muy grande (más de 6 MB), «Descargar con fotos» lo baja en partes (`…-parte-1-de-2.txt`). Cada parte se lee sola, y «Cargar archivo de libreta» deja elegir varias a la vez y las une.
+- Prueba nueva: `pruebas/muelles-v205.cjs` (libretas de 5, 50 y 300 fichas, con y sin fotos; cortadas a 65.536 letras y al final; «Exportar chat»; dos libretas en un chat; UTF-16; BOM; ZIP; texto pegado; partes; y que la v204 lea el archivo nuevo).
+
 ## Versión 204: arreglo urgente, la libreta que llega comprimida por WhatsApp se abre sola
 - El padre vio que lo que le llegaba por WhatsApp la app lo tomaba por un ZIP y pedía «Ábrelo antes»; descargado desde la app sí iba. Ahora «Cargar archivo de libreta» abre el ZIP en el móvil (`lib/jszip.min.js`, se carga solo al hacer falta y está en la caché del service worker), busca dentro todas las libretas (subcarpetas, ZIP dentro de ZIP, UTF-16, archivos de la v190 en adelante) y las carga todas sumando el resultado. Nunca borra ni repite.
 - Mensajes con una sola acción: ZIP sin libreta, estropeado, demasiado grande (60 MB el ZIP, 25 MB cada archivo) o sin conexión para abrirlo. Nada de «descomprimir».

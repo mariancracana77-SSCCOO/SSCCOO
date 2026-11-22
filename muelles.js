@@ -100,33 +100,72 @@
   // Libreta a texto para otro móvil, y al revés (añade, no quita nada; lo repetido no se duplica)
   // v195 (petición n.º 63): con `fotos` (id -> «data:image/jpeg;base64,…», ya pequeña), cada ficha lleva también su foto
   const FOTO_OK = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/, FOTO_MAX = 120000;
-  const exporta = (l, fotos) => PREFIJO + JSON.stringify(l.map(f => { const r = limpia(f); if (r) delete r.rec; if (r && fotos && fotos[f.id]) r.foto = fotos[f.id]; return r; }).filter(Boolean));
+  // v205: el primer elemento dice cuántas fichas lleva (y la parte, si va en varias): así al otro lado se sabe si ha llegado
+  // todo («Llegaron 40 de 52»). Las versiones de antes lo ignoran (no tiene nombre ni «Cómo entrar»).
+  const exporta = (l, fotos, parte) => {
+    const fs = l.map(f => { const r = limpia(f); if (r) delete r.rec; if (r && fotos && fotos[f.id]) r.foto = fotos[f.id]; return r; }).filter(Boolean);
+    const cab = Object.assign({ libreta: "ccoo-muelles", total: fs.length }, parte || {});
+    return PREFIJO + JSON.stringify([cab].concat(fs));
+  };
   // v202 (arreglo urgente: a los compañeros no se les cargaba el archivo): se lee aunque venga con BOM, caracteres
   // invisibles, saltos de línea de Windows, comillas «tipográficas» (las cambian algunos teclados y apps al pegar),
   // el prefijo en minúsculas o sin él (solo la lista), o con texto de más detrás. Nunca falla en silencio: devuelve
   // `error` = "vacio" | "codigo" (no es una libreta) | "cortado" (empieza bien pero no llega entero) | "nada" (no hay
   // ninguna ficha que se pueda leer). Las fichas nuevas entran con la marca `rec` (recibida).
   const COMILLAS = /[\u201C\u201D\u201E\u201F\u2033\u00AB\u00BB]/g;
+  // v205 (arreglo urgente: «El archivo no ha llegado entero» y no se cargaba NADA). Ahora se lee ficha a ficha: cada
+  // ficha completa vale aunque lo de detrás venga cortado (WhatsApp corta los mensajes largos) o mezclado con otros
+  // mensajes (un chat de WhatsApp exportado llega como ZIP con un .txt: fecha, nombre y el texto, y más mensajes
+  // detrás). También varias libretas en el mismo texto. Devuelve {datos, total, cortado} o {error}.
+  // Recorre una lista JSON desde `ini` (el «[») y saca cada objeto de primer nivel que esté entero
+  function objetos(t, ini) {
+    const sale = []; let prof = 0, enTxt = false, esc2 = false, desde = -1, i = ini + 1, cerrada = false;
+    for (; i < t.length; i++) {
+      const c = t[i];
+      if (enTxt) {
+        if (esc2) esc2 = false; else if (c === "\\") esc2 = true; else if (c === '"') enTxt = false; else if (c === "\n") break;
+        continue;
+      }
+      if (c === '"') { enTxt = true; continue; }
+      if (c === "{" || c === "[") { if (prof === 0 && c === "{") desde = i; prof++; continue; }
+      if (c === "}" || c === "]") {
+        if (prof === 0) { if (c === "]") cerrada = true; break; }
+        prof--;
+        if (prof === 0 && desde >= 0) { try { sale.push(JSON.parse(t.slice(desde, i + 1))); } catch (e) { /* esta no */ } desde = -1; }
+        continue;
+      }
+      if (prof === 0 && !/[\s,]/.test(c)) break;
+    }
+    return { sale, cerrada };
+  }
+  function leeTrozos(t) {
+    const T2 = t.toUpperCase(), datos = [];
+    let total = 0, cortado = false, alguna = false, pos = 0;
+    const lee = (ini) => { const r = objetos(t, ini); alguna = true; if (!r.cerrada) cortado = true; for (const o of r.sale) { if (o && o.libreta === "ccoo-muelles") total = Math.max(total, Number(o.partes > 1 ? o.todas : o.total) || 0); else datos.push(o); } };
+    for (;;) {
+      const i = T2.indexOf(PREFIJO, pos); if (i < 0) break;
+      const j = t.slice(i + PREFIJO.length).search(/\S/), k = i + PREFIJO.length + j;
+      if (j >= 0 && t[k] === "[") lee(k); else if (j >= 0 && t[k] === "{") { const r = objetos("[" + t.slice(k), 0); alguna = true; if (!r.cerrada && !r.sale.length) cortado = true; datos.push(...r.sale); }
+      pos = i + PREFIJO.length;
+    }
+    if (!alguna) { const m = /\[\s*\{/.exec(t); if (m) lee(m.index); else if (/^\{/.test(t)) { try { datos.push(JSON.parse(t)); alguna = true; } catch (e) { /* no */ } } }
+    return { datos, total, cortado, alguna };
+  }
   function leeDatos(texto) {
     const t = String(texto || "").replace(/[\uFEFF\u200B-\u200D\u2060\u00AD]/g, "").replace(/\r\n?/g, "\n").trim();
     if (!t) return { error: "vacio" };
-    const i = t.toUpperCase().indexOf(PREFIJO);
-    let cuerpo = i >= 0 ? t.slice(i + PREFIJO.length).trim() : t;
-    if (i < 0 && !/^\[\s*\{/.test(cuerpo)) return { error: "codigo" };
-    const prueba = (c) => { try { return JSON.parse(c); } catch (e) { return undefined; } };
-    let datos = prueba(cuerpo);
-    if (datos === undefined) { const z = cuerpo.lastIndexOf("]"); if (z > 0) datos = prueba(cuerpo.slice(0, z + 1)); }
-    if (datos === undefined) { const c2 = cuerpo.replace(COMILLAS, '"'); datos = prueba(c2); if (datos === undefined) { const z = c2.lastIndexOf("]"); if (z > 0) datos = prueba(c2.slice(0, z + 1)); } }
-    if (datos === undefined) return { error: /^\[\s*\{/.test(cuerpo) ? "cortado" : "codigo" };
-    if (datos && !Array.isArray(datos) && typeof datos === "object") datos = [datos];
-    if (!Array.isArray(datos)) return { error: "codigo" };
-    return { datos };
+    let r = leeTrozos(t);
+    if (!r.datos.length) { const r2 = leeTrozos(t.replace(COMILLAS, '"')); if (r2.datos.length || r2.total) r = r2; }
+    if (!r.alguna) return { error: "codigo" };
+    if (!r.datos.length) return { error: r.cortado || r.total ? "cortado" : "nada" };
+    return { datos: r.datos, total: r.total, cortado: r.cortado };
   }
   function importa(texto, actual) {
     const ld = leeDatos(texto);
     if (ld.error) return { error: ld.error };
     const datos = ld.datos;
-    if (!datos.some(d => limpia(d))) return { error: "nada" };
+    const leidas = datos.filter(d => limpia(d)).length;
+    if (!leidas) return { error: "nada" };
     const l = actual.slice(), ids = new Set(l.map(f => f.id));
     // v197 (fichas repetidas que vio el padre): la misma ficha (mismo id y mismo nombre) que ya tienes no se vuelve a
     // añadir aunque se haya cambiado «Cómo entrar» en un móvil o en el otro (se queda la tuya, no se pisa nada), y al
@@ -147,7 +186,7 @@
       ids.add(f.id); l.push(f); nuevas++;
       if (foto(d)) fotos.push({ id: f.id, data: foto(d) });
     }
-    return { lista: l, nuevas, repes, sobran, fotos };
+    return { lista: l, nuevas, repes, sobran, fotos, leidas, total: ld.total || 0, cortado: !!ld.cortado };
   }
   const plano = (s) => String(s || "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
   const norm = (s) => plano(s).replace(/\s+/g, " ").trim();
@@ -178,7 +217,22 @@
     waze: `https://waze.com/ul?ll=${f.lat},${f.lon}&navigate=yes`,
     osm: `https://www.openstreetmap.org/directions?to=${f.lat}%2C${f.lon}`,
   };
-  window.MuellesCuentas = { limpia, exporta, importa, leeDatos, busca, mapa, rutas, repetidas, limpiaHor, estado, horTexto, TOPE, PREFIJO };
+  // v205: un archivo muy grande (muchas fichas con fotos) se descarga en varias partes, cada una es una libreta entera
+  // que se lee sola; al otro lado se eligen todas a la vez. Sin fotos nunca hace falta (300 fichas son unos 100 KB).
+  const PARTE_MAX = 6 * 1024 * 1024;
+  function trozos(l, fo) {
+    const t = exporta(l, fo);
+    if (new Blob([t]).size <= PARTE_MAX) return [t];
+    const grupos = [[]]; let tam = 0;
+    for (const f of l) {
+      const n = new Blob([JSON.stringify(limpia(f) || {})]).size + (fo && fo[f.id] ? fo[f.id].length : 0) + 2;
+      if (tam + n > PARTE_MAX && grupos[grupos.length - 1].length) { grupos.push([]); tam = 0; }
+      grupos[grupos.length - 1].push(f); tam += n;
+    }
+    const todas = l.map(limpia).filter(Boolean).length;
+    return grupos.map((g, i) => exporta(g, fo, { parte: i + 1, partes: grupos.length, todas }));
+  }
+  window.MuellesCuentas = { trozos, PARTE_MAX, limpia, exporta, importa, leeDatos, busca, mapa, rutas, repetidas, limpiaHor, estado, horTexto, TOPE, PREFIJO };
 
   const $ = (i) => document.getElementById(i);
   if (!$("v-muelles")) return;
@@ -792,7 +846,7 @@
   const hoyTxt = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
   const nombreArchivo = (fotos, n) => "libreta-muelles-" + hoyTxt() + (pasaTodas ? "" : "-" + n + (n === 1 ? "-ficha" : "-fichas")) + (fotos ? "-con-fotos" : "") + ".txt";
   // El archivo se tiene que poder volver a leer entero antes de darlo por bueno
-  const archivoBien = (t, l) => { const r = importa(t, []); return !r.error && r.nuevas > 0 && r.nuevas + r.repes + r.sobran === l.map(limpia).filter(Boolean).length; };
+  const archivoBien = (t, l) => { const r = importa(t, []); return !r.error && !r.cortado && r.nuevas > 0 && (l ? r.nuevas + r.repes + r.sobran === l.map(limpia).filter(Boolean).length : r.leidas === Number((JSON.parse(t.slice(PREFIJO.length))[0] || {}).total)); };
   const puedeDescargar = () => "download" in document.createElement("a") && typeof URL.createObjectURL === "function";
   function pintaPasa() {
     if (!$("mue-pasa-lista")) return;
@@ -826,16 +880,21 @@
     if (!l.length) { aviso(T("No has elegido ninguna ficha. Marca las que quieras pasar."), true); return null; }
     return l;
   }
-  function descarga(t, fotos, l) {
-    if (!archivoBien(t, l)) { aviso(T("No se ha podido preparar bien el archivo. No se ha descargado nada: prueba otra vez."), true); return; }
-    const nombre = nombreArchivo(fotos, l.length);
+  function descarga(l, fo) {
+    const conF = !!(fo && Object.keys(fo).length), ts = trozos(l, fo);
+    if (!ts.every((t, i) => archivoBien(t, ts.length > 1 ? null : l))) { aviso(T("No se ha podido preparar bien el archivo. No se ha descargado nada: prueba otra vez."), true); return; }
     if (!puedeDescargar()) { aviso(T("Este navegador no deja descargar archivos. Prueba con «Compartir» o con «Copiar»."), true); return; }
+    const nombres = ts.map((t, i) => { const n = nombreArchivo(conF, l.length); return ts.length > 1 ? n.replace(/\.txt$/, "-parte-" + (i + 1) + "-de-" + ts.length + ".txt") : n; });
     try {
-      const u = URL.createObjectURL(new Blob([t], { type: "text/plain" })), a = document.createElement("a");
-      a.href = u; a.download = nombre; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(u), 30000);
+      ts.forEach((t, i) => setTimeout(() => {
+        const u = URL.createObjectURL(new Blob([t], { type: "text/plain" })), a = document.createElement("a");
+        a.href = u; a.download = nombres[i]; a.rel = "noopener"; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(u), 30000);
+      }, i * 700));
     } catch (e) { aviso(T("Este navegador no deja descargar archivos. Prueba con «Compartir» o con «Copiar»."), true); return; }
-    aviso(T("Descargado «{f}» ({n} KB). Lo tienes en la carpeta Descargas del móvil: desde ahí mándalo por WhatsApp, Telegram o correo como documento. Tu compañero lo guarda y pulsa «Cargar archivo de libreta».", { f: nombre, n: kb(t) }));
+    const kbT = ts.reduce((s2, t) => s2 + kb(t), 0);
+    if (ts.length > 1) aviso(T("Con las fotos es muy grande: se ha descargado en {p} partes ({n} KB en total). Mándale a tu compañero todas las partes como documento; él las elige todas a la vez en «Cargar archivo de libreta».", { p: ts.length, n: kbT }));
+    else aviso(T("Descargado «{f}» ({n} KB). Lo tienes en la carpeta Descargas del móvil: desde ahí mándalo por WhatsApp, Telegram o correo como documento. Tu compañero lo guarda y pulsa «Cargar archivo de libreta».", { f: nombres[0], n: kbT }));
   }
   $("mue-exporta-sin").addEventListener("click", () => {
     const l = aPasar(); if (!l) return;
@@ -848,8 +907,8 @@
       copia(t, T("Copiado con las fotos ({n} KB). Pégalo en «Pasar fichas» del otro móvil.", { n: kb(t) }) + (t.length > 60000 ? " " + T("Si WhatsApp o Telegram no lo aceptan, usa «Descargar archivo» y manda el archivo.") : ""));
     });
   });
-  $("mue-descarga").addEventListener("click", () => { const l = aPasar(); if (l) descarga(exporta(l), false, l); });
-  $("mue-descarga-fotos").addEventListener("click", () => { const l = aPasar(); if (l) conFotos(l).then(fo => descarga(exporta(l, fo), !!(fo && Object.keys(fo).length), l)); });
+  $("mue-descarga").addEventListener("click", () => { const l = aPasar(); if (l) descarga(l, null); });
+  $("mue-descarga-fotos").addEventListener("click", () => { const l = aPasar(); if (l) conFotos(l).then(fo => descarga(l, fo)); });
   $("mue-archivo").addEventListener("click", async () => {
     const l = aPasar(); if (!l) return;
     const t = exporta(l), nombre = nombreArchivo(false, l.length);
@@ -865,7 +924,7 @@
   const MAL_ARCHIVO = {
     vacio: "Ese archivo está vacío. Pide a tu compañero que te lo mande otra vez.",
     codigo: "Ese archivo no es una libreta de Accesos y muelles. Elige el archivo que se llama «libreta-muelles-…».",
-    cortado: "El archivo no ha llegado entero. Pide a tu compañero que lo descargue otra vez con «Descargar archivo» y te lo mande como documento.",
+    cortado: "El archivo llegó cortado y no se ha podido leer ninguna ficha. Pide a tu compañero que pulse «Descargar archivo» y te lo mande como documento (con el clip, «Documento»).",
     nada: "En ese archivo no hay ninguna ficha que se pueda leer.",
     foto: "Has elegido una foto, no la libreta. Elige el archivo que se llama «libreta-muelles-…».",
     pdf: "Has elegido un PDF, no la libreta. Elige el archivo que se llama «libreta-muelles-…».",
@@ -878,7 +937,7 @@
   const MAL_TEXTO = {
     vacio: "No has pegado nada. Mantén pulsado el cuadro y elige «Pegar».",
     codigo: "Ese texto no es una libreta ni una ficha de Accesos y muelles.",
-    cortado: "El texto no está entero. Cópialo otra vez entero (desde «CCOO-MUELLES:» hasta el final) y pégalo.",
+    cortado: "El texto llegó cortado y no se ha podido leer ninguna ficha. Pide a tu compañero que pulse «Descargar archivo» y te lo mande como documento.",
     nada: "En ese texto no hay ninguna ficha que se pueda leer.",
   };
   const bytes = (a) => typeof a.arrayBuffer === "function" ? a.arrayBuffer()
@@ -937,11 +996,19 @@
     return t == null ? { error: "leer" } : { textos: [t] };
   }
   // Mete lo leído en la libreta y SIEMPRE dice qué ha pasado
+  // v205: si no ha llegado todo (cortado, o menos fichas de las que dice el archivo), se carga lo que vale y se dice
+  function falta(r) {
+    const menos = r.total > r.leidas;
+    if (!r.cortado && !menos) return "";
+    return " " + (menos ? T("Llegaron {n} de {t} fichas: el archivo llegó cortado o faltan partes.", { n: r.leidas, t: r.total }) : T("El archivo llegó cortado: faltan fichas."))
+      + " " + T("Para el resto, pide a tu compañero que pulse «Descargar archivo» y te lo mande como documento (si son varias partes, elígelas todas a la vez).");
+  }
   function mete(t, deArchivo) {
     const r = importaVarios(Array.isArray(t) ? t : [t]);
     if (r.error) { aviso(T((deArchivo ? MAL_ARCHIVO : MAL_TEXTO)[r.error] || MAL_TEXTO.codigo), true); return; }
+    const fa = falta(r);
     if (!r.nuevas) {
-      aviso(r.repes === 1 ? T("No había nada nuevo: ya tenías ese cliente.") : T("No había nada nuevo: ya tenías los {n} clientes.", { n: r.repes }));
+      aviso((r.repes === 1 ? T("No había nada nuevo: ya tenías ese cliente.") : T("No había nada nuevo: ya tenías los {n} clientes.", { n: r.repes })) + fa, !!fa);
       if (r.fotos.length) guardaFotosPegadas(r.fotos).then(n => { if (n) { lista(); aviso(n === 1 ? T("Ya tenías ese cliente. Se ha añadido la foto que le faltaba.") : T("Ya tenías esos clientes. Se han añadido {n} fotos que te faltaban.", { n })); } });
       return;
     }
@@ -951,7 +1018,7 @@
     const msg = (r.nuevas === 1 ? T("Se ha añadido 1 cliente nuevo.") : T("Se han añadido {n} clientes nuevos.", { n: r.nuevas }))
       + " " + T("Salen marcados como «Recibida de un compañero»: revísalos.")
       + (r.repes ? " " + (r.repes === 1 ? T("1 ya lo tenías.") : T("{n} ya los tenías.", { n: r.repes })) : "")
-      + (r.sobran ? " " + T("{n} no caben (máximo {t}).", { n: r.sobran, t: TOPE }) : "");
+      + (r.sobran ? " " + T("{n} no caben (máximo {t}).", { n: r.sobran, t: TOPE }) : "") + fa;
     avisoRec(msg);
     $("mue-msg").scrollIntoView({ block: "center", behavior: "smooth" });
     if (r.fotos.length) guardaFotosPegadas(r.fotos).then(n => { if (n) { lista(); avisoRec(msg + " " + (n === 1 ? T("Con su foto.") : T("Con {n} fotos.", { n }))); } });
@@ -959,11 +1026,12 @@
   // Varios textos (los archivos de un ZIP): se cargan uno detrás de otro y se suman; si ninguno vale, el primer motivo.
   function importaVarios(textos) {
     let base = fichas, error = null;
-    const r = { nuevas: 0, repes: 0, sobran: 0, fotos: [] };
+    const r = { nuevas: 0, repes: 0, sobran: 0, fotos: [], leidas: 0, total: 0, cortado: false };
     for (const t of textos) {
       const x = importa(t, base);
-      if (x.error) { error = error || x.error; continue; }
+      if (x.error) { error = error || x.error; if (x.error === "cortado") r.cortado = true; continue; }
       base = x.lista; r.nuevas += x.nuevas; r.repes += x.repes; r.sobran += x.sobran; r.fotos.push(...x.fotos); r.vale = true;
+      r.leidas += x.leidas; r.total = Math.max(r.total, x.total); if (x.cortado) r.cortado = true;
     }
     return r.vale ? Object.assign(r, { lista: base }) : { error: error || "codigo" };
   }
@@ -974,12 +1042,16 @@
   }
   $("mue-abre-archivo").addEventListener("click", () => $("mue-archivo-in").click());
   $("mue-archivo-in").addEventListener("change", () => {
-    const a = $("mue-archivo-in").files && $("mue-archivo-in").files[0];
+    // v205: se pueden elegir varios archivos a la vez (las partes de una libreta grande): se cargan todos juntos
+    const as = Array.from($("mue-archivo-in").files || []).slice(0, 20);
     $("mue-archivo-in").value = "";
-    if (!a) return;
+    if (!as.length) return;
     aviso(T("Leyendo el archivo…"));
-    leeArchivo(a).then(r => r.error ? aviso(T(MAL_ARCHIVO[r.error] || MAL_ARCHIVO.leer), true) : mete(r.textos, true))
-      .catch(() => aviso(T(MAL_ARCHIVO.leer), true));
+    Promise.all(as.map(a => leeArchivo(a).catch(() => ({ error: "leer" })))).then(rs => {
+      const textos = [].concat(...rs.filter(r => r.textos).map(r => r.textos));
+      if (!textos.length) { const e = rs.find(r => r.error) || {}; aviso(T(MAL_ARCHIVO[e.error] || MAL_ARCHIVO.leer), true); return; }
+      mete(textos, true);
+    }).catch(() => aviso(T(MAL_ARCHIVO.leer), true));
   });
   // v197: fichas repetidas que ya están en la libreta (de antes del arreglo). Se quitan solo si el conductor lo confirma,
   // con copia antes (localStorage «ccoo-muelles-copia») y «Deshacer».

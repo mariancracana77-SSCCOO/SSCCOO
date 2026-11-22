@@ -38,7 +38,7 @@ const fs = require('fs');
   const hoy = await p.evaluate(() => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); });
   ok(d1.suggestedFilename() === 'libreta-muelles-' + hoy + '.txt', 'nombre del archivo: ' + d1.suggestedFilename());
   const f1 = fs.readFileSync(await d1.path(), 'utf8');
-  ok(f1.startsWith('CCOO-MUELLES:') && JSON.parse(f1.slice(13)).length === 3, 'el archivo lleva las 3 fichas');
+  ok(f1.startsWith('CCOO-MUELLES:') && JSON.parse(f1.slice(13)).filter(x => x.nombre).length === 3 && JSON.parse(f1.slice(13))[0].total === 3, 'el archivo lleva las 3 fichas');
   ok((await p.textContent('#mue-msg')).includes('Descargado') && (await p.textContent('#mue-msg')).includes('Descargas'), 'mensaje al acabar: ' + (await p.textContent('#mue-msg')).slice(0, 70));
   ok(await p.evaluate(() => localStorage.getItem('ccoo-muelles')) === antesLS, 'descargar no cambia la libreta guardada');
   // Con foto: sale «Descargar con fotos» y los dos archivos se distinguen (v202: «Descargar archivo» va sin fotos)

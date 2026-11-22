@@ -35,7 +35,7 @@ const fs = require('fs');
   ok((await p.textContent('#mue-pasar')).includes('Para pasárselas a un compañero'), 'texto de ayuda para pasarlo a un compañero');
   let dl = p.waitForEvent('download'); await p.click('#mue-descarga'); const d1 = await dl;
   const archivo = fs.readFileSync(await d1.path(), 'utf8');
-  ok(archivo.startsWith('CCOO-MUELLES:') && JSON.parse(archivo.slice(13)).length === 3 && !archivo.includes('"rec"'), 'archivo con las 3 fichas y sin marcas');
+  ok(archivo.startsWith('CCOO-MUELLES:') && JSON.parse(archivo.slice(13)).filter(x => x.nombre).length === 3 && !archivo.includes('"rec"'), 'archivo con las 3 fichas y sin marcas');
 
   // 2. El compañero, con la libreta vacía: 2 toques desde la lista vacía
   const { p: q } = await nuevo(null);
@@ -75,7 +75,7 @@ const fs = require('fs');
     ['una foto', { name: 'IMG-2026.jpg', mimeType: 'image/png', buffer: png }, 'foto'],
     ['un PDF', { name: 'x.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 hola') }, 'PDF'],
     ['un ZIP estropeado', { name: 'x.zip', mimeType: 'application/zip', buffer: Buffer.from([0x50, 0x4B, 3, 4, 0, 0]) }, 'estropeado'],
-    ['cortado', { name: 'x.txt', mimeType: 'text/plain', buffer: Buffer.from(archivo.slice(0, Math.floor(archivo.length / 2))) }, 'no ha llegado entero'],
+    ['cortado', { name: 'x.txt', mimeType: 'text/plain', buffer: Buffer.from(archivo.slice(0, Math.floor(archivo.length / 2))) }, 'cortado'],
     ['otro texto', { name: 'x.txt', mimeType: 'text/plain', buffer: Buffer.from('Hola, ¿qué tal?') }, 'no es una libreta'],
   ];
   for (const [nom, f, palabra] of malos) {
@@ -110,7 +110,7 @@ const fs = require('fs');
   await p.check('#mue-pasa-lista [data-pasa=pa03]');
   ok((await p.textContent('#mue-pasa-n')).includes('1 de 3'), 'dice cuántas vas a pasar: ' + await p.textContent('#mue-pasa-n'));
   dl = p.waitForEvent('download'); await p.click('#mue-descarga'); const d2 = await dl;
-  const solo = JSON.parse(fs.readFileSync(await d2.path(), 'utf8').slice(13));
+  const solo = JSON.parse(fs.readFileSync(await d2.path(), 'utf8').slice(13)).filter(x => x.nombre);
   ok(solo.length === 1 && solo[0].nombre === 'Frigoríficos Sur' && /-1-ficha\.txt$/.test(d2.suggestedFilename()), 'solo la elegida: ' + d2.suggestedFilename());
   ok(JSON.stringify(await guardadas(p)) === JSON.stringify(mias.map(f => f.id)) || (await guardadas(p)).length === 3, 'pasar no cambia la libreta de quien pasa');
 
