@@ -3286,3 +3286,10 @@ label.cg-huecos { margin: 0 0 12px; }
 .ga-res.duda, .ga-res.justo { border-color: var(--ambar); background: var(--ambar-suave); }
 .ga-tels { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 @media (min-width: 700px) { .ga-datos { grid-template-columns: 1fr 1fr; } }
+
+/* v200 (petición n.º 68 del padre): fondo morado en «Accesos y muelles». Solo cambia el fondo de esa pestaña; las fichas siguen igual */
+:root { --mue-fondo: #ece3f8; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --mue-fondo: #22163a; } }
+:root[data-theme="dark"] { --mue-fondo: #22163a; }
+:root body.publica[data-vista="muelles"], :root[data-theme="dark"] body.publica[data-vista="muelles"] { background: var(--mue-fondo); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) body.publica[data-vista="muelles"] { background: var(--mue-fondo); } }
