@@ -83,6 +83,7 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - Recibir en 2 toques: «Cargar archivo de libreta» también en la libreta vacía. Lo recibido sale marcado «Recibida de un compañero» (campo `rec` en `ccoo-muelles`, que no se pasa al compartir), con el filtro «Recibidas», el botón «Ver las recibidas» y «Ya la he revisado: quitar la marca».
 - «Pasar mis fichas»: todas o elegir con casillas; por defecto archivo pequeño sin fotos y «con fotos» aparte. Texto de ayuda (se traduce al rumano con el selector de idioma).
 - Prueba nueva: `pruebas/muelles-v202.cjs`.
+- Petición n.º 69 del padre: en «Ferry y tren», la barra «Interrupciones: … de 1 h como mucho» pasa al recuadro blanco, debajo de los minutos de embarcar y desembarcar (`#fe-barra-caja`), para verla mientras se pulsa −5 / +5. Ya no sale repetida en el resultado.
 
 ## Versión 201: dibujos de la Guía de testigos como los de Gemini
 - Petición n.º 65 (orden de Lorena: «los iconos de Gemini tal cual»). Cada testigo lleva su dibujo en una caja oscura redondeada (como el cuadro del camión), en claro y en oscuro.

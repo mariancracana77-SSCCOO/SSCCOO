@@ -3238,6 +3238,8 @@ label.cg-huecos { margin: 0 0 12px; }
 .fe-barra { height: 12px; border-radius: 999px; background: var(--linea); overflow: hidden; margin: 4px 0 8px; }
 .fe-barra span { display: block; height: 100%; background: var(--verde, #1e7b34); }
 .fe-barra.pasa span { background: var(--rojo); }
+.fe-barra-caja:empty { display: none; } /* petición n.º 69: la barra va en el recuadro blanco, debajo de los minutos */
+.fe-barra-caja { margin-top: 4px; }
 .fe-pasos { margin: 10px 0 0; padding-left: 22px; }
 .fe-pasos li { margin-bottom: 6px; }
 .fe-pasos li.no { opacity: .85; }

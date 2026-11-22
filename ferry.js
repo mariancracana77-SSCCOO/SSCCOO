@@ -119,17 +119,18 @@
     guarda();
     for (const k of ["antes", "m1", "viaje", "m2"]) { const n = num($("fe-" + k).value); $("fe-" + k + "-t").textContent = isFinite(n) && n >= 60 ? "= " + hm(n) : ""; }
     const r = calcula({ tipo, litera: $("fe-litera").value, ini: $("fe-ini").value, antes: $("fe-antes").value, m1: $("fe-m1").value, viaje: $("fe-viaje").value, m2: $("fe-m2").value });
-    if (r.falta) { $("fe-out").innerHTML = `<div class="zc-aviso fe-semaforo"><b>${esc(r.falta)}</b></div>`; ultimo = ""; return; }
+    if (r.falta) { $("fe-barra-caja").innerHTML = ""; $("fe-out").innerHTML = `<div class="zc-aviso fe-semaforo"><b>${esc(r.falta)}</b></div>`; ultimo = ""; return; }
     const pct = Math.min(100, Math.round(r.enCortes / MAX_CORTES * 100));
     const barra = r.tipo.corte && r.cortes ? `<div class="fe-barra-t">Interrupciones: ${esc(hm(r.enCortes))} de 1 h como mucho</div><div class="fe-barra${r.enCortes > MAX_CORTES ? " pasa" : ""}"><span style="width:${pct}%"></span></div>` : "";
     const pasos = `<ol class="fe-pasos">${r.pasos.map(p => `<li class="${p.cuenta ? "si" : "no"}"><span class="fe-h">${esc(hora(p.desde))} a ${esc(hora(p.hasta))}</span> <b>${esc(p.q)}</b> · ${esc(hm(p.hasta - p.desde))}${p.cuenta ? "" : " · no es descanso"}</li>`).join("")}</ol>`;
     const vuelve = r.sinBarco
       ? `<p class="fe-vuelve">El descanso termina antes de embarcar: el barco o el tren no lo cortan.</p>`
       : `<p class="fe-vuelve">Puedes volver a conducir a las <b>${esc(hora(r.vuelve))}</b>.${r.baja != null ? ` El descanso acaba a bordo; bajas a las ${esc(hora(r.baja))}.` : ""}</p>`;
+    $("fe-barra-caja").innerHTML = barra; // petición n.º 69: en el recuadro blanco, junto a los minutos
     const dudas = r.dudas.length ? `<p class="fe-duda">${r.dudas.map(esc).join(" ")}</p>` : "";
     $("fe-out").innerHTML = r.ok
-      ? `<div class="zc-ok fe-semaforo"><p class="fe-sem-t">Descanso válido</p><p>${esc(r.tipo.n)}: ${esc(hm(r.descanso))} de descanso.</p>${vuelve}${barra}${dudas}${pasos}</div>`
-      : `<div class="zc-mal fe-semaforo"><p class="fe-sem-t">No vale así</p><ul>${r.fallos.map(f => `<li>${esc(f)}</li>`).join("")}</ul>${barra}${dudas}${pasos}</div>`;
+      ? `<div class="zc-ok fe-semaforo"><p class="fe-sem-t">Descanso válido</p><p>${esc(r.tipo.n)}: ${esc(hm(r.descanso))} de descanso.</p>${vuelve}${dudas}${pasos}</div>`
+      : `<div class="zc-mal fe-semaforo"><p class="fe-sem-t">No vale así</p><ul>${r.fallos.map(f => `<li>${esc(f)}</li>`).join("")}</ul>${dudas}${pasos}</div>`;
     ultimo = [`Ferry y tren · ${r.tipo.n}`, r.ok ? "Descanso válido" : "No vale así", ...r.fallos, ...r.pasos.map(p => `${hora(p.desde)} a ${hora(p.hasta)}: ${p.q} (${hm(p.hasta - p.desde)})`), r.ok && !r.sinBarco ? `Puedes volver a conducir a las ${hora(r.vuelve)}` : "", "Orientativo (Reg. 561/2006, art. 9). Sigue lo que marque tu tacógrafo."].filter(Boolean).join("\n");
   }
   chips();
