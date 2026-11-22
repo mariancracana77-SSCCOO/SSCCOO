@@ -112,7 +112,7 @@
   // el prefijo en minúsculas o sin él (solo la lista), o con texto de más detrás. Nunca falla en silencio: devuelve
   // `error` = "vacio" | "codigo" (no es una libreta) | "cortado" (empieza bien pero no llega entero) | "nada" (no hay
   // ninguna ficha que se pueda leer). Las fichas nuevas entran con la marca `rec` (recibida).
-  const COMILLAS = /[\u201C\u201D\u201E\u201F\u2033\u00AB\u00BB]/g;
+  const COMILLAS = /[\u201C\u201D\u201E\u201F\u2033\u00AB\u00BB]/g, CURVAS = /[\u201C\u201D\u201E\u201F\u2033]/g;
   // v205 (arreglo urgente: «El archivo no ha llegado entero» y no se cargaba NADA). Ahora se lee ficha a ficha: cada
   // ficha completa vale aunque lo de detrás venga cortado (WhatsApp corta los mensajes largos) o mezclado con otros
   // mensajes (un chat de WhatsApp exportado llega como ZIP con un .txt: fecha, nombre y el texto, y más mensajes
@@ -155,7 +155,8 @@
     const t = String(texto || "").replace(/[\uFEFF\u200B-\u200D\u2060\u00AD]/g, "").replace(/\r\n?/g, "\n").trim();
     if (!t) return { error: "vacio" };
     let r = leeTrozos(t);
-    if (!r.datos.length) { const r2 = leeTrozos(t.replace(COMILLAS, '"')); if (r2.datos.length || r2.total) r = r2; }
+    // Comillas cambiadas por el teclado o por Word: primero solo las “curvas” (así «…» dentro de un texto se respeta)
+    for (const cm of [CURVAS, COMILLAS]) { if (r.datos.length) break; const r2 = leeTrozos(t.replace(cm, '"')); if (r2.datos.length || r2.total) r = r2; }
     if (!r.alguna) return { error: "codigo" };
     if (!r.datos.length) return { error: r.cortado || r.total ? "cortado" : "nada" };
     return { datos: r.datos, total: r.total, cortado: r.cortado };
@@ -929,6 +930,7 @@
     foto: "Has elegido una foto, no la libreta. Elige el archivo que se llama «libreta-muelles-…».",
     pdf: "Has elegido un PDF, no la libreta. Elige el archivo que se llama «libreta-muelles-…».",
     zipvacio: "Dentro de ese archivo comprimido no hay ninguna libreta. Pide a tu compañero que te la mande otra vez como archivo, o que te la pegue como texto.",
+    word: "Ese documento de Word no lleva ninguna libreta. Pide a tu compañero que pulse «Descargar archivo» y te lo mande otra vez como documento.",
     zipmal: "Ese archivo comprimido está estropeado y no se puede abrir. Pide a tu compañero que te lo mande otra vez como archivo.",
     zipsin: "No se ha podido abrir el archivo comprimido sin conexión. Conéctate a internet y vuelve a pulsar «Cargar archivo de libreta».",
     grande: "Ese archivo es demasiado grande para ser una libreta. Pide a tu compañero que te la mande sin fotos.",
@@ -963,13 +965,17 @@
       return new TextDecoder("utf-8").decode(b);
     } catch (e) { return null; }
   }
+  // Texto de un documento de Word: lo de cada <w:t>, párrafos separados por salto de línea, sin etiquetas
+  const ENT = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+  const textoWord = (x) => x.split(/<\/w:p>/).map(par => (par.match(/<w:t(?:\s[^>]*)?>[^<]*<\/w:t>/g) || []).map(t => t.replace(/<[^>]+>/g, "")).join(""))
+    .join("\n").replace(/&(amp|lt|gt|quot|apos);|&#(\d+);|&#x([0-9a-f]+);/gi, (m, n, d, h) => n ? ENT[n.toLowerCase()] : String.fromCodePoint(parseInt(d || h, d ? 10 : 16)));
   async function abreZip(b, nivel) {
     let JSZip;
     try { JSZip = await cargaZip(); } catch (e) { return { error: "zipsin" }; }
     let z;
     try { z = await JSZip.loadAsync(b); } catch (e) { return { error: "zipmal" }; }
     const textos = [];
-    let total = 0;
+    let total = 0, word = false;
     for (const e of Object.values(z.files)) {
       if (e.dir || /(^|\/)(__MACOSX\/|\.)/.test(e.name)) continue;
       let d;
@@ -977,10 +983,15 @@
       total += d.length;
       if (d.length > DENTRO_MAX || total > ZIP_MAX) return { error: "grande" };
       if (esZip(d)) { if (nivel < 1) { const r = await abreZip(d, nivel + 1); if (r.textos) textos.push(...r.textos); } continue; }
+      // v206 (lo vio el padre: al abrir el archivo de WhatsApp, el móvil lo convierte en un documento de Word): un .docx es
+      // un ZIP con word/document.xml; se saca el texto de sus párrafos y se busca la libreta dentro (Word cambia las
+      // comillas por «tipográficas»: leeDatos ya las arregla).
+      if (/^word\/document\.xml$/i.test(e.name)) { word = true; const t = textoWord(bytesATexto(d) || ""); if (t && /CCOO-MUELLES:|\[\s*\{/i.test(t)) textos.push(t); continue; }
+      if (/\.xml$/i.test(e.name) && /^(word|docProps|customXml)\//i.test(e.name)) continue;
       const t = bytesATexto(d);
       if (t && /CCOO-MUELLES:|\[\s*\{/i.test(t)) textos.push(t);
     }
-    return textos.length ? { textos } : { error: "zipvacio" };
+    return textos.length ? { textos } : { error: word ? "word" : "zipvacio" };
   }
   async function leeArchivo(a) {
     if (!a.size) return { error: "vacio" };

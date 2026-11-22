@@ -77,6 +77,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 206: la libreta que el móvil convierte en un documento de Word se carga igual
+- El padre vio que el archivo que llega por WhatsApp (`DOC-20261122-WA0060`, sin extensión) el móvil lo convierte en un Word («Documento (1) (4)», OneDrive) al guardarlo o abrirlo. Ahora «Cargar archivo de libreta» también abre un .docx: saca el texto de `word/document.xml` (párrafos y trozos `<w:t>`, entidades XML) y busca la libreta dentro.
+- Las comillas que cambia Word (“ ”) se arreglan antes que las «…», así un «…» escrito dentro de una ficha se respeta.
+- Un Word sin libreta: «Ese documento de Word no lleva ninguna libreta…» (una sola acción).
+- Prueba nueva: `pruebas/muelles-v206.cjs` (libreta descargada de la app → .docx como lo guarda Word, con y sin comillas tipográficas y sin extensión; el archivo de WhatsApp tal cual, .json.txt y .bin; Word sin libreta; selector sin «accept» y con varios a la vez).
+
 ## Versión 205: arreglo urgente, la libreta que llega cortada se carga igual
 - Con la v204, al compañero le salía «El archivo no ha llegado entero» y no se cargaba nada. Ahora la libreta se lee ficha a ficha: cada ficha entera vale aunque el resto llegue cortado (WhatsApp corta los mensajes de más de 65.536 letras) o mezclado con otros mensajes («Exportar chat» de WhatsApp: ZIP con un .txt con fecha y nombre delante y más mensajes detrás). También se leen varias libretas en el mismo texto. Nunca borra ni repite.
 - El archivo dice cuántas fichas lleva (primer elemento `{libreta, total}`, que las versiones anteriores ignoran). Así se avisa con «Llegaron N de M fichas» y qué hacer: «Descargar archivo» y mandarlo como documento.
