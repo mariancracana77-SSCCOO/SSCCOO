@@ -3323,7 +3323,7 @@ label.cg-huecos { margin: 0 0 12px; }
 .mue-sitio-lista { display: grid; gap: 6px; margin-top: 6px; }
 .mue-sitio-lista .btn { display: grid; gap: 2px; text-align: left; justify-items: start; white-space: normal; }
 .mue-sitio-lista small { font-weight: 400; color: var(--suave); overflow-wrap: anywhere; }
-.mue-cerca { margin: 6px 0 0 6px; display: inline-flex; align-items: center; gap: 6px; }
+.mue-cerca { margin: 6px 0 0; display: inline-flex; align-items: center; gap: 6px; }
 .mue-cerca .icono { width: 18px; height: 18px; }
 .mue-dist { display: inline-block; margin: 4px 6px 0 0; padding: 2px 8px; border-radius: 999px; font-size: .85em; font-weight: 700; border: 1px solid var(--linea); }
 .mue-priv { font-size: .9em; }
