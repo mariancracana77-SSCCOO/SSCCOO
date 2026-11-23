@@ -2,7 +2,7 @@
 // lo demás sale como «Sin comprobar: confirma con la señal». Al revisar un dato: ponerlo en «comp» con la fuente y la fecha.
 // Base: archivo de Gemini que mandó el padre (24 túneles), corregido donde las fuentes oficiales dicen otra cosa.
 window.GalibosDatos = {
- "revisado": "21/11/2026",
+ "revisado": "23/11/2026",
  "zonas": [
   {
    "id": "pirineos",
@@ -229,8 +229,8 @@ window.GalibosDatos = {
    "altoNota": "",
    "adr": "C",
    "adrNota": "Adaptada: lo que no puede pasar por un túnel C está prohibido (salvo algunos gases de clase 2 en cisterna: 2A, 2O, 3A y 3O). Las mercancías peligrosas que sí pueden pasar van siempre acompañadas por los vehículos de patrulla del túnel.",
-   "vel": "Entre 50 y 70 km/h (sin comprobar).",
-   "dist": "150 m (sin comprobar).",
+   "vel": "Máximo 70 km/h.",
+   "dist": "150 m entre camiones (300 m entre un autobús y un camión).",
    "normas": [
     "Prohibido a camiones de más de 3,5 t Euro 0, Euro 1 y Euro 2.",
     "Prohibido con cadenas puestas o con la carga mal sujeta."
@@ -244,6 +244,14 @@ window.GalibosDatos = {
     "adr": {
      "f": "Bison Futé (Gobierno de Francia)",
      "d": "21/11/2026"
+    },
+    "vel": {
+     "f": "la carta de servicios 2025 de SITAF (concesionaria del túnel)",
+     "d": "23/11/2026"
+    },
+    "dist": {
+     "f": "la carta de servicios 2025 de SITAF (concesionaria del túnel)",
+     "d": "23/11/2026"
     }
    }
   },
@@ -471,8 +479,8 @@ window.GalibosDatos = {
    "km": "3,3 km",
    "alto": 4,
    "altoNota": "",
-   "adr": "D",
-   "adrNota": "Prohibidas cisternas de combustibles inflamables (UN 1202/1203), GLP y explosivos. Control automático de altura en pórticos.",
+   "adr": "E",
+   "adrNota": "Categoría E de 5:00 a 23:00 y C de 23:00 a 5:00 (sin comprobar en la web oficial: confirma con la señal). Control automático de altura en los pórticos.",
    "vel": "",
    "dist": "",
    "normas": [
@@ -493,15 +501,20 @@ window.GalibosDatos = {
    "alto": 4.3,
    "altoNota": "",
    "adr": "A",
-   "adrNota": "Es el túnel obligatorio para mercancías peligrosas ADR en Amberes (ya que el Kennedy está prohibido para ADR).",
+   "adrNota": "Sin ninguna restricción para mercancías peligrosas (código A): es el túnel para ADR en Amberes.",
    "vel": "",
    "dist": "",
    "normas": [
     "Túnel de peaje (se puede pagar con dispositivo Satellic / Viapass o tarjeta). (sin comprobar)",
     "Velocidad máxima 90 km/h. Excelente alternativa para evitar los atascos del Ring R1 de Amberes. (sin comprobar)"
    ],
-   "alt": "Túnel Kennedytunnel (R1, gratuito, pero prohibido para ADR Cat. E).",
-   "comp": {}
+   "alt": "Túnel Kennedy (R1, gratuito), pero es categoría D: prohibidas las mercancías inflamables o explosivas.",
+   "comp": {
+    "adr": {
+     "f": "el Centro de Tráfico de Flandes (Verkeerscentrum)",
+     "d": "23/11/2026"
+    }
+   }
   },
   {
    "id": "kennedytunnel",
@@ -513,8 +526,8 @@ window.GalibosDatos = {
    "km": "0,69 km",
    "alto": 4.2,
    "altoNota": "",
-   "adr": "E",
-   "adrNota": "Prohibido todo transporte ADR con panel naranja (multa automática por cámaras ANPR).",
+   "adr": "D",
+   "adrNota": "Prohibidas las mercancías peligrosas inflamables o explosivas (código D).",
    "vel": "",
    "dist": "",
    "normas": [
@@ -522,7 +535,12 @@ window.GalibosDatos = {
     "Si llevas ADR, debes desviarte por el R2 (Túnel Liefkenshoek). (sin comprobar)"
    ],
    "alt": "Túnel Liefkenshoek (R2, admite ADR Cat. A).",
-   "comp": {}
+   "comp": {
+    "adr": {
+     "f": "el Centro de Tráfico de Flandes (Verkeerscentrum)",
+     "d": "23/11/2026"
+    }
+   }
   },
   {
    "id": "westerschelde",
@@ -576,7 +594,7 @@ window.GalibosDatos = {
    "ruta": "Dartford (Kent) – Thurrock (Essex, Este de Londres)",
    "km": "1,4 km",
    "alto": 4.8,
-   "altoNota": "(túnel oeste; el este, 5,03 m)",
+   "altoNota": "4,80 m en el túnel oeste y 5,03 m en el este.",
    "adr": "C",
    "adrNota": "Con mercancías peligrosas hay que salir en el cruce 1a y seguir el rombo hasta la zona de escolta (sin comprobar).",
    "vel": "",
@@ -587,7 +605,16 @@ window.GalibosDatos = {
     "Para mercancías ADR que requieran escolta en sentido Norte, debes detenerte en la zona de control previa. (sin comprobar)"
    ],
    "alt": "Arco Oeste de la M25 (Heathrow) si se transporta ADR prohibido en túneles Cat. C.",
-   "comp": {}
+   "comp": {
+    "alto": {
+     "f": "la norma del cruce de Dartford (legislation.gov.uk, 2014)",
+     "d": "23/11/2026"
+    },
+    "adr": {
+     "f": "la lista de categorías ADR de túneles del Reino Unido (GOV.UK)",
+     "d": "23/11/2026"
+    }
+   }
   }
  ]
 };

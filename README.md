@@ -77,6 +77,12 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 208: datos de túneles comprobados en webs oficiales (petición 66)
+- Kennedytunnel (Amberes): categoría D, no E (Centro de Tráfico de Flandes). Liefkenshoek A, comprobado.
+- Elbtunnel (Hamburgo): E de 5 a 23 h y C el resto, en vez de D (sale «Sin comprobar»: la web del ministerio alemán no se pudo abrir).
+- Dartford: categoría C (GOV.UK) y altura 4,80 m oeste y 5,03 m este (legislation.gov.uk). Fréjus: máximo 70 km/h y 150 m (SITAF).
+- Los testigos DAF siguen «Sin comprobar»: el manual oficial de DAF solo se descarga con el número de bastidor de un camión.
+
 ## Versión 207: fotos de la libreta, buscar un sitio en el mapa de muelles, «Estoy aquí» y «Cerca de mí»
 - **Fotos de la libreta** (lo vio el padre: las fichas le volvían sin fotos). Causa: desde la v202 «Descargar archivo» iba sin fotos y al cargarlo no se avisaba. Cargar un archivo nunca borró fotos; borrar una ficha sí borra la suya. Ahora «Descargar archivo» vuelve a llevar las fotos, como al principio, y «Descargar sin fotos (pesa menos)» queda aparte (`#mue-descarga-sin`). Cada ficha que tiene foto pero va sin ella lleva `tf: 1`, y al cargarla se avisa «N fichas tenían foto en el otro móvil pero llegan sin ella». Al borrar una ficha con foto, el aviso dice que la foto no vuelve. Prueba nueva: `pruebas/muelles-fotos-v207.cjs` (11 fichas con foto por .txt, Word y sin extensión; cargar encima no borra fotos).
 - Lo pidió el padre (nota 071 del vault). Sin tocar la CSP: el buscador de pueblos usa la misma función «ruta» de Supabase que «Aparcamientos en mi ruta» (pueblo, ciudad o código postal; si hay varios, pregunta cuál). Las coordenadas («41.98, 2.82», «41,98 2,82») y los enlaces de Google Maps, OpenStreetMap o `geo:` se leen en el móvil sin enviar nada. Un enlace corto sin posición lo explica.
