@@ -3311,3 +3311,21 @@ label.cg-huecos { margin: 0 0 12px; }
    Leaflet pone sus capas con z-index 400–1000; sin un contexto propio competían con la cabecera (z-index 20).
    Cada mapa encierra ahora sus capas (isolation) y queda por debajo de todo lo fijo; a pantalla completa sigue arriba. */
 .mue-mapa:not(.completa), .mue-elige-mapa, .apc-mapa:not(.completa), .leaflet-container:not(.completa) { position: relative; z-index: 0; isolation: isolate; }
+/* v207 (petición n.º 71): buscar un sitio encima del mapa, «Estoy aquí» y «Cerca de mí» */
+.mue-sitio { display: grid; gap: 6px; margin: 0 0 10px; }
+.mue-sitio[hidden], .mue-cerca[hidden] { display: none; }
+.mue-sitio label { font-weight: 700; }
+.mue-sitio-fila { display: flex; gap: 8px; }
+.mue-sitio-fila input { flex: 1 1 auto; min-width: 0; margin: 0; }
+.mue-sitio-fila .btn { flex: 0 0 auto; }
+.mue-sitio-res .msg { margin-top: 0; }
+.mue-sitio-res .zc-pista { margin: 0; }
+.mue-sitio-lista { display: grid; gap: 6px; margin-top: 6px; }
+.mue-sitio-lista .btn { display: grid; gap: 2px; text-align: left; justify-items: start; white-space: normal; }
+.mue-sitio-lista small { font-weight: 400; color: var(--suave); overflow-wrap: anywhere; }
+.mue-cerca { margin: 6px 0 0; display: inline-flex; align-items: center; gap: 6px; }
+.mue-cerca .icono { width: 18px; height: 18px; }
+.mue-dist { display: inline-block; margin: 4px 6px 0 0; padding: 2px 8px; border-radius: 999px; font-size: .85em; font-weight: 700; border: 1px solid var(--linea); }
+.mue-priv { font-size: .9em; }
+.mue-yo-btn span { white-space: nowrap; }
+@media (max-width: 380px) { .mue-sitio-fila { flex-wrap: wrap; } .mue-sitio-fila .btn { flex: 1 1 100%; } }

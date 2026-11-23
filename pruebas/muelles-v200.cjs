@@ -28,7 +28,7 @@ const fs = require('fs');
   const txt = await p.textContent('#mue-pasar');
   ok(!/Mandar/.test(txt), 'ya no sale la palabra «Mandar»');
   ok(await p.locator('#mue-descarga').isVisible() && (await p.textContent('#mue-descarga')).includes('Descargar archivo'), 'botón «Descargar archivo»');
-  ok(!(await p.locator('#mue-descarga-fotos').isVisible()), 'sin fotos en la libreta no sale «Descargar con fotos»');
+  ok(!(await p.locator('#mue-descarga-sin').isVisible()), 'sin fotos en la libreta no sale «Descargar sin fotos»');
   ok(await p.locator('#mue-archivo').isVisible() && (await p.textContent('#mue-archivo')).trim() === 'Compartir', 'botón aparte «Compartir»');
   ok((await p.textContent('#mue-abre-archivo')).includes('Cargar archivo de libreta'), 'botón «Cargar archivo de libreta»');
   ok(txt.includes('Guárdalo también como copia'), 'texto de la copia de seguridad (v202)');
@@ -41,16 +41,16 @@ const fs = require('fs');
   ok(f1.startsWith('CCOO-MUELLES:') && JSON.parse(f1.slice(13)).filter(x => x.nombre).length === 3 && JSON.parse(f1.slice(13))[0].total === 3, 'el archivo lleva las 3 fichas');
   ok((await p.textContent('#mue-msg')).includes('Descargado') && (await p.textContent('#mue-msg')).includes('Descargas'), 'mensaje al acabar: ' + (await p.textContent('#mue-msg')).slice(0, 70));
   ok(await p.evaluate(() => localStorage.getItem('ccoo-muelles')) === antesLS, 'descargar no cambia la libreta guardada');
-  // Con foto: sale «Descargar con fotos» y los dos archivos se distinguen (v202: «Descargar archivo» va sin fotos)
+  // Con foto: sale «Descargar sin fotos» y los dos archivos se distinguen (v207: «Descargar archivo» vuelve a llevar las fotos)
   const foto = Buffer.from(await p.evaluate(() => { const c = document.createElement('canvas'); c.width = 800; c.height = 600; const x = c.getContext('2d'); x.fillStyle = '#c33'; x.fillRect(0, 0, 800, 600); return c.toDataURL('image/png').split(',')[1]; }), 'base64');
   await p.locator('.mue-ficha[data-ficha=dd02] > summary').click();
   const fc = p.waitForEvent('filechooser'); await p.click('.mue-ficha[data-ficha=dd02] [data-foto]'); await (await fc).setFiles({ name: 'm.png', mimeType: 'image/png', buffer: foto }); await p.waitForTimeout(1200);
-  ok(await p.locator('#mue-descarga-fotos').isVisible(), 'con foto sale «Descargar con fotos»');
+  ok(await p.locator('#mue-descarga-sin').isVisible(), 'con foto sale «Descargar sin fotos»');
   ok(/con fotos \(1\)/.test(await p.textContent('#mue-tam')), 'tamaño con y sin fotos: ' + await p.textContent('#mue-tam'));
-  dl = p.waitForEvent('download'); await p.click('#mue-descarga-fotos'); const d2 = await dl; const f2 = fs.readFileSync(await d2.path(), 'utf8');
-  dl = p.waitForEvent('download'); await p.click('#mue-descarga'); const d3 = await dl; const f3 = fs.readFileSync(await d3.path(), 'utf8');
+  dl = p.waitForEvent('download'); await p.click('#mue-descarga'); const d2 = await dl; const f2 = fs.readFileSync(await d2.path(), 'utf8');
+  dl = p.waitForEvent('download'); await p.click('#mue-descarga-sin'); const d3 = await dl; const f3 = fs.readFileSync(await d3.path(), 'utf8');
   ok(d2.suggestedFilename() === 'libreta-muelles-' + hoy + '-con-fotos.txt' && d3.suggestedFilename() === 'libreta-muelles-' + hoy + '.txt', 'nombres: ' + d2.suggestedFilename() + ' / ' + d3.suggestedFilename());
-  ok(JSON.parse(f2.slice(13)).some(x => x.foto && x.foto.startsWith('data:image/')) && !JSON.parse(f3.slice(13)).some(x => x.foto), 'el de fotos lleva la foto y el otro no');
+  ok(JSON.parse(f2.slice(13)).some(x => x.foto && x.foto.startsWith('data:image/')) && !JSON.parse(f3.slice(13)).some(x => x.foto) && JSON.parse(f3.slice(13)).some(x => x.tf === 1), 'el de fotos lleva la foto y el otro no (pero dice que tenía)');
   ok(f2.length > f3.length, 'con fotos pesa más (' + Math.round(f2.length / 1024) + ' KB / ' + Math.round(f3.length / 1024) + ' KB)');
   // Cargar el archivo descargado en otra ventana (otro móvil) con una ficha suya
   const { c: c2, p: p2 } = await nuevo([{ id: 'zz01', nombre: 'Mía SL', truco: 'Puerta 2', nivel: 'facil' }]);
