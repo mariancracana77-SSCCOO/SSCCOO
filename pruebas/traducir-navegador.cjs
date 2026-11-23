@@ -33,7 +33,7 @@ const PERMITIDOS = [/^[\d.,\s]+ h$/, /^\*\*ZZ /, /^X?\d+$/, /^[\d.]+ kg$/]; // �
     if (fallan.length) { mal++; console.log(`MAL ${nombre}: ${fallan.length} textos ${debe ? "sin traducir" : "sin volver al español"}:`, fallan.slice(0, 8)); }
     else console.log(`OK  ${nombre} (${vistos.length} textos)`);
   };
-  for (const [g, hash] of [["finiquito", "finiquito"], ["hora", "hora"], ["diccionario", "diccionario"], ["adr", "adr"], ["carga", "carga"], ["ejes", "ejes"], ["sobresale", "sobresale"], ["conversor", "conversor"], ["muelles", "muelles"]]) {
+  for (const [g, hash] of [["finiquito", "finiquito"], ["hora", "hora"], ["diccionario", "diccionario"], ["adr", "adr"], ["carga", "carga"], ["ejes", "ejes"], ["sobresale", "sobresale"], ["conversor", "conversor"], ["muelles", "muelles"], ["testigos", "testigos"]]) {
     await p.goto(BASE + "#" + hash); await p.waitForTimeout(700);
     await p.evaluate(([g, lista]) => {
       try { localStorage.removeItem("ccoo-mi-idioma"); localStorage.removeItem("ccoo-textos-" + g); } catch (_) {}
@@ -59,6 +59,8 @@ const PERMITIDOS = [/^[\d.,\s]+ h$/, /^\*\*ZZ /, /^X?\d+$/, /^[\d.]+ kg$/]; // �
     // v183: «Peso por ejes» en los tres estados (correcto, al límite y exceso) y con «Uniforme»
     // v185: «Cargas que sobresalen» pasándose de los límites y con carga ancha; «Conversor» con un número y otra conversión
     if (g === "sobresale") { await p.fill("#so-det", "3.5"); await p.waitForTimeout(300); await comprueba("sobresale exceso", true); await p.selectOption("#so-tipo", "ancha"); await p.fill("#so-ancho", "2.2"); await p.fill("#so-izq", "0.1"); await p.waitForTimeout(300); await comprueba("sobresale ancha", true); }
+    // v211: Guía de testigos: la carpeta DAF entera (avisos rojos, cuadro y otros), un filtro y una búsqueda
+    if (g === "testigos") { await p.click("#te-marcas [data-m='daf']"); await p.waitForTimeout(400); await comprueba("testigos carpeta DAF", true); await p.click("#te-colores [data-c='rojo']"); await p.waitForTimeout(300); await comprueba("testigos avisos rojos", true); await p.fill("#te-busca", "zzzzzz-nada"); await p.waitForTimeout(300); await comprueba("testigos sin resultados", true); await p.fill("#te-busca", ""); await p.click("#te-colores [data-c='']"); await p.waitForTimeout(300); }
     if (g === "conversor") { await p.fill("#cv-a", "8"); await p.click("#cv-chips [data-i='6']"); await p.fill("#cv-a", "20"); await p.waitForTimeout(300); await comprueba("conversor temperatura", true); }
     if (g === "ejes") { await p.fill("#ej-kg", "12000"); await p.click("#ej-pos [data-v='centro']"); await p.waitForTimeout(300); await comprueba("ejes correcto", true); await p.fill("#ej-kg", "24500"); await p.click("#ej-pos [data-v='uniforme']"); await p.waitForTimeout(300); await comprueba("ejes al límite o exceso", true); await p.click("#ej-pos [data-v='cabina']"); await p.click("[data-paso='-0.1']"); await p.waitForTimeout(300); await comprueba("ejes exceso delante", true); }
     if (g === "carga") { await p.click("#cg-add"); await p.selectOption("#cg-1-t", "ind"); await p.fill("#cg-1-q", "3"); await p.waitForTimeout(300); await comprueba("carga dos recogidas", true); await p.click("#cg-cero"); await p.waitForTimeout(200); await comprueba("carga borrar", true); await p.click("#cg-no"); await p.fill("#cg-0-q", "40"); await p.waitForTimeout(300); await comprueba("carga no cabe", true); }

@@ -14,6 +14,35 @@
     {
       id: "daf", n: "DAF", sub: "XF, XG, XG+ y CF (de 2013 en adelante)",
       t: [
+      // v211 (parte B): avisos ROJOS de la pantalla del manual DAF del padre (cap. 5, págs. 70-75). Texto tal cual del manual.
+      { g: "rojo", p: 70, i: "c-carroceria", n: "Carrocería no asegurada", m: "La carrocería está desbloqueada o no está asegurada." },
+      { g: "rojo", p: 70, i: "c-freno-rend", n: "Presión de aire demasiado baja", m: "La presión de aire de uno de los circuitos del freno de servicio es inferior a 5 bares. Se muestran los niveles actuales de presión de aire de los circuitos 1 y 2." },
+      { g: "rojo", p: 70, i: "c-freno-rend", n: "Avería del sistema de suministro de aire", m: "Se ha producido una avería en el sistema de suministro de aire (SAC)." },
+      { g: "rojo", p: 70, i: "c-mil", n: "Apague el motor inmediatamente", m: "Se han detectado posibles daños en el motor." },
+      { g: "rojo", p: 70, i: "c-mil", n: "Fallo del motor", m: "Se ha detectado una avería grave del motor." },
+      { g: "rojo", p: 71, i: "c-mil", n: "Avería del pedal del acelerador", m: "Se ha detectado una avería en el pedal del acelerador.", nota: "En función de la avería, el motor puede cambiar al modo de funcionamiento de emergencia (funcionalidad limitada y comportamiento diferente)." },
+      { g: "rojo", p: 71, i: "c-plataforma", n: "Peldaño en uso. Marcha atrás prohibida", m: "La plataforma se está utilizando y la marcha atrás no se puede engranar." },
+      { g: "rojo", p: 71, i: "c-plataforma", n: "Avería de la prevención de desplazamiento en pendiente, plataforma bajada", m: "Se detecta una avería en el sistema de prevención de desplazamiento en pendiente cuando la plataforma está bajada." },
+      { g: "rojo", p: 71, i: "r-volante", n: "Avería en la dirección del eje trasero", m: "Se ha producido una avería en la dirección del eje trasero." },
+      { g: "rojo", p: 71, i: "r-volante", n: "Avería en la servodirección", m: "Se ha detectado una avería en la servodirección." },
+      { g: "rojo", p: 71, i: "r-ebs-camion", n: "Avería en el sistema de frenos del camión", m: "El sistema EBS del camión no funciona correctamente." },
+      { g: "rojo", p: 71, i: "r-ebs-remolque", n: "Avería en el sistema de frenos del remolque/semirremolque", m: "Se ha producido una avería en el sistema EBS del remolque/semirremolque." },
+      { g: "rojo", p: 72, i: "r-temp-escape", n: "Calentamiento excesivo del motor", m: "La regeneración está en curso y la temperatura de los gases de escape alcanza niveles potencialmente peligrosos para las personas o el área circundante. Temperatura alta del sistema de escape (HEST)." },
+      { g: "rojo", p: 72, i: "r-temp-escape", n: "Filtro de hollín sucio", m: "El filtro de hollín está contaminado." },
+      { g: "rojo", p: 72, i: "r-temp-escape", n: "Avería del sistema de escape", m: "Avería del sistema EAS." },
+      { g: "rojo", p: 72, i: "r-aceite", n: "Presión del aceite excesivamente baja", m: "La presión del aceite del motor es demasiado baja. Compruebe el nivel de aceite del motor.", pre: "Pare inmediatamente el motor." },
+      { g: "rojo", p: 72, i: "r-cabina", n: "Cabina sin asegurar", m: "El bloqueo de la suspensión de la cabina está abierto. Compruebe que la cabina está completamente enderezada." },
+      { g: "rojo", p: 73, i: "r-dpf-lleno", n: "Filtro de hollín lleno, se necesita mantenimiento", m: "El filtro de hollín está lleno y es necesario realizar el mantenimiento." },
+      { g: "rojo", p: 73, i: "c-tpms-averia", n: "Fuga grave en los neumáticos", m: "Hay una fuga grave en un neumático. Observe la pantalla para saber cuál es el neumático afectado por la fuga de presión grave." },
+      { g: "rojo", p: 73, i: "c-tpms-averia", n: "Presión de neumáticos demasiado baja", m: "La presión de inflado de los neumáticos es excesivamente baja. Observe la pantalla para saber cuál es el neumático afectado por una presión de inflado demasiado baja." },
+      { g: "rojo", p: 73, i: "r-bateria", n: "Tensión de carga demasiado alta", m: "La tensión de carga del alternador es demasiado alta. Este símbolo de aviso aparece cuando la tensión de carga del alternador sobrepasa los 31 V. Esto indica que la tensión de la batería es excesiva y se corre el riesgo de que se produzca una ebullición. Si se enciende este testigo, ponga en funcionamiento el mayor número posible de consumidores eléctricos.", pre: "Si el símbolo permanece encendido, no siga conduciendo en ninguna circunstancia." },
+      { g: "rojo", p: 74, i: "r-config", n: "Error de configuración", m: "Los números de chasis programados en el sistema electrónico del motor y en el inmovilizador no coinciden." },
+      { g: "rojo", p: 74, i: "r-temp-refr", n: "Temperatura del refrigerante demasiado alta", m: "La temperatura del refrigerante supera el valor máximo permitido. Compruebe los puntos siguientes: el nivel del refrigerante (precaución: peligro de quemaduras), signos de fugas de refrigerante, las correas trapezoidales polirranuradas y las mangueras de agua, y el embrague del ventilador." },
+      { g: "rojo", p: 74, i: "r-nivel-refr", n: "Nivel de refrigerante demasiado bajo", m: "El nivel de refrigerante es excesivamente bajo." },
+      { g: "rojo", p: 74, i: "r-cambio", n: "Fallo de la transmisión", m: "Se ha detectado un aviso de la transmisión. En función de la avería, la caja de cambios solo admitirá cambios manuales." },
+      { g: "rojo", p: 75, i: "c-asiento-gir", n: "Bloquee el asiento giratorio", m: "El asiento giratorio no está bloqueado en la posición de conducción." },
+      { g: "rojo", p: 75, i: "c-freno-estac", n: "Avería del sistema de freno de estacionamiento", m: "Se ha detectado una avería crítica en el sistema del freno de estacionamiento." },
+      { g: "rojo", p: 75, i: "c-freno-estac", n: "Freno de estacionamiento no accionado", m: "El freno de estacionamiento no se aplica al salir del vehículo." },
       // v210 (petición del padre, 23/11/2026): los testigos del cuadro tal como vienen en SU manual DAF (cap. 5 «Entorno
       // del conductor», págs. 101-109): número, nombre y texto del manual; el dibujo, hecho por nosotros igual que el del manual.
       // num: número del testigo en el cuadro; p: página; m: lo que dice el manual; h: qué hacer (solo si el manual lo dice).
@@ -78,18 +107,12 @@
       { g: "cuadro", num: 39, p: 109, i: "c-plataforma", n: "Plataforma bajada", m: "Prevención de desplazamiento activada." },
       // Otros testigos que salían en la guía de antes (v196/v201). Aún sin comprobar en el manual del padre: se irán
       // cambiando por los avisos de la pantalla (partes B y C, págs. 70-97).
-        { g: "otros", i: "presion-aire-frenos", c: "rojo", a: "(!)", n: "Freno: presión de aire baja", v: "Un círculo con un signo de admiración dentro y dos arcos a los lados.", s: "No hay presión de aire suficiente en los circuitos de freno, o hay una avería en el sistema de frenos.", h: "No arranques hasta que se apague (deja el motor en marcha para que cargue el aire). Si sale circulando, para con cuidado: el freno puede ir peor." },
-        { g: "otros", i: "presion-aceite", c: "rojo", a: "ACEITE", n: "Presión de aceite del motor", v: "Una aceitera con una gota cayendo.", s: "La presión de aceite del motor es demasiado baja.", h: "Para y apaga el motor enseguida: puede romperse. Mira el nivel de aceite y no arranques sin hablar con el taller." },
-        { g: "otros", i: "temperatura-refrigerante", c: "rojo", a: "TEMP", n: "Temperatura del motor alta", v: "Un termómetro metido en unas olas.", s: "El refrigerante del motor está demasiado caliente.", h: "Baja la carga del motor y para con seguridad. Déjalo al ralentí un poco y apágalo. No abras el depósito en caliente." },
-        { g: "otros", i: "refrigerante-nivel", c: "ambar", a: "REFR", n: "Nivel de refrigerante bajo", v: "Un depósito con una línea de nivel y unas olas.", s: "Falta líquido refrigerante.", h: "Con el motor frío, mira el nivel y rellena con el líquido que pide DAF. Si se repite, al taller." },
         { g: "otros", i: "alternador-bateria-rojo", c: "rojo", a: "BAT", n: "Carga de la batería", v: "Una batería con los signos + y −.", s: "El alternador no carga las baterías.", h: "Apaga lo que no haga falta y ve al taller. Si apagas el motor, puede que no vuelva a arrancar." },
-        { g: "otros", i: "cabina-sin-bloquear", c: "rojo", a: "CABINA", n: "Cabina no bloqueada", v: "Un camión con la cabina inclinada hacia delante.", s: "La cabina no ha quedado bien enganchada después de bascularla.", h: "No circules. Vuelve a bajar la cabina hasta que quede bloqueada." },
         { g: "otros", i: "airbag", c: "rojo", a: "AIRBAG", n: "Airbag", v: "Una persona sentada con un globo delante.", s: "Avería en el airbag o en los pretensores del cinturón.", h: "Puedes seguir, pero el airbag puede no funcionar. Al taller lo antes posible." },
         { g: "otros", i: "aviso-general", c: "ambar", a: "!", n: "Aviso general", v: "Un triángulo con un signo de admiración.", s: "Hay un aviso o una avería que no es grave. La pantalla central dice cuál.", h: "Lee el mensaje de la pantalla. Puedes seguir, pero arréglalo pronto." },
         { g: "otros", i: "adblue-scr-fallo", c: "ambar", a: "SCR", n: "Avería del sistema AdBlue (SCR)", v: "Un tubo de escape con un aviso, o el motor con la palabra SCR o NOx.", s: "El sistema que limpia los gases con AdBlue no funciona bien: AdBlue malo, sensor o bomba.", h: "Al taller pronto: si no se arregla, el camión limita la velocidad o la potencia." },
         { g: "otros", i: "regeneracion-dpf-activa", c: "ambar", a: "REGEN", n: "Regeneración en marcha", v: "Tres rayas onduladas hacia arriba (calor del escape), a veces junto al filtro.", s: "El filtro se está limpiando: el escape va muy caliente.", h: "No pares encima de hierba, papel o cosas que ardan. No interrumpas la regeneración si no hace falta." },
         { g: "otros", i: "precalentamiento", c: "ambar", a: "PRECAL", n: "Precalentamiento", v: "Dos bujías (en algunos modelos, una espiral como un muelle).", s: "El motor está calentando antes de arrancar en frío.", h: "Espera a que se apague y luego arranca. Si sigue encendido circulando, al taller." },
-        { g: "otros", i: "ebs-rojo", c: "rojo", a: "EBS", n: "Avería grave del EBS", v: "Las letras EBS en rojo, a veces con STOP.", s: "Fallo importante en el freno electrónico.", h: "Para con seguridad: la frenada puede ser más débil. Llama al taller o a asistencia." },
         { g: "otros", i: "ebs-ambar", c: "ambar", a: "EBS", n: "Avería leve del EBS", v: "Las letras EBS en ámbar.", s: "Fallo en el freno electrónico que no es grave.", h: "Puedes seguir con cuidado. Al taller pronto." },
         { g: "otros", i: "pastillas-freno", c: "ambar", a: "PASTILLAS", n: "Desgaste de pastillas de freno", v: "Un círculo con una línea discontinua (las pastillas) a cada lado.", s: "Las pastillas de freno están gastadas.", h: "Al taller a cambiarlas pronto." },
         { g: "otros", i: "agua-combustible", c: "ambar", a: "AGUA", n: "Agua en el gasoil", v: "Un surtidor o filtro con gotas de agua.", s: "Hay agua en el filtro separador de gasoil.", h: "Purga el filtro como dice el manual o al taller. El agua puede estropear la inyección." },
@@ -102,10 +125,12 @@
       ],
     },
   ];
-  /* fin textos */
   const COLOR = { rojo: "Rojo: para", ambar: "Ámbar: revisa pronto", verde: "Verde: informa", azul: "Azul: informa" };
-  const GRUPOS = { cuadro: "Del cuadro (manual DAF)", otros: "Otros, sin comprobar" };
-  window.TestigosDatos = { MARCAS, COLOR, GRUPOS };
+  const GRUPOS = { rojo: "Avisos rojos de la pantalla", cuadro: "Testigos del cuadro", otros: "Otros, sin comprobar" };
+  // Lo que dice el manual (pág. 70) para todos los avisos rojos
+  const ROJO = { h: "Detenga el vehículo inmediatamente con suma precaución. Aparque el vehículo en un lugar seguro y pare el motor. Acuda lo antes posible a un taller de servicio DAF para reparar la anomalía.", nota: "Los avisos de color rojo solo se pueden suprimir con el freno de estacionamiento accionado." };
+  /* fin textos */
+  window.TestigosDatos = { MARCAS, COLOR, GRUPOS, ROJO };
 
   const $ = (i) => document.getElementById(i);
   if (!$("v-testigos")) return;
@@ -117,32 +142,41 @@
   const guarda = () => { try { localStorage.setItem(KEY, JSON.stringify({ m: marca })); } catch (e) { /* sin almacenamiento */ } };
   const normal = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
+  // v211: traducible como las demás de Zona Conductores (zona-idioma.js, grupo «testigos» de la función traducir):
+  // todo lo que se pinta pasa por Z.T con el texto en español tal cual está en este archivo
+  const Z = typeof ZonaIdioma === "function" ? ZonaIdioma("testigos", "v-testigos", () => pinta()) : { T: (x, v) => x.replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m) };
+  const t = (s) => esc(Z.T(s || ""));
   function pinta() {
     const m = MARCAS.find(x => x.id === marca);
     $("te-marcas").hidden = !!m;
     $("te-carpeta").hidden = !m;
     if (!m) {
-      $("te-marcas").innerHTML = MARCAS.map(x => `<a class="panel desc-promo cond util te-marca" href="#testigos" data-m="${esc(x.id)}">${icono("carpeta")}<span><b>${esc(x.n)}</b><small>${esc(x.sub)} · ${x.t.length} testigos</small></span>${icono("der", "p")}</a>`).join("");
+      $("te-marcas").innerHTML = MARCAS.map(x => `<a class="panel desc-promo cond util te-marca" href="#testigos" data-m="${esc(x.id)}">${icono("carpeta")}<span><b>${esc(x.n)}</b><small>${t(x.sub)} · ${esc(Z.T("{n} testigos", { n: x.t.length }))}</small></span>${icono("der", "p")}</a>`).join("");
       return;
     }
     $("te-nombre").textContent = m.n;
-    $("te-sub").textContent = m.sub;
-    $("te-colores").innerHTML = [["", "Todos"], ...Object.entries(GRUPOS)].map(([k, t]) => `<button type="button" class="zc-chip${k === grupo ? " activa" : ""}" data-c="${esc(k)}" aria-pressed="${k === grupo}">${esc(t)}</button>`).join("");
+    $("te-sub").textContent = Z.T(m.sub);
+    $("te-colores").innerHTML = [["", Z.T("Todos")], ...Object.entries(GRUPOS).map(([k, v]) => [k, Z.T(v)])].map(([k, v]) => `<button type="button" class="zc-chip${k === grupo ? " activa" : ""}" data-c="${esc(k)}" aria-pressed="${k === grupo}">${esc(v)}</button>`).join("");
     const q = normal($("te-busca").value.trim());
-    const l = m.t.filter(x => (!grupo || x.g === grupo) && (!q || normal(`${x.num || ""} ${x.a || ""} ${x.n} ${x.m || ""} ${x.nota || ""} ${x.v || ""} ${x.s || ""}`).includes(q)));
-    $("te-cuenta").textContent = `${l.length} de ${m.t.length} testigos`;
+    const l = m.t.filter(x => (!grupo || x.g === grupo) && (!q || normal([x.num, x.a, x.n, x.m, x.nota, x.pre, x.v, x.s].map(s => s == null ? "" : `${s} ${Z.T(String(s))}`).join(" ")).includes(q)));
+    $("te-cuenta").textContent = Z.T("{a} de {b} testigos", { a: l.length, b: m.t.length });
     $("te-lista").innerHTML = l.length ? l.map(tarjeta).join("")
-      : `<div class="zc-aviso">No hay ningún testigo que coincida. Prueba con otra palabra (aceite, freno, AdBlue…) o con el número del cuadro.</div>`;
+      : `<div class="zc-aviso">${esc(Z.T("No hay ningún testigo que coincida. Prueba con otra palabra (freno, AdBlue…) o con el número del cuadro."))}</div>`;
   }
+  // Cada texto en su propio elemento (la etiqueta en <b>, el texto en <span>) para que se traduzcan por separado
+  const linea = (et, txt) => txt ? `<p><b>${esc(et)}</b> <span>${t(txt)}</span></p>` : "";
   function tarjeta(x) {
     const ico = `<span class="te-icono" aria-hidden="true">${ICONOS[x.i] || ""}</span>`;
-    if (x.g === "cuadro") return `<article class="panel te-item manual">${ico}
-      <div><h3>${esc(x.n)}</h3><p class="te-color">${x.num ? "N.º " + esc(x.num) + " en el cuadro" : "Indicador del cuadro"}</p><p class="te-comp">Comprobado en manual DAF, pág. ${esc(x.p)}</p>
-      ${x.m ? `<p><b>Qué dice el manual:</b> ${esc(x.m)}</p>` : `<p>El manual solo da el nombre de este testigo.</p>`}
-      ${x.h ? `<p><b>Qué hacer:</b> ${esc(x.h)}</p>` : ""}${x.nota ? `<p><b>Nota del manual:</b> ${esc(x.nota)}</p>` : ""}</div></article>`;
+    if (x.g === "rojo" || x.g === "cuadro") {
+      const sub = x.g === "rojo" ? Z.T("Aviso rojo en la pantalla: para") : x.num ? Z.T("N.º {n} en el cuadro", { n: x.num }) : Z.T("Indicador del cuadro");
+      return `<article class="panel te-item ${x.g === "rojo" ? "rojo" : "manual"}">${ico}
+      <div><h3>${t(x.n)}</h3><p class="te-color">${esc(sub)}</p><p class="te-comp">${esc(Z.T("Comprobado en manual DAF, pág. {p}", { p: x.p }))}</p>
+      ${x.m ? linea(Z.T("Qué dice el manual:"), x.m) : `<p>${esc(Z.T("El manual solo da el nombre de este testigo."))}</p>`}
+      ${linea(Z.T("Precaución del manual:"), x.pre)}${linea(Z.T("Qué hacer:"), x.h || (x.g === "rojo" ? ROJO.h : ""))}${linea(Z.T("Nota del manual:"), x.nota)}</div></article>`;
+    }
     return `<article class="panel te-item ${esc(x.c)}">${ico}
-      <div><h3>${esc(x.n)}</h3><p class="te-color">${esc(COLOR[x.c])}</p><p class="te-comp">Sin comprobar en el manual</p>
-      <p><b>Cómo se ve:</b> ${esc(x.v)}</p><p><b>Qué significa:</b> ${esc(x.s)}</p><p><b>Qué hacer:</b> ${esc(x.h)}</p></div></article>`;
+      <div><h3>${t(x.n)}</h3><p class="te-color">${t(COLOR[x.c])}</p><p class="te-comp">${esc(Z.T("Sin comprobar en el manual"))}</p>
+      ${linea(Z.T("Cómo se ve:"), x.v)}${linea(Z.T("Qué significa:"), x.s)}${linea(Z.T("Qué hacer:"), x.h)}</div></article>`;
   }
   $("te-marcas").addEventListener("click", (e) => {
     const a = e.target.closest("[data-m]");

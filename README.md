@@ -77,6 +77,11 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 211: guía de testigos, parte B (avisos rojos del manual DAF) y en otros idiomas
+- Petición del padre (manual DAF, parte B): los 28 avisos rojos de la pantalla (págs. 70-75), con el texto del manual, la precaución cuando la hay y «Qué hacer» con lo que dice el manual para todos los avisos rojos (pág. 70). Salen los primeros y en rojo. 12 dibujos nuevos nuestros (`testigos-iconos.js`, claves `r-*`); los demás, los mismos del cuadro.
+- Quitados de «Otros, sin comprobar» los 6 que ya salen en estas páginas (presión de aire, aceite, temperatura y nivel del refrigerante, cabina, EBS).
+- Traducción (Lorena: «que esté la traducción sí»): la guía usa `zona-idioma.js` como las demás de Zona Conductores (selector «Idioma · Language», por defecto español). Grupo nuevo `testigos` en la función `traducir` (copia en `herramientas/funciones/traducir.ts`). Todo se pinta con `Z.T`; el buscador busca en español y en el idioma elegido. Pruebas: `traducir-textos.cjs` y `traducir-navegador.cjs` con el grupo nuevo, `utilidades-v196.cjs`.
+
 ## Versión 210: guía de testigos con el manual DAF del padre (parte A: cuadro 1-39)
 - Petición del padre: «Cambia los testigos por estos», con las fotos de su manual DAF (XF, XG, XG+ y CF). Primera parte: los testigos del cuadro, números 1 a 39 (págs. 101-109 del manual).
 - Cada testigo del cuadro lleva su número, el nombre y el texto tal como vienen en el manual, y «Comprobado en manual DAF, pág. N». Nada inventado: si el manual solo da el nombre, la tarjeta lo dice.
