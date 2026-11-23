@@ -7,6 +7,8 @@
 // vuelve a pedir con las coordenadas de la elegida). Con la web nueva («elegir: true»), hasta 2 rutas alternativas en «alternativas».
 // v9: «peajes» (tramos de peaje en km) para el precio aproximado de los peajes.
 // v10: con «buscar» (texto) solo busca sitios (buscador del mapa) y devuelve «lugares» (hasta 5, de Europa); no calcula ruta.
+// v12: si Photon y Nominatim fallan o no encuentran nada, Open-Meteo (GeoNames, gratis y sin clave). Desde el 23/11/2026
+// Photon y Nominatim contestan 403 al servidor de funciones.
 const UA = "CCOO-Calsina-Carre-web/1.0 (seccion sindical; rutas para camion)";
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...cors, "Content-Type": "application/json" } });
@@ -24,6 +26,15 @@ async function photon(t: string): Promise<Lugar[]> {
     const detalle = [p.postcode, p.county && p.county !== p.name ? p.county : "", p.state, p.country].filter(Boolean).join(", ").slice(0, 120);
     return { nombre: String(p.name || t).slice(0, 80), lat, lon, detalle, cp: String(p.postcode || ""), tipo: String(p.osm_value || "") };
   });
+}
+async function openmeteo(t: string): Promise<Lugar[]> {
+  const u = new URL("https://geocoding-api.open-meteo.com/v1/search");
+  u.search = new URLSearchParams({ name: t.replace(/,.*$/, "").trim(), count: "8", language: "es", format: "json" }).toString();
+  const r = await fetch(u, { headers: { "User-Agent": UA } });
+  if (!r.ok) throw new Error("openmeteo " + r.status);
+  return ((await r.json())?.results || []).map((x: any) => ({ nombre: String(x.name || t).slice(0, 80), lat: +x.latitude, lon: +x.longitude,
+    detalle: [(x.postcodes || [])[0], x.admin2, x.admin1, x.country].filter(Boolean).join(", ").slice(0, 120), cp: String((x.postcodes || [])[0] || ""),
+    tipo: x.population > 100000 ? "city" : "" }));
 }
 async function nominatim(t: string): Promise<Lugar[]> {
   const u = new URL("https://nominatim.openstreetmap.org/search");
@@ -46,6 +57,7 @@ async function busca(q: unknown, cpPedido: unknown): Promise<{ lugar: Lugar | nu
   let l: Lugar[] = [];
   try { l = await photon(texto); } catch (e) { console.error("ruta", String(e)); }
   if (!l.length) try { l = await nominatim(texto); } catch (e) { console.error("ruta", String(e)); }
+  if (!l.length) try { l = await openmeteo(t || cp); } catch (e) { console.error("ruta", String(e)); }
   if (cp) { const c = l.filter(x => x.cp.replace(/\s+/g, "").toUpperCase().startsWith(cp)); if (c.length) l = c; }
   // Solo Europa (los aparcamientos son de Europa): así «Milano» no pregunta por uno de Texas
   const eu = l.filter(x => x.lat >= 34 && x.lat <= 72 && x.lon >= -25 && x.lon <= 45); if (eu.length) l = eu;
@@ -152,6 +164,7 @@ Deno.serve(async (req) => {
       let l: Lugar[] = [];
       try { l = await photon(t); } catch (e) { console.error("ruta", String(e)); }
       if (!l.length) try { l = await nominatim(t); } catch (e) { console.error("ruta", String(e)); }
+      if (!l.length) try { l = await openmeteo(t); } catch (e) { console.error("ruta", String(e)); }
       l = l.filter(x => x.lat >= 34 && x.lat <= 72 && x.lon >= -25 && x.lon <= 45);
       const vistos: Lugar[] = [];
       for (const x of l) if (vistos.every(y => dist([y.lat, y.lon], [x.lat, x.lon]) > 2)) vistos.push(x);

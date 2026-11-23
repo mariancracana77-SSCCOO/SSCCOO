@@ -210,10 +210,76 @@
     }
     return sobran;
   }
-  const busca = (l, q, nivel) => {
-    const p = plano(q).split(/\s+/).filter(Boolean);
-    return l.filter(f => (!nivel || f.nivel === nivel) && p.every(w => plano([f.nombre, f.lugar, f.truco, f.epis].join(" ")).includes(w)));
+  // v209 (lo pidió el padre por Lorena: «que busque por semejanza»): sin mayúsculas, tildes, ñ ni ç; vale el principio
+  // de la palabra o un trozo; aguanta faltas (una letra cambiada, de más o de menos; dos en palabras largas) y nombres en
+  // otros idiomas o como los escribiría en rumano (ALIAS). Todo en el móvil.
+  const lev = (a, b, max) => {
+    if (Math.abs(a.length - b.length) > max) return max + 1;
+    let ante = null, ant = Array.from({ length: b.length + 1 }, (_, j) => j);
+    for (let i = 1; i <= a.length; i++) {
+      const fila = [i]; let menor = i;
+      for (let j = 1; j <= b.length; j++) {
+        let v = Math.min(ant[j] + 1, fila[j - 1] + 1, ant[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+        if (ante && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) v = Math.min(v, ante[j - 2] + 1); // dos letras cambiadas de sitio
+        fila.push(v); if (v < menor) menor = v;
+      }
+      if (menor > max) return max + 1;
+      ante = ant; ant = fila;
+    }
+    return ant[b.length];
   };
+  const tolera = (n) => n >= 8 ? 2 : n >= 4 ? 1 : 0;
+  const ALIAS = Object.create(null); // sin «constructor» ni nada heredado
+  [["girona", "gerona"], ["lleida", "lerida"], ["zaragoza", "saragossa", "zaragosa", "saragosse"], ["a coruna", "la coruna", "coruna"], ["ourense", "orense"],
+    ["barcelona", "barcelone"], ["sevilla", "seville"], ["lisboa", "lisbon", "lisbonne", "lisabona"], ["porto", "oporto"],
+    ["perpignan", "perpinan", "perpinya"], ["narbonne", "narbona"], ["avignon", "avinon"], ["bordeaux", "burdeos"], ["marseille", "marsella", "marsilia"], ["lyon", "lion"],
+    ["strasbourg", "estrasburgo"], ["paris", "parigi"], ["london", "londres", "londra"], ["bruxelles", "bruselas", "brussels", "brussel", "bruxelas"],
+    ["antwerpen", "amberes", "anvers", "antwerp", "anversa"], ["den haag", "la haya", "haga"], ["koln", "colonia", "cologne", "koeln"],
+    ["munchen", "munich", "muenchen", "munchen"], ["aachen", "aquisgran"], ["mainz", "maguncia"], ["regensburg", "ratisbona"], ["hamburg", "hamburgo"],
+    ["frankfurt", "francfort", "frankfurt am main"], ["nurnberg", "nuremberg", "nuremberga", "nuernberg"], ["wien", "viena", "vienna", "vienne"],
+    ["geneve", "ginebra", "geneva", "ginevra"], ["basel", "basilea", "bale"], ["zurich", "zuerich"], ["milano", "milan"],
+    ["torino", "turin"], ["genova", "genes", "genoa"], ["venezia", "venecia", "venetia", "venice", "venise"], ["firenze", "florencia", "florenta", "florence"],
+    ["napoli", "napoles", "neapole", "naples"], ["bologna", "bolonia"], ["roma", "rome"], ["praha", "praga", "prague"], ["warszawa", "varsovia", "warsaw"],
+    ["bucuresti", "bucarest", "bucharest"], ["athina", "atenas", "atena", "athens"]].forEach(([b, ...o]) => o.forEach(x => { ALIAS[x] = b; }));
+  // El texto buscado con los nombres de otros idiomas cambiados por el que entiende el buscador del mapa
+  const conAlias = (q) => { const p = norm(q); return ALIAS[p] || p.split(" ").map(w => ALIAS[w] || w).join(" "); };
+  const palabrasDe = (t) => plano(t).split(/[^a-z0-9]+/).filter(Boolean);
+  // Lo que se parece una palabra buscada a las de un texto: 3 igual, 2 empieza así, 1,5 la lleva dentro, 1 con faltas, 0 nada
+  const nota = (w, pal, todo) => {
+    if (pal.includes(w)) return 3;
+    if (pal.some(x => x.startsWith(w))) return 2;
+    if (w.length >= 3 && (todo.includes(w) || todo.replace(/[^a-z0-9]+/g, "").includes(w))) return 1.5; // también «bonarea» por «Bon Àrea»
+    const t = tolera(w.length); if (!t) return 0;
+    let mejor = t + 1;
+    for (const x of pal) mejor = Math.min(mejor, lev(w, x, t), x.length > w.length ? lev(w, x.slice(0, w.length), t) : t + 1);
+    return mejor <= t ? 1 - mejor * 0.2 : 0;
+  };
+  // Cuánto se parece una ficha a lo buscado (0 = no sale): todas las palabras tienen que estar, aunque sea con faltas
+  const puntua = (f, q) => {
+    const todo = plano([f.nombre, f.lugar, f.truco, f.epis].join(" ")), pal = palabrasDe(todo);
+    let s = 0;
+    for (const w of palabrasDe(q)) {
+      const a = ALIAS[w], n = Math.max(nota(w, pal, todo), a ? Math.min(...palabrasDe(a).map(x => nota(x, pal, todo))) : 0);
+      if (!n) return 0; s += n;
+    }
+    return s;
+  };
+  // Las fichas que salen, de la que más se parece a la que menos (sin texto: todas, en su orden)
+  const busca = (l, q, nivel) => {
+    const de = l.filter(f => !nivel || f.nivel === nivel);
+    if (!palabrasDe(q).length) return de;
+    return de.map(f => [f, puntua(f, q)]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]).map(x => x[0]);
+  };
+  // «¿Quisiste decir…?»: los textos que más se parecen aunque no lleguen a coincidir (hasta 5)
+  const parecidos = (textos, q, n = 5) => {
+    const b = norm(conAlias(q)); if (b.length < 2) return [];
+    const vistos = new Set();
+    return textos.map(t => String(t || "").trim()).filter(t => t && !vistos.has(norm(t)) && vistos.add(norm(t))).map(t => {
+      const c = norm(t), d = Math.min(lev(b, c, 99), ...palabrasDe(t).map(x => lev(b, x, 99)), c.length > b.length ? lev(b, c.slice(0, b.length), 99) : 99);
+      return [t, d / Math.max(b.length, 1)];
+    }).filter(x => x[1] <= 0.5).sort((a, b2) => a[1] - b2[1]).slice(0, n).map(x => x[0]);
+  };
+  const CIUDADES = [...new Set(Object.values(ALIAS))];
   // Enlace al mapa solo con números ya comprobados (y aun así pasa por urlSegura al pintarlo)
   const mapa = (f) => f.lat != null && f.lon != null ? `https://www.google.com/maps/search/?api=1&query=${f.lat},${f.lon}` : "";
   // v190 (Lorena: «añade la 1 y la 2»): «Ir allí» con la app que elija el conductor. Solo enlaces https (urlSegura no deja
@@ -238,7 +304,7 @@
     const todas = l.map(limpia).filter(Boolean).length;
     return grupos.map((g, i) => exporta(g, fo, { parte: i + 1, partes: grupos.length, todas }));
   }
-  window.MuellesCuentas = { trozos, PARTE_MAX, limpia, exporta, importa, leeDatos, busca, mapa, rutas, repetidas, limpiaHor, estado, horTexto, TOPE, PREFIJO };
+  window.MuellesCuentas = { lev, conAlias, puntua, parecidos, ALIAS, trozos, PARTE_MAX, limpia, exporta, importa, leeDatos, busca, mapa, rutas, repetidas, limpiaHor, estado, horTexto, TOPE, PREFIJO };
 
   const $ = (i) => document.getElementById(i);
   if (!$("v-muelles")) return;
@@ -483,8 +549,14 @@
   }
 
   const ABIERTAS = new Set();
+  // v209: si no sale nada, los nombres y pueblos de la libreta que más se parecen a lo escrito
+  function quisisteLibreta() {
+    const p = parecidos(fichas.flatMap(f => [f.nombre, f.lugar]), $("mue-q").value);
+    return p.length ? `<div class="mue-quisiste"><p class="zc-pista">${esc(T("¿Quisiste decir…?"))}</p><div class="mue-bots">${p.map(t => `<button type="button" class="btn sec" data-quisiste="${esc(t)}" translate="no">${esc(t)}</button>`).join("")}</div></div>` : "";
+  }
   function lista() {
-    let l = busca(fichas, $("mue-q").value, filtro === "rec" ? "" : filtro).filter(f => filtro !== "rec" || f.rec).filter(f => !soloAbiertos || (estadoTexto(f) || {}).abierto).sort((a, b) => NIVELES.indexOf(a.nivel) - NIVELES.indexOf(b.nivel) || a.nombre.localeCompare(b.nombre, "es"));
+    let l = busca(fichas, $("mue-q").value, filtro === "rec" ? "" : filtro).filter(f => filtro !== "rec" || f.rec).filter(f => !soloAbiertos || (estadoTexto(f) || {}).abierto);
+    if (!palabrasDe($("mue-q").value).length) l.sort((a, b) => NIVELES.indexOf(a.nivel) - NIVELES.indexOf(b.nivel) || a.nombre.localeCompare(b.nombre, "es")); // con texto: el que más se parece, primero
     // v207: «Cerca de mí»: solo los que están a menos de 50 km de tu posición, del más cerca al más lejos, con los km
     DIST.clear();
     if (cerca && YO) {
@@ -497,7 +569,7 @@
       ? `<div class="panel mue-vacio"><b>${esc(T("Tu libreta está vacía."))}</b><p>${esc(T("Cuando descargues en un sitio difícil, apunta aquí cómo se entra para la próxima vez."))}</p>
         <p>${esc(T("¿Te ha pasado un compañero su libreta? Pulsa aquí y elige el archivo:"))}</p>
         <div class="mue-bots"><button type="button" class="btn zc-btn" data-cargar="1">${icono("subir", "p")}${esc(T("Cargar archivo de libreta"))}</button></div></div>`
-      : l.length ? l.map(ficha).join("") : `<p class="mue-vacio">${esc(cerca && YO ? T("No tienes ningún cliente apuntado a menos de {k} km de aquí. Pulsa «Cerca de mí» otra vez para verlos todos.", { k: CERCA_KM }) : T("No hay ningún cliente con eso. Prueba con otra palabra o quita el filtro."))}</p>`;
+      : l.length ? l.map(ficha).join("") : `<p class="mue-vacio">${esc(cerca && YO ? T("No tienes ningún cliente apuntado a menos de {k} km de aquí. Pulsa «Cerca de mí» otra vez para verlos todos.", { k: CERCA_KM }) : T("No hay ningún cliente con eso. Prueba con otra palabra o quita el filtro."))}</p>${cerca ? "" : quisisteLibreta()}`;
     $("mue-buscar").hidden = !fichas.length;
     const conHor = fichas.some(f => f.hor);
     $("mue-abiertos").hidden = !conHor && !soloAbiertos;
@@ -814,17 +886,35 @@
     const c = leeCoord(q);
     if (c) { pistaSitio(donde, ""); vaSitio(donde, { lat: c.lat, lon: c.lon, nombre: c.lat + ", " + c.lon, exacto: true }); return; }
     if (/^(https?:|www\.)/i.test(q)) { pistaSitio(donde, T("Ese enlace no lleva la posición dentro. Ábrelo en el mapa, mantén pulsado el sitio y copia aquí los números que salen."), true); return; }
-    if (navigator.onLine === false) { pistaSitio(donde, T("Sin internet no se puede buscar un pueblo. Puedes pegar unas coordenadas."), true); return; }
     pistaSitio(donde, T("Buscando…"));
-    try {
-      const { data, error } = await window.sb.functions.invoke("ruta", { body: { buscar: q } });
-      if (error || !data || data.error) throw new Error("buscar");
-      const l = (data.lugares || []).filter(x => coord(x.lat, 90) !== null && coord(x.lon, 180) !== null).slice(0, 5);
-      if (!l.length) { pistaSitio(donde, T("No encuentro «{q}». Prueba con el nombre del pueblo y el país, o con el código postal.", { q }), true); return; }
-      if (l.length === 1) { pistaSitio(donde, ""); vaSitio(donde, l[0]); return; }
-      SITIO[donde] = l;
-      resSitio(donde).innerHTML = `<p class="zc-pista">${esc(T("¿Cuál es?"))}</p><div class="mue-sitio-lista">${l.map((x, i) => `<button type="button" class="btn sec" data-sitio-i="${i}" data-sitio-de="${donde}"><b translate="no">${esc(x.nombre || "")}</b>${x.detalle ? `<small translate="no">${esc(x.detalle)}</small>` : ""}</button>`).join("")}</div>`;
-    } catch (e) { pistaSitio(donde, T("No se ha podido buscar. Comprueba que tienes internet o pega unas coordenadas."), true); }
+    const qa = conAlias(q), envia = qa === norm(q) ? q : qa; // «Gerona», «Lisabona», «Saragossa»… se buscan con su nombre de allí
+    // v209: la lista propia de ciudades de Europa (ciudades.js) por si el servidor no encuentra el sitio o no contesta
+    const propias = async () => window.Ciudades ? [...await window.Ciudades.busca(envia), ...(envia !== q ? await window.Ciudades.busca(q) : [])].filter((x, i, a) => a.findIndex(y => y.nombre === x.nombre) === i).slice(0, 5) : [];
+    let l = [], fallo = false;
+    if (navigator.onLine !== false) {
+      try {
+        const { data, error } = await window.sb.functions.invoke("ruta", { body: { buscar: envia } });
+        if (error || !data || data.error) throw new Error("buscar");
+        const b = norm(qa), dif = (x) => { const n = norm(String(x.nombre || "").split(",")[0]); return n === b ? -1 : n.startsWith(b) ? 0 : lev(b, n, 99) / Math.max(b.length, 1); };
+        l = (data.lugares || []).filter(x => coord(x.lat, 90) !== null && coord(x.lon, 180) !== null).map((x, i) => [x, dif(x), i]).sort((a, c) => a[1] - c[1] || a[2] - c[2]).map(x => x[0]).slice(0, 5);
+      } catch (e) { fallo = true; }
+    }
+    if (!l.length) {
+      l = await propias();
+      const exactas = l.filter(x => x.exacta);
+      if (exactas.length === 1) l = exactas; // «Lyon»: va directo; con faltas, pregunta cuál
+    }
+    if (!l.length) {
+      pistaSitio(donde, navigator.onLine === false ? T("Sin internet solo se encuentran ciudades grandes. Puedes pegar unas coordenadas.")
+        : fallo ? T("No se ha podido buscar. Comprueba que tienes internet o pega unas coordenadas.")
+        : T("No encuentro «{q}». Prueba con el nombre del pueblo y el país, o con el código postal.", { q }), true);
+      const p = parecidos([...fichas.map(f => f.lugar), ...CIUDADES], q).filter(t => norm(t) !== norm(q));
+      if (p.length) resSitio(donde).insertAdjacentHTML("beforeend", `<p class="zc-pista">${esc(T("¿Quisiste decir…?"))}</p><div class="mue-sitio-lista">${p.map(t => `<button type="button" class="btn sec" data-sitio-q="${esc(t)}" data-sitio-de="${donde}"><b translate="no">${esc(t)}</b></button>`).join("")}</div>`);
+      return;
+    }
+    if (l.length === 1) { pistaSitio(donde, ""); vaSitio(donde, l[0]); return; }
+    SITIO[donde] = l;
+    resSitio(donde).innerHTML = `<p class="zc-pista">${esc(T("¿Cuál es?"))}</p><div class="mue-sitio-lista">${l.map((x, i) => `<button type="button" class="btn sec" data-sitio-i="${i}" data-sitio-de="${donde}"><b translate="no">${esc(x.nombre || "")}</b>${x.detalle ? `<small translate="no">${esc(x.detalle)}</small>` : ""}</button>`).join("")}</div>`;
   }
   function vaSitio(donde, x) {
     const la = coord(x.lat, 90), lo = coord(x.lon, 180);
@@ -917,6 +1007,7 @@
   $("mue-lat").addEventListener("change", sigueNumeros); // el nombre del botón no cambia aquí: al salir del campo moverían los botones justo al pulsar «Guardar»
   $("mue-lon").addEventListener("change", sigueNumeros);
   $("mue-q").addEventListener("input", lista);
+  $("mue-lista").addEventListener("click", (e) => { const b = e.target.closest("[data-quisiste]"); if (!b) return; $("mue-q").value = b.dataset.quisiste; lista(); $("mue-q").focus(); });
   $("mue-h24").addEventListener("change", pintaHor);
   $("mue-hor-mas").addEventListener("click", () => { if (HB.length < 4) { HB.push(nuevoGrupo()); pintaHor(); } });
   $("mue-hor-bloques").addEventListener("click", (e) => {
@@ -937,6 +1028,7 @@
     c.querySelector("input").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); buscaSitio(donde); } }); // dentro del formulario: Enter no guarda la ficha
     c.addEventListener("click", (e) => {
       if (e.target.closest("[data-sitio-buscar]")) { buscaSitio(donde); return; }
+      const q = e.target.closest("[data-sitio-q]"); if (q) { c.querySelector("input").value = q.dataset.sitioQ; buscaSitio(donde); return; }
       const b = e.target.closest("[data-sitio-i]"); if (!b) return;
       const x = (SITIO[donde] || [])[+b.dataset.sitioI]; if (x) vaSitio(donde, x);
     });
