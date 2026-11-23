@@ -339,7 +339,18 @@
     $("apc-buscar").disabled = true; estado("Calculando la ruta para tu camión…");
     try {
       const desde = ELEGIDO.desde || ((AJ.desde || AJ.cpDesde) ? AJ.desde : await posicion().then(p => ({ ...p, nombre: "Tu ubicación" })));
-      const { data, error } = await sb.functions.invoke("ruta", { body: { desde, hasta: ELEGIDO.hasta || AJ.hasta, cp_desde: AJ.cpDesde, cp_hasta: AJ.cpHasta, camion: AJ.camion, elegir: true } });
+      const hasta = ELEGIDO.hasta || AJ.hasta;
+      let { data, error } = await sb.functions.invoke("ruta", { body: { desde, hasta, cp_desde: AJ.cpDesde, cp_hasta: AJ.cpHasta, camion: AJ.camion, elegir: true } });
+      // v209: si el servidor no encuentra la salida o el destino (o los buscadores gratis no le contestan), se prueba con
+      // la lista propia de ciudades de Europa (ciudades.js) y se le mandan ya las coordenadas
+      if ((error || !data || data.error) && !data?.elegir && window.Ciudades) {
+        const sitio = async (x, cp) => typeof x === "string" && x.trim() && !cp ? (await window.Ciudades.busca(x, 1))[0] || null : x;
+        const [d2, h2] = await Promise.all([sitio(desde, AJ.cpDesde), sitio(hasta, AJ.cpHasta)]);
+        if (d2 && h2 && (d2 !== desde || h2 !== hasta)) {
+          const solo = (x) => x && typeof x === "object" ? { lat: x.lat, lon: x.lon, nombre: x.nombre } : x;
+          ({ data, error } = await sb.functions.invoke("ruta", { body: { desde: solo(d2), hasta: solo(h2), cp_desde: d2 === desde ? AJ.cpDesde : "", cp_hasta: h2 === hasta ? AJ.cpHasta : "", camion: AJ.camion, elegir: true } }));
+        }
+      }
       if (data?.elegir) { estado(""); pintaElegir(data.elegir); return; }
       if (error || !data || data.error) throw new Error(data?.error || "No se ha podido calcular la ruta. Comprueba que tienes internet.");
       // La principal y hasta 2 alternativas (lo pidió el padre: «como cualquier navegador»)
@@ -1089,9 +1100,14 @@
       if (q.length < 2) return;
       res.innerHTML = `<p class="apc-nota">Buscando…</p>`;
       try {
-        const { data, error } = await sb.functions.invoke("ruta", { body: { buscar: q } });
-        if (error || !data || data.error) throw new Error(data?.error || "error");
-        const l = data.lugares || [];
+        let l = [];
+        try {
+          const { data, error } = await sb.functions.invoke("ruta", { body: { buscar: q } });
+          if (error || !data || data.error) throw new Error(data?.error || "error");
+          l = data.lugares || [];
+        } catch (e) { if (!window.Ciudades) throw e; }
+        // v209: si el servidor no lo encuentra o no contesta, la lista propia de ciudades de Europa (ciudades.js)
+        if (!l.length && window.Ciudades) { l = await window.Ciudades.busca(q); const ex = l.filter(x => x.exacta); if (ex.length === 1) l = ex; }
         if (!l.length) { res.innerHTML = `<p class="msg err">No encuentro «${esc(q)}». Prueba con el nombre y el país, o con el código postal.</p>`; return; }
         const ir = (x) => { MAPAS[id]?.mapa.setView([x.lat, x.lon], 11); muestraZona(id, x.lat, x.lon, x.nombre); };
         if (l.length === 1) { ir(l[0]); return; }

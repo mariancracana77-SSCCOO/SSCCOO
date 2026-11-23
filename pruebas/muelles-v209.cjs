@@ -67,11 +67,30 @@ const path = require('path');
     ok(await p.evaluate(() => window.__BUSCADO) === 'lisboa', 'mapa: «Lisabona» (rumano) se busca como «lisboa»');
     await p.fill('#mue-sitio-mapa', 'Torelló'); await p.press('#mue-sitio-mapa', 'Enter'); await p.waitForTimeout(500);
     ok(await p.evaluate(() => window.__BUSCADO) === 'Torelló', 'mapa: un pueblo normal se busca tal cual');
-    await p.fill('#mue-sitio-mapa', 'Barzelona'); await p.press('#mue-sitio-mapa', 'Enter'); await p.waitForTimeout(500);
+    await p.fill('#mue-sitio-mapa', 'Barzelona'); await p.press('#mue-sitio-mapa', 'Enter'); await p.waitForTimeout(800);
+    ok((await res(p, 'mapa')).includes('Mapa en Barcelona, España'), 'mapa: «Barzelona» (falta) el servidor no lo encuentra y la lista propia sí: ' + (await res(p, 'mapa')));
+    await p.fill('#mue-sitio-mapa', 'zzzAlcaras'); await p.fill('#mue-sitio-mapa', 'Alcaras'); await p.evaluate(() => { window.__FUERA = true; });
+    await p.press('#mue-sitio-mapa', 'Enter'); await p.waitForTimeout(800);
     const qm = await p.$$eval('[data-sitio-res="mapa"] [data-sitio-q]', l => l.map(x => x.textContent));
-    ok((await res(p, 'mapa')).includes('¿Quisiste decir…?') && qm[0] === 'Barcelona', 'mapa: «Barzelona» no sale y ofrece ' + qm.join(', '));
-    await p.click('[data-sitio-res="mapa"] [data-sitio-q="Barcelona"]'); await p.waitForTimeout(500);
-    ok(await p.inputValue('#mue-sitio-mapa') === 'Barcelona' && await p.evaluate(() => window.__BUSCADO) === 'Barcelona', 'al tocarlo lo busca');
+    ok((await res(p, 'mapa')).includes('¿Quisiste decir…?') && qm.includes('Alcarràs'), 'mapa: «Alcaras» no sale y ofrece ' + qm.join(', '));
+    await p.click('[data-sitio-res="mapa"] [data-sitio-q="Alcarràs"]'); await p.waitForTimeout(500);
+    ok(await p.inputValue('#mue-sitio-mapa') === 'Alcarràs' && await p.evaluate(() => window.__BUSCADO) === 'Alcarràs', 'al tocarlo lo busca');
+    await p.fill('#mue-sitio-mapa', 'Lyon'); await p.press('#mue-sitio-mapa', 'Enter'); await p.waitForTimeout(800);
+    ok((await res(p, 'mapa')).includes('Mapa en Lyon, Francia'), 'mapa: el servidor no encuentra «Lyon» y sale de la lista propia: ' + (await res(p, 'mapa')));
+    await p.fill('#mue-sitio-mapa', 'Lione'); await p.press('#mue-sitio-mapa', 'Enter'); await p.waitForTimeout(800);
+    ok((await res(p, 'mapa')).includes('Lyon'), 'mapa: «Lione» (italiano) también: ' + (await res(p, 'mapa')));
+    await p.evaluate(() => { Object.defineProperty(navigator, 'onLine', { get: () => false, configurable: true }); });
+    await p.fill('#mue-sitio-mapa', 'München'); await p.press('#mue-sitio-mapa', 'Enter'); await p.waitForTimeout(800);
+    ok((await res(p, 'mapa')).includes('Múnich'), 'sin internet: «München» sale de la lista propia: ' + (await res(p, 'mapa')));
+    await c.close(); }
+
+  // Aparcamientos en mi ruta: el servidor no encuentra el destino y se prueba con las coordenadas de la lista propia
+  { const { c, p } = await nuevo();
+    await p.goto(BASE + '#aparcar'); await p.waitForTimeout(1200);
+    await p.fill('#apc-desde', 'Girona'); await p.fill('#apc-hasta', 'Lyon'); await p.click('#apc-buscar'); await p.waitForTimeout(1500);
+    const body = await p.evaluate(() => window.__RUTA_BODY);
+    ok(body && typeof body.hasta === 'object' && /Lyon/.test(body.hasta.nombre) && body.hasta.lat > 45, 'ruta: destino «Lyon» mandado con coordenadas de la lista: ' + JSON.stringify(body && body.hasta));
+    ok(body && typeof body.desde === 'object' && /Girona/.test(body.desde.nombre), 'ruta: salida «Girona» también con coordenadas');
     await c.close(); }
 
   for (const [w, osc] of [[320, false], [320, true], [412, true]]) {

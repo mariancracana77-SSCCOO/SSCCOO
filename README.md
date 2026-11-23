@@ -77,14 +77,17 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
-## Versión 209: buscar por parecido en la libreta de muelles y en los mapas
+## Versión 209: buscar por parecido y lista propia de ciudades de Europa (libreta de muelles, mapas y rutas)
 - Lo pidieron el padre y Lorena: el buscador de la libreta y el de «Buscar un sitio» encima de los mapas ya no distinguen mayúsculas, tildes, ñ ni ç («lleida», «LÉRIDA», «lléida»; «barçelona»; «coruna»).
 - Vale escribir el principio de la palabra («merca») o un trozo («cadona»), y también junto («bonarea» por «Bon Àrea»).
 - Aguanta faltas: una letra cambiada, de más o de menos, o dos letras cambiadas de sitio («leida», «barcelna», «bacrelona»); dos faltas en palabras de 8 letras o más.
 - Lista pequeña de nombres en otros idiomas (`ALIAS` en `muelles.js`): Gerona/Girona, Lérida/Lleida, Saragossa/Zaragoza, Lisabona/Lisbon/Lisboa, Milán/Milano, Colonia/Köln, Amberes/Anvers/Antwerpen, Viena/Wien, Bucarest/București y otros. En el mapa se busca con el nombre de allí.
 - Con texto, la libreta ordena del que más se parece al que menos; sin texto, como antes (por dificultad y nombre). Los resultados del mapa también van del más parecido al menos.
 - Si no sale nada: «¿Quisiste decir…?» con hasta 5 nombres o pueblos de tu libreta (y en el mapa, también de la lista de ciudades) que se parecen; al tocar uno se busca.
-- Todo en el móvil: sin servicios nuevos ni cambios en la CSP. Prueba: `pruebas/muelles-v209.cjs`.
+- **Lista propia de ciudades de Europa** (`ciudades.json` + `ciudades.js`, 1016 ciudades, unos 64 KB, se carga solo al buscar y queda guardada para usar sin internet): las grandes de Natural Earth (dominio público) con sus nombres en castellano, francés, alemán, italiano, inglés, portugués, neerlandés, polaco… y unas 320 ciudades y pueblos de las rutas (Girona, Figueres, Torelló, Guissona, Narbona, Aviñón, Le Boulou, Padua, Venlo, Pitești, Nădlac…) de GeoNames (CC BY 4.0) sacados con Open-Meteo. Crédito en el propio archivo.
+- Por qué: desde el 23/11/2026 a las 06:00 UTC los dos buscadores gratis que usa la función «ruta» (Photon y Nominatim) le contestan 403 al servidor de funciones de Supabase, y no se encontraba ningún sitio («Lyon», «Figueres»…): ni en el buscador de los mapas ni al calcular una ruta en «Aparcamientos en mi ruta». Ahora, si la función no encuentra el sitio o no contesta, se usa la lista propia; y en las rutas se le manda a la función la salida y el destino ya con sus coordenadas (el cálculo de la ruta sí funciona). Sin internet, el buscador del mapa de muelles también encuentra las ciudades de la lista.
+- Lo que no está en la lista (pueblos pequeños, códigos postales) sigue necesitando que la función «ruta» vuelva a encontrar sitios: el arreglo de la función (añadir Open-Meteo de reserva) es del servidor y espera el permiso de Lorena.
+- Todo en el móvil: sin dominios nuevos ni cambios en la CSP. Pruebas: `pruebas/muelles-v209.cjs` y `pruebas/ciudades-v209.cjs` (54 ciudades escritas de varias formas).
 
 ## Versión 208: datos de túneles comprobados en webs oficiales (petición 66)
 - Kennedytunnel (Amberes): categoría D, no E (Centro de Tráfico de Flandes). Liefkenshoek A, comprobado.
