@@ -3105,6 +3105,8 @@ label.cg-huecos { margin: 0 0 12px; }
 .btn.mue-si { background: var(--rojo); border-color: var(--rojo); color: #fff; }
 .mue-vacio { color: var(--suave); }
 .panel.mue-vacio p { margin: 6px 0 0; }
+.mue-quisiste { margin: 0 0 18px; } /* v209 */
+.mue-quisiste .zc-pista { margin: 0 0 6px; }
 .mue-pasar summary { cursor: pointer; font-weight: 800; min-height: 44px; display: flex; align-items: center; }
 .mue-pasar .btn { display: inline-flex; align-items: center; gap: 6px; }
 /* v190: «Ir allí» y mapa de mis clientes (Leaflet como en Aparcamientos) */

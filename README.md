@@ -77,6 +77,15 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 209: buscar por parecido en la libreta de muelles y en los mapas
+- Lo pidieron el padre y Lorena: el buscador de la libreta y el de «Buscar un sitio» encima de los mapas ya no distinguen mayúsculas, tildes, ñ ni ç («lleida», «LÉRIDA», «lléida»; «barçelona»; «coruna»).
+- Vale escribir el principio de la palabra («merca») o un trozo («cadona»), y también junto («bonarea» por «Bon Àrea»).
+- Aguanta faltas: una letra cambiada, de más o de menos, o dos letras cambiadas de sitio («leida», «barcelna», «bacrelona»); dos faltas en palabras de 8 letras o más.
+- Lista pequeña de nombres en otros idiomas (`ALIAS` en `muelles.js`): Gerona/Girona, Lérida/Lleida, Saragossa/Zaragoza, Lisabona/Lisbon/Lisboa, Milán/Milano, Colonia/Köln, Amberes/Anvers/Antwerpen, Viena/Wien, Bucarest/București y otros. En el mapa se busca con el nombre de allí.
+- Con texto, la libreta ordena del que más se parece al que menos; sin texto, como antes (por dificultad y nombre). Los resultados del mapa también van del más parecido al menos.
+- Si no sale nada: «¿Quisiste decir…?» con hasta 5 nombres o pueblos de tu libreta (y en el mapa, también de la lista de ciudades) que se parecen; al tocar uno se busca.
+- Todo en el móvil: sin servicios nuevos ni cambios en la CSP. Prueba: `pruebas/muelles-v209.cjs`.
+
 ## Versión 208: datos de túneles comprobados en webs oficiales (petición 66)
 - Kennedytunnel (Amberes): categoría D, no E (Centro de Tráfico de Flandes). Liefkenshoek A, comprobado.
 - Elbtunnel (Hamburgo): E de 5 a 23 h y C el resto, en vez de D (sale «Sin comprobar»: la web del ministerio alemán no se pudo abrir).
