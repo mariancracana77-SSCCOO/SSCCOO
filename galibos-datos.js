@@ -480,7 +480,7 @@ window.GalibosDatos = {
    "alto": 4,
    "altoNota": "",
    "adr": "E",
-   "adrNota": "Categoría E de 5:00 a 23:00 y C de 23:00 a 5:00 (sin comprobar en la web oficial: confirma con la señal). Control automático de altura en los pórticos.",
+   "adrNota": "De 5:00 a 23:00. De 23:00 a 5:00 es categoría C. Control automático de altura en los pórticos.",
    "vel": "",
    "dist": "",
    "normas": [
@@ -532,7 +532,7 @@ window.GalibosDatos = {
    "dist": "",
    "normas": [
     "Uno de los puntos con mayor tráfico pesado de Europa. Prohibido adelantar camiones. (sin comprobar)",
-    "Si llevas ADR, debes desviarte por el R2 (Túnel Liefkenshoek). (sin comprobar)"
+    "Si llevas mercancías inflamables o explosivas, desvíate por el R2 (Túnel Liefkenshoek). (sin comprobar)"
    ],
    "alt": "Túnel Liefkenshoek (R2, admite ADR Cat. A).",
    "comp": {
