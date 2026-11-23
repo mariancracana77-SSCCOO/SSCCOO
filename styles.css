@@ -3204,6 +3204,7 @@ label.cg-huecos { margin: 0 0 12px; }
 .te-item.ambar { border-left-color: var(--ambar); }
 .te-item.verde { border-left-color: var(--verde); }
 .te-item.azul { border-left-color: #1e6fd9; }
+.te-item.manual { border-left-color: var(--cond-azul-ic); } /* v210: testigos del manual DAF del padre */
 .te-item > div { min-width: 0; }
 .te-item h3 { margin: 0 0 2px; }
 .te-item p { margin: 4px 0; }

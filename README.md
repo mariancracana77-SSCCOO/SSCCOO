@@ -77,6 +77,13 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 210: guía de testigos con el manual DAF del padre (parte A: cuadro 1-39)
+- Petición del padre: «Cambia los testigos por estos», con las fotos de su manual DAF (XF, XG, XG+ y CF). Primera parte: los testigos del cuadro, números 1 a 39 (págs. 101-109 del manual).
+- Cada testigo del cuadro lleva su número, el nombre y el texto tal como vienen en el manual, y «Comprobado en manual DAF, pág. N». Nada inventado: si el manual solo da el nombre, la tarjeta lo dice.
+- 58 dibujos nuevos hechos por nosotros con la misma forma que en el manual (`testigos-iconos.js`). Las fotos del manual no se publican (derechos de DAF).
+- Los testigos de antes que aún no están en esas páginas siguen abajo como «Otros, sin comprobar»; las partes B y C (avisos rojos y amarillos de la pantalla, págs. 70-97) los irán cambiando.
+- Filtros «Del cuadro (manual DAF)» / «Otros, sin comprobar» en vez de por color; el buscador también busca por el número del cuadro y en el texto del manual. Prueba: `pruebas/utilidades-v196.cjs`.
+
 ## Versión 209: buscar por parecido y lista propia de ciudades de Europa (libreta de muelles, mapas y rutas)
 - Lo pidieron el padre y Lorena: el buscador de la libreta y el de «Buscar un sitio» encima de los mapas ya no distinguen mayúsculas, tildes, ñ ni ç («lleida», «LÉRIDA», «lléida»; «barçelona»; «coruna»).
 - Vale escribir el principio de la palabra («merca») o un trozo («cadona»), y también junto («bonarea» por «Bon Àrea»).
