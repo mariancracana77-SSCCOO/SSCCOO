@@ -3201,7 +3201,7 @@ label.cg-huecos { margin: 0 0 12px; }
 .te-titulo { margin: 4px 0 2px; }
 .te-item { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 12px; border-left: 6px solid var(--linea); }
 .te-item.rojo { border-left-color: #d32f2f; }
-.te-item.ambar { border-left-color: var(--ambar); }
+.te-item.ambar, .te-item.amarillo { border-left-color: var(--ambar); } /* v212: avisos amarillos del manual */
 .te-item.verde { border-left-color: var(--verde); }
 .te-item.azul { border-left-color: #1e6fd9; }
 .te-item.manual { border-left-color: var(--cond-azul-ic); } /* v210: testigos del manual DAF del padre */

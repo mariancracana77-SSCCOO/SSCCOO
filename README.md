@@ -77,6 +77,13 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 212: guía de testigos, parte C (avisos amarillos del manual DAF)
+- Petición del padre (manual DAF, parte C): 106 avisos amarillos de la pantalla (págs. 75-94), con el texto del manual. Salen después de los rojos, con el borde ámbar y «Aviso amarillo en la pantalla: sigue con precaución». «Qué hacer» y «Precaución» con lo que dice el manual para todos los amarillos (pág. 75), salvo cuando el aviso dice otra cosa (por ejemplo «Presión de aceite baja»: parar el motor). Si el manual solo da el nombre, la tarjeta lo dice.
+- 20 dibujos nuevos nuestros (`testigos-iconos.js`, claves `a-*`); los demás, los del cuadro y los rojos.
+- Faltan las págs. 88, 89 y 95 (pedidas al padre): los 5 avisos de luces de la pág. 90 llevan el dibujo general hasta tener la 89. Los avisos de la carrocería (págs. 95-97, solo nombres y según el equipo del camión) no se ponen aún.
+- Quitados de «Otros, sin comprobar» los 9 que ya salen (batería, airbag, EBS, pastillas, filtro de aire, caja de cambios y su temperatura, crucero y limpiaparabrisas). Quedan 6.
+- Traducción: la función `traducir` admite 500 textos por herramienta; los códigos de `testigos.js` (grupo, icono, color) van ahora con comillas simples para no contar como texto (426). Sin cambios en el servidor.
+
 ## Versión 211: guía de testigos, parte B (avisos rojos del manual DAF) y en otros idiomas
 - Petición del padre (manual DAF, parte B): los 28 avisos rojos de la pantalla (págs. 70-75), con el texto del manual, la precaución cuando la hay y «Qué hacer» con lo que dice el manual para todos los avisos rojos (pág. 70). Salen los primeros y en rojo. 12 dibujos nuevos nuestros (`testigos-iconos.js`, claves `r-*`); los demás, los mismos del cuadro.
 - Quitados de «Otros, sin comprobar» los 6 que ya salen en estas páginas (presión de aire, aceite, temperatura y nivel del refrigerante, cabina, EBS).
