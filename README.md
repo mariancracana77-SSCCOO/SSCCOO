@@ -77,6 +77,10 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 213: guía de testigos, iconos de los avisos amarillos como en el libro
+- Lo pidió Lorena: que los iconos de los avisos amarillos sean los mismos dibujos que el manual DAF del padre. Se han redibujado 15 copiando la forma del libro (págs. 82-94): pise el pedal de freno, avería del vehículo, ACC, PCC, sensor sucio y AEBS, airbag, suspensión neumática, forros de freno, lavaparabrisas, multimedia, filtro de aire, caja de herramientas, panel de instrumentos, desplazamiento en pendiente y ángulo muerto delantero.
+- Son dibujos nuestros (`testigos-iconos.js`, bloque v213); las fotos del manual no se publican. Las luces de la pág. 90 siguen con el aviso general hasta tener la pág. 89.
+
 ## Versión 212: guía de testigos, parte C (avisos amarillos del manual DAF)
 - Petición del padre (manual DAF, parte C): 106 avisos amarillos de la pantalla (págs. 75-94), con el texto del manual. Salen después de los rojos, con el borde ámbar y «Aviso amarillo en la pantalla: sigue con precaución». «Qué hacer» y «Precaución» con lo que dice el manual para todos los amarillos (pág. 75), salvo cuando el aviso dice otra cosa (por ejemplo «Presión de aceite baja»: parar el motor). Si el manual solo da el nombre, la tarjeta lo dice.
 - 20 dibujos nuevos nuestros (`testigos-iconos.js`, claves `a-*`); los demás, los del cuadro y los rojos.
