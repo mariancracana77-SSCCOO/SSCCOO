@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 214: guía de testigos, n.º 27 como en el libro
+- Repasados todos los iconos del cuadro (1-39) y de los avisos rojos contra las fotos del libro: todos se parecen menos el n.º 27 (ayuda de arranque en pendiente), que se ha redibujado como en la pág. 107 (arcos a la izquierda y camión en la cuesta).
+
 ## Versión 213: guía de testigos, iconos de los avisos amarillos como en el libro
 - Lo pidió Lorena: que los iconos de los avisos amarillos sean los mismos dibujos que el manual DAF del padre. Se han redibujado 15 copiando la forma del libro (págs. 82-94): pise el pedal de freno, avería del vehículo, ACC, PCC, sensor sucio y AEBS, airbag, suspensión neumática, forros de freno, lavaparabrisas, multimedia, filtro de aire, caja de herramientas, panel de instrumentos, desplazamiento en pendiente y ángulo muerto delantero.
 - Son dibujos nuestros (`testigos-iconos.js`, bloque v213); las fotos del manual no se publican. Las luces de la pág. 90 siguen con el aviso general hasta tener la pág. 89.
