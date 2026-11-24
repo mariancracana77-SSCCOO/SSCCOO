@@ -52,7 +52,11 @@ if (typeof module !== "undefined") module.exports = BAJA;
   const Z = typeof ZonaIdioma === "function" ? ZonaIdioma("baja", "v-baja", () => calc()) : { T: (x, v) => x.replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m), TH: null };
   const T = Z.T;
   const eur = (n) => n.toLocaleString("es-ES", { style: "currency", currency: "EUR" });
-  const num = (v) => Math.max(0, parseFloat(String(v).replace(",", ".")) || 0);
+  // v216: lee números como los escribe la gente en España: «2100», «2.100», «2.100,50», «2100,5», «2100 €».
+  const num = (v) => { let t = String(v ?? "").replace(/[\s€]/g, "");
+    if (t.includes(",")) t = t.replace(/\./g, "").replace(",", ".");
+    else if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, "");
+    const n = parseFloat(t); return Number.isFinite(n) && n > 0 ? n : 0; };
   const QUIEN = { empresa: () => T("la paga la empresa"), inss: () => T("la paga la Seguridad Social o la mutua"), mutua: () => T("la paga la mutua"), "": () => T("nadie paga estos días") };
   const caja = (t) => `<div class="zc-ok">${t}</div>`;
   function calc() {

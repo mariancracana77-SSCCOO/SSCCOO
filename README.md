@@ -81,7 +81,7 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 Petición n.º 72 del padre. Dos calculadoras nuevas, después de «Mi hora ordinaria», solo con datos comprobados en el BOE el 24/11/2026 y en el artículo 24 del convenio de Girona 2026-2027 (BOP n.º 160).
 - `jubilacion.js`: edad según los años cotizados (LGSS art. 205 y DT 7.ª), base reguladora (art. 209), porcentaje (art. 210 y DT 9.ª), anticipada voluntaria (art. 208) y por despido o cierre (art. 207, no para autónomos), pensión máxima y mínimas de 2026 (RDL 3/2026). Recuadro: los conductores profesionales todavía no tienen jubilación anticipada por la profesión. Las tablas de recortes se copiaron del texto del BOE con un programa, no a mano.
 - `baja.js`: lo que paga la Seguridad Social (LGSS arts. 169, 171 y 173, Decreto 3158/1966, RD 53/1980) y lo que completa la empresa por el convenio.
-- No se guarda nada ni se pregunta el sexo. Iconos `arena` y `salud` en `iconos.js`. Pruebas: `pruebas/jubilacion.cjs` (33 casos) y `pruebas/baja.cjs` (26).
+- No se guarda nada ni se pregunta el sexo. Iconos `arena` y `salud` en `iconos.js`. Pruebas: `pruebas/jubilacion.cjs` (33 casos) y `pruebas/baja.cjs` (26). Además `pruebas/jub-baja-pantalla.cjs` (177 comprobaciones: 320–412 px y PC, oscuro, letra muy grande, casillas vacías, lo que se esconde, buscador y bases escritas como «2.100», «2.100,50» o «2100 €», que antes se leían como 2,1 €).
 - Traducción: grupos `jubilacion` y `baja` en la copia de `traducir` (`herramientas/funciones/traducir.ts`); hay que desplegarla en Supabase (con el permiso de Lorena).
 
 ## Versión 215: «Aparcamientos en mi ruta» dentro de «Utilidades en ruta», en marrón

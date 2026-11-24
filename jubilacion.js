@@ -104,7 +104,11 @@ if (typeof module !== "undefined") module.exports = JUBILACION;
   const Z = typeof ZonaIdioma === "function" ? ZonaIdioma("jubilacion", "v-jubilacion", () => calc()) : { T: (x, v) => x.replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m), TH: null };
   const T = Z.T, TH = Z.TH || ((x, v) => esc(T(x, v)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>"));
   const eur = (n) => n.toLocaleString("es-ES", { style: "currency", currency: "EUR" });
-  const num = (v) => Math.max(0, parseFloat(String(v).replace(",", ".")) || 0);
+  // v216: lee números como los escribe la gente en España: «2100», «2.100», «2.100,50», «2100,5», «2100 €».
+  const num = (v) => { let t = String(v ?? "").replace(/[\s€]/g, "");
+    if (t.includes(",")) t = t.replace(/\./g, "").replace(",", ".");
+    else if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, "");
+    const n = parseFloat(t); return Number.isFinite(n) && n > 0 ? n : 0; };
   const fecha = (t) => new Date(t).toLocaleDateString("es-ES", { timeZone: "UTC", day: "numeric", month: "long", year: "numeric" });
   const am = (m) => m % 12 ? T("{a} años y {m} meses", { a: Math.floor(m / 12), m: m % 12 }) : T("{a} años", { a: m / 12 });
   const pct = (p) => p.toLocaleString("es-ES", { maximumFractionDigits: 2 }) + " %";

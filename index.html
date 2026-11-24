@@ -564,7 +564,7 @@
       <label for="ju-sigue">¿Seguirás cotizando hasta jubilarte?</label>
       <select id="ju-sigue"><option value="si">Sí</option><option value="no">No, ya no cotizo</option></select>
       <label for="ju-base">Base de cotización al mes (€)</label>
-      <input id="ju-base" type="number" inputmode="decimal" min="0" placeholder="Ej. 2100">
+      <input id="ju-base" type="text" inputmode="decimal" autocomplete="off" placeholder="Ej. 2100">
       <p class="zc-pista">Sale en tu nómina («base de contingencias comunes»). Si eres autónomo, la base por la que cotizas.</p>
       <label for="ju-fam">Situación familiar (opcional)</label>
       <select id="ju-fam"><option value="">Prefiero no decirlo</option><option value="solo">Sin cónyuge</option><option value="carga">Con cónyuge a mi cargo</option><option value="nocarga">Con cónyuge que no está a mi cargo</option></select>
@@ -602,7 +602,7 @@
       <label for="ba-tipo">Por qué es la baja</label>
       <select id="ba-tipo"><option value="comun">Enfermedad común</option><option value="anl">Accidente fuera del trabajo</option><option value="at">Accidente de trabajo</option><option value="ep">Enfermedad profesional</option></select>
       <label for="ba-base">Base de cotización del mes anterior (€)</label>
-      <input id="ba-base" type="number" inputmode="decimal" min="0" placeholder="Ej. 1900">
+      <input id="ba-base" type="text" inputmode="decimal" autocomplete="off" placeholder="Ej. 1900">
       <p class="zc-pista">Sale en tu nómina. Para una enfermedad o un accidente fuera del trabajo, la «base de contingencias comunes»; para un accidente de trabajo, la «base de accidentes de trabajo y enfermedades profesionales».</p>
       <label for="ba-dias">Días de baja</label>
       <input id="ba-dias" type="number" inputmode="numeric" min="1" max="545" value="30">
