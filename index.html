@@ -25,10 +25,10 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="fuentes.css?v=215">
-<script src="lectura.js?v=215"></script>
-<link rel="stylesheet" href="styles.css?v=215">
-<link rel="stylesheet" href="web-pc.css?v=215" media="(min-width: 1000px) and (display-mode: browser)">
+<link rel="stylesheet" href="fuentes.css?v=216">
+<script src="lectura.js?v=216"></script>
+<link rel="stylesheet" href="styles.css?v=216">
+<link rel="stylesheet" href="web-pc.css?v=216" media="(min-width: 1000px) and (display-mode: browser)">
 </head>
 <body class="publica">
 
@@ -539,6 +539,93 @@
     <div id="ho-out" aria-live="polite"></div>
     <a class="btn zc-delegado" href="#delegados"><svg class="icono p" aria-hidden="true"><use href="#i-telefono"/></svg>Hablar con un delegado</a>
     <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Cálculo orientativo. La hora ordinaria se obtiene dividiendo el salario anual (12 mensualidades más 3 pagas extra de 30 días, con salario base, plus convenio y antigüedad) entre las horas de trabajo efectivo al año. La hora extra del convenio es la de la tabla salarial. Si tu empresa tiene mejoras por contrato o acuerdo, pueden salir cifras distintas. Sin comprobar con el BOP 160 (20/08/2026): las tablas 2026-2027, las 1.766 horas, las 3 pagas extra y la hora extra de cada categoría.</span></p>
+  </section>
+
+  <!-- MI JUBILACIÓN (Zona Conductores, petición n.º 72 del padre, v216): solo con datos comprobados en el BOE el 24/11/2026; no se guarda nada (jubilacion.js) -->
+  <section class="vista zc-herr" id="v-jubilacion">
+    <h1 class="titulo-vista">Mi jubilación</h1>
+    <p class="intro-vista">A qué edad te puedes jubilar según lo que has cotizado, cuánto cobrarías más o menos y si puedes adelantarla. Se calcula en tu móvil: no se guarda ni se envía nada.</p>
+    <p class="aviso-oficial zc-arriba"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span><b>Cálculo orientativo; no sustituye al de la Seguridad Social.</b> Usa las reglas y las cifras de 2026. Para saber tu pensión de verdad, pide tu informe a la Seguridad Social.</span></p>
+    <div class="zc-aviso zc-conductores">
+      <p><b>Conductores profesionales: todavía no hay jubilación anticipada por la profesión.</b></p>
+      <p>Para jubilarse antes por un trabajo penoso hace falta un real decreto para ese colectivo. A 24 de noviembre de 2026, en el BOE solo lo tienen, entre otros, los bomberos, las policías locales y los agentes forestales. Para los conductores lo piden los sindicatos y la patronal, pero todavía no existe. Por eso aquí solo se calcula la jubilación como la de cualquier trabajador.</p>
+    </div>
+    <div class="panel zc-caja">
+      <label for="ju-reg">Cómo cotizas</label>
+      <select id="ju-reg"><option value="ajena">Con nómina (cuenta ajena)</option><option value="auto">Autónomo</option></select>
+      <label for="ju-nac">Fecha de nacimiento</label>
+      <input id="ju-nac" type="date">
+      <p class="zc-pista">Solo para saber cuándo cumples cada edad. No se guarda.</p>
+      <div class="zc-dos">
+        <div><label for="ju-anios">Años cotizados hasta hoy</label><input id="ju-anios" type="number" inputmode="numeric" min="0" max="60" value="30"></div>
+        <div><label for="ju-meses">Y meses</label><input id="ju-meses" type="number" inputmode="numeric" min="0" max="11" value="0"></div>
+      </div>
+      <p class="zc-pista">Los ves en tu informe de vida laboral. Sin contar las pagas extra.</p>
+      <label for="ju-sigue">¿Seguirás cotizando hasta jubilarte?</label>
+      <select id="ju-sigue"><option value="si">Sí</option><option value="no">No, ya no cotizo</option></select>
+      <label for="ju-base">Base de cotización al mes (€)</label>
+      <input id="ju-base" type="text" inputmode="decimal" autocomplete="off" placeholder="Ej. 2100">
+      <p class="zc-pista">Sale en tu nómina («base de contingencias comunes»). Si eres autónomo, la base por la que cotizas.</p>
+      <label for="ju-fam">Situación familiar (opcional)</label>
+      <select id="ju-fam"><option value="">Prefiero no decirlo</option><option value="solo">Sin cónyuge</option><option value="carga">Con cónyuge a mi cargo</option><option value="nocarga">Con cónyuge que no está a mi cargo</option></select>
+      <p class="zc-pista">Solo para enseñarte la pensión mínima que te tocaría. No se guarda.</p>
+      <div id="ju-desp-caja">
+        <label class="check"><input type="checkbox" id="ju-desp"><span>Me han despedido (despido colectivo u objetivo, cierre de la empresa…) y quiero ver la jubilación anticipada por despido</span></label>
+        <p class="zc-pista">Hace falta estar apuntado al paro al menos 6 meses. No es para autónomos.</p>
+      </div>
+      <label for="ju-adel">Meses que quieres adelantarla (opcional)</label>
+      <input id="ju-adel" type="number" inputmode="numeric" min="0" max="48" placeholder="Vacío = lo más pronto posible">
+    </div>
+    <div id="ju-out" aria-live="polite"></div>
+    <details class="zc-explica">
+      <summary>Cómo se calcula y de dónde salen los datos</summary>
+      <ul>
+        <li><b>Edad:</b> en 2026, a los 65 años si tienes 38 años y 3 meses cotizados; si no, a los 66 años y 10 meses. Desde 2027, a los 65 con 38 años y 6 meses; si no, a los 67. Hacen falta 15 años cotizados como mínimo. Comprobado en el BOE (Ley General de la Seguridad Social, art. 205 y disposición transitoria 7.ª), 24/11/2026.</li>
+        <li><b>Base reguladora:</b> las 324 mejores bases de las últimas 348, divididas entre 378 (art. 209). Aquí usamos tu base de ahora todos los meses y un 10 % menos, por si tus bases de años atrás eran más bajas: por eso sale una horquilla. Comprobado en el BOE, 24/11/2026.</li>
+        <li><b>Porcentaje:</b> 50 % por los primeros 15 años y luego un poco más por cada mes, hasta el 100 % (art. 210 y disposición transitoria 9.ª). Comprobado en el BOE, 24/11/2026.</li>
+        <li><b>Jubilación anticipada voluntaria:</b> hasta 2 años antes, con 35 años cotizados, con un recorte por cada mes que se adelanta (art. 208). La pensión tiene que salir más alta que la mínima. Comprobado en el BOE, 24/11/2026.</li>
+        <li><b>Por despido o cierre:</b> hasta 4 años antes, con 33 años cotizados, con su recorte (art. 207). No es para autónomos (art. 318). Comprobado en el BOE, 24/11/2026.</li>
+        <li><b>Pensión máxima de 2026:</b> 3.359,60 € al mes. <b>Pensiones mínimas de 2026</b> con 65 años: 17.592,40 € al año con cónyuge a cargo, 13.106,80 € sin cónyuge y 12.441,80 € con cónyuge no a cargo (Real Decreto-ley 3/2026). Comprobado en el BOE, 24/11/2026.</li>
+        <li><b>No se calcula:</b> los años que faltan en tu vida laboral (lagunas), el recorte cuando la pensión pasa del tope máximo, el límite de ingresos de la pensión mínima, los complementos por hijos y los años trabajados en otros países.</li>
+      </ul>
+    </details>
+    <a class="btn zc-delegado" href="#delegados"><svg class="icono p" aria-hidden="true"><use href="#i-telefono"/></svg>Hablar con un delegado</a>
+    <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Cálculo orientativo; no sustituye al de la Seguridad Social. Las cifras cambian cada año. Antes de decidir nada, pide tu informe a la Seguridad Social o pregunta a un delegado.</span></p>
+  </section>
+
+  <!-- MI BAJA MÉDICA (Zona Conductores, petición n.º 72 del padre, v216): Seguridad Social comprobada en el BOE y art. 24 del convenio de Girona 2026-2027; no se guarda nada (baja.js) -->
+  <section class="vista zc-herr" id="v-baja">
+    <h1 class="titulo-vista">Mi baja médica</h1>
+    <p class="intro-vista">Cuánto cobras cada día de baja: lo que paga la Seguridad Social y lo que completa la empresa por el convenio de Girona 2026-2027. Se calcula en tu móvil: no se guarda ni se envía nada.</p>
+    <p class="aviso-oficial zc-arriba"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span><b>Cálculo orientativo; no sustituye al de la Seguridad Social</b> ni a tu nómina.</span></p>
+    <div class="panel zc-caja">
+      <label for="ba-tipo">Por qué es la baja</label>
+      <select id="ba-tipo"><option value="comun">Enfermedad común</option><option value="anl">Accidente fuera del trabajo</option><option value="at">Accidente de trabajo</option><option value="ep">Enfermedad profesional</option></select>
+      <label for="ba-base">Base de cotización del mes anterior (€)</label>
+      <input id="ba-base" type="text" inputmode="decimal" autocomplete="off" placeholder="Ej. 1900">
+      <p class="zc-pista">Sale en tu nómina. Para una enfermedad o un accidente fuera del trabajo, la «base de contingencias comunes»; para un accidente de trabajo, la «base de accidentes de trabajo y enfermedades profesionales».</p>
+      <label for="ba-dias">Días de baja</label>
+      <input id="ba-dias" type="number" inputmode="numeric" min="1" max="545" value="30">
+      <div id="ba-comun-caja">
+        <label class="check"><input type="checkbox" id="ba-hosp"><span>Estoy ingresado en el hospital (o esperando el ingreso, hasta 15 días, o recuperándome después), con justificante médico</span></label>
+        <label class="check"><input type="checkbox" id="ba-veces"><span>Este año ya he tenido 2 bajas que pasaron de 60 días</span></label>
+        <p class="zc-pista">El convenio paga el 100 % desde el día 61 «como máximo dos veces al año». Si no sabes cómo se cuentan, pregunta a un delegado.</p>
+      </div>
+    </div>
+    <div id="ba-out" aria-live="polite"></div>
+    <details class="zc-explica">
+      <summary>Cómo se calcula y de dónde salen los datos</summary>
+      <ul>
+        <li><b>Base reguladora:</b> la base de cotización del mes anterior dividida entre 30 (Ley General de la Seguridad Social, art. 171). Comprobado en el BOE, 24/11/2026.</li>
+        <li><b>Enfermedad común o accidente fuera del trabajo:</b> los 3 primeros días no paga la Seguridad Social; del día 4 al 20, el 60 %; desde el día 21, el 75 %. Del día 4 al 15 lo paga la empresa (art. 173, Decreto 3158/1966 y Real Decreto 53/1980). Comprobado en el BOE, 24/11/2026.</li>
+        <li><b>Accidente de trabajo o enfermedad profesional:</b> el día de la baja, el salario entero a cargo de la empresa; desde el día siguiente, el 75 % (art. 173 y Decreto 3158/1966). Comprobado en el BOE, 24/11/2026.</li>
+        <li><b>Convenio de Girona 2026-2027, artículo 24</b> (BOP de Girona n.º 160, 20/08/2026): accidente de trabajo, la empresa completa hasta el 100 % durante 360 días como máximo; enfermedad común con hospitalización, el 100 % desde el primer día; enfermedad común, nada los 3 primeros días, hasta el 80 % del día 4 al 60 y el 100 % desde el día 61, como máximo dos veces al año.</li>
+        <li><b>Lo que no dice el convenio:</b> los accidentes fuera del trabajo y las enfermedades profesionales. Ahí solo se cuenta lo de la Seguridad Social.</li>
+        <li><b>Una baja dura como mucho 365 días</b>, que se pueden alargar 180 más (art. 169). Comprobado en el BOE, 24/11/2026.</li>
+      </ul>
+    </details>
+    <a class="btn zc-delegado" href="#delegados"><svg class="icono p" aria-hidden="true"><use href="#i-telefono"/></svg>Hablar con un delegado</a>
+    <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Cálculo orientativo; no sustituye al de la Seguridad Social ni a tu nómina. Si tu empresa paga más que el convenio, cobrarás más. Si algo no te cuadra, pregunta a un delegado.</span></p>
   </section>
 
   <!-- DICCIONARIO DEL CONDUCTOR (Zona Conductores, petición n.º 42): el diccionario del padre tal cual; no se guarda nada (diccionario.js) -->
@@ -1147,32 +1234,34 @@
 <div class="barra-acciones" id="barra-acciones"></div>
 <button class="arriba-btn" id="arriba" type="button" aria-label="Volver arriba" title="Volver arriba"><svg class="arriba-aro" viewBox="0 0 52 52" aria-hidden="true"><circle class="aro-fondo" cx="26" cy="26" r="23"/><circle class="aro-prog" cx="26" cy="26" r="23" pathLength="100"/></svg><span data-i="arriba"></span></button>
 
-<script src="lib/supabase.js?v=215"></script>
-<script src="iconos.js?v=215"></script>
-<script src="config.js?v=215"></script>
-<script src="render.js?v=215"></script>
-<script src="app.js?v=215"></script>
-<script src="descansos.js?v=215"></script>
-<script src="ganancias.js?v=215"></script>
-<script src="ciudades.js?v=215"></script>
-<script src="aparcar.js?v=215"></script>
-<script src="zona-idioma.js?v=215"></script>
-<script src="convenio-girona.js?v=215"></script>
-<script src="finiquito.js?v=215"></script>
-<script src="adr.js?v=215"></script>
-<script src="hora.js?v=215"></script>
-<script src="diccionario.js?v=215"></script>
-<script src="carga.js?v=215"></script>
-<script src="ejes.js?v=215"></script>
-<script src="multas.js?v=215"></script>
-<script src="sobresale.js?v=215"></script>
-<script src="conversor.js?v=215"></script>
-<script src="muelles.js?v=215"></script>
-<script src="ferry.js?v=215"></script>
-<script src="testigos-iconos.js?v=215"></script>
-<script src="testigos.js?v=215"></script>
-<script src="galibos-datos.js?v=215"></script>
-<script src="galibos.js?v=215"></script>
-<script src="web-pc.js?v=215"></script>
+<script src="lib/supabase.js?v=216"></script>
+<script src="iconos.js?v=216"></script>
+<script src="config.js?v=216"></script>
+<script src="render.js?v=216"></script>
+<script src="app.js?v=216"></script>
+<script src="descansos.js?v=216"></script>
+<script src="ganancias.js?v=216"></script>
+<script src="ciudades.js?v=216"></script>
+<script src="aparcar.js?v=216"></script>
+<script src="zona-idioma.js?v=216"></script>
+<script src="convenio-girona.js?v=216"></script>
+<script src="finiquito.js?v=216"></script>
+<script src="adr.js?v=216"></script>
+<script src="hora.js?v=216"></script>
+<script src="jubilacion.js?v=216"></script>
+<script src="baja.js?v=216"></script>
+<script src="diccionario.js?v=216"></script>
+<script src="carga.js?v=216"></script>
+<script src="ejes.js?v=216"></script>
+<script src="multas.js?v=216"></script>
+<script src="sobresale.js?v=216"></script>
+<script src="conversor.js?v=216"></script>
+<script src="muelles.js?v=216"></script>
+<script src="ferry.js?v=216"></script>
+<script src="testigos-iconos.js?v=216"></script>
+<script src="testigos.js?v=216"></script>
+<script src="galibos-datos.js?v=216"></script>
+<script src="galibos.js?v=216"></script>
+<script src="web-pc.js?v=216"></script>
 </body>
 </html>

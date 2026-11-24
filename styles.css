@@ -2749,6 +2749,12 @@ body.solo-restr #apc-prohib-todas { margin-top: 20px; }
 .zc-aviso { background: var(--ambar-suave); border-left: 5px solid var(--ambar-rotulo); border-radius: 10px; padding: 12px 14px; margin: 0 0 14px; }
 .zc-aviso ul { margin: 6px 0 0; padding-left: 20px; }
 .zc-aviso li { margin-bottom: 4px; }
+/* v216 (petición n.º 72): aviso de arriba de «Mi jubilación» y «Mi baja médica», y el recuadro de los conductores profesionales */
+.zc-herr .aviso-oficial.zc-arriba { margin: 0 0 12px; }
+.zc-aviso.zc-conductores p { margin: 0 0 6px; }
+.zc-aviso.zc-conductores p:last-child { margin: 0; }
+/* En estas dos, las cifras (fechas, horquillas) pueden ocupar dos líneas: en 320-412 px no caben en una */
+.zc-tabla.zc-parte td:last-child { white-space: normal; width: 44%; overflow-wrap: anywhere; }
 .btn.zc-delegado { display: flex; justify-content: center; align-items: center; gap: 8px; width: 100%; min-height: 52px; margin: 0 0 14px; background: var(--rojo); border-color: var(--rojo); color: #fff; font-weight: 800; text-decoration: none; }
 .btn.zc-btn { display: block; width: 100%; min-height: 48px; margin-top: 12px; background: var(--cond-azul); border-color: var(--cond-azul); color: #fff; font-weight: 800; }
 .zc-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; margin: 0 0 14px; background: var(--tarjeta); border: 1px solid var(--linea); border-radius: 14px; }
