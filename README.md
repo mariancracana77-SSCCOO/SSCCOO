@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 215: «Aparcamientos en mi ruta» dentro de «Utilidades en ruta», en marrón
+- Petición n.º 71 del padre: la tarjeta de «Aparcamientos en mi ruta» ya no sale suelta en Zona Conductores (ni en su segunda fila de pestañas); va dentro de «Utilidades en ruta», la tercera (detrás de «Accesos y muelles», que sigue segunda) y con fondo marrón. La herramienta y lo guardado en el móvil no cambian. `UTIL` y `TARJETAS_COND` en `app.js`; color en `styles.css`.
+
 ## Versión 214: guía de testigos, n.º 27 como en el libro
 - Repasados todos los iconos del cuadro (1-39) y de los avisos rojos contra las fotos del libro: todos se parecen menos el n.º 27 (ayuda de arranque en pendiente), que se ha redibujado como en la pág. 107 (arcos a la izquierda y camión en la cuesta).
 
