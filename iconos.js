@@ -69,6 +69,9 @@
     tunel: '<path d="M3 20V12a9 9 0 0 1 18 0v8"/><path d="M7.5 20v-7a4.5 4.5 0 0 1 9 0v7"/><path d="M2 20h20"/>',
     testigo: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5.5"/><path d="M12 16.2v.3"/>',
     tunel: '<path d="M3 20V12a9 9 0 0 1 18 0v8"/><path d="M7 20v-7.5a5 5 0 0 1 10 0V20"/><path d="M2 20h20"/>',
+    // v216 (petición n.º 72): reloj de arena para «Mi jubilación» y cruz de salud para «Mi baja médica»
+    arena: '<path d="M6 3h12M6 21h12"/><path d="M7 3c0 5 10 5 10 9s-10 4-10 9"/><path d="M17 3c0 5-10 5-10 9s10 4 10 9"/><path d="M10 18h4"/>',
+    salud: '<rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M12 7.5v9M7.5 12h9"/>',
     muelle: '<path d="M2.5 21V9.5L12 4l9.5 5.5V21"/><path d="M6.5 21v-8h11v8"/><path d="M6.5 16.5h11"/><path d="M9.5 9.5h5"/>',
   };
   const svg = '<svg xmlns="http://www.w3.org/2000/svg" style="display:none">' +
