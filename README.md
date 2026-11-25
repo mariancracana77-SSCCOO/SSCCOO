@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 217: «Aparcamientos en mi ruta» en morado
+Petición n.º 73 del padre. En «Utilidades en ruta», la tarjeta de «Aparcamientos en mi ruta» pasa del marrón al mismo morado que «Accesos y muelles» (`styles.css`, regla de la v215) y también en el PC (`web-pc.css`, que las ponía todas amarillas menos muelles: el marrón de la v215 tampoco se veía en el PC). Igual en claro y oscuro.
+
 ## Versión 216: «Mi jubilación» y «Mi baja médica» en Zona Conductores
 Petición n.º 72 del padre. Dos calculadoras nuevas, después de «Mi hora ordinaria», solo con datos comprobados en el BOE el 24/11/2026 y en el artículo 24 del convenio de Girona 2026-2027 (BOP n.º 160).
 - `jubilacion.js`: edad según los años cotizados (LGSS art. 205 y DT 7.ª), base reguladora (art. 209), porcentaje (art. 210 y DT 9.ª), anticipada voluntaria (art. 208) y por despido o cierre (art. 207, no para autónomos), pensión máxima y mínimas de 2026 (RDL 3/2026). Recuadro: los conductores profesionales todavía no tienen jubilación anticipada por la profesión. Las tablas de recortes se copiaron del texto del BOE con un programa, no a mano.

@@ -3339,8 +3339,8 @@ label.cg-huecos { margin: 0 0 12px; }
 .mue-yo-btn span { white-space: nowrap; }
 @media (max-width: 380px) { .mue-sitio-fila { flex-wrap: wrap; } .mue-sitio-fila .btn { flex: 1 1 100%; } }
 
-/* v215 (petición n.º 71 del padre): «Aparcamientos en mi ruta» dentro de «Utilidades en ruta», en marrón. Igual en claro y oscuro, como la morada de muelles */
-.desc-promo.cond.util[href="#aparcar"] { background: #6e3b1f; border-color: #4f2914; border-left-color: #2e170a; color: #fff; }
+/* v215 (petición n.º 71 del padre): «Aparcamientos en mi ruta» dentro de «Utilidades en ruta». v217 (petición n.º 73): del marrón al mismo morado que «Accesos y muelles». Igual en claro y oscuro */
+.desc-promo.cond.util[href="#aparcar"] { background: #6b2fa8; border-color: #4c1d7a; border-left-color: #2e0f4d; color: #fff; }
 .desc-promo.cond.util[href="#aparcar"] > .icono:first-child, .desc-promo.cond.util[href="#aparcar"] > .icono:last-child { color: #fff; }
-.desc-promo.cond.util[href="#aparcar"] small { color: #f5e9df; }
-.desc-promo.cond.util[href="#aparcar"]:hover { background: #7e4726; }
+.desc-promo.cond.util[href="#aparcar"] small { color: #efe6fa; }
+.desc-promo.cond.util[href="#aparcar"]:hover { background: #7a3bbb; }

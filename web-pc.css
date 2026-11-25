@@ -482,9 +482,9 @@ body.publica a { text-underline-offset: 4px; }
 /* v187 (petición n.º 56 del padre): «Utilidades en ruta» en amarillo también en el PC */
 :root:root #v-apartado .desc-promo.util, :root:root #v-apartado .desc-promo.util:hover, :root:root #v-utilidades .desc-promo.util, :root:root #v-utilidades .desc-promo.util:hover { background: #ffd23f; border-radius: 10px; border-bottom: 0; padding: 18px 16px; margin-top: 10px; color: #1d1a10; }
 :root:root #v-apartado .desc-promo.util small, :root:root #v-utilidades .desc-promo.util small { color: #3d3420; }
-/* v200 (petición n.º 68 del padre): «Accesos y muelles» en morado, las demás amarillas */
-:root:root #v-utilidades .desc-promo.util[href="#muelles"], :root:root #v-utilidades .desc-promo.util[href="#muelles"]:hover { background: #6b2fa8; color: #fff; }
-:root:root #v-utilidades .desc-promo.util[href="#muelles"] small, :root:root #v-utilidades .desc-promo.util[href="#muelles"] .icono { color: #efe6fa; }
+/* v200 (petición n.º 68 del padre): «Accesos y muelles» en morado, las demás amarillas. v217 (petición n.º 73): «Aparcamientos en mi ruta» en el mismo morado */
+:root:root #v-utilidades .desc-promo.util:is([href="#muelles"], [href="#aparcar"]), :root:root #v-utilidades .desc-promo.util:is([href="#muelles"], [href="#aparcar"]):hover { background: #6b2fa8; color: #fff; }
+:root:root #v-utilidades .desc-promo.util:is([href="#muelles"], [href="#aparcar"]) small, :root:root #v-utilidades .desc-promo.util:is([href="#muelles"], [href="#aparcar"]) .icono { color: #efe6fa; }
 /* Publicaciones de los apartados (como las actas): la fecha como cifra grande */
 :root:root #v-apartado .publicacion { background: none; border: 0; border-top: 1px solid var(--a-filete); border-radius: 0; box-shadow: none; margin: 0; padding: 26px 0 22px; grid-template-columns: 96px 1fr; gap: 24px; }
 :root:root #v-apartado .grupo-mes + .publicacion { border-top: 0; }
