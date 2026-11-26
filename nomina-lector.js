@@ -297,10 +297,37 @@ const LECTOR_NOMINA = (function () {
   }
   // Para la pantalla: lee un archivo. Errores: "foto" (imagen), "viejo" (.doc/.xls), "tipo" (otro), "vacio" (sin texto),
   // "mal" (no se abre), "grande" (más de 20 MB)
-  async function leeArchivo(archivo) {
+  // v223 (aviso del padre: «pones una y ya no puedes hacer nada»): Android a veces da el archivo sin extensión o como
+  // «application/octet-stream» (desde WhatsApp, Drive o Descargas): entonces se mira cómo empieza el archivo (%PDF, ZIP
+  // de Word/Excel/OpenOffice). Y nunca se queda «Leyendo…» para siempre: a los 45 s da el aviso «lento».
+  async function adivinaExt(archivo) {
+    try {
+      const b = new Uint8Array(await archivo.slice(0, 8).arrayBuffer());
+      const ini = String.fromCharCode(...b);
+      if (ini.startsWith("%PDF")) return "pdf";
+      if (b[0] === 0xff && b[1] === 0xd8) return "jpg";
+      if (ini.startsWith("\x89PNG")) return "png";
+      if (b[0] === 0xd0 && b[1] === 0xcf) return "doc";
+      if (ini.startsWith("PK")) {
+        const z = await abreZip(archivo);
+        if (z.file("word/document.xml")) return "docx";
+        if (z.file("xl/workbook.xml")) return "xlsx";
+        if (z.file("content.xml")) return "odt";
+      }
+    } catch (_) {}
+    return "";
+  }
+  function leeArchivo(archivo) {
+    let reloj;
+    const tarde = new Promise((ok) => { reloj = setTimeout(() => ok({ error: "lento" }), 45000); });
+    return Promise.race([leeArchivo0(archivo), tarde]).finally(() => clearTimeout(reloj));
+  }
+  async function leeArchivo0(archivo) {
     const nom = (archivo.name || "").toLowerCase(), tipo = archivo.type || "";
-    const ext = (/\.([a-z0-9]+)$/.exec(nom) || [])[1] || "";
+    let ext = (/\.([a-z0-9]+)$/.exec(nom) || [])[1] || "";
     if (archivo.size > 20 * 1048576) return { error: "grande" };
+    const conocida = /^(pdf|jpe?g|png|webp|heic|heif|gif|bmp|tiff?|docx?|xlsx?|xlsm|odt|ods|html?|txt|csv|tsv|text)$/.test(ext);
+    if (!conocida && tipo !== "application/pdf" && !/^(image|text)\//.test(tipo)) ext = (await adivinaExt(archivo)) || ext;
     let tz;
     try {
       if (ext === "pdf" || tipo === "application/pdf") tz = await trozosPdf(archivo);
@@ -327,7 +354,8 @@ const LECTOR_NOMINA = (function () {
     tipo: "Este tipo de archivo no lo sé leer. Valen PDF, Word, Excel, OpenOffice, texto o página web.",
     vacio: "Este archivo no tiene texto que se pueda leer (parece escaneado o una foto): copia los importes a mano.",
     mal: "No he podido abrir este archivo. Puede que esté dañado o tenga contraseña.",
-    grande: "El archivo es demasiado grande (más de 20 MB)." /* fin textos */ };
+    grande: "El archivo es demasiado grande (más de 20 MB).",
+    lento: "Este archivo tarda demasiado en leerse. Prueba otra vez o copia los importes a mano." /* fin textos */ };
   const MESES_TXT = { /* textos */ m1: "Enero", m2: "Febrero", m3: "Marzo", m4: "Abril", m5: "Mayo", m6: "Junio", m7: "Julio", m8: "Agosto", m9: "Septiembre", m10: "Octubre", m11: "Noviembre", m12: "Diciembre" /* fin textos */ };
   const nombreMes = (mes, T) => { if (!mes) return ""; const [a, m] = mes.split("-"); return T(MESES_TXT["m" + +m]) + " " + a; };
   const eur = (n) => n.toLocaleString("es-ES", { style: "currency", currency: "EUR" });

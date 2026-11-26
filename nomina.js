@@ -62,7 +62,7 @@ if (typeof module !== "undefined") module.exports = NOMINA;
   if (!$("v-nomina") || typeof CONVENIO_GIRONA === "undefined") return;
   // v219 (permiso de Lorena, 26/11): textos traducibles con el selector «Idioma · Language» (zona-idioma.js, grupo «nomina» de la función «traducir»)
   const T0 = (x, v) => x.replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m);
-  const Z = typeof ZonaIdioma === "function" ? ZonaIdioma("nomina", "v-nomina", () => { ponNombres(); calcDos(); calcConv(); pintaLista(); pintaRev(); pintaGuardadas(); }) : { T: T0, TH: null };
+  const Z = typeof ZonaIdioma === "function" ? ZonaIdioma("nomina", "v-nomina", () => { ponNombres(); calcDos(); calcConv(); pintaLista(); pintaRev(); pintaGuardadas(); pintaBorraTodo(); }) : { T: T0, TH: null };
   const T = Z.T, TH = Z.TH || ((x, v) => esc(T(x, v)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>"));
   const eur = (n) => n.toLocaleString("es-ES", { style: "currency", currency: "EUR" });
   // Lee números como los escribe la gente en España: «2100», «2.100», «2.100,50», «2100,5», «2100 €» (igual que baja.js)
@@ -183,7 +183,11 @@ if (typeof module !== "undefined") module.exports = NOMINA;
       </div>`;
     });
     const buenas = leidas.map((n, i) => [n, i]).filter(([n]) => !n.error);
-    if (buenas.length) {
+    // v223: con una sola nómina se elige si va como 1.ª o como 2.ª; con varias, las dos listas. Se pueden ir añadiendo
+    // de una en una con «Leer mis nóminas» (se suman a las de aquí, hasta 6).
+    const yaA = C.some(([k]) => ($(`nom-a-${k}`)?.value || "").trim() !== "");
+    if (!buenas.length) h += `<div class="nl-botones"><button type="button" class="btn sec" id="nom-rev-quitar">${esc(T("Quitar lo leído"))}</button></div>`;
+    else {
       const opc = (sel) => buenas.map(([n, i]) => `<option value="${i}"${i === sel ? " selected" : ""}>${esc(T("Nómina {n}", { n: i + 1 }))} · ${esc(etiqueta(n))}</option>`).join("");
       // Por defecto: la más antigua y la siguiente (por mes)
       const orden = buenas.slice().sort(([a], [b]) => (a.mes || "").localeCompare(b.mes || ""));
@@ -191,7 +195,9 @@ if (typeof module !== "undefined") module.exports = NOMINA;
       h += `<div class="panel nl-usar">
         ${buenas.length > 1 ? `<div class="zc-dos"><div><label for="nom-ua">${esc(T("1.ª nómina"))}</label><select id="nom-ua">${opc(a0)}</select></div><div><label for="nom-ub">${esc(T("2.ª nómina"))}</label><select id="nom-ub">${opc(b0)}</select></div></div>` : ""}
         <label class="check"><input type="checkbox" id="nom-guardar"><span>${esc(T("Guardar en este móvil el mes y los importes de las nóminas marcadas, para compararlas otro día. Nunca se guarda tu nombre, DNI, cuenta del banco ni el archivo."))}</span></label>
-        <button type="button" class="btn" id="nom-usar">${esc(buenas.length > 1 ? T("Comparar estas dos") : T("Poner como 1.ª nómina"))}</button>
+        ${buenas.length > 1 ? `<button type="button" class="btn" id="nom-usar">${esc(T("Comparar estas dos"))}</button>`
+          : `<p class="zc-pista">${esc(T("Puedes leer otra nómina más con «Leer mis nóminas» o ponerla ya en la comparadora:"))}</p>
+        <div class="nl-botones"><button type="button" class="${yaA ? "btn sec" : "btn"}" id="nom-usar" data-col="a">${esc(T("Poner como 1.ª nómina"))}</button><button type="button" class="${yaA ? "btn" : "btn sec"}" id="nom-usar-b" data-col="b">${esc(T("Poner como 2.ª nómina"))}</button></div>`}
         <p class="zc-pista" id="nom-usar-msg" aria-live="polite"></p>
         <button type="button" class="btn sec" id="nom-rev-quitar">${esc(T("Quitar lo leído"))}</button>
       </div>`;
@@ -222,7 +228,7 @@ if (typeof module !== "undefined") module.exports = NOMINA;
         if (yo !== turnoPdf) return;
         out.push(r.error ? { error: r.error } : { id: Date.now().toString(36) + out.length, mes: r.mes || "", nombre: r.mes ? L.nombreMes(r.mes, T).slice(0, 20) : "", valores: limpia(r.valores), sinReconocer: r.sinReconocer, ok: false });
       }
-      leidas = out; pintaRev();
+      leidas = leidas.filter(n => !n.error).concat(out).slice(-MAX_PDF); pintaRev();
       $rev.scrollIntoView({ behavior: "smooth", block: "start" });
     });
     $rev.addEventListener("input", (e) => {
@@ -243,13 +249,14 @@ if (typeof module !== "undefined") module.exports = NOMINA;
       const b = e.target.closest("button"); if (!b) return;
       const msg = $("nom-usar-msg");
       if (b.id === "nom-rev-quitar") { leidas = []; turnoPdf++; pintaRev(); return; }
-      if (b.id !== "nom-usar") return;
+      if (b.id !== "nom-usar" && b.id !== "nom-usar-b") return;
+      const sola = b.id === "nom-usar-b" ? "b" : !$("nom-ua") ? "a" : "";
       const ia = $("nom-ua") ? +$("nom-ua").value : leidas.findIndex(n => !n.error), ib = $("nom-ub") ? +$("nom-ub").value : -1;
       if (ib >= 0 && ia === ib) { msg.textContent = T("Elige dos nóminas distintas."); return; }
       const elegidas = [ia, ib].filter(i => i >= 0).map(i => leidas[i]);
       if (elegidas.some(n => !n.ok)) { msg.textContent = T("Antes, marca «He leído esto y está bien» en las nóminas que vas a comparar."); return; }
-      ponEn("a", elegidas[0]);
-      if (elegidas[1]) ponEn("b", elegidas[1]);
+      if (sola) ponEn(sola, elegidas[0]);
+      else { ponEn("a", elegidas[0]); ponEn("b", elegidas[1]); }
       if ($("nom-guardar")?.checked) {
         const marcadas = leidas.filter(n => !n.error && n.ok);
         let lista = leeGuardadas();
@@ -334,5 +341,38 @@ if (typeof module !== "undefined") module.exports = NOMINA;
   }
   $("nom-q").addEventListener("input", pintaLista);
   pintaLista();
+
+  // ---------- Borrar todo (v222, lo pidió el padre por el Coordinador, 26/11/2026) ----------
+  // Un botón bien visible arriba que deja la herramienta como recién abierta: lo leído, las casillas de las tres
+  // pestañas, los resultados y lo guardado en este móvil («ccoo-nominas» y su copia). Es un borrado que pide la
+  // persona, con confirmación en la propia página: por eso aquí no se guarda copia. Otra ventana abierta se entera
+  // por el evento «storage» de arriba (pintaGuardadas).
+  const $bt = $("nom-borra-todo");
+  function pintaBorraTodo(msg) {
+    const caja = $("nom-borra-todo"); if (!caja) return; // por id: el idioma puede llamarla antes de llegar aquí
+    caja.innerHTML = `<button type="button" class="btn sec" id="nom-bt">${esc(T("Borrar todo"))}</button>
+      <div id="nom-bt-confirma" class="panel nl-bt-confirma" hidden><p>${esc(T("¿Borrar todo? Se borran las nóminas leídas, lo que has escrito en las casillas, los resultados y las nóminas guardadas en este móvil. No se puede deshacer."))}</p>
+      <div class="nl-botones"><button type="button" class="btn" id="nom-bt-si">${esc(T("Sí, borrar todo"))}</button><button type="button" class="btn sec" id="nom-bt-no">${esc(T("No"))}</button></div></div>
+      <p class="zc-ok nl-bt-msg" id="nom-bt-msg" aria-live="polite"${msg ? "" : " hidden"}>${msg ? esc(T("Todo borrado")) : ""}</p>`;
+  }
+  function borraTodo() {
+    leidas = []; turnoPdf++; pintaRev();
+    $("nom-n1").value = ""; $("nom-n2").value = "";
+    $("nom-filas").querySelectorAll("input").forEach(i => { i.value = ""; });
+    sc.value = "c"; $("nc-yr").value = "1"; $("nc-ant").value = "0"; $("nc-pro").checked = false;
+    ["nc-base", "nc-plus", "nc-antig", "nc-prorrata", "nc-hx"].forEach(i => { $(i).value = ""; });
+    $("nom-q").value = "";
+    try { localStorage.removeItem(CLAVE); localStorage.removeItem(COPIA); } catch (_) {}
+    ponNombres(); calcDos(); calcConv(); pintaLista(); pintaGuardadas(); ponTab("dos");
+    pintaBorraTodo(true);
+    $("nom-bt")?.focus();
+  }
+  if ($bt) $bt.addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.id === "nom-bt") { $("nom-bt-confirma").hidden = false; b.hidden = true; $("nom-bt-msg").hidden = true; $("nom-bt-si").focus(); return; }
+    if (b.id === "nom-bt-no") { pintaBorraTodo(); $("nom-bt")?.focus(); return; }
+    if (b.id === "nom-bt-si") borraTodo();
+  });
+  pintaBorraTodo();
   ponTab("dos");
 })();

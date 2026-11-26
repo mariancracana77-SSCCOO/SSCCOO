@@ -109,19 +109,81 @@ const N2 = nomina("01/10/2026 a 31/10/2026", [["SALARIO BASE", "1.200,00"], ["PL
     ok(await p.evaluate(() => localStorage.getItem("ccoo-nominas") === null && localStorage.getItem("ccoo-nominas-copia") === null), `${tag}: «Borrar todo» lo borra`);
     ok((await p.textContent("#nom-guardadas")).trim() === "", `${tag}: la primera ventana se entera del borrado`);
     await p2.close();
+    // v223 (aviso del padre: «pones una y ya no puedes hacer nada»): de una en una, A y luego B, y archivos sin extensión
+    await p.click("#nom-bt"); await p.click("#nom-bt-si");
+    await p.setInputFiles("#nom-pdf", P1); await p.waitForSelector("#nom-usar-b");
+    ok(await p.isVisible("#nom-usar") && await p.isVisible("#nom-usar-b"), `${tag}: con una nómina deja elegir 1.ª o 2.ª`);
+    await p.check("[data-rev-ok='0']"); await p.click("#nom-usar"); await p.waitForTimeout(300);
+    ok(await p.inputValue("#nom-a-base") === "1200,00" && await p.inputValue("#nom-b-base") === "", `${tag}: la primera va a la 1.ª`);
+    await p.setInputFiles("#nom-pdf", { name: "nomina", mimeType: "application/octet-stream", buffer: fs.readFileSync(P2) }); await p.waitForSelector("#nom-usar-b");
+    ok(await p.getAttribute("#nom-usar-b", "class") === "btn", `${tag}: si la 1.ª ya está, resalta «Poner como 2.ª»`);
+    if (CAP) { await p.evaluate(() => document.querySelector(".nl-usar").scrollIntoView({ block: "center" })); await p.waitForTimeout(300); await p.screenshot({ path: path.join(CAP, `una-a-una-${ancho}${oscuro ? "-oscuro" : ""}.png`) }); }
+    ok(/Octubre 2026/.test(await p.textContent("#nom-rev")), `${tag}: lee un PDF sin extensión (como lo da Android)`);
+    await p.check("[data-rev-ok='0']"); await p.click("#nom-usar-b"); await p.waitForTimeout(300);
+    ok(await p.inputValue("#nom-a-base") === "1200,00" && await p.inputValue("#nom-b-hx") === "90,00" && /Líquido a percibir/.test(await p.textContent("#nom-out")), `${tag}: de una en una compara las dos`);
+    // se van sumando: una y luego otra, salen las dos listas
+    await p.setInputFiles("#nom-pdf", P1); await p.waitForSelector("#nom-usar-b");
+    await p.setInputFiles("#nom-pdf", P2); await p.waitForSelector("#nom-ua");
+    ok(await p.locator(".nl-tarjeta").count() === 2, `${tag}: la segunda se suma a la primera`);
+    await p.click("#nom-rev-quitar");
+    if (ancho === 360) {
+      await p.setInputFiles("#nom-pdf", { name: "documento", mimeType: "", buffer: fs.readFileSync(RUTAS["nomina.docx"]) }); await p.waitForSelector(".nl-tarjeta", { timeout: 15000 });
+      ok(await p.locator("#nom-usar-b").count() === 1, `${tag}: lee un Word sin extensión`);
+      await p.click("#nom-rev-quitar");
+    }
+    // un archivo que no se puede leer: se puede quitar y seguir
+    await p.setInputFiles("#nom-pdf", { name: "cosa", mimeType: "application/octet-stream", buffer: Buffer.from("hola que tal esto no es nada") }); await p.waitForSelector(".nl-tarjeta");
+    ok(await p.isVisible("#nom-rev-quitar"), `${tag}: con un archivo que no se lee sale «Quitar lo leído»`);
+    await p.click("#nom-rev-quitar"); await p.fill("#nom-a-plus", "10");
+    ok(await p.locator(".nl-tarjeta").count() === 0 && await p.inputValue("#nom-a-plus") === "10", `${tag}: y se puede seguir escribiendo`);
     // una foto
     await p.setInputFiles("#nom-pdf", FOTO); await p.waitForSelector(".nl-tarjeta");
     ok(/Es una foto/.test(await p.textContent("#nom-rev")), `${tag}: una foto da aviso`);
+    // v222: «Borrar todo» de arriba deja la herramienta como recién abierta (y otra ventana se entera)
+    await p.setInputFiles("#nom-pdf", [P1, P2]); await p.waitForSelector("[data-rev-ok='1']");
+    await p.check("[data-rev-ok='0']"); await p.check("[data-rev-ok='1']"); await p.check("#nom-guardar"); await p.click("#nom-usar"); await p.waitForTimeout(300);
+    await p.setInputFiles("#nom-pdf", [P1, P2]); await p.waitForSelector(".nl-tarjeta");
+    await p.click("[data-nom-tab='convenio']"); await p.fill("#nc-base", "1000"); await p.check("#nc-pro"); await p.fill("#nc-prorrata", "50");
+    await p.click("[data-nom-tab='conceptos']"); await p.fill("#nom-q", "irpf");
+    const p3 = await ctx.newPage(); await p3.goto(BASE + "#nomina"); await p3.waitForTimeout(500);
+    ok(/\(2\)/.test(await p3.textContent("#nom-guardadas")), `${tag}: hay guardadas antes de borrar`);
+    ok(await p.isVisible("#nom-bt"), `${tag}: el botón «Borrar todo» se ve arriba`);
+    await p.click("#nom-bt");
+    ok(await p.isVisible("#nom-bt-confirma") && /No se puede deshacer/.test(await p.textContent("#nom-bt-confirma")), `${tag}: pide confirmación en la página`);
+    await p.click("#nom-bt-no");
+    ok(await p.evaluate(() => localStorage.getItem("ccoo-nominas") !== null) && await p.locator(".nl-tarjeta").count() > 0, `${tag}: «No» no borra nada`);
+    if (CAP) { await p.click("#nom-bt"); await p.evaluate(() => document.getElementById("v-nomina").scrollIntoView()); await p.waitForTimeout(300); await p.screenshot({ path: path.join(CAP, `borrar-confirma-${ancho}${oscuro ? "-oscuro" : ""}.png`) }); await p.click("#nom-bt-no"); }
+    await p.click("#nom-bt"); await p.click("#nom-bt-si"); await p.waitForTimeout(400);
+    const limpio = await p.evaluate(() => {
+      const $ = (i) => document.getElementById(i);
+      return { ls: localStorage.getItem("ccoo-nominas") === null && localStorage.getItem("ccoo-nominas-copia") === null,
+        rev: $("nom-rev").textContent.trim() === "", guar: $("nom-guardadas").textContent.trim() === "",
+        casillas: [...document.querySelectorAll("#nom-filas input, #nom-n1, #nom-n2, #nc-base, #nc-prorrata, #nom-q")].every(i => i.value === ""),
+        pro: !$("nc-pro").checked && $("nc-pro-caja").hidden, ant: $("nc-ant").value === "0",
+        out: !/Líquido a percibir/.test($("nom-out").textContent), tab: !$("nom-dos").hidden,
+        msg: !$("nom-bt-msg").hidden && /Todo borrado/.test($("nom-bt-msg").textContent) };
+    });
+    ok(Object.values(limpio).every(Boolean), `${tag}: «Borrar todo» lo deja limpio ${JSON.stringify(limpio)}`);
+    await p3.waitForTimeout(300);
+    ok((await p3.textContent("#nom-guardadas")).trim() === "", `${tag}: la otra ventana se entera del «Borrar todo»`);
+    if (CAP) { await p.evaluate(() => document.getElementById("v-nomina").scrollIntoView()); await p.waitForTimeout(300); await p.screenshot({ path: path.join(CAP, `borrar-hecho-${ancho}${oscuro ? "-oscuro" : ""}.png`) }); }
+    await p3.close();
+    // sin nada guardado también sale y borra lo de la pantalla
+    await p.fill("#nom-a-base", "500"); await p.click("#nom-bt"); await p.click("#nom-bt-si");
+    ok(await p.inputValue("#nom-a-base") === "", `${tag}: sin nada guardado también borra lo escrito`);
 
     if (ancho === 360) for (const n of ["nomina.docx", "nomina.xlsx", "nomina.odt", "nomina.html", "nomina.csv"]) {
+      await p.evaluate(() => document.getElementById("nom-rev-quitar")?.click());
       await p.setInputFiles("#nom-pdf", RUTAS[n]); await p.waitForSelector("[data-rev='0'], #nom-rev .zc-aviso", { timeout: 15000 }); await p.waitForTimeout(200);
       const vv = await p.evaluate(() => [...document.querySelectorAll("[data-rev='0']")].reduce((o, i) => (o[i.dataset.k] = i.value, o), {}));
       const cuadra = await p.locator("#nom-rev .nl-tarjeta .zc-ok").count() === 1;
       ok(vv.base === "1200,00" && vv.hx === "90,00" && vv.irpf === "210,00" && vv.liquido === "1428,88" && vv.basecc === "1750,00" && cuadra && /Octubre 2026/.test(await p.textContent("#nom-rev")), `${tag}: lee ${n} ${cuadra ? "(cuadra)" : "(NO cuadra)"} ${JSON.stringify(vv)}`);
     }
     if (ancho === 360) {
+      await p.evaluate(() => document.getElementById("nom-rev-quitar")?.click());
       await p.setInputFiles("#nom-pdf", RUTAS["vieja.doc"]); await p.waitForSelector(".nl-tarjeta");
       ok(/antiguo/.test(await p.textContent("#nom-rev")), `${tag}: un .doc viejo da aviso`);
+      await p.evaluate(() => document.getElementById("nom-rev-quitar")?.click());
       await p.setInputFiles("#nom-pdf", RUTAS["cosa.zip"]); await p.waitForSelector(".nl-tarjeta");
       ok(/no lo sé leer/.test(await p.textContent("#nom-rev")), `${tag}: un tipo raro da aviso`);
     }

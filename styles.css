@@ -3407,6 +3407,10 @@ label.cg-huecos { margin: 0 0 12px; }
 .nl-lista li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; border-bottom: 1px solid var(--linea); padding-bottom: 10px; }
 .nl-lista li > span:first-child { min-width: 0; overflow-wrap: anywhere; }
 .nl-borrar { margin-top: 6px; }
+.nl-borra-todo { margin: 0 0 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.nl-bt-confirma { margin: 0; padding: 14px 16px; border-left: 5px solid var(--rojo, #AB1012); }
+.nl-bt-confirma p { margin: 0 0 10px; }
+.nl-bt-msg { margin: 0; }
 .nl-coger { margin: 4px 0 10px; }
 .nl-coger-out:empty { display: none; }
 .nl-coger-out { margin-top: 10px; }
