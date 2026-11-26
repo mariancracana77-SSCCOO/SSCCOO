@@ -3344,3 +3344,29 @@ label.cg-huecos { margin: 0 0 12px; }
 .desc-promo.cond.util[href="#aparcar"] > .icono:first-child, .desc-promo.cond.util[href="#aparcar"] > .icono:last-child { color: #fff; }
 .desc-promo.cond.util[href="#aparcar"] small { color: #efe6fa; }
 .desc-promo.cond.util[href="#aparcar"]:hover { background: #7a3bbb; }
+/* v218 (petición n.º 74): Comparadora de nóminas. Cada concepto con su explicación plegada y las dos cifras al lado */
+.nom-sec { margin: 16px 0 6px; font-size: 1.05rem; color: var(--cond-azul-ic); }
+.nom-sec:first-child { margin-top: 4px; }
+.nom-fila { padding: 8px 0; border-bottom: 1px solid var(--linea); }
+.nom-fila details summary { cursor: pointer; font-weight: 700; min-height: 32px; }
+.nom-fila details p { margin: 4px 0 8px; color: var(--suave); }
+.nom-par { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin-top: 4px; }
+.nom-par input { width: 100%; min-width: 0; margin: 0; }
+.nom-scroll { overflow-x: auto; }
+/* Cada línea en dos filas: el nombre a todo el ancho y debajo las tres cifras (en 320-412 px no caben cuatro columnas) */
+.nom-tabla { table-layout: fixed; }
+.nom-tabla td, .zc-tabla.nom-tabla td:last-child { padding: 6px 4px; text-align: right; white-space: normal; overflow-wrap: anywhere; font-weight: 600; width: auto; }
+.zc-tabla.nom-tabla tr.nom-nombre td { text-align: left; border-bottom: 0; padding: 10px 0 0; font-weight: 700; }
+.nom-tabla tr.nom-cab td:first-child, .nom-tabla tr.nom-cifras td:first-child { padding-left: 0; }
+.zc-tabla.nom-tabla tr.zc-sec td { text-align: left; padding-left: 0; }
+.nom-tabla td.nom-mas, .nom-tabla td.nom-menos { font-weight: 800; }
+.nom-tabla tr.nom-cab td { font-weight: 800; color: var(--suave); font-size: .9rem; white-space: normal; overflow-wrap: anywhere; }
+.nom-tabla tr.nom-tot td { font-weight: 800; }
+.nom-resumen ul { margin: 0; }
+.zc-mal p { margin: 0 0 6px; }
+.nom-concepto { margin: 0 0 10px; }
+.nom-concepto p { margin: 4px 0 0; }
+.nom-tabla td.nom-mas { color: var(--nom-mas); } .nom-tabla td.nom-menos { color: var(--nom-menos); }
+:root { --nom-mas: #17683a; --nom-menos: #a30f12; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --nom-mas: #7fdca4; --nom-menos: #ff9b9b; } }
+:root[data-theme="dark"] { --nom-mas: #7fdca4; --nom-menos: #ff9b9b; }

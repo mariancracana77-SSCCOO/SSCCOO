@@ -15,7 +15,7 @@ $("version-web").textContent = "Versión " + VERSION_WEB;
 document.querySelector(".contacto-btn").innerHTML = icono("correo", "p") + "Escribir a la Sección Sindical";
 
 // ---------- Navegación ----------
-const VISTAS = ["inicio", "avisos", "calendario", "convenio", "calcula", "actas", "documentos", "preguntas", "info", "buscar", "legal", "descansos", "ganancias", "aparcar", "restricciones", "finiquito", "adr", "hora", "jubilacion", "baja", "diccionario", "carga", "ejes", "multas", "sobresale", "conversor", "muelles", "ferry", "testigos", "galibos", "utilidades"];
+const VISTAS = ["inicio", "avisos", "calendario", "convenio", "calcula", "actas", "documentos", "preguntas", "info", "buscar", "legal", "descansos", "ganancias", "aparcar", "restricciones", "finiquito", "adr", "hora", "jubilacion", "baja", "nomina", "diccionario", "carga", "ejes", "multas", "sobresale", "conversor", "muelles", "ferry", "testigos", "galibos", "utilidades"];
 // Título de la pestaña del navegador según la sección (se ve en el historial, al compartir y con lector de pantalla)
 const TITULO_WEB = document.title;
 const ponTitulo = (nombre) => { document.title = nombre ? nombre + " · CCOO Calsina Carré" : TITULO_WEB; };
@@ -91,9 +91,9 @@ document.querySelector("[data-saltar]").addEventListener("click", (ev) => { ev.p
 // Arriba solo salen los apartados principales; lo que va dentro (Actas en «Comité de empresa», los subapartados
 // que crea el admin…) sale en una segunda fila (#subpestanas). Las direcciones de siempre (#actas, #ap-…) siguen valiendo.
 // Si falta el apartado de arriba (borrado u oculto), lo de dentro vuelve a salir arriba.
-const DENTRO_DE = { actas: "comite", convenio: "convenio-y-leyes", calcula: "convenio-y-leyes", descansos: "zona-conductores", ganancias: "zona-conductores", aparcar: "zona-conductores", restricciones: "zona-conductores", finiquito: "zona-conductores", adr: "zona-conductores", hora: "zona-conductores", jubilacion: "zona-conductores", baja: "zona-conductores", utilidades: "zona-conductores", diccionario: "zona-conductores", carga: "zona-conductores", ejes: "zona-conductores", multas: "zona-conductores", sobresale: "zona-conductores", conversor: "zona-conductores", muelles: "zona-conductores", ferry: "zona-conductores", testigos: "zona-conductores", galibos: "zona-conductores", preguntas: "@info" };
+const DENTRO_DE = { actas: "comite", convenio: "convenio-y-leyes", calcula: "convenio-y-leyes", descansos: "zona-conductores", ganancias: "zona-conductores", aparcar: "zona-conductores", restricciones: "zona-conductores", finiquito: "zona-conductores", adr: "zona-conductores", hora: "zona-conductores", jubilacion: "zona-conductores", baja: "zona-conductores", nomina: "zona-conductores", utilidades: "zona-conductores", diccionario: "zona-conductores", carga: "zona-conductores", ejes: "zona-conductores", multas: "zona-conductores", sobresale: "zona-conductores", conversor: "zona-conductores", muelles: "zona-conductores", ferry: "zona-conductores", testigos: "zona-conductores", galibos: "zona-conductores", preguntas: "@info" };
 const APARTADO_AFILIATE = "afiliate"; // va el último, al lado de «Nosotros», para animar a afiliarse
-const NOMBRE_FIJO = { inicio: "Inicio", avisos: "Avisos", calendario: "Calendario", actas: "Actas", documentos: "Documentos", convenio: "Convenio", calcula: "Calcula", preguntas: "Dudas", info: "Nosotros", descansos: "Mis descansos", ganancias: "Mis incentivos", aparcar: "Aparcamientos en mi ruta", restricciones: "Restricciones en mi ruta", finiquito: "Mi finiquito", adr: "Test de ADR", hora: "Mi hora ordinaria", jubilacion: "Mi jubilación", baja: "Mi baja médica", utilidades: "Utilidades en ruta", diccionario: "Diccionario del conductor", carga: "Simulador de carga", ejes: "Peso por ejes y estiba", multas: "Multas en Europa", sobresale: "Cargas que sobresalen", conversor: "Conversor rápido", muelles: "Accesos y muelles", ferry: "Ferry y tren", testigos: "Guía de testigos", galibos: "Gálibos y túneles" };
+const NOMBRE_FIJO = { inicio: "Inicio", avisos: "Avisos", calendario: "Calendario", actas: "Actas", documentos: "Documentos", convenio: "Convenio", calcula: "Calcula", preguntas: "Dudas", info: "Nosotros", descansos: "Mis descansos", ganancias: "Mis incentivos", aparcar: "Aparcamientos en mi ruta", restricciones: "Restricciones en mi ruta", finiquito: "Mi finiquito", adr: "Test de ADR", hora: "Mi hora ordinaria", jubilacion: "Mi jubilación", baja: "Mi baja médica", nomina: "Comparadora de nóminas", utilidades: "Utilidades en ruta", diccionario: "Diccionario del conductor", carga: "Simulador de carga", ejes: "Peso por ejes y estiba", multas: "Multas en Europa", sobresale: "Cargas que sobresalen", conversor: "Conversor rápido", muelles: "Accesos y muelles", ferry: "Ferry y tren", testigos: "Guía de testigos", galibos: "Gálibos y túneles" };
 // v215 (petición n.º 71 del padre): «Aparcamientos en mi ruta» también va dentro, la tercera y en marrón.
 // v187 (petición n.º 56 del padre): estas 8 herramientas van dentro de «Utilidades en ruta» (#utilidades, tarjeta amarilla).
 // Siguen siendo de Zona Conductores (enlaces directos, buscador y miga), pero no salen en su segunda fila ni en los accesos de Inicio.
@@ -359,7 +359,7 @@ function pintaInicio() {
   if ($("ver-mas")) $("ver-mas").onclick = () => { estado.feedMax = max + 20; pintaInicio(); };
   if (aparece) $("inicio-feed").querySelectorAll(".item-tablon").forEach(el => { if (el.getBoundingClientRect().top > innerHeight) { el.classList.add("por-ver"); aparece.observe(el); } });
   // Accesos
-  const IC_FIJO = { descansos: "reloj", ganancias: "euro", aparcar: "lugar", restricciones: "alerta", finiquito: "hoja", adr: "escudo", hora: "euro", jubilacion: "arena", baja: "salud", diccionario: "texto", carga: "archivo", ejes: "check", multas: "alerta", sobresale: "medida", conversor: "cambio", muelles: "muelle", ferry: "barco", testigos: "testigo", galibos: "tunel", utilidades: "ajustes", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta" };
+  const IC_FIJO = { descansos: "reloj", ganancias: "euro", aparcar: "lugar", restricciones: "alerta", finiquito: "hoja", adr: "escudo", hora: "euro", jubilacion: "arena", baja: "salud", nomina: "nominas", diccionario: "texto", carga: "archivo", ejes: "check", multas: "alerta", sobresale: "medida", conversor: "cambio", muelles: "muelle", ferry: "barco", testigos: "testigo", galibos: "tunel", utilidades: "ajustes", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta" };
   const acc = GRUPOS.flatMap(g => g.miembros).filter(m => m.clave !== "inicio" && m.clave !== "info" && !UTIL.includes(m.clave))
     .map(m => [m.clave, IC_FIJO[m.clave] || D.apartados.find(a => "ap-" + a.slug === m.clave)?.icono || "carpeta", m.titulo]);
   // v163 (lo pidió Lorena): los 4 más usados primero y en grande; color por grupo (azul = Zona Conductores, gris = documentación)
@@ -689,6 +689,8 @@ const TARJETAS_COND = [
   // v216 (petición n.º 72 del padre): dos calculadoras nuevas, solo con datos comprobados en el BOE y en el convenio de Girona
   ["jubilacion", "arena", "Mi jubilación", "A qué edad te puedes jubilar según lo que has cotizado, cuánto cobrarías más o menos y si puedes adelantarla."],
   ["baja", "salud", "Mi baja médica", "Cuánto cobras cada día de baja: lo que paga la Seguridad Social y lo que completa la empresa por el convenio de Girona."],
+  // v218 (petición n.º 74 del padre): comparadora de nóminas con la explicación de cada concepto
+  ["nomina", "nominas", "Comparadora de nóminas", "Compara dos nóminas tuyas línea a línea, mira si la tuya cumple el convenio de Girona y qué es cada concepto."],
   ["diccionario", "texto", "Diccionario del conductor", "Siglas y palabras de papeles, controles y nómina, explicadas en una frase. Con buscador."],
   ["carga", "archivo", "Simulador de carga", "Mira el remolque desde arriba y cómo se llena con cada recogida: europalets, industriales, apilados, huecos y peso."],
   ["ejes", "check", "Peso por ejes y estiba", "Cuánto pesa cada eje con tu carga antes de la báscula y cuántas cinchas necesitas para sujetarla."],
@@ -702,7 +704,7 @@ const TARJETAS_COND = [
 const tarjetasCond = (l, amarillas) => l.map(([h, ic, b, sm]) => h === "utilidades"
   ? `<a class="panel desc-promo cond util" href="#utilidades">${icono(ic)}<span><b>${esc(b)}</b><small>${esc(sm)}</small></span>${icono("der", "p")}</a>`
   : `<a class="panel desc-promo cond${amarillas ? " util" : ""}" href="#${esc(h)}">${icono(ic)}<span><b>${esc(b)}</b><small>${esc(sm)}</small></span>${icono("der", "p")}</a>`).join("");
-TARJETAS_COND.splice(TARJETAS_COND.findIndex(t => t[0] === "baja") + 1, 0, ["utilidades", "ajustes", "Utilidades en ruta", "Restricciones, accesos y muelles, aparcamientos en mi ruta, test de ADR, diccionario, simulador de carga, peso por ejes, multas en Europa, cargas que sobresalen, conversor, ferry y tren, guía de testigos y gálibos y túneles."]);
+TARJETAS_COND.splice(TARJETAS_COND.findIndex(t => t[0] === "nomina") + 1, 0, ["utilidades", "ajustes", "Utilidades en ruta", "Restricciones, accesos y muelles, aparcamientos en mi ruta, test de ADR, diccionario, simulador de carga, peso por ejes, multas en Europa, cargas que sobresalen, conversor, ferry y tren, guía de testigos y gálibos y túneles."]);
 function pintaApartado() {
   const a = D.apartados.find(x => x.slug === estado.ap);
   if (!a) { $("ap-extra").innerHTML = ""; $("ap-titulo").textContent = D.apartados.length || !cargar.listo ? "Cargando…" : "Apartado no encontrado"; $("lista-ap").innerHTML = ""; $("ap-desc").textContent = ""; $("fechas-ap").innerHTML = ""; return; }
@@ -1584,6 +1586,7 @@ const PALABRAS_VISTA = { inicio: "inicio portada principal", avisos: "avisos com
   finiquito: "finiquito despido indemnizacion baja dimision fin de contrato pagas extra vacaciones convenio girona calculadora",
   adr: "adr mercancias peligrosas test examen carnet placa naranja numero onu peligro renovar curso",
   jubilacion: "jubilacion jubilarse pension retiro edad anos cotizados anticipada despido seguridad social autonomo conductor profesional calculadora",
+  nomina: "nomina nominas comparar comparadora sueldo salario base plus convenio antiguedad irpf retencion seguridad social contingencias comunes desempleo mei prorrata paga extra dietas liquido bruto devengado conceptos",
   baja: "baja medica incapacidad temporal it enfermedad accidente de trabajo hospital convenio girona complemento mutua seguridad social calculadora",
   hora: "hora ordinaria hora extra horas extra precio hora nomina salario convenio girona antiguedad calculadora",
   diccionario: "diccionario glosario siglas palabras significado que significa cmr albaran tacografo cap mma tara dieta prorrata cabotaje",
@@ -1642,7 +1645,7 @@ function buscarTodo() {
   const sitiosExtra = sitiosWeb().filter(x => !vistas.includes(x.h));
   const secciones = [...lista(sitiosExtra, x => ({ n: nota(x.t, x.p), h: x.h, t: x.t, donde: x.donde, ic: "lugar", sinEnlace: !x.h })), ...lista(vistas, c => {
     const ap = c.startsWith("ap-") ? D.apartados.find(a => "ap-" + a.slug === c) : null;
-    return { n: nota(nomVista(c), ap?.descripcion, PALABRAS_VISTA[c], GRUPO_DE[c]?.titulo), h: c, t: nomVista(c), s: ap?.descripcion || "", donde: rutaDe(c), ic: ap?.icono || { descansos: "reloj", ganancias: "euro", aparcar: "lugar", restricciones: "alerta", finiquito: "hoja", adr: "escudo", hora: "euro", jubilacion: "arena", baja: "salud", diccionario: "texto", carga: "archivo", ejes: "check", multas: "alerta", sobresale: "medida", conversor: "cambio", muelles: "muelle", ferry: "barco", testigos: "testigo", galibos: "tunel", utilidades: "ajustes", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta", info: "grupo", inicio: "inicio" }[c] || "carpeta" };
+    return { n: nota(nomVista(c), ap?.descripcion, PALABRAS_VISTA[c], GRUPO_DE[c]?.titulo), h: c, t: nomVista(c), s: ap?.descripcion || "", donde: rutaDe(c), ic: ap?.icono || { descansos: "reloj", ganancias: "euro", aparcar: "lugar", restricciones: "alerta", finiquito: "hoja", adr: "escudo", hora: "euro", jubilacion: "arena", baja: "salud", nomina: "nominas", diccionario: "texto", carga: "archivo", ejes: "check", multas: "alerta", sobresale: "medida", conversor: "cambio", muelles: "muelle", ferry: "barco", testigos: "testigo", galibos: "tunel", utilidades: "ajustes", avisos: "avisos", calendario: "calendario", actas: "actas", documentos: "carpeta", convenio: "convenio", calcula: "reloj", preguntas: "pregunta", info: "grupo", inicio: "inicio" }[c] || "carpeta" };
   })].sort((a, b) => b.n - a.n);
   // Archivos: los de Documentos y los adjuntos de avisos, actas y publicaciones
   const arch = [];

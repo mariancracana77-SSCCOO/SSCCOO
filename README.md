@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 218: «Comparadora de nóminas» en Zona Conductores
+Petición n.º 74 del padre. Herramienta nueva (`nomina.js`, vista `#nomina`) con tres pestañas: «Dos nóminas» (cada línea de dos nóminas tuyas con la diferencia, los totales, el líquido y un resumen de lo que más cambia), «Con el convenio» (salario base, plus convenio, antigüedad, prorrata y hora extra contra los mínimos del convenio de Girona 2026-2027 de `convenio-girona.js`) y «Qué es cada concepto» (26 conceptos explicados, con buscador). Los descuentos no se calculan, solo se comparan. No se guarda ni se envía nada. Aún sin traducción (falta el grupo «nomina» en la función `traducir`, que espera el visto bueno de Lorena). Prueba: `node pruebas/nomina.cjs`.
+
 ## Versión 217: «Aparcamientos en mi ruta» en morado
 Petición n.º 73 del padre. En «Utilidades en ruta», la tarjeta de «Aparcamientos en mi ruta» pasa del marrón al mismo morado que «Accesos y muelles» (`styles.css`, regla de la v215) y también en el PC (`web-pc.css`, que las ponía todas amarillas menos muelles: el marrón de la v215 tampoco se veía en el PC). Igual en claro y oscuro.
 
