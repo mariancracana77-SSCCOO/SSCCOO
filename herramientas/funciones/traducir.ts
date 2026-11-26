@@ -14,6 +14,8 @@
 // v182 (petición n.º 49 del padre): grupo «multas» (Multas en Europa), con los textos visibles de la tabla multas_paises.
 // v190 (petición n.º 58 del padre): grupo «muelles» (Accesos y muelles). Copia de la v186 en privado.respaldo_funciones (nombre traducir-v186).
 // v211 (petición 074, Lorena: «que esté la traducción sí»): grupo «testigos» (Guía de testigos).
+// v219 (petición n.º 74 del padre, permiso de Lorena 26/11): grupo «nomina» (Comparadora de nóminas). Además: se quitan las negritas que
+// Gemini pone de más (sobre todo en los huecos {n}) y una traducción a medias ya no se guarda (sale con «parcial»). Copia de antes: este archivo en git (commit 9504053).
 // v186 (petición n.º 55 del padre): grupos «sobresale» (Cargas que sobresalen) y «conversor» (Conversor rápido). Copia de la v182 en privado.respaldo_funciones (nombre traducir-v182).
 // Además de T("...") sacan las cadenas de entre /* textos */ y /* fin textos */ de sus .js y el texto que se ve en su
 // sección de index.html («textosVista»: misma forma de partirlo que zona-idioma.js en la web). Copia de antes en privado.respaldo_funciones (id 14).
@@ -42,6 +44,8 @@ const GRUPOS: Record<string, { archivo: string; tema: string; mas?: string[]; vi
   // v216 (petición n.º 72 del padre): «Mi jubilación» y «Mi baja médica»
   jubilacion: { archivo: "jubilacion.js", vista: "v-jubilacion", tema: "una calculadora orientativa de la jubilación en España (edad según los años cotizados, base reguladora, porcentaje, jubilación anticipada voluntaria y por despido, pensión máxima y mínima) para conductores de camión. Usa los términos oficiales de la Seguridad Social en ese idioma" },
   baja: { archivo: "baja.js", vista: "v-baja", tema: "una calculadora orientativa de lo que cobra un conductor de camión en España durante una baja médica (incapacidad temporal): lo que paga la Seguridad Social o la mutua y lo que completa la empresa por el convenio de transporte de mercancías de Girona. Usa los términos oficiales en ese idioma" },
+  // v219 (petición n.º 74 del padre): «Comparadora de nóminas»
+  nomina: { archivo: "nomina.js", mas: ["convenio-girona.js"], vista: "v-nomina", tema: "una comparadora de nóminas para conductores de camión en España: dos nóminas una al lado de la otra, la nómina comparada con los mínimos del convenio de transporte de mercancías de Girona y la explicación de cada concepto de la nómina (salario base, plus convenio, antigüedad, horas extra, prorrata de pagas extra, dietas, contingencias comunes, desempleo, formación profesional, MEI, IRPF, líquido a percibir, bases de cotización). Usa los términos habituales de las nóminas en ese idioma y deja igual las siglas IRPF y MEI" },
   diccionario: { archivo: "diccionario.js", vista: "v-diccionario", tema: "un diccionario de siglas y palabras del transporte por carretera para conductores de camión (papeles y aduanas, conducción, nómina, vehículo). Las siglas y palabras técnicas (CMR, DUA, TIR, AdBlue, ITV...) se dejan igual si en ese idioma se usan así" },
   adr: { archivo: "adr.js", vista: "v-adr", tema: "un test de preguntas para el examen del ADR (transporte de mercancías peligrosas por carretera), con la placa naranja y cómo sacar el carnet. Usa los términos oficiales del ADR en ese idioma (clases, número ONU, número de peligro, instrucciones escritas)" },
   carga: { archivo: "carga.js", vista: "v-carga", tema: "un simulador de carga para conductores de camión: el remolque (visto desde arriba, de lado o en 3D) y cómo se llena de palets (europalet, palet industrial, medio palet) con cada recogida, huecos libres, apilado en 2 alturas, alto de la carga, peso y carga útil. Usa las palabras del transporte en ese idioma (remolque, palet, cabina, puertas)" },
@@ -239,13 +243,29 @@ Reglas: traducción clara y natural para un camionero. Deja igual lo que va entr
   const partes: string[][] = [];
   for (let i = 0; i < lista.length; i += 50) partes.push(lista.slice(i, i + 50));
   const tandas = await Promise.all(partes.map((parte) => gemini(clave, sistema, parte, { type: "OBJECT", properties: { t: { type: "ARRAY", items: { type: "STRING" } } }, required: ["t"] })));
+  // v219: si un trozo no sale (Gemini saturado), se devuelve lo demás pero NO se guarda: así la próxima vez se vuelve a
+  // pedir entero (antes se guardaba a medias y se quedaba así hasta que cambiara el texto, como pasó con «Mi jubilación»).
+  let completa = true;
   for (let k = 0; k < partes.length; k++) {
     const parte = partes[k], t = tandas[k];
-    if (!t || !Array.isArray(t.t) || t.t.length !== parte.length) return json({ error: msgFallo() }, 502);
-    parte.forEach((s, j) => { const x = t.t[j]; if (typeof x === "string" && x.trim() && marcas(x) === marcas(s)) res[s] = x; });
+    if (!t || !Array.isArray(t.t) || t.t.length !== parte.length) { completa = false; continue; }
+    const fuera: unknown[] = [];
+    parte.forEach((s, j) => {
+      let x = t.t[j];
+      // v219: Gemini a veces pone en negrita los huecos ({n}) o añade negritas que no están en el original: se quitan
+      if (typeof x === "string" && marcas(x) !== marcas(s)) {
+        x = x.replace(/\*\*(\{\w+\})\*\*/g, "$1");
+        if (!s.includes("**")) x = x.replace(/\*\*/g, "");
+      }
+      if (typeof x === "string" && x.trim() && marcas(x) === marcas(s)) res[s] = x;
+      else fuera.push([s.slice(0, 40), typeof x === "string" ? x.slice(0, 40) : typeof x]);
+    });
+    if (fuera.length) console.error("Descartadas", grupo, codigo, "tanda", k, fuera.length, "de", parte.length, JSON.stringify(fuera.slice(0, 4)));
   }
-  await admin.from("traducciones").upsert({ tabla, id_reg: 0, idioma: codigo, huella, texto: res, creado: new Date().toISOString() });
-  return json({ textos: res });
+  if (!Object.keys(res).length) return json({ error: msgFallo() }, 502);
+  if (completa) await admin.from("traducciones").upsert({ tabla, id_reg: 0, idioma: codigo, huella, texto: res, creado: new Date().toISOString() });
+  else console.error("Traducción a medias, no se guarda", grupo, codigo, Object.keys(res).length, "de", lista.length);
+  return json(completa ? { textos: res } : { textos: res, parcial: true });
 }
 
 Deno.serve(async (req) => {

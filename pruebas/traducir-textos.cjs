@@ -6,7 +6,7 @@ const raiz = path.join(__dirname, "..");
 const ts = fs.readFileSync(path.join(raiz, "herramientas/funciones/traducir.ts"), "utf8");
 const trozo = ts.slice(ts.indexOf("// --- textosVista (v177)"), ts.indexOf("// --- fin textosVista ---"));
 const { textosVista, textosJS } = new Function(trozo + "\nreturn { textosVista, textosJS };")();
-const GRUPOS = { finiquito: ["v-finiquito", "finiquito.js", "convenio-girona.js"], hora: ["v-hora", "hora.js", "convenio-girona.js"], jubilacion: ["v-jubilacion", "jubilacion.js"], baja: ["v-baja", "baja.js"], diccionario: ["v-diccionario", "diccionario.js"], adr: ["v-adr", "adr.js"], carga: ["v-carga", "carga.js"], ejes: ["v-ejes", "ejes.js"], multas: ["v-multas", "multas.js"], sobresale: ["v-sobresale", "sobresale.js"], conversor: ["v-conversor", "conversor.js"], muelles: ["v-muelles", "muelles.js"], testigos: ["v-testigos", "testigos.js"] };
+const GRUPOS = { finiquito: ["v-finiquito", "finiquito.js", "convenio-girona.js"], hora: ["v-hora", "hora.js", "convenio-girona.js"], jubilacion: ["v-jubilacion", "jubilacion.js"], baja: ["v-baja", "baja.js"], diccionario: ["v-diccionario", "diccionario.js"], adr: ["v-adr", "adr.js"], carga: ["v-carga", "carga.js"], ejes: ["v-ejes", "ejes.js"], multas: ["v-multas", "multas.js"], sobresale: ["v-sobresale", "sobresale.js"], conversor: ["v-conversor", "conversor.js"], muelles: ["v-muelles", "muelles.js"], testigos: ["v-testigos", "testigos.js"], nomina: ["v-nomina", "nomina.js", "convenio-girona.js"] };
 const html = fs.readFileSync(path.join(raiz, "index.html"), "utf8"), res = {};
 let mal = 0;
 for (const [g, [vista, ...js]] of Object.entries(GRUPOS)) {

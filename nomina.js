@@ -4,8 +4,7 @@
 // «Mi hora ordinaria»); (3) qué es cada concepto, con buscador. Los descuentos (Seguridad Social, IRPF) no se calculan:
 // cambian según la persona y el año, solo se comparan los que pone el conductor. Todo se calcula en el móvil: no se guarda
 // nada (ni en el móvil) ni se envía. Lo prueba pruebas/nomina.cjs (window.NOMINA para las cuentas).
-// Los textos van con T("...") para poder traducirlos cuando se añada el grupo «nomina» a la función «traducir»
-// (eso toca una función del servidor: espera el visto bueno de Lorena). Mientras, sale solo en español.
+// Los textos van con T("..."): los traduce la función «traducir» (grupo «nomina», v219) con el selector de idioma.
 const NOMINA = (function () {
   // [clave, nombre, d = lo cobras / q = te lo quitan / i = solo informativo (no suma), explicación]
   /* textos */
@@ -61,8 +60,10 @@ if (typeof module !== "undefined") module.exports = NOMINA;
   if (typeof document === "undefined") return;
   const $ = (i) => document.getElementById(i);
   if (!$("v-nomina") || typeof CONVENIO_GIRONA === "undefined") return;
-  const T = (x, v) => x.replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m);
-  const TH = (x, v) => esc(T(x, v)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+  // v219 (permiso de Lorena, 26/11): textos traducibles con el selector «Idioma · Language» (zona-idioma.js, grupo «nomina» de la función «traducir»)
+  const T0 = (x, v) => x.replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m);
+  const Z = typeof ZonaIdioma === "function" ? ZonaIdioma("nomina", "v-nomina", () => { ponNombres(); calcDos(); calcConv(); pintaLista(); }) : { T: T0, TH: null };
+  const T = Z.T, TH = Z.TH || ((x, v) => esc(T(x, v)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>"));
   const eur = (n) => n.toLocaleString("es-ES", { style: "currency", currency: "EUR" });
   // Lee números como los escribe la gente en España: «2100», «2.100», «2.100,50», «2100,5», «2100 €» (igual que baja.js)
   const num = (v) => { let t = String(v ?? "").replace(/[\s€]/g, "");
@@ -70,7 +71,7 @@ if (typeof module !== "undefined") module.exports = NOMINA;
     else if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, "");
     const n = parseFloat(t); return Number.isFinite(n) && n > 0 ? n : 0; };
   const C = NOMINA.CONCEPTOS;
-  const SEC = { d: "Lo que cobras", q: "Lo que te quitan" };
+  const SEC = { /* textos */ d: "Lo que cobras", q: "Lo que te quitan" /* fin textos */ };
 
   // ---------- Pestañas ----------
   let tab = "dos";
@@ -164,7 +165,7 @@ if (typeof module !== "undefined") module.exports = NOMINA;
 
   // ---------- 3. Qué es cada concepto ----------
   const sin = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-  const GRUPO = { d: "Lo que cobras", q: "Lo que te quitan", i: "Totales, bases y otras líneas" };
+  const GRUPO = { /* textos */ d: "Lo que cobras", q: "Lo que te quitan", i: "Totales, bases y otras líneas" /* fin textos */ };
   function pintaLista() {
     const q = sin($("nom-q").value.trim());
     let h = "";

@@ -131,7 +131,8 @@
             const { data, error } = await sb.functions.invoke("traducir", { body: { modo: "textos", grupo, idioma: idi } });
             if (error || !data?.textos) throw 0;
             mapa = data.textos; msg.textContent = "";
-            try { localStorage.setItem(CACHE, JSON.stringify({ idioma: idi, v: VERSION_WEB, t: Date.now(), mapa })); } catch (_) {}
+            // v219: si la traducción ha salido a medias (Gemini saturado) no se guarda, para pedirla entera la próxima vez
+            if (!data.parcial) try { localStorage.setItem(CACHE, JSON.stringify({ idioma: idi, v: VERSION_WEB, t: Date.now(), mapa })); } catch (_) {}
           } catch (_) { mapa = {}; msg.textContent = "La traducción no está disponible ahora mismo. Prueba más tarde."; msg.className = "msg err"; }
         }
       }

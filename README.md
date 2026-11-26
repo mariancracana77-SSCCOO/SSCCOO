@@ -77,6 +77,9 @@ Si un móvil se queda con una versión vieja: Chrome → ⋮ → Configuración 
 - **Buscar en toda la web**: lupa arriba a la derecha.
 - **Delegados** y **Enlaces útiles**: salen en «Quiénes somos»; se editan en el panel. Publica teléfono o email solo si la persona está de acuerdo.
 
+## Versión 219: traducción de la «Comparadora de nóminas»
+Petición n.º 74 del padre, con el permiso de Lorena (26/11/2026). La comparadora sale con el selector «Idioma · Language» como las demás herramientas de Zona Conductores (`ZonaIdioma("nomina", "v-nomina", …)` en `nomina.js`; los nombres de las secciones van entre `/* textos */`). Grupo `nomina` en la función `traducir` (copia en `herramientas/funciones/traducir.ts`, ya desplegada). Arreglo de la función para todas las herramientas: quita las negritas que Gemini pone de más (sobre todo en los huecos como `{n}`, que hacían tirar la traducción) y, si algún trozo no sale porque Gemini está saturado, devuelve lo demás con `parcial` y no lo guarda, ni en Supabase ni en el móvil (`zona-idioma.js`), para pedirlo entero la próxima vez. Pruebas: `nomina` en `pruebas/traducir-textos.cjs` y en `pruebas/traducir-navegador.cjs` (dos nóminas, «Con el convenio» y «Conceptos»).
+
 ## Versión 218: «Comparadora de nóminas» en Zona Conductores
 Petición n.º 74 del padre. Herramienta nueva (`nomina.js`, vista `#nomina`) con tres pestañas: «Dos nóminas» (cada línea de dos nóminas tuyas con la diferencia, los totales, el líquido y un resumen de lo que más cambia), «Con el convenio» (salario base, plus convenio, antigüedad, prorrata y hora extra contra los mínimos del convenio de Girona 2026-2027 de `convenio-girona.js`) y «Qué es cada concepto» (26 conceptos explicados, con buscador). Los descuentos no se calculan, solo se comparan. No se guarda ni se envía nada. Aún sin traducción (falta el grupo «nomina» en la función `traducir`, que espera el visto bueno de Lorena). Prueba: `node pruebas/nomina.cjs`.
 
