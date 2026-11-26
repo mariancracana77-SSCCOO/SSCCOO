@@ -91,20 +91,28 @@ if (typeof module !== "undefined") module.exports = NOMINA;
     const [n1, n2] = nombres();
     C.forEach(([k, n]) => {
       const a = $("nom-a-" + k), b = $("nom-b-" + k); if (!a) return;
-      a.placeholder = n1; b.placeholder = n2;
       a.setAttribute("aria-label", T(n) + ", " + n1); b.setAttribute("aria-label", T(n) + ", " + n2);
     });
   }
+  const baseCol = { a: null, b: null }; // base de cotización de la nómina leída de cada columna (para el informe)
   const difTxt = (d) => Math.abs(d) < 0.005 ? T("igual") : (d > 0 ? "+" : "−") + eur(Math.abs(d));
   function calcDos() {
     const a = {}, b = {};
     $("nom-filas").querySelectorAll("input[data-nom]").forEach(i => { (i.dataset.nom === "a" ? a : b)[i.dataset.k] = num(i.value); });
     const r = NOMINA.compara(a, b), [n1, n2] = nombres(), out = $("nom-out");
     const hayA = r.ta.d || r.ta.q, hayB = r.tb.d || r.tb.q;
-    if (!hayA || !hayB) { out.innerHTML = `<div class="zc-ok">${esc(T("Copia los importes de las dos nóminas y aquí verás la diferencia de cada línea."))}</div>`; return; }
+    if (!hayA || !hayB) { out.innerHTML = `<div class="zc-ok">${esc(T("Elige las dos nóminas arriba (o copia los importes a mano) y aquí verás qué ha cambiado."))}</div>`; return; }
     const cab = `<tr class="nom-cab"><td>${esc(n1)}</td><td>${esc(n2)}</td><td>${esc(T("Diferencia"))}</td></tr>`;
     const fila = (n, x, y, d, cls, quita) => `<tr class="nom-nombre${cls ? " " + cls : ""}"><td colspan="3">${esc(n)}</td></tr><tr class="nom-cifras${cls ? " " + cls : ""}"><td>${esc(eur(x))}</td><td>${esc(eur(y))}</td><td class="${Math.abs(d) < 0.005 ? "" : (d > 0) !== !!quita ? "nom-mas" : "nom-menos"}">${esc(difTxt(d))}</td></tr>`;
-    let h = `<div class="panel zc-caja zc-resultado"><div class="nom-scroll"><table class="zc-tabla nom-tabla">${cab}`;
+    // v224: resumen arriba (lo que pedía la maqueta del padre): bruto, neto, IRPF, Seguridad Social, pagas y base
+    const sum = (o, ks) => ks.reduce((t, k) => t + (o[k] || 0), 0), SS = ["cc", "desempleo", "fp", "mei", "hxcot"], PAGAS = ["paga", "prorrata"];
+    const res = [[T("Sueldo bruto (total devengado)"), r.ta.d, r.tb.d], [T("Te llega al banco"), r.ta.l, r.tb.l], [T("IRPF"), a.irpf || 0, b.irpf || 0, true], [T("Seguridad Social"), sum(a, SS), sum(b, SS), true]];
+    if (sum(a, PAGAS) || sum(b, PAGAS)) res.push([T("Pagas extra y prorrata"), sum(a, PAGAS), sum(b, PAGAS)]);
+    if (baseCol.a != null && baseCol.b != null) res.push([T("Base de cotización"), baseCol.a, baseCol.b, null]);
+    let h = `<h3 class="nom-sec">${esc(T("Resumen"))}</h3><div class="panel zc-caja zc-resultado nl-informe"><div class="nom-scroll"><table class="zc-tabla nom-tabla">${cab}`;
+    h += res.map(([n, x, y, quita]) => quita === null ? `<tr class="nom-nombre"><td colspan="3">${esc(n)}</td></tr><tr class="nom-cifras"><td>${esc(eur(x))}</td><td>${esc(eur(y))}</td><td>${esc(difTxt(y - x))}</td></tr>` : fila(n, x, y, y - x, "", quita)).join("");
+    h += `</table></div></div><h3 class="nom-sec">${esc(T("Línea por línea"))}</h3>`;
+    h += `<div class="panel zc-caja zc-resultado"><div class="nom-scroll"><table class="zc-tabla nom-tabla">${cab}`;
     for (const t of ["d", "q"]) {
       const fs = r.filas.filter(f => f.t === t); if (!fs.length) continue;
       h += `<tr class="zc-sec"><td colspan="3">${esc(T(SEC[t]))}</td></tr>` + fs.map(f => fila(T(f.n), f.a, f.b, f.dif, "", t === "q")).join("");
@@ -129,7 +137,7 @@ if (typeof module !== "undefined") module.exports = NOMINA;
     out.innerHTML = h;
   }
   ["nom-n1", "nom-n2"].forEach(i => $(i).addEventListener("input", () => { ponNombres(); calcDos(); }));
-  $("nom-filas").addEventListener("input", calcDos);
+  $("nom-filas").addEventListener("input", (e) => { const c = e.target.dataset && e.target.dataset.nom; if (c) baseCol[c] = null; calcDos(); });
   ponNombres(); calcDos();
 
   // ---------- 1b. Leer nóminas en PDF (v221, paso 2 del plan de la nómina; aprobado por Lorena el 26/11/2026) ----------
@@ -140,7 +148,7 @@ if (typeof module !== "undefined") module.exports = NOMINA;
   // «ccoo-nominas-copia»; si «ccoo-nominas» no se puede leer, se usa la copia; otra ventana abierta se entera por el
   // evento «storage» y vuelve a pintar la lista. «Borrar todo» quita las dos claves.
   const L = typeof LECTOR_NOMINA !== "undefined" ? LECTOR_NOMINA : null;
-  const CLAVE = "ccoo-nominas", COPIA = "ccoo-nominas-copia", MAX_GUARDADAS = 24, MAX_PDF = 6;
+  const CLAVE = "ccoo-nominas", COPIA = "ccoo-nominas-copia", MAX_GUARDADAS = 24;
   const CLAVES = C.map(c => c[0]);
   const limpia = (v) => { const o = {}; for (const k of CLAVES) { const n = +v?.[k]; if (Number.isFinite(n) && n >= 0 && n < 1e6) o[k] = Math.round(n * 100) / 100; } return o; };
   const valida = (x) => x && x.v === 1 && Array.isArray(x.lista) ? x.lista.filter(n => n && typeof n.id === "string").map(n => ({ id: n.id.slice(0, 20), mes: /^\d{4}-\d{2}$/.test(n.mes) ? n.mes : "", nombre: String(n.nombre || "").slice(0, 20), valores: limpia(n.valores) })) : null;
@@ -157,118 +165,111 @@ if (typeof module !== "undefined") module.exports = NOMINA;
     } catch (_) { return false; }
   }
   const etiqueta = (n) => n.nombre || (L && n.mes ? L.nombreMes(n.mes, T) : T("Nómina"));
-  let leidas = []; // [{id, mes, nombre, valores, avisos, sinReconocer, ok}]
-  let turnoPdf = 0;
-  const $rev = $("nom-rev"), $guar = $("nom-guardadas");
+  // v224 (lo pidió el padre con una maqueta: «Nómina A» y «Nómina B», «así… foto o PDF»): dos tarjetas grandes, una por
+  // nómina. En cada una se elige el archivo, se lee en el móvil y sale corto lo leído («He leído esto», editable dentro
+  // de «Ver y corregir lo leído»). Al marcar «He leído esto y está bien» pasa a su columna y sale el informe abajo.
+  // Las fotos aún no (sin OCR: necesitaría cambiar la CSP, lo decide Lorena).
+  const SLOTS = ["a", "b"];
+  let slot = { a: null, b: null }; // {id, mes, nombre, valores, sinReconocer, ok} | {error} | {leyendo: true}
+  const turno = { a: 0, b: 0 };
+  const $slots = $("nom-slots"), $guar = $("nom-guardadas");
   const formato = (n) => n == null ? "" : String(n.toFixed(2)).replace(".", ",");
   const AVISO_HTML = (a) => esc(T(a.t, a.v && { a: eur(a.v.a), b: eur(a.v.b) }));
+  const RESUMEN = ["devengado", "deducir", "liquido", "irpf", "basecc"];
+  const avisosHTML = (n) => { const av = L.revisa(n.valores, n.mes); return av.length ? `<div class="zc-aviso"><ul>${av.map(a => `<li>${AVISO_HTML(a)}</li>`).join("")}</ul></div>` : `<div class="zc-ok">${esc(T("Las sumas cuadran con los totales de la nómina."))}</div>`; };
+  const elegir = (s, txt, prin) => `<label class="btn${prin ? "" : " sec"} nl-elegir"><input type="file" class="nl-file" data-file="${s}">${esc(txt)}</label>`;
 
-  function pintaRev() {
-    if (!leidas.length) { $rev.innerHTML = ""; return; }
-    let h = "";
-    leidas.forEach((n, i) => {
-      if (n.error) { h += `<div class="panel nl-tarjeta"><h3>${esc(T("Nómina {n}", { n: i + 1 }))}</h3><div class="zc-aviso">${esc(T(L.ERR[n.error]))}</div></div>`; return; }
-      const conValor = C.filter(c => n.valores[c[0]] != null), sinValor = C.filter(c => n.valores[c[0]] == null);
-      const campo = ([k, nom]) => `<label class="nl-campo"><span>${esc(T(nom))}</span><input type="text" inputmode="decimal" autocomplete="off" data-rev="${i}" data-k="${esc(k)}" value="${esc(formato(n.valores[k]))}"></label>`;
-      const avisos = L.revisa(n.valores, n.mes);
-      h += `<div class="panel nl-tarjeta${n.ok ? " nl-ok" : ""}" data-tarjeta="${i}">
-        <h3>${esc(T("Nómina {n}", { n: i + 1 }))}${n.mes ? " · " + esc(L.nombreMes(n.mes, T)) : ""}</h3>
-        <label class="nl-campo"><span>${esc(T("Nombre para compararla"))}</span><input type="text" maxlength="20" autocomplete="off" data-rev-nombre="${i}" value="${esc(n.nombre)}"></label>
-        <p class="zc-pista">${esc(T("Esto es lo que he leído. Míralo con tu nómina delante y cambia lo que no esté bien."))}</p>
-        <div class="nl-campos">${conValor.map(campo).join("")}</div>
-        ${sinValor.length ? `<details class="nl-faltan"><summary>${esc(T("Lo que no he encontrado ({n})", { n: sinValor.length }))}</summary><div class="nl-campos">${sinValor.map(campo).join("")}</div></details>` : ""}
-        ${n.sinReconocer.length ? `<div class="zc-aviso"><p>${esc(T("Líneas que no he reconocido:"))}</p><ul>${n.sinReconocer.map(x => `<li>${esc(x.texto)}: ${esc(eur(x.importe))} · ${esc(x.tipo === "d" ? T("la he sumado en «Otros cobros»") : x.tipo === "q" ? T("la he sumado en «Otros descuentos»") : T("no sé si es un cobro o un descuento: no la he contado"))}</li>`).join("")}</ul></div>` : ""}
-        <div class="nl-avisos" data-avisos="${i}">${avisos.length ? `<div class="zc-aviso"><ul>${avisos.map(a => `<li>${AVISO_HTML(a)}</li>`).join("")}</ul></div>` : `<div class="zc-ok">${esc(T("Las sumas cuadran con los totales de la nómina."))}</div>`}</div>
-        <label class="check nl-visto"><input type="checkbox" data-rev-ok="${i}"${n.ok ? " checked" : ""}><span>${esc(T("He leído esto y está bien"))}</span></label>
-      </div>`;
-    });
-    const buenas = leidas.map((n, i) => [n, i]).filter(([n]) => !n.error);
-    // v223: con una sola nómina se elige si va como 1.ª o como 2.ª; con varias, las dos listas. Se pueden ir añadiendo
-    // de una en una con «Leer mis nóminas» (se suman a las de aquí, hasta 6).
-    const yaA = C.some(([k]) => ($(`nom-a-${k}`)?.value || "").trim() !== "");
-    if (!buenas.length) h += `<div class="nl-botones"><button type="button" class="btn sec" id="nom-rev-quitar">${esc(T("Quitar lo leído"))}</button></div>`;
+  function pintaSlot(s) {
+    const caja = $slots && $slots.querySelector(`[data-slot="${s}"]`); if (!caja) return;
+    const n = slot[s], titulo = s === "a" ? T("1.ª nómina") : T("2.ª nómina");
+    let h = `<h3>${esc(titulo)}${n && n.mes ? " · " + esc(L.nombreMes(n.mes, T)) : ""}</h3>`;
+    if (!n) h += `<p class="zc-pista">${esc(T("PDF, Word, Excel u OpenOffice: la que te da la empresa. Se lee en tu móvil y no se envía."))}</p>${elegir(s, T("Elegir nómina"), true)}`;
+    else if (n.leyendo) h += `<p class="nl-leyendo">${esc(T("Leyendo en tu móvil…"))}</p>`;
+    else if (n.error) h += `<div class="zc-aviso">${esc(T(L.ERR[n.error]))}</div><div class="nl-botones">${elegir(s, T("Elegir otra"), true)}<button type="button" class="btn sec" data-quita="${s}">${esc(T("Quitar"))}</button></div>`;
     else {
-      const opc = (sel) => buenas.map(([n, i]) => `<option value="${i}"${i === sel ? " selected" : ""}>${esc(T("Nómina {n}", { n: i + 1 }))} · ${esc(etiqueta(n))}</option>`).join("");
-      // Por defecto: la más antigua y la siguiente (por mes)
-      const orden = buenas.slice().sort(([a], [b]) => (a.mes || "").localeCompare(b.mes || ""));
-      const a0 = orden.length > 1 ? orden[orden.length - 2][1] : orden[0][1], b0 = orden.length > 1 ? orden[orden.length - 1][1] : -1;
-      h += `<div class="panel nl-usar">
-        ${buenas.length > 1 ? `<div class="zc-dos"><div><label for="nom-ua">${esc(T("1.ª nómina"))}</label><select id="nom-ua">${opc(a0)}</select></div><div><label for="nom-ub">${esc(T("2.ª nómina"))}</label><select id="nom-ub">${opc(b0)}</select></div></div>` : ""}
-        <label class="check"><input type="checkbox" id="nom-guardar"><span>${esc(T("Guardar en este móvil el mes y los importes de las nóminas marcadas, para compararlas otro día. Nunca se guarda tu nombre, DNI, cuenta del banco ni el archivo."))}</span></label>
-        ${buenas.length > 1 ? `<button type="button" class="btn" id="nom-usar">${esc(T("Comparar estas dos"))}</button>`
-          : `<p class="zc-pista">${esc(T("Puedes leer otra nómina más con «Leer mis nóminas» o ponerla ya en la comparadora:"))}</p>
-        <div class="nl-botones"><button type="button" class="${yaA ? "btn sec" : "btn"}" id="nom-usar" data-col="a">${esc(T("Poner como 1.ª nómina"))}</button><button type="button" class="${yaA ? "btn" : "btn sec"}" id="nom-usar-b" data-col="b">${esc(T("Poner como 2.ª nómina"))}</button></div>`}
-        <p class="zc-pista" id="nom-usar-msg" aria-live="polite"></p>
-        <button type="button" class="btn sec" id="nom-rev-quitar">${esc(T("Quitar lo leído"))}</button>
-      </div>`;
+      const campo = ([k, nom]) => `<label class="nl-campo"><span>${esc(T(nom))}</span><input type="text" inputmode="decimal" autocomplete="off" data-rev="${s}" data-k="${esc(k)}" value="${esc(formato(n.valores[k]))}"></label>`;
+      const conValor = C.filter(c => n.valores[c[0]] != null), sinValor = C.filter(c => n.valores[c[0]] == null);
+      const res = RESUMEN.filter(k => n.valores[k] != null).map(k => `<li><span>${esc(k === "basecc" ? T("Base de cotización") : T(C.find(c => c[0] === k)[1]))}</span><b>${esc(eur(n.valores[k]))}</b></li>`).join("");
+      h += `${res ? `<ul class="nl-resumen">${res}</ul>` : ""}
+        <div class="nl-avisos" data-avisos="${s}">${avisosHTML(n)}</div>
+        <details class="nl-faltan"${n.ok ? "" : " open"}><summary>${esc(T("Ver y corregir lo leído"))}</summary>
+          <p class="zc-pista">${esc(T("Esto es lo que he leído. Míralo con tu nómina delante y cambia lo que no esté bien."))}</p>
+          <label class="nl-campo"><span>${esc(T("Nombre para compararla"))}</span><input type="text" maxlength="20" autocomplete="off" data-rev-nombre="${s}" value="${esc(n.nombre)}"></label>
+          <div class="nl-campos">${conValor.map(campo).join("")}</div>
+          ${sinValor.length ? `<details class="nl-faltan"><summary>${esc(T("Lo que no he encontrado ({n})", { n: sinValor.length }))}</summary><div class="nl-campos">${sinValor.map(campo).join("")}</div></details>` : ""}
+          ${n.sinReconocer && n.sinReconocer.length ? `<div class="zc-aviso"><p>${esc(T("Líneas que no he reconocido:"))}</p><ul>${n.sinReconocer.map(x => `<li>${esc(x.texto)}: ${esc(eur(x.importe))} · ${esc(x.tipo === "d" ? T("la he sumado en «Otros cobros»") : x.tipo === "q" ? T("la he sumado en «Otros descuentos»") : T("no sé si es un cobro o un descuento: no la he contado"))}</li>`).join("")}</ul></div>` : ""}
+        </details>
+        <label class="check nl-visto"><input type="checkbox" data-slot-ok="${s}"${n.ok ? " checked" : ""}><span>${esc(T("He leído esto y está bien"))}</span></label>
+        <div class="nl-botones">${elegir(s, T("Elegir otra"), false)}<button type="button" class="btn sec" data-quita="${s}">${esc(T("Quitar"))}</button></div>`;
     }
-    $rev.innerHTML = h;
+    caja.innerHTML = h;
+    caja.classList.toggle("nl-ok", !!(n && n.ok));
   }
-  function pintaAvisos(i) {
-    const n = leidas[i], caja = $rev.querySelector(`[data-avisos="${i}"]`); if (!caja) return;
-    const avisos = L.revisa(n.valores, n.mes);
-    caja.innerHTML = avisos.length ? `<div class="zc-aviso"><ul>${avisos.map(a => `<li>${AVISO_HTML(a)}</li>`).join("")}</ul></div>` : `<div class="zc-ok">${esc(T("Las sumas cuadran con los totales de la nómina."))}</div>`;
+  function pintaGuardar() {
+    const g = $("nom-guardar-caja"); if (!g) return;
+    const hay = SLOTS.some(s => slot[s] && slot[s].ok);
+    g.hidden = !hay;
+    if (hay) g.innerHTML = `<button type="button" class="btn sec" id="nom-guardar">${esc(T("Guardar en este móvil para compararlas otro día"))}</button>
+      <p class="zc-pista">${esc(T("Solo el mes y los importes. Nunca tu nombre, DNI, cuenta del banco ni el archivo."))}</p><p class="zc-pista" id="nom-guardar-msg" aria-live="polite"></p>`;
   }
-  // Pone una nómina en la columna a o b de la comparadora
+  function pintaRev() { SLOTS.forEach(pintaSlot); pintaGuardar(); }
+  // Pone una nómina en la columna a o b de la comparadora (o la vacía)
   function ponEn(col, n) {
-    C.forEach(([k]) => { const inp = $(`nom-${col}-${k}`); if (inp) inp.value = n.valores[k] != null ? formato(n.valores[k]) : ""; });
-    $(col === "a" ? "nom-n1" : "nom-n2").value = etiqueta(n).slice(0, 20);
+    C.forEach(([k]) => { const inp = $(`nom-${col}-${k}`); if (inp) inp.value = n && n.valores[k] != null ? formato(n.valores[k]) : ""; });
+    $(col === "a" ? "nom-n1" : "nom-n2").value = n ? etiqueta(n).slice(0, 20) : "";
+    baseCol[col] = n && n.valores.basecc != null ? n.valores.basecc : null;
   }
-  function acaba() { ponNombres(); calcDos(); $("nom-out").scrollIntoView({ behavior: "smooth", block: "start" }); }
+  // La columna sigue a su tarjeta: marcada = sus importes; leída sin marcar o quitada = vacía
+  function sincroniza(s, antes) {
+    const n = slot[s];
+    if (n && n.ok) ponEn(s, n); else if (antes || (n && !n.error && !n.leyendo)) ponEn(s, null);
+    ponNombres(); calcDos();
+  }
+  function marca(s, si) {
+    slot[s].ok = si; pintaSlot(s); pintaGuardar(); sincroniza(s, true);
+    if (si && SLOTS.every(x => slot[x] && slot[x].ok)) $("nom-out").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
-  if (L && $("nom-pdf")) {
-    $("nom-pdf").addEventListener("change", async (e) => {
-      const fs = [...(e.target.files || [])].slice(0, MAX_PDF); e.target.value = "";
-      if (!fs.length) return;
-      const yo = ++turnoPdf;
-      $rev.innerHTML = `<p class="zc-pista">${esc(T("Leyendo {n} nóminas en tu móvil…", { n: fs.length }))}</p>`;
-      const out = [];
-      for (const f of fs) {
-        const r = await L.leeArchivo(f);
-        if (yo !== turnoPdf) return;
-        out.push(r.error ? { error: r.error } : { id: Date.now().toString(36) + out.length, mes: r.mes || "", nombre: r.mes ? L.nombreMes(r.mes, T).slice(0, 20) : "", valores: limpia(r.valores), sinReconocer: r.sinReconocer, ok: false });
-      }
-      leidas = leidas.filter(n => !n.error).concat(out).slice(-MAX_PDF); pintaRev();
-      $rev.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (L && $slots) {
+    $slots.addEventListener("change", async (e) => {
+      const t = e.target;
+      if (t.dataset.slotOk != null) { marca(t.dataset.slotOk, t.checked); return; }
+      if (t.dataset.file == null) return;
+      const s = t.dataset.file, f = (t.files || [])[0]; t.value = "";
+      if (!f) return;
+      const yo = ++turno[s], antes = slot[s] && slot[s].ok;
+      slot[s] = { leyendo: true }; pintaSlot(s); pintaGuardar();
+      if (antes) sincroniza(s, true);
+      const r = await L.leeArchivo(f);
+      if (yo !== turno[s]) return;
+      slot[s] = r.error ? { error: r.error } : { id: Date.now().toString(36) + s, mes: r.mes || "", nombre: r.mes ? L.nombreMes(r.mes, T).slice(0, 20) : "", valores: limpia(r.valores), sinReconocer: r.sinReconocer, ok: false };
+      pintaSlot(s); pintaGuardar();
+      $slots.querySelector(`[data-slot="${s}"]`).scrollIntoView({ behavior: "smooth", block: "start" });
     });
-    $rev.addEventListener("input", (e) => {
+    $slots.addEventListener("input", (e) => {
       const t = e.target;
       if (t.dataset.rev != null) {
-        const n = leidas[+t.dataset.rev], v = num(t.value);
+        const s = t.dataset.rev, n = slot[s], v = num(t.value);
         if (String(t.value).trim() === "") delete n.valores[t.dataset.k]; else n.valores[t.dataset.k] = v;
-        n.ok = false; const ck = $rev.querySelector(`[data-rev-ok="${t.dataset.rev}"]`); if (ck) ck.checked = false;
-        $rev.querySelector(`[data-tarjeta="${t.dataset.rev}"]`)?.classList.remove("nl-ok");
-        pintaAvisos(+t.dataset.rev);
-      } else if (t.dataset.revNombre != null) leidas[+t.dataset.revNombre].nombre = t.value.trim().slice(0, 20);
+        const caja = $slots.querySelector(`[data-avisos="${s}"]`); if (caja) caja.innerHTML = avisosHTML(n);
+        if (n.ok) { n.ok = false; const ck = $slots.querySelector(`[data-slot-ok="${s}"]`); if (ck) ck.checked = false; $slots.querySelector(`[data-slot="${s}"]`).classList.remove("nl-ok"); pintaGuardar(); sincroniza(s, true); }
+      } else if (t.dataset.revNombre != null) { const n = slot[t.dataset.revNombre]; n.nombre = t.value.trim().slice(0, 20); if (n.ok) sincroniza(t.dataset.revNombre); }
     });
-    $rev.addEventListener("change", (e) => {
-      const t = e.target;
-      if (t.dataset.revOk != null) { leidas[+t.dataset.revOk].ok = t.checked; $rev.querySelector(`[data-tarjeta="${t.dataset.revOk}"]`)?.classList.toggle("nl-ok", t.checked); }
+    $slots.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-quita]"); if (!b) return;
+      const s = b.dataset.quita; turno[s]++; slot[s] = null; pintaSlot(s); pintaGuardar(); sincroniza(s, true);
     });
-    $rev.addEventListener("click", (e) => {
-      const b = e.target.closest("button"); if (!b) return;
-      const msg = $("nom-usar-msg");
-      if (b.id === "nom-rev-quitar") { leidas = []; turnoPdf++; pintaRev(); return; }
-      if (b.id !== "nom-usar" && b.id !== "nom-usar-b") return;
-      const sola = b.id === "nom-usar-b" ? "b" : !$("nom-ua") ? "a" : "";
-      const ia = $("nom-ua") ? +$("nom-ua").value : leidas.findIndex(n => !n.error), ib = $("nom-ub") ? +$("nom-ub").value : -1;
-      if (ib >= 0 && ia === ib) { msg.textContent = T("Elige dos nóminas distintas."); return; }
-      const elegidas = [ia, ib].filter(i => i >= 0).map(i => leidas[i]);
-      if (elegidas.some(n => !n.ok)) { msg.textContent = T("Antes, marca «He leído esto y está bien» en las nóminas que vas a comparar."); return; }
-      if (sola) ponEn(sola, elegidas[0]);
-      else { ponEn("a", elegidas[0]); ponEn("b", elegidas[1]); }
-      if ($("nom-guardar")?.checked) {
-        const marcadas = leidas.filter(n => !n.error && n.ok);
-        let lista = leeGuardadas();
-        for (const n of marcadas) {
-          lista = lista.filter(x => !(x.mes && x.mes === n.mes && x.valores.liquido === n.valores.liquido));
-          lista.push({ id: n.id, mes: n.mes, nombre: n.nombre, valores: limpia(n.valores) });
-        }
-        lista.sort((a, b) => (a.mes || "").localeCompare(b.mes || "")); lista = lista.slice(-MAX_GUARDADAS);
-        if (!guardaLista(lista)) { msg.textContent = T("No se ha podido guardar en este móvil (puede que esté en modo privado). La comparación sí está hecha."); }
-        pintaGuardadas();
+    $("nom-guardar-caja")?.addEventListener("click", (e) => {
+      if (e.target.closest("#nom-guardar") == null) return;
+      let lista = leeGuardadas();
+      for (const s of SLOTS) {
+        const n = slot[s]; if (!n || !n.ok) continue;
+        lista = lista.filter(x => x.id !== n.id && !(x.mes && x.mes === n.mes && x.valores.liquido === n.valores.liquido));
+        lista.push({ id: n.id, mes: n.mes, nombre: n.nombre, valores: limpia(n.valores) });
       }
-      leidas = []; pintaRev(); acaba();
+      lista.sort((a, b) => (a.mes || "").localeCompare(b.mes || "")); lista = lista.slice(-MAX_GUARDADAS);
+      $("nom-guardar-msg").textContent = guardaLista(lista) ? T("Guardadas en este móvil.") : T("No se ha podido guardar en este móvil (puede que esté en modo privado).");
+      pintaGuardadas();
     });
   }
 
@@ -287,14 +288,21 @@ if (typeof module !== "undefined") module.exports = NOMINA;
   $guar.addEventListener("click", (e) => {
     const b = e.target.closest("button"); if (!b) return;
     const lista = leeGuardadas(), id = b.dataset.gA || b.dataset.gB || b.dataset.gQuita;
-    if (b.dataset.gA || b.dataset.gB) { const n = lista.find(x => x.id === id); if (n) { ponEn(b.dataset.gA ? "a" : "b", n); acaba(); } return; }
+    if (b.dataset.gA || b.dataset.gB) {
+      const n = lista.find(x => x.id === id); if (!n) return;
+      const s = b.dataset.gA ? "a" : "b"; turno[s]++;
+      slot[s] = { id: n.id, mes: n.mes, nombre: n.nombre, valores: Object.assign({}, n.valores), sinReconocer: [], ok: true };
+      pintaSlot(s); pintaGuardar(); sincroniza(s, true);
+      $slots.querySelector(`[data-slot="${s}"]`).scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
     if (b.dataset.gQuita) { guardaLista(lista.filter(x => x.id !== id)); pintaGuardadas(); const d = $guar.querySelector("details"); if (d) d.open = true; return; }
     if (b.id === "nom-g-borrar") { $("nom-g-confirma").hidden = false; b.hidden = true; return; }
     if (b.id === "nom-g-no") { $("nom-g-confirma").hidden = true; $("nom-g-borrar").hidden = false; return; }
     if (b.id === "nom-g-si") { try { localStorage.removeItem(CLAVE); localStorage.removeItem(COPIA); } catch (_) {} pintaGuardadas(); }
   });
   addEventListener("storage", (e) => { if (e.key === CLAVE || e.key === null) pintaGuardadas(); });
-  pintaGuardadas();
+  pintaRev(); pintaGuardadas();
 
   // ---------- 2. Con el convenio ----------
   const TAB = CONVENIO_GIRONA.TAB, sc = $("nc-cat");
@@ -356,7 +364,7 @@ if (typeof module !== "undefined") module.exports = NOMINA;
       <p class="zc-ok nl-bt-msg" id="nom-bt-msg" aria-live="polite"${msg ? "" : " hidden"}>${msg ? esc(T("Todo borrado")) : ""}</p>`;
   }
   function borraTodo() {
-    leidas = []; turnoPdf++; pintaRev();
+    SLOTS.forEach(x => { turno[x]++; slot[x] = null; }); pintaRev();
     $("nom-n1").value = ""; $("nom-n2").value = "";
     $("nom-filas").querySelectorAll("input").forEach(i => { i.value = ""; });
     sc.value = "c"; $("nc-yr").value = "1"; $("nc-ant").value = "0"; $("nc-pro").checked = false;

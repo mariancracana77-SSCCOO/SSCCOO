@@ -3407,6 +3407,29 @@ label.cg-huecos { margin: 0 0 12px; }
 .nl-lista li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; border-bottom: 1px solid var(--linea); padding-bottom: 10px; }
 .nl-lista li > span:first-child { min-width: 0; overflow-wrap: anywhere; }
 .nl-borrar { margin-top: 6px; }
+/* v224: dos tarjetas grandes, una por nómina */
+.nl-slots { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 0 0 14px; }
+@media (min-width: 700px) { .nl-slots { grid-template-columns: 1fr 1fr; } }
+.nl-slot { margin: 0; padding: 16px; border-left: 5px solid var(--linea); display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.nl-slot.nl-ok { border-left-color: var(--verde, #2e7d32); }
+.nl-slot h3 { margin: 0; font-size: 1.25rem; }
+.nl-slot > .zc-pista, .nl-slot .zc-ok, .nl-slot .zc-aviso { margin: 0; }
+.nl-elegir { position: relative; cursor: pointer; align-self: flex-start; }
+.nl-slot > .nl-elegir { font-size: 1.1rem; padding-block: 14px; }
+.nl-elegir:focus-within { outline: 3px solid var(--foco, #1a5fb4); outline-offset: 2px; }
+.nl-file { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 0; }
+.nl-leyendo { margin: 0; font-weight: 600; }
+.nl-resumen { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.nl-resumen li { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--linea); padding-bottom: 4px; }
+.nl-resumen li span { min-width: 0; overflow-wrap: anywhere; }
+.nl-resumen li b { white-space: nowrap; }
+.nl-slot .nl-botones { align-items: stretch; }
+.nl-slot .nl-botones .btn { font-size: 1rem; margin: 0; padding: 12px 18px; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; }
+.nl-fotos { margin: 0 0 14px; }
+.nl-guardar { margin: 0 0 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.nl-guardar .zc-pista { margin: 0; }
+.nl-mano { margin: 0 0 14px; }
+.nl-mano > summary { cursor: pointer; font-weight: 700; }
 .nl-borra-todo { margin: 0 0 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
 .nl-bt-confirma { margin: 0; padding: 14px 16px; border-left: 5px solid var(--rojo, #AB1012); }
 .nl-bt-confirma p { margin: 0 0 10px; }

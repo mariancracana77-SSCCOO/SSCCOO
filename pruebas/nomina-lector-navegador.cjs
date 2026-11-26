@@ -1,4 +1,4 @@
-// v221: «Leer nóminas en PDF» en el navegador, con dos nóminas INVENTADAS hechas aquí mismo en PDF (ningún dato real).
+// v221/v224: leer nóminas en el navegador (v224: dos tarjetas «1.ª nómina» y «2.ª nómina»), con dos nóminas INVENTADAS hechas aquí mismo en PDF (ningún dato real).
 // Comprueba: Comparadora (lee 2 PDF, «He leído esto», no compara sin marcarlo, rellena A y B, por defecto no guarda nada,
 // con la casilla guarda solo mes e importes, otra ventana se entera, «Borrar todo»), una foto da aviso, y «Coger la
 // base de una nómina» en Mi jubilación y Mi baja médica. Ninguna petición que no sea GET.
@@ -72,92 +72,70 @@ const N2 = nomina("01/10/2026 a 31/10/2026", [["SALARIO BASE", "1.200,00"], ["PL
     p.on("request", r => { if (r.method() !== "GET") pedidas.push(r.method() + " " + r.url()); });
     const tag = `${ancho}${oscuro ? " oscuro" : ""}`;
     await p.goto(BASE + "#nomina"); await p.waitForTimeout(1500);
-    await p.setInputFiles("#nom-pdf", [P2, P1]);
-    await p.waitForSelector(".nl-tarjeta", { timeout: 15000 });
-    ok(await p.locator(".nl-tarjeta").count() === 2, `${tag}: dos nóminas leídas`);
-    const v = await p.evaluate(() => [...document.querySelectorAll("[data-rev='1']")].reduce((o, i) => (o[i.dataset.k] = i.value, o), {}));
+    const A = "#nom-slots [data-file='a']", B = "#nom-slots [data-file='b']";
+    const lista = async (s) => p.evaluate((s) => [...document.querySelectorAll(`[data-rev='${s}']`)].reduce((o, i) => (o[i.dataset.k] = i.value, o), {}), s);
+    // v224: dos tarjetas grandes; se puede empezar por cualquiera y de una en una
+    ok(await p.locator("#nom-slots .nl-elegir").count() === 2, `${tag}: dos tarjetas con «Elegir nómina»`);
+    if (CAP) { await p.waitForTimeout(1500); await p.evaluate(() => { document.getElementById("nom-slots").scrollIntoView(); scrollBy(0, -(innerWidth < 1000 ? 200 : 240)); }); await p.waitForTimeout(300); await p.screenshot({ path: path.join(CAP, `tarjetas-vacias-${ancho}${oscuro ? "-oscuro" : ""}.png`) }); }
+    await p.setInputFiles(A, P1); await p.waitForSelector("[data-slot-ok='a']", { timeout: 15000 });
+    const v = await lista("a");
     ok(v.base === "1200,00" && v.cc === "78,02" && v.basecc === "1660,00" && v.liquido === "1355,39", `${tag}: importes leídos ${JSON.stringify(v)}`);
-    ok(await p.locator(".nl-tarjeta .zc-ok").count() === 2, `${tag}: las sumas cuadran en las dos`);
-    const txt = await p.textContent("#nom-rev");
+    ok(await p.locator("[data-slot='a'] .zc-ok").count() === 1, `${tag}: las sumas cuadran`);
+    const txt = await p.textContent("#nom-slots");
     ok(!/PEREZ|12345678Z|ES91/.test(txt), `${tag}: no enseña nombre, DNI ni IBAN`);
-    ok(/Septiembre 2026/.test(txt) && /Octubre 2026/.test(txt), `${tag}: mes de cada nómina`);
-    if (CAP) { await p.evaluate(() => document.querySelector(".nl-tarjeta").scrollIntoView()); await p.evaluate(() => scrollBy(0, -230)); await p.waitForTimeout(300); await p.screenshot({ path: path.join(CAP, `lector-revisa-${ancho}${oscuro ? "-oscuro" : ""}.png`) }); }
-    // sin marcar, no compara
-    await p.click("#nom-usar");
-    ok(/marca/.test(await p.textContent("#nom-usar-msg")), `${tag}: sin «He leído esto» no compara`);
-    // cambiar un importe a mano: avisa de que no cuadra y quita la marca
-    await p.check("[data-rev-ok='0']"); await p.check("[data-rev-ok='1']");
-    await p.fill("[data-rev='0'][data-k='irpf']", "100");
-    ok(await p.locator("[data-avisos='0'] .zc-aviso").count() === 1 && !(await p.isChecked("[data-rev-ok='0']")), `${tag}: al cambiar un importe vuelve a mirar las sumas y quita la marca`);
-    await p.fill("[data-rev='0'][data-k='irpf']", "210,00"); await p.check("[data-rev-ok='0']");
-    await p.click("#nom-usar"); await p.waitForTimeout(300);
-    const ab = await p.evaluate(() => [document.getElementById("nom-a-base").value, document.getElementById("nom-b-hx").value, document.getElementById("nom-n1").value, document.getElementById("nom-n2").value]);
-    ok(ab[0] === "1200,00" && ab[1] === "90,00" && ab[2] === "Septiembre 2026" && ab[3] === "Octubre 2026", `${tag}: rellena la 1.ª (septiembre) y la 2.ª (octubre) ${JSON.stringify(ab)}`);
-    ok(/Líquido a percibir/.test(await p.textContent("#nom-out")), `${tag}: compara`);
-    if (CAP) { await p.evaluate(() => document.getElementById("nom-out").scrollIntoView()); await p.screenshot({ path: path.join(CAP, `lector-compara-${ancho}${oscuro ? "-oscuro" : ""}.png`) }); }
-    ok(await p.evaluate(() => localStorage.getItem("ccoo-nominas")) === null, `${tag}: sin la casilla no guarda nada`);
-    // ahora guardando
-    await p.setInputFiles("#nom-pdf", [P1, P2]); await p.waitForSelector(".nl-tarjeta");
-    await p.check("[data-rev-ok='0']"); await p.check("[data-rev-ok='1']"); await p.check("#nom-guardar"); await p.click("#nom-usar"); await p.waitForTimeout(300);
+    ok(/Septiembre 2026/.test(txt), `${tag}: mes de la nómina`);
+    ok(await p.inputValue("#nom-a-base") === "", `${tag}: sin marcar «He leído esto» no la usa`);
+    // cambiar un importe a mano: avisa de que no cuadra
+    await p.fill("[data-rev='a'][data-k='irpf']", "100");
+    ok(await p.locator("[data-avisos='a'] .zc-aviso").count() === 1, `${tag}: al cambiar un importe vuelve a mirar las sumas`);
+    await p.fill("[data-rev='a'][data-k='irpf']", "199,20");
+    await p.check("[data-slot-ok='a']"); await p.waitForTimeout(200);
+    ok(await p.inputValue("#nom-a-base") === "1200,00" && await p.inputValue("#nom-n1") === "Septiembre 2026", `${tag}: marcada, pasa a la 1.ª`);
+    if (CAP) { await p.evaluate(() => { document.getElementById("nom-slots").scrollIntoView(); scrollBy(0, -(innerWidth < 1000 ? 200 : 240)); }); await p.waitForTimeout(300); await p.screenshot({ path: path.join(CAP, `una-leida-${ancho}${oscuro ? "-oscuro" : ""}.png`) }); }
+    // la 2.ª, como la da Android: sin extensión
+    await p.setInputFiles(B, { name: "nomina", mimeType: "application/octet-stream", buffer: fs.readFileSync(P2) }); await p.waitForSelector("[data-slot-ok='b']", { timeout: 15000 });
+    ok(/Octubre 2026/.test(await p.textContent("[data-slot='b']")), `${tag}: lee un PDF sin extensión (como lo da Android)`);
+    await p.check("[data-slot-ok='b']"); await p.waitForTimeout(300);
+    const out = await p.textContent("#nom-out");
+    ok(await p.inputValue("#nom-b-hx") === "90,00" && /Resumen/.test(out) && /Seguridad Social/.test(out) && /Base de cotización/.test(out) && /Te llega al banco/.test(out), `${tag}: compara con el resumen (bruto, banco, IRPF, Seguridad Social, base)`);
+    if (CAP) { await p.evaluate(() => { document.getElementById("nom-out").scrollIntoView(); scrollBy(0, -(innerWidth < 1000 ? 200 : 240)); }); await p.waitForTimeout(300); await p.screenshot({ path: path.join(CAP, `informe-${ancho}${oscuro ? "-oscuro" : ""}.png`) }); }
+    // al desmarcar, la columna se vacía; al volver a marcar, vuelve
+    await p.uncheck("[data-slot-ok='b']"); await p.waitForTimeout(100);
+    ok(await p.inputValue("#nom-b-hx") === "", `${tag}: al desmarcar se quita de la comparación`);
+    await p.check("[data-slot-ok='b']");
+    ok(await p.evaluate(() => localStorage.getItem("ccoo-nominas")) === null, `${tag}: sin pulsar «Guardar» no guarda nada`);
+    // guardar
+    await p.click("#nom-guardar"); await p.waitForTimeout(200);
     const g = await p.evaluate(() => localStorage.getItem("ccoo-nominas"));
     ok(g && JSON.parse(g).lista.length === 2 && !/PEREZ|12345678Z|ES91|nomina-/.test(g), `${tag}: guarda solo mes e importes (${g && g.length} letras)`);
-    // otra ventana se entera
+    // otra ventana se entera y puede usar una guardada
     const p2 = await ctx.newPage(); await p2.goto(BASE + "#nomina"); await p2.waitForTimeout(500);
     ok(/\(2\)/.test(await p2.textContent("#nom-guardadas")), `${tag}: otra ventana ve las guardadas`);
     await p2.evaluate(() => { document.querySelector(".nl-guardadas").open = true; });
+    await p2.click("[data-g-b]"); await p2.waitForTimeout(200);
+    ok(await p2.isChecked("[data-slot-ok='b']") && await p2.inputValue("#nom-b-base") === "1200,00", `${tag}: una guardada se pone en su tarjeta`);
     await p2.click("#nom-g-borrar"); await p2.click("#nom-g-si"); await p.waitForTimeout(400);
-    ok(await p.evaluate(() => localStorage.getItem("ccoo-nominas") === null && localStorage.getItem("ccoo-nominas-copia") === null), `${tag}: «Borrar todo» lo borra`);
+    ok(await p.evaluate(() => localStorage.getItem("ccoo-nominas") === null && localStorage.getItem("ccoo-nominas-copia") === null), `${tag}: «Borrar todo lo guardado» lo borra`);
     ok((await p.textContent("#nom-guardadas")).trim() === "", `${tag}: la primera ventana se entera del borrado`);
     await p2.close();
-    // v223 (aviso del padre: «pones una y ya no puedes hacer nada»): de una en una, A y luego B, y archivos sin extensión
-    await p.click("#nom-bt"); await p.click("#nom-bt-si");
-    await p.setInputFiles("#nom-pdf", P1); await p.waitForSelector("#nom-usar-b");
-    ok(await p.isVisible("#nom-usar") && await p.isVisible("#nom-usar-b"), `${tag}: con una nómina deja elegir 1.ª o 2.ª`);
-    await p.check("[data-rev-ok='0']"); await p.click("#nom-usar"); await p.waitForTimeout(300);
-    ok(await p.inputValue("#nom-a-base") === "1200,00" && await p.inputValue("#nom-b-base") === "", `${tag}: la primera va a la 1.ª`);
-    await p.setInputFiles("#nom-pdf", { name: "nomina", mimeType: "application/octet-stream", buffer: fs.readFileSync(P2) }); await p.waitForSelector("#nom-usar-b");
-    ok(await p.getAttribute("#nom-usar-b", "class") === "btn", `${tag}: si la 1.ª ya está, resalta «Poner como 2.ª»`);
-    if (CAP) { await p.evaluate(() => document.querySelector(".nl-usar").scrollIntoView({ block: "center" })); await p.waitForTimeout(300); await p.screenshot({ path: path.join(CAP, `una-a-una-${ancho}${oscuro ? "-oscuro" : ""}.png`) }); }
-    ok(/Octubre 2026/.test(await p.textContent("#nom-rev")), `${tag}: lee un PDF sin extensión (como lo da Android)`);
-    await p.check("[data-rev-ok='0']"); await p.click("#nom-usar-b"); await p.waitForTimeout(300);
-    ok(await p.inputValue("#nom-a-base") === "1200,00" && await p.inputValue("#nom-b-hx") === "90,00" && /Líquido a percibir/.test(await p.textContent("#nom-out")), `${tag}: de una en una compara las dos`);
-    // se van sumando: una y luego otra, salen las dos listas
-    await p.setInputFiles("#nom-pdf", P1); await p.waitForSelector("#nom-usar-b");
-    await p.setInputFiles("#nom-pdf", P2); await p.waitForSelector("#nom-ua");
-    ok(await p.locator(".nl-tarjeta").count() === 2, `${tag}: la segunda se suma a la primera`);
-    await p.click("#nom-rev-quitar");
-    if (ancho === 360) {
-      await p.setInputFiles("#nom-pdf", { name: "documento", mimeType: "", buffer: fs.readFileSync(RUTAS["nomina.docx"]) }); await p.waitForSelector(".nl-tarjeta", { timeout: 15000 });
-      ok(await p.locator("#nom-usar-b").count() === 1, `${tag}: lee un Word sin extensión`);
-      await p.click("#nom-rev-quitar");
-    }
-    // un archivo que no se puede leer: se puede quitar y seguir
-    await p.setInputFiles("#nom-pdf", { name: "cosa", mimeType: "application/octet-stream", buffer: Buffer.from("hola que tal esto no es nada") }); await p.waitForSelector(".nl-tarjeta");
-    ok(await p.isVisible("#nom-rev-quitar"), `${tag}: con un archivo que no se lee sale «Quitar lo leído»`);
-    await p.click("#nom-rev-quitar"); await p.fill("#nom-a-plus", "10");
-    ok(await p.locator(".nl-tarjeta").count() === 0 && await p.inputValue("#nom-a-plus") === "10", `${tag}: y se puede seguir escribiendo`);
-    // una foto
-    await p.setInputFiles("#nom-pdf", FOTO); await p.waitForSelector(".nl-tarjeta");
-    ok(/Es una foto/.test(await p.textContent("#nom-rev")), `${tag}: una foto da aviso`);
+    // «Quitar» vacía su tarjeta y su columna
+    await p.click("[data-quita='b']");
+    ok(await p.locator("[data-slot='b'] .nl-elegir").count() === 1 && await p.inputValue("#nom-b-hx") === "", `${tag}: «Quitar» deja la tarjeta y la columna vacías`);
     // v222: «Borrar todo» de arriba deja la herramienta como recién abierta (y otra ventana se entera)
-    await p.setInputFiles("#nom-pdf", [P1, P2]); await p.waitForSelector("[data-rev-ok='1']");
-    await p.check("[data-rev-ok='0']"); await p.check("[data-rev-ok='1']"); await p.check("#nom-guardar"); await p.click("#nom-usar"); await p.waitForTimeout(300);
-    await p.setInputFiles("#nom-pdf", [P1, P2]); await p.waitForSelector(".nl-tarjeta");
+    await p.click("#nom-guardar"); await p.waitForTimeout(100);
     await p.click("[data-nom-tab='convenio']"); await p.fill("#nc-base", "1000"); await p.check("#nc-pro"); await p.fill("#nc-prorrata", "50");
     await p.click("[data-nom-tab='conceptos']"); await p.fill("#nom-q", "irpf");
     const p3 = await ctx.newPage(); await p3.goto(BASE + "#nomina"); await p3.waitForTimeout(500);
-    ok(/\(2\)/.test(await p3.textContent("#nom-guardadas")), `${tag}: hay guardadas antes de borrar`);
-    ok(await p.isVisible("#nom-bt"), `${tag}: el botón «Borrar todo» se ve arriba`);
+    ok(/\(1\)/.test(await p3.textContent("#nom-guardadas")), `${tag}: hay guardadas antes de borrar`);
     await p.click("#nom-bt");
     ok(await p.isVisible("#nom-bt-confirma") && /No se puede deshacer/.test(await p.textContent("#nom-bt-confirma")), `${tag}: pide confirmación en la página`);
     await p.click("#nom-bt-no");
-    ok(await p.evaluate(() => localStorage.getItem("ccoo-nominas") !== null) && await p.locator(".nl-tarjeta").count() > 0, `${tag}: «No» no borra nada`);
-    if (CAP) { await p.click("#nom-bt"); await p.evaluate(() => document.getElementById("v-nomina").scrollIntoView()); await p.waitForTimeout(300); await p.screenshot({ path: path.join(CAP, `borrar-confirma-${ancho}${oscuro ? "-oscuro" : ""}.png`) }); await p.click("#nom-bt-no"); }
+    ok(await p.evaluate(() => localStorage.getItem("ccoo-nominas") !== null) && await p.isChecked("[data-slot-ok='a']"), `${tag}: «No» no borra nada`);
     await p.click("#nom-bt"); await p.click("#nom-bt-si"); await p.waitForTimeout(400);
     const limpio = await p.evaluate(() => {
       const $ = (i) => document.getElementById(i);
       return { ls: localStorage.getItem("ccoo-nominas") === null && localStorage.getItem("ccoo-nominas-copia") === null,
-        rev: $("nom-rev").textContent.trim() === "", guar: $("nom-guardadas").textContent.trim() === "",
+        tarjetas: document.querySelectorAll("#nom-slots .nl-elegir").length === 2 && !document.querySelector("[data-slot-ok]"), guar: $("nom-guardadas").textContent.trim() === "",
         casillas: [...document.querySelectorAll("#nom-filas input, #nom-n1, #nom-n2, #nc-base, #nc-prorrata, #nom-q")].every(i => i.value === ""),
         pro: !$("nc-pro").checked && $("nc-pro-caja").hidden, ant: $("nc-ant").value === "0",
         out: !/Líquido a percibir/.test($("nom-out").textContent), tab: !$("nom-dos").hidden,
@@ -166,26 +144,31 @@ const N2 = nomina("01/10/2026 a 31/10/2026", [["SALARIO BASE", "1.200,00"], ["PL
     ok(Object.values(limpio).every(Boolean), `${tag}: «Borrar todo» lo deja limpio ${JSON.stringify(limpio)}`);
     await p3.waitForTimeout(300);
     ok((await p3.textContent("#nom-guardadas")).trim() === "", `${tag}: la otra ventana se entera del «Borrar todo»`);
-    if (CAP) { await p.evaluate(() => document.getElementById("v-nomina").scrollIntoView()); await p.waitForTimeout(300); await p.screenshot({ path: path.join(CAP, `borrar-hecho-${ancho}${oscuro ? "-oscuro" : ""}.png`) }); }
     await p3.close();
-    // sin nada guardado también sale y borra lo de la pantalla
-    await p.fill("#nom-a-base", "500"); await p.click("#nom-bt"); await p.click("#nom-bt-si");
-    ok(await p.inputValue("#nom-a-base") === "", `${tag}: sin nada guardado también borra lo escrito`);
-
+    // a mano: «Copiar los importes a mano» sigue funcionando
+    await p.evaluate(() => { document.getElementById("nom-mano").open = true; });
+    await p.fill("#nom-a-base", "1000"); await p.fill("#nom-b-base", "1100");
+    ok(/Resumen/.test(await p.textContent("#nom-out")) && !/Base de cotización/.test(await p.textContent("#nom-out")), `${tag}: a mano también compara`);
+    await p.click("#nom-bt"); await p.click("#nom-bt-si");
+    ok(await p.inputValue("#nom-a-base") === "", `${tag}: «Borrar todo» borra lo escrito a mano`);
+    // archivos que no se leen: aviso y se puede elegir otro o quitar
+    await p.setInputFiles(A, { name: "cosa", mimeType: "application/octet-stream", buffer: Buffer.from("hola que tal esto no es nada") }); await p.waitForSelector("[data-slot='a'] .zc-aviso");
+    ok(await p.locator("[data-slot='a'] [data-quita='a']").count() === 1 && await p.locator("[data-slot='a'] .nl-elegir").count() === 1, `${tag}: con un archivo que no se lee, «Elegir otra» y «Quitar»`);
+    await p.setInputFiles(A, FOTO); await p.waitForSelector("[data-slot='a'] .zc-aviso");
+    ok(/Es una foto/.test(await p.textContent("[data-slot='a']")), `${tag}: una foto da aviso`);
     if (ancho === 360) for (const n of ["nomina.docx", "nomina.xlsx", "nomina.odt", "nomina.html", "nomina.csv"]) {
-      await p.evaluate(() => document.getElementById("nom-rev-quitar")?.click());
-      await p.setInputFiles("#nom-pdf", RUTAS[n]); await p.waitForSelector("[data-rev='0'], #nom-rev .zc-aviso", { timeout: 15000 }); await p.waitForTimeout(200);
-      const vv = await p.evaluate(() => [...document.querySelectorAll("[data-rev='0']")].reduce((o, i) => (o[i.dataset.k] = i.value, o), {}));
-      const cuadra = await p.locator("#nom-rev .nl-tarjeta .zc-ok").count() === 1;
-      ok(vv.base === "1200,00" && vv.hx === "90,00" && vv.irpf === "210,00" && vv.liquido === "1428,88" && vv.basecc === "1750,00" && cuadra && /Octubre 2026/.test(await p.textContent("#nom-rev")), `${tag}: lee ${n} ${cuadra ? "(cuadra)" : "(NO cuadra)"} ${JSON.stringify(vv)}`);
+      await p.setInputFiles(A, RUTAS[n]); await p.waitForSelector("[data-slot-ok='a'], [data-slot='a'] .zc-aviso", { timeout: 15000 }); await p.waitForTimeout(200);
+      const vv = await lista("a");
+      const cuadra = await p.locator("[data-slot='a'] .zc-ok").count() === 1;
+      ok(vv.base === "1200,00" && vv.hx === "90,00" && vv.irpf === "210,00" && vv.liquido === "1428,88" && vv.basecc === "1750,00" && cuadra && /Octubre 2026/.test(await p.textContent("[data-slot='a']")), `${tag}: lee ${n} ${cuadra ? "(cuadra)" : "(NO cuadra)"} ${JSON.stringify(vv)}`);
     }
     if (ancho === 360) {
-      await p.evaluate(() => document.getElementById("nom-rev-quitar")?.click());
-      await p.setInputFiles("#nom-pdf", RUTAS["vieja.doc"]); await p.waitForSelector(".nl-tarjeta");
-      ok(/antiguo/.test(await p.textContent("#nom-rev")), `${tag}: un .doc viejo da aviso`);
-      await p.evaluate(() => document.getElementById("nom-rev-quitar")?.click());
-      await p.setInputFiles("#nom-pdf", RUTAS["cosa.zip"]); await p.waitForSelector(".nl-tarjeta");
-      ok(/no lo sé leer/.test(await p.textContent("#nom-rev")), `${tag}: un tipo raro da aviso`);
+      await p.setInputFiles(A, { name: "documento", mimeType: "", buffer: fs.readFileSync(RUTAS["nomina.docx"]) }); await p.waitForSelector("[data-slot-ok='a']", { timeout: 15000 });
+      ok(/Octubre 2026/.test(await p.textContent("[data-slot='a']")), `${tag}: lee un Word sin extensión`);
+      await p.setInputFiles(A, RUTAS["vieja.doc"]); await p.waitForSelector("[data-slot='a'] .zc-aviso");
+      ok(/antiguo/.test(await p.textContent("[data-slot='a']")), `${tag}: un .doc viejo da aviso`);
+      await p.setInputFiles(A, RUTAS["cosa.zip"]); await p.waitForSelector("[data-slot='a'] .zc-aviso");
+      ok(/no lo sé leer/.test(await p.textContent("[data-slot='a']")), `${tag}: un tipo raro da aviso`);
     }
     // Mi jubilación y Mi baja médica
     await p.goto(BASE + "#jubilacion"); await p.waitForTimeout(500);

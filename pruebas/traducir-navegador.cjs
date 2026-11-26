@@ -63,6 +63,7 @@ const PERMITIDOS = [/^[\d.,\s]+ h$/, /^\*\*ZZ /, /^X?\d+$/, /^[\d.]+ kg$/]; // �
     if (g === "testigos") { await p.click("#te-marcas [data-m='daf']"); await p.waitForTimeout(400); await comprueba("testigos carpeta DAF", true); await p.click("#te-colores [data-c='rojo']"); await p.waitForTimeout(300); await comprueba("testigos avisos rojos", true); await p.fill("#te-busca", "zzzzzz-nada"); await p.waitForTimeout(300); await comprueba("testigos sin resultados", true); await p.fill("#te-busca", ""); await p.click("#te-colores [data-c='']"); await p.waitForTimeout(300); }
     // v219: Comparadora de nóminas con dos nóminas distintas (sube el sueldo y una retención), «Convenio» y «Conceptos»
     if (g === "nomina") {
+      await p.evaluate(() => { const d = document.getElementById("nom-mano"); if (d) d.open = true; }); // v224: copiar a mano va plegado
       const ks = await p.$$eval("#nom-filas input[data-nom='a']", l => l.slice(0, 2).map(i => i.dataset.k));
       await p.fill(`#nom-a-${ks[0]}`, "1500"); await p.fill(`#nom-b-${ks[0]}`, "1600"); await p.fill(`#nom-a-${ks[1]}`, "100");
       const q = await p.$$eval("#nom-filas input[data-nom='a']", l => l.filter(i => i.closest(".nom-fila, div")).map(i => i.dataset.k).pop());

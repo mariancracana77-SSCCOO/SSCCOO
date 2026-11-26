@@ -25,10 +25,10 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="fuentes.css?v=223">
-<script src="lectura.js?v=223"></script>
-<link rel="stylesheet" href="styles.css?v=223">
-<link rel="stylesheet" href="web-pc.css?v=223" media="(min-width: 1000px) and (display-mode: browser)">
+<link rel="stylesheet" href="fuentes.css?v=224">
+<script src="lectura.js?v=224"></script>
+<link rel="stylesheet" href="styles.css?v=224">
+<link rel="stylesheet" href="web-pc.css?v=224" media="(min-width: 1000px) and (display-mode: browser)">
 </head>
 <body class="publica">
 
@@ -631,7 +631,7 @@
   <!-- COMPARADORA DE NÓMINAS (Zona Conductores, petición n.º 74 del padre, v218): dos nóminas tuyas, tu nómina con el convenio de Girona y qué es cada concepto; tablas de convenio-girona.js; no se guarda ni se envía nada (nomina.js) -->
   <section class="vista zc-herr" id="v-nomina">
     <h1 class="titulo-vista">Comparadora de nóminas</h1>
-    <p class="intro-vista">Pon dos nóminas tuyas una al lado de la otra, mira si tu nómina cumple el convenio de Girona 2026-2027 y qué es cada concepto. Se calcula en tu móvil: no se envía nada y solo se guarda lo que tú marques.</p>
+    <p class="intro-vista">Elige dos nóminas tuyas y te digo qué ha cambiado; mira también si tu nómina cumple el convenio de Girona 2026-2027 y qué es cada concepto. Se calcula en tu móvil: no se envía nada y solo se guarda lo que tú marques.</p>
     <div id="nom-borra-todo" class="nl-borra-todo"></div>
     <nav class="zc-tabs" role="tablist" aria-label="Qué quieres hacer">
       <button type="button" role="tab" data-nom-tab="dos">Dos nóminas</button>
@@ -639,21 +639,22 @@
       <button type="button" role="tab" data-nom-tab="conceptos">Qué es cada concepto</button>
     </nav>
     <div id="nom-dos" data-nom-vista="dos">
-      <div class="panel zc-caja">
-        <div class="zc-dos">
-          <div><label for="nom-n1">Nombre de la 1.ª nómina</label><input id="nom-n1" type="text" autocomplete="off" maxlength="20" placeholder="Ej. Octubre"></div>
-          <div><label for="nom-n2">Nombre de la 2.ª nómina</label><input id="nom-n2" type="text" autocomplete="off" maxlength="20" placeholder="Ej. Noviembre"></div>
-        </div>
-        <div class="nl-leer">
-          <label for="nom-pdf">Leer mis nóminas (una o varias)</label>
-          <input id="nom-pdf" type="file" multiple>
-          <p class="zc-pista">En PDF, Word, Excel, OpenOffice, texto o página web: las que da la empresa o la app de nóminas. Se leen en tu móvil: no se suben a ningún sitio, no pasan por la IA y el archivo no se guarda. Puedes elegirlas de una en una: se van sumando. Las fotos y los escaneados no se pueden leer.</p>
-        </div>
-        <div id="nom-rev" aria-live="polite"></div>
-        <div id="nom-guardadas"></div>
-        <p class="zc-pista">O copia los importes de cada línea de las dos nóminas. Deja en blanco lo que no salga. Toca el nombre de un concepto para ver qué es.</p>
-        <div id="nom-filas"></div>
+      <div class="nl-slots" id="nom-slots">
+        <section class="panel nl-slot" data-slot="a" aria-label="1.ª nómina"></section>
+        <section class="panel nl-slot" data-slot="b" aria-label="2.ª nómina"></section>
       </div>
+      <p class="zc-pista nl-fotos">Las fotos todavía no se pueden leer: pide la nómina en PDF (en la app o el correo de la empresa) o copia los importes a mano.</p>
+      <div id="nom-guardar-caja" class="nl-guardar" hidden></div>
+      <div id="nom-guardadas"></div>
+      <details class="panel zc-caja nl-mano" id="nom-mano">
+        <summary>Copiar los importes a mano</summary>
+        <div class="zc-dos">
+          <div><label for="nom-n1">Nombre de la 1.ª nómina</label><input id="nom-n1" type="text" autocomplete="off" maxlength="20"></div>
+          <div><label for="nom-n2">Nombre de la 2.ª nómina</label><input id="nom-n2" type="text" autocomplete="off" maxlength="20"></div>
+        </div>
+        <p class="zc-pista">Copia los importes de cada línea de las dos nóminas. Deja en blanco lo que no salga. Toca el nombre de un concepto para ver qué es.</p>
+        <div id="nom-filas"></div>
+      </details>
       <div id="nom-out" aria-live="polite"></div>
     </div>
     <div id="nom-convenio" data-nom-vista="convenio" hidden>
@@ -1336,37 +1337,37 @@
 <div class="barra-acciones" id="barra-acciones"></div>
 <button class="arriba-btn" id="arriba" type="button" aria-label="Volver arriba" title="Volver arriba"><svg class="arriba-aro" viewBox="0 0 52 52" aria-hidden="true"><circle class="aro-fondo" cx="26" cy="26" r="23"/><circle class="aro-prog" cx="26" cy="26" r="23" pathLength="100"/></svg><span data-i="arriba"></span></button>
 
-<script src="lib/supabase.js?v=223"></script>
-<script src="iconos.js?v=223"></script>
-<script src="config.js?v=223"></script>
-<script src="render.js?v=223"></script>
-<script src="app.js?v=223"></script>
-<script src="descansos.js?v=223"></script>
-<script src="ganancias.js?v=223"></script>
-<script src="ciudades.js?v=223"></script>
-<script src="aparcar.js?v=223"></script>
-<script src="zona-idioma.js?v=223"></script>
-<script src="convenio-girona.js?v=223"></script>
-<script src="finiquito.js?v=223"></script>
-<script src="adr.js?v=223"></script>
-<script src="hora.js?v=223"></script>
-<script src="nomina-lector.js?v=223"></script>
-<script src="jubilacion.js?v=223"></script>
-<script src="baja.js?v=223"></script>
-<script src="nomina.js?v=223"></script>
-<script src="tapar.js?v=223"></script>
-<script src="diccionario.js?v=223"></script>
-<script src="carga.js?v=223"></script>
-<script src="ejes.js?v=223"></script>
-<script src="multas.js?v=223"></script>
-<script src="sobresale.js?v=223"></script>
-<script src="conversor.js?v=223"></script>
-<script src="muelles.js?v=223"></script>
-<script src="ferry.js?v=223"></script>
-<script src="testigos-iconos.js?v=223"></script>
-<script src="testigos.js?v=223"></script>
-<script src="galibos-datos.js?v=223"></script>
-<script src="galibos.js?v=223"></script>
-<script src="web-pc.js?v=223"></script>
+<script src="lib/supabase.js?v=224"></script>
+<script src="iconos.js?v=224"></script>
+<script src="config.js?v=224"></script>
+<script src="render.js?v=224"></script>
+<script src="app.js?v=224"></script>
+<script src="descansos.js?v=224"></script>
+<script src="ganancias.js?v=224"></script>
+<script src="ciudades.js?v=224"></script>
+<script src="aparcar.js?v=224"></script>
+<script src="zona-idioma.js?v=224"></script>
+<script src="convenio-girona.js?v=224"></script>
+<script src="finiquito.js?v=224"></script>
+<script src="adr.js?v=224"></script>
+<script src="hora.js?v=224"></script>
+<script src="nomina-lector.js?v=224"></script>
+<script src="jubilacion.js?v=224"></script>
+<script src="baja.js?v=224"></script>
+<script src="nomina.js?v=224"></script>
+<script src="tapar.js?v=224"></script>
+<script src="diccionario.js?v=224"></script>
+<script src="carga.js?v=224"></script>
+<script src="ejes.js?v=224"></script>
+<script src="multas.js?v=224"></script>
+<script src="sobresale.js?v=224"></script>
+<script src="conversor.js?v=224"></script>
+<script src="muelles.js?v=224"></script>
+<script src="ferry.js?v=224"></script>
+<script src="testigos-iconos.js?v=224"></script>
+<script src="testigos.js?v=224"></script>
+<script src="galibos-datos.js?v=224"></script>
+<script src="galibos.js?v=224"></script>
+<script src="web-pc.js?v=224"></script>
 </body>
 </html>
