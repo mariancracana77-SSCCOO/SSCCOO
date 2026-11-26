@@ -33,7 +33,7 @@ const PERMITIDOS = [/^[\d.,\s]+ h$/, /^\*\*ZZ /, /^X?\d+$/, /^[\d.]+ kg$/]; // Â
     if (fallan.length) { mal++; console.log(`MAL ${nombre}: ${fallan.length} textos ${debe ? "sin traducir" : "sin volver al espaÃ±ol"}:`, fallan.slice(0, 8)); }
     else console.log(`OK  ${nombre} (${vistos.length} textos)`);
   };
-  for (const [g, hash] of [["finiquito", "finiquito"], ["hora", "hora"], ["diccionario", "diccionario"], ["adr", "adr"], ["carga", "carga"], ["ejes", "ejes"], ["sobresale", "sobresale"], ["conversor", "conversor"], ["muelles", "muelles"], ["testigos", "testigos"], ["nomina", "nomina"]]) {
+  for (const [g, hash] of [["finiquito", "finiquito"], ["hora", "hora"], ["diccionario", "diccionario"], ["adr", "adr"], ["carga", "carga"], ["ejes", "ejes"], ["sobresale", "sobresale"], ["conversor", "conversor"], ["muelles", "muelles"], ["testigos", "testigos"], ["nomina", "nomina"], ["tapar", "tapar"]]) {
     await p.goto(BASE + "#" + hash); await p.waitForTimeout(700);
     await p.evaluate(([g, lista]) => {
       try { localStorage.removeItem("ccoo-mi-idioma"); localStorage.removeItem("ccoo-textos-" + g); } catch (_) {}

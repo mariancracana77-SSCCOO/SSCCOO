@@ -3370,3 +3370,15 @@ label.cg-huecos { margin: 0 0 12px; }
 :root { --nom-mas: #17683a; --nom-menos: #a30f12; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --nom-mas: #7fdca4; --nom-menos: #ff9b9b; } }
 :root[data-theme="dark"] { --nom-mas: #7fdca4; --nom-menos: #ff9b9b; }
+
+/* v220: «Tapar datos privados» (tapar.js). Las hojas se ven a lo ancho; con «Tapar a mano» encendido el dedo dibuja recuadros (sin mover la página) */
+#v-tapar [hidden] { display: none !important; }
+#v-tapar input[type="file"] { display: block; width: 100%; min-height: 48px; margin: 6px 0 4px; font: inherit; }
+.tap-botones { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.tap-botones .btn { flex: 1 1 200px; }
+#tap-mano.activa { background: var(--cond-azul); color: #fff; border-color: var(--cond-azul); }
+.tap-paginas { display: grid; gap: 12px; margin: 8px 0 14px; }
+.tap-lienzo { display: block; width: 100%; max-width: 100%; height: auto; background: #fff; border: 1px solid var(--linea); border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+.tap-paginas.a-mano .tap-lienzo { touch-action: none; cursor: crosshair; outline: 3px solid var(--cond-azul); outline-offset: 2px; }
+.tap-lista { margin: 6px 0 8px; padding-left: 20px; }
+#tap-otra { width: 100%; margin-top: 4px; }

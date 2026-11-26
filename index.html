@@ -25,10 +25,10 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="fuentes.css?v=219">
-<script src="lectura.js?v=219"></script>
-<link rel="stylesheet" href="styles.css?v=219">
-<link rel="stylesheet" href="web-pc.css?v=219" media="(min-width: 1000px) and (display-mode: browser)">
+<link rel="stylesheet" href="fuentes.css?v=220">
+<script src="lectura.js?v=220"></script>
+<link rel="stylesheet" href="styles.css?v=220">
+<link rel="stylesheet" href="web-pc.css?v=220" media="(min-width: 1000px) and (display-mode: browser)">
 </head>
 <body class="publica">
 
@@ -691,6 +691,37 @@
     <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>Orientativo: el convenio marca lo mínimo, tu empresa puede pagar más. Si algo no te cuadra, pregunta a un delegado antes de reclamar.</span></p>
   </section>
 
+  <!-- TAPAR DATOS PRIVADOS (Zona Conductores, v220; paso 1 del plan de la nómina, aprobado por Lorena el 26/11/2026): tapa en negro los datos personales de un PDF o una foto y da una imagen nueva; todo en el móvil, no se sube ni se guarda nada (tapar.js) -->
+  <section class="vista zc-herr" id="v-tapar">
+    <h1 class="titulo-vista">Tapar datos privados</h1>
+    <p class="intro-vista">Tapa en negro tu nombre, DNI, cuenta del banco, número de la Seguridad Social, dirección y teléfono de una nómina o de cualquier papel, para poder enseñarlo o enviarlo sin tus datos. Todo se hace en tu móvil: el archivo no se sube a ningún sitio y no se guarda.</p>
+    <div class="panel zc-caja">
+      <label for="tap-archivo">Elige el PDF o la foto</label>
+      <input id="tap-archivo" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp">
+      <p class="zc-pista">En un PDF con texto se buscan solos los datos personales. En una foto o un PDF escaneado los tapas tú con el dedo.</p>
+      <p class="msg" id="tap-msg" aria-live="polite"></p>
+    </div>
+    <div id="tap-hecho" hidden>
+      <div class="panel zc-caja" id="tap-resumen" aria-live="polite"></div>
+      <div class="tap-botones">
+        <button class="btn sec" type="button" id="tap-mano" aria-pressed="false">Tapar a mano</button>
+        <button class="btn sec" type="button" id="tap-deshacer">Deshacer lo último</button>
+      </div>
+      <p class="zc-pista">Con «Tapar a mano» encendido: arrastra el dedo para poner un recuadro negro y toca un recuadro para quitarlo.</p>
+      <div id="tap-paginas" class="tap-paginas"></div>
+      <div class="panel zc-caja">
+        <label class="check"><input type="checkbox" id="tap-revisado"><span>Lo he revisado: no queda ningún dato mío a la vista</span></label>
+        <div class="tap-botones">
+          <button class="btn" type="button" id="tap-bajar" disabled>Descargar la imagen tapada</button>
+          <button class="btn sec" type="button" id="tap-compartir" disabled hidden>Compartir la imagen</button>
+        </div>
+        <p class="zc-pista">Se descarga una imagen nueva (PNG): lo tapado no queda debajo y no lleva los datos del archivo original.</p>
+        <button class="btn sec" type="button" id="tap-otra">Empezar otra vez</button>
+      </div>
+    </div>
+    <p class="aviso-oficial"><svg class="icono p" aria-hidden="true"><use href="#i-alerta"/></svg><span>La búsqueda automática ayuda, pero no es perfecta: revisa siempre toda la hoja antes de enviarla.</span></p>
+  </section>
+
   <!-- DICCIONARIO DEL CONDUCTOR (Zona Conductores, petición n.º 42): el diccionario del padre tal cual; no se guarda nada (diccionario.js) -->
   <section class="vista zc-herr" id="v-diccionario">
     <h1 class="titulo-vista">Diccionario del conductor</h1>
@@ -1297,35 +1328,36 @@
 <div class="barra-acciones" id="barra-acciones"></div>
 <button class="arriba-btn" id="arriba" type="button" aria-label="Volver arriba" title="Volver arriba"><svg class="arriba-aro" viewBox="0 0 52 52" aria-hidden="true"><circle class="aro-fondo" cx="26" cy="26" r="23"/><circle class="aro-prog" cx="26" cy="26" r="23" pathLength="100"/></svg><span data-i="arriba"></span></button>
 
-<script src="lib/supabase.js?v=219"></script>
-<script src="iconos.js?v=219"></script>
-<script src="config.js?v=219"></script>
-<script src="render.js?v=219"></script>
-<script src="app.js?v=219"></script>
-<script src="descansos.js?v=219"></script>
-<script src="ganancias.js?v=219"></script>
-<script src="ciudades.js?v=219"></script>
-<script src="aparcar.js?v=219"></script>
-<script src="zona-idioma.js?v=219"></script>
-<script src="convenio-girona.js?v=219"></script>
-<script src="finiquito.js?v=219"></script>
-<script src="adr.js?v=219"></script>
-<script src="hora.js?v=219"></script>
-<script src="jubilacion.js?v=219"></script>
-<script src="baja.js?v=219"></script>
-<script src="nomina.js?v=219"></script>
-<script src="diccionario.js?v=219"></script>
-<script src="carga.js?v=219"></script>
-<script src="ejes.js?v=219"></script>
-<script src="multas.js?v=219"></script>
-<script src="sobresale.js?v=219"></script>
-<script src="conversor.js?v=219"></script>
-<script src="muelles.js?v=219"></script>
-<script src="ferry.js?v=219"></script>
-<script src="testigos-iconos.js?v=219"></script>
-<script src="testigos.js?v=219"></script>
-<script src="galibos-datos.js?v=219"></script>
-<script src="galibos.js?v=219"></script>
-<script src="web-pc.js?v=219"></script>
+<script src="lib/supabase.js?v=220"></script>
+<script src="iconos.js?v=220"></script>
+<script src="config.js?v=220"></script>
+<script src="render.js?v=220"></script>
+<script src="app.js?v=220"></script>
+<script src="descansos.js?v=220"></script>
+<script src="ganancias.js?v=220"></script>
+<script src="ciudades.js?v=220"></script>
+<script src="aparcar.js?v=220"></script>
+<script src="zona-idioma.js?v=220"></script>
+<script src="convenio-girona.js?v=220"></script>
+<script src="finiquito.js?v=220"></script>
+<script src="adr.js?v=220"></script>
+<script src="hora.js?v=220"></script>
+<script src="jubilacion.js?v=220"></script>
+<script src="baja.js?v=220"></script>
+<script src="nomina.js?v=220"></script>
+<script src="tapar.js?v=220"></script>
+<script src="diccionario.js?v=220"></script>
+<script src="carga.js?v=220"></script>
+<script src="ejes.js?v=220"></script>
+<script src="multas.js?v=220"></script>
+<script src="sobresale.js?v=220"></script>
+<script src="conversor.js?v=220"></script>
+<script src="muelles.js?v=220"></script>
+<script src="ferry.js?v=220"></script>
+<script src="testigos-iconos.js?v=220"></script>
+<script src="testigos.js?v=220"></script>
+<script src="galibos-datos.js?v=220"></script>
+<script src="galibos.js?v=220"></script>
+<script src="web-pc.js?v=220"></script>
 </body>
 </html>

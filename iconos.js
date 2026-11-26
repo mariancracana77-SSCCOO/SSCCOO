@@ -72,6 +72,7 @@
     // v216 (petición n.º 72): reloj de arena para «Mi jubilación» y cruz de salud para «Mi baja médica»
     arena: '<path d="M6 3h12M6 21h12"/><path d="M7 3c0 5 10 5 10 9s-10 4-10 9"/><path d="M17 3c0 5-10 5-10 9s10 4 10 9"/><path d="M10 18h4"/>',
     // v218 (petición n.º 74): dos hojas de nómina para la «Comparadora de nóminas»
+    tapar: '<rect x="4" y="2.5" width="16" height="19" rx="1.5"/><path d="M8 7h8M8 17h5"/><rect x="7.5" y="10.5" width="9" height="3" rx=".5" fill="currentColor"/>',
     nominas: '<rect x="3" y="5" width="10" height="15" rx="1.5"/><path d="M7 5V3.5A1.5 1.5 0 0 1 8.5 2h11A1.5 1.5 0 0 1 21 3.5v13a1.5 1.5 0 0 1-1.5 1.5H13"/><path d="M6 10h4M6 13.5h4M6 17h2"/>',
     salud: '<rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M12 7.5v9M7.5 12h9"/>',
     muelle: '<path d="M2.5 21V9.5L12 4l9.5 5.5V21"/><path d="M6.5 21v-8h11v8"/><path d="M6.5 16.5h11"/><path d="M9.5 9.5h5"/>',
