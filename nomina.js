@@ -64,7 +64,8 @@ if (typeof module !== "undefined") module.exports = NOMINA;
   const T0 = (x, v) => x.replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m);
   const Z = typeof ZonaIdioma === "function" ? ZonaIdioma("nomina", "v-nomina", () => { ponNombres(); calcDos(); calcConv(); pintaLista(); pintaRev(); pintaGuardadas(); pintaBorraTodo(); }) : { T: T0, TH: null };
   const T = Z.T, TH = Z.TH || ((x, v) => esc(T(x, v)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>"));
-  const eur = (n) => n.toLocaleString("es-ES", { style: "currency", currency: "EUR" });
+  // v225: con punto de miles siempre («3.097,77 €»; el formato de España no lo pone con 4 cifras)
+  const eur = (n) => { const [e, d] = Math.abs(n).toFixed(2).split("."); return (n < 0 ? "-" : "") + e.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "," + d + "\u00a0€"; };
   // Lee números como los escribe la gente en España: «2100», «2.100», «2.100,50», «2100,5», «2100 €» (igual que baja.js)
   const num = (v) => { let t = String(v ?? "").replace(/[\s€]/g, "");
     if (t.includes(",")) t = t.replace(/\./g, "").replace(",", ".");
@@ -94,50 +95,111 @@ if (typeof module !== "undefined") module.exports = NOMINA;
       a.setAttribute("aria-label", T(n) + ", " + n1); b.setAttribute("aria-label", T(n) + ", " + n2);
     });
   }
-  const baseCol = { a: null, b: null }; // base de cotización de la nómina leída de cada columna (para el informe)
+  const fuente = { a: null, b: null }; // la nómina leída de cada columna (bases y líneas con su nombre, para el informe)
   const difTxt = (d) => Math.abs(d) < 0.005 ? T("igual") : (d > 0 ? "+" : "−") + eur(Math.abs(d));
+  // v225: informe como el que enseñó el padre: 1) lo que llega al banco, 2) los totales, 3) por qué cambia,
+  // 4) concepto por concepto (con los nombres de la nómina si se leyeron las dos y no se corrigieron a mano)
+  // y 5) en resumen. Las cabeceras: el nombre de cada nómina; si son iguales o faltan, «1.ª nómina» / «2.ª nómina».
+  const llano = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z]+/g, " ").trim();
+  const lista = (xs) => xs.length < 2 ? xs.join("") : xs.slice(0, -1).join(", ") + " " + T("y") + " " + xs[xs.length - 1];
   function calcDos() {
     const a = {}, b = {};
     $("nom-filas").querySelectorAll("input[data-nom]").forEach(i => { (i.dataset.nom === "a" ? a : b)[i.dataset.k] = num(i.value); });
-    const r = NOMINA.compara(a, b), [n1, n2] = nombres(), out = $("nom-out");
+    const r = NOMINA.compara(a, b), out = $("nom-out");
+    let [n1, n2] = nombres();
+    if (llano(n1) === llano(n2)) { n1 = T("1.ª nómina"); n2 = T("2.ª nómina"); }
     const hayA = r.ta.d || r.ta.q, hayB = r.tb.d || r.tb.q;
     if (!hayA || !hayB) { out.innerHTML = `<div class="zc-ok">${esc(T("Elige las dos nóminas arriba (o copia los importes a mano) y aquí verás qué ha cambiado."))}</div>`; return; }
-    const cab = `<tr class="nom-cab"><td>${esc(n1)}</td><td>${esc(n2)}</td><td>${esc(T("Diferencia"))}</td></tr>`;
-    const fila = (n, x, y, d, cls, quita) => `<tr class="nom-nombre${cls ? " " + cls : ""}"><td colspan="3">${esc(n)}</td></tr><tr class="nom-cifras${cls ? " " + cls : ""}"><td>${esc(eur(x))}</td><td>${esc(eur(y))}</td><td class="${Math.abs(d) < 0.005 ? "" : (d > 0) !== !!quita ? "nom-mas" : "nom-menos"}">${esc(difTxt(d))}</td></tr>`;
-    // v224: resumen arriba (lo que pedía la maqueta del padre): bruto, neto, IRPF, Seguridad Social, pagas y base
-    const sum = (o, ks) => ks.reduce((t, k) => t + (o[k] || 0), 0), SS = ["cc", "desempleo", "fp", "mei", "hxcot"], PAGAS = ["paga", "prorrata"];
-    const res = [[T("Sueldo bruto (total devengado)"), r.ta.d, r.tb.d], [T("Te llega al banco"), r.ta.l, r.tb.l], [T("IRPF"), a.irpf || 0, b.irpf || 0, true], [T("Seguridad Social"), sum(a, SS), sum(b, SS), true]];
-    if (sum(a, PAGAS) || sum(b, PAGAS)) res.push([T("Pagas extra y prorrata"), sum(a, PAGAS), sum(b, PAGAS)]);
-    if (baseCol.a != null && baseCol.b != null) res.push([T("Base de cotización"), baseCol.a, baseCol.b, null]);
-    let h = `<h3 class="nom-sec">${esc(T("Resumen"))}</h3><div class="panel zc-caja zc-resultado nl-informe"><div class="nom-scroll"><table class="zc-tabla nom-tabla">${cab}`;
-    h += res.map(([n, x, y, quita]) => quita === null ? `<tr class="nom-nombre"><td colspan="3">${esc(n)}</td></tr><tr class="nom-cifras"><td>${esc(eur(x))}</td><td>${esc(eur(y))}</td><td>${esc(difTxt(y - x))}</td></tr>` : fila(n, x, y, y - x, "", quita)).join("");
-    h += `</table></div></div><h3 class="nom-sec">${esc(T("Línea por línea"))}</h3>`;
-    h += `<div class="panel zc-caja zc-resultado"><div class="nom-scroll"><table class="zc-tabla nom-tabla">${cab}`;
-    for (const t of ["d", "q"]) {
-      const fs = r.filas.filter(f => f.t === t); if (!fs.length) continue;
-      h += `<tr class="zc-sec"><td colspan="3">${esc(T(SEC[t]))}</td></tr>` + fs.map(f => fila(T(f.n), f.a, f.b, f.dif, "", t === "q")).join("");
-    }
-    h += fila(T("Total devengado"), r.ta.d, r.tb.d, r.tb.d - r.ta.d, "nom-tot") + fila(T("Total a deducir"), r.ta.q, r.tb.q, r.tb.q - r.ta.q, "nom-tot", true);
-    h += `</table></div>`;
+    const claseDif = (d, quita) => Math.abs(d) < 0.005 ? "" : (d > 0) !== !!quita ? "nom-mas" : "nom-menos";
+    const cab = (t) => `<tr class="nom-cab"><td>${esc(n1)}</td><td>${esc(n2)}</td><td>${esc(t || T("Diferencia"))}</td></tr>`;
+    const fila = (n, x, y, d, cls, quita) => `<tr class="nom-nombre${cls ? " " + cls : ""}"><td colspan="3">${esc(n)}</td></tr><tr class="nom-cifras${cls ? " " + cls : ""}"><td>${x == null ? "—" : esc(eur(x))}</td><td>${y == null ? "—" : esc(eur(y))}</td><td class="${quita === null ? "" : claseDif(d, quita)}">${esc(difTxt(d))}</td></tr>`;
+    const tabla = (filas, t) => `<div class="panel zc-caja zc-resultado nl-informe"><div class="nom-scroll"><table class="zc-tabla nom-tabla">${cab(t)}${filas}</table></div></div>`;
     const dl = r.tb.l - r.ta.l;
-    h += `<div class="zc-total"><span>${esc(T("Líquido a percibir"))}</span><span>${esc(eur(r.ta.l))} → ${esc(eur(r.tb.l))}</span></div></div>`;
-    // Lo que más ha cambiado, en frases
-    const cambios = r.filas.filter(f => Math.abs(f.dif) >= 0.005).sort((x, y) => Math.abs(y.dif) - Math.abs(x.dif)).slice(0, 4);
-    let frases = Math.abs(dl) < 0.005 ? [T("En las dos te llega lo mismo al banco.")]
-      : [TH("En «{b}» te llega al banco **{d} {m}** que en «{a}».", { a: n1, b: n2, d: eur(Math.abs(dl)), m: dl > 0 ? T("más") : T("menos") })];
-    frases = frases.map(x => x.includes("<b>") ? x : esc(x));
-    cambios.forEach(f => {
-      const sube = f.dif > 0, cobro = f.t === "d";
-      frases.push(TH(cobro ? (sube ? "**{n}:** cobras {d} más." : "**{n}:** cobras {d} menos.") : (sube ? "**{n}:** te quitan {d} más." : "**{n}:** te quitan {d} menos."), { n: T(f.n), d: eur(Math.abs(f.dif)) }));
-    });
-    if (r.filas.some(f => f.k === "irpf" && Math.abs(f.dif) >= 0.005)) frases.push(esc(T("Si el IRPF ha cambiado sin que cambie tu sueldo, puede que la empresa haya ajustado el porcentaje. Lo de más o de menos se arregla en la renta.")));
+    // 1. Lo que te llega al banco
+    let h = `<h3 class="nom-sec">${esc(T("1. Lo que te llega al banco"))}</h3>
+      <div class="panel zc-caja nl-neto"><div class="nl-neto-dos"><div><span>${esc(n1)}</span><b>${esc(eur(r.ta.l))}</b></div><div><span>${esc(n2)}</span><b>${esc(eur(r.tb.l))}</b></div></div>
+      <div class="nl-neto-dif"><span>${esc(T("Diferencia"))}</span><b class="${claseDif(dl)}">${esc(difTxt(dl))}${r.ta.l && Math.abs(dl) >= 0.005 ? `<small> (${dl > 0 ? "+" : "−"}${esc(String((Math.abs(dl) / r.ta.l * 100).toFixed(1)).replace(".", ","))} %)</small>` : ""}</b></div>
+      <p>${Math.abs(dl) < 0.005 ? esc(T("En las dos te llega lo mismo al banco.")) : (dl > 0 ? TH("En «{b}» te llega **{d} más** que en «{a}».", { a: n1, b: n2, d: eur(Math.abs(dl)) }) : TH("En «{b}» te llega **{d} menos** que en «{a}».", { a: n1, b: n2, d: eur(Math.abs(dl)) }))}</p></div>`;
+    // 2. Los totales
+    const sum = (o, ks) => ks.reduce((t, k) => t + (o[k] || 0), 0), SS = ["cc", "desempleo", "fp", "mei", "hxcot"], PAGAS = ["paga", "prorrata"];
+    const tot = [[T("Total devengado"), r.ta.d, r.tb.d], [T("Total a deducir"), r.ta.q, r.tb.q, true], [T("Líquido a percibir"), r.ta.l, r.tb.l],
+      [T("Seguridad Social"), sum(a, SS), sum(b, SS), true], [T("IRPF"), a.irpf || 0, b.irpf || 0, true]];
+    if (sum(a, PAGAS) || sum(b, PAGAS)) tot.push([T("Pagas extra y prorrata"), sum(a, PAGAS), sum(b, PAGAS)]);
+    const base = (k) => fuente.a && fuente.b && fuente.a.valores[k] != null && fuente.b.valores[k] != null ? [fuente.a.valores[k], fuente.b.valores[k]] : null;
+    if (base("basecc")) tot.push([T("Base de cotización"), ...base("basecc"), null]);
+    if (base("baseirpf")) tot.push([T("Base del IRPF"), ...base("baseirpf"), null]);
+    h += `<h3 class="nom-sec">${esc(T("2. Los totales"))}</h3>` + tabla(tot.map(([n, x, y, q]) => fila(n, x, y, y - x, "", q)).join(""));
+    // Las líneas: con su nombre de la nómina (si se leyeron las dos sin corregir) o por grupos
+    const conNombre = !!(fuente.a && fuente.b && !fuente.a.editada && !fuente.b.editada && fuente.a.detalle && fuente.a.detalle.length && fuente.b.detalle && fuente.b.detalle.length);
+    let lin = [];
+    if (conNombre) {
+      const m = new Map();
+      for (const [col, n] of [["a", fuente.a], ["b", fuente.b]]) for (const x of n.detalle) {
+        const k = x.tipo + "|" + llano(x.texto);
+        if (!m.has(k)) m.set(k, { n: x.texto, t: x.tipo, a: 0, b: 0 });
+        m.get(k)[col] = Math.round((m.get(k)[col] + x.importe) * 100) / 100;
+      }
+      lin = [...m.values()];
+    } else lin = r.filas.map(f => ({ n: T(f.n), t: f.t, a: f.a, b: f.b, k: f.k }));
+    lin.forEach(x => { x.dif = x.b - x.a; x.efecto = x.t === "d" ? x.dif : -x.dif; });
+    // 3. Por qué cambia
+    if (Math.abs(dl) >= 0.005) {
+      const ant = lin.filter(x => x.t === "q" && /anticip/.test(llano(x.n)) && (x.a || x.b));
+      const top = lin.filter(x => Math.abs(x.efecto) >= 0.005).sort((x, y) => Math.abs(y.efecto) - Math.abs(x.efecto)).slice(0, 4);
+      let filas = top.map(x => fila(x.n, x.a, x.b, x.dif, "", x.t === "q")).join("");
+      let frase;
+      const pesa = (e) => Math.sign(e) === Math.sign(dl) && Math.abs(e) >= Math.abs(dl) * 0.7;
+      if (ant.length >= 2) {
+        const ta = ant.reduce((t, x) => t + x.a, 0), tb = ant.reduce((t, x) => t + x.b, 0);
+        filas += fila(T("Total anticipos"), ta, tb, tb - ta, "nom-tot", true);
+        if (pesa(ta - tb)) { filas = ant.map(x => fila(x.n, x.a, x.b, x.dif, "", true)).join("") + fila(T("Total anticipos"), ta, tb, tb - ta, "nom-tot", true); const va = { a: n1, b: n2, d: eur(Math.abs(tb - ta)) }; frase = tb > ta ? TH("En «{b}» te descuentan **{d} más en anticipos** que en «{a}». Esto explica casi toda la diferencia.", va) : TH("En «{b}» te descuentan **{d} menos en anticipos** que en «{a}». Esto explica casi toda la diferencia.", va); }
+      }
+      if (!frase && top.length) frase = pesa(top[0].efecto) ? TH("La diferencia más grande está en **{n}**: explica casi toda la diferencia.", { n: top[0].n })
+        : TH("Lo que más pesa es **{n}**, pero hay varias cosas que cambian.", { n: top[0].n });
+      h += `<h3 class="nom-sec">${esc(dl < 0 ? T("3. ¿Por qué te llega menos en «{b}»?", { b: n2 }) : T("3. ¿Por qué te llega más en «{b}»?", { b: n2 }))}</h3>`;
+      if (frase) h += `<p class="nl-frase">${frase}</p>`;
+      // Barras: lo que sube y lo que baja lo que te llega al banco (los anticipos, juntos)
+      const efectos = lin.filter(x => !(ant.length >= 2 && ant.includes(x)) && Math.abs(x.efecto) >= 0.005).map(x => ({ n: x.n, e: x.efecto }));
+      if (ant.length >= 2) { const e = ant.reduce((t, x) => t + x.efecto, 0); if (Math.abs(e) >= 0.005) efectos.push({ n: T("Anticipos (todos juntos)"), e }); }
+      const barras = efectos.sort((x, y) => Math.abs(y.e) - Math.abs(x.e)).slice(0, 6), max = Math.max(...barras.map(x => Math.abs(x.e)), 0.01);
+      if (barras.length) h += `<div class="panel zc-caja nl-barras"><p class="zc-pista">${esc(T("Cuánto sube o baja lo que te llega al banco por cada cosa:"))}</p><ul>${barras.map(x =>
+        `<li><span class="nl-barra-n">${esc(x.n)}</span><span class="nl-barra-v ${x.e > 0 ? "nom-mas" : "nom-menos"}">${esc((x.e > 0 ? "+" : "−") + eur(Math.abs(x.e)))}</span><span class="nl-barra"><i class="${x.e > 0 ? "mas" : "menos"}" style="width:${Math.max(3, Math.round(Math.abs(x.e) / max * 100))}%"></i></span></li>`).join("")}</ul></div>`;
+      if (ant.length >= 2) h += tabla(filas);
+    }
+    // 4. Concepto por concepto
+    h += `<h3 class="nom-sec">${esc(T("4. Concepto por concepto"))}</h3>`;
+    if (conNombre) h += `<p class="zc-pista">${esc(T("Con los nombres que trae tu nómina."))}</p>`;
+    let todas = "";
+    for (const t of ["d", "q"]) {
+      const fs = lin.filter(x => x.t === t && (x.a || x.b)); if (!fs.length) continue;
+      todas += `<tr class="zc-sec"><td colspan="3">${esc(T(SEC[t]))}</td></tr>` + fs.map(x => fila(x.n, x.a || null, x.b || null, x.dif, "", t === "q")).join("");
+    }
+    todas += fila(T("Total devengado"), r.ta.d, r.tb.d, r.tb.d - r.ta.d, "nom-tot") + fila(T("Total a deducir"), r.ta.q, r.tb.q, r.tb.q - r.ta.q, "nom-tot", true);
+    h += tabla(todas).replace(/<\/div>$/, `<div class="zc-total"><span>${esc(T("Líquido a percibir"))}</span><span>${esc(eur(r.ta.l))} → ${esc(eur(r.tb.l))}</span></div></div>`);
+    // 5. En resumen
+    const frases = [], con = lin.filter(x => x.a || x.b);
+    const iguales = con.filter(x => x.a && x.b && Math.abs(x.dif) < 0.005).map(x => x.n);
+    if (iguales.length) frases.push(esc(T("No cambian: {l}.", { l: lista(iguales.slice(0, 6)) })));
+    const soloA = con.filter(x => x.a && !x.b).map(x => `${x.n} (${eur(x.a)})`), soloB = con.filter(x => !x.a && x.b).map(x => `${x.n} (${eur(x.b)})`);
+    if (soloA.length) frases.push(esc(T("Solo en «{a}»: {l}.", { a: n1, l: lista(soloA.slice(0, 4)) })));
+    if (soloB.length) frases.push(esc(T("Solo en «{b}»: {l}.", { b: n2, l: lista(soloB.slice(0, 4)) })));
+    con.filter(x => x.a && x.b && Math.abs(x.dif) >= 0.005 && !(x.t === "q" && /anticip/.test(llano(x.n)))).sort((x, y) => Math.abs(y.dif) - Math.abs(x.dif)).slice(0, 3)
+      .forEach(x => frases.push(TH("**{n}** pasa de {x} a {y}.", { n: x.n, x: eur(x.a), y: eur(x.b) })));
+    const antB = con.filter(x => x.t === "q" && /anticip/.test(llano(x.n)) && x.b).map(x => eur(x.b));
+    if (antB.length) frases.push(esc(T("Comprueba que los anticipos que te descuentan en «{b}» ({l}) te los dieron de verdad.", { b: n2, l: lista(antB) })));
+    if (Math.abs((b.irpf || 0) - (a.irpf || 0)) >= 0.005 && Math.abs(r.tb.d - r.ta.d) < 0.005) frases.push(esc(T("Si el IRPF ha cambiado sin que cambie tu sueldo, puede que la empresa haya ajustado el porcentaje. Lo de más o de menos se arregla en la renta.")));
     const bruto = r.tb.d - r.ta.d;
-    if (Math.abs(bruto) >= 0.005 && Math.sign(bruto) !== Math.sign(dl) && Math.abs(dl) >= 0.005) frases.push(esc(T("Ojo: has cobrado más en bruto pero te llega menos (o al revés). Mira los descuentos.")));
-    h += `<div class="zc-aviso nom-resumen"><ul>${frases.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
+    if (Math.abs(bruto) >= 0.005 && Math.sign(bruto) !== Math.sign(dl) && Math.abs(dl) >= 0.005) frases.push(bruto > 0 ? TH("Ojo: en «{b}» cobras **más en bruto** pero te llega **menos al banco**. Mira lo que te quitan.", { b: n2 }) : TH("En «{b}» cobras menos en bruto pero te llega más al banco: te quitan menos.", { b: n2 }));
+    if (frases.length) h += `<h3 class="nom-sec">${esc(T("5. En resumen"))}</h3><div class="zc-aviso nom-resumen"><ul>${frases.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
+    h += `<div class="nl-botones nl-compartir"><button type="button" class="btn sec" id="nom-compartir">${esc(T("Compartir el informe"))}</button></div><p class="zc-pista">${esc(T("Por ejemplo, para enseñárselo a un delegado. Solo van los importes, sin tu nombre."))}</p>`;
+    informeTxt = [T("Comparadora de nóminas"), `${n1}: ${eur(r.ta.l)} · ${n2}: ${eur(r.tb.l)} (${T("Diferencia")}: ${difTxt(dl)})`,
+      ...frases.map(x => x.replace(/<[^>]+>/g, "").replace(/&laquo;|&raquo;/g, "")).map(x => "- " + x.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'"))].join("\n");
     out.innerHTML = h;
   }
+  let informeTxt = "";
+  $("nom-out").addEventListener("click", (e) => { if (e.target.closest("#nom-compartir") && informeTxt && window.compartir) window.compartir(T("Comparadora de nóminas"), informeTxt); });
   ["nom-n1", "nom-n2"].forEach(i => $(i).addEventListener("input", () => { ponNombres(); calcDos(); }));
-  $("nom-filas").addEventListener("input", (e) => { const c = e.target.dataset && e.target.dataset.nom; if (c) baseCol[c] = null; calcDos(); });
+  $("nom-filas").addEventListener("input", (e) => { const c = e.target.dataset && e.target.dataset.nom; if (c) fuente[c] = null; calcDos(); });
   ponNombres(); calcDos();
 
   // ---------- 1b. Leer nóminas en PDF (v221, paso 2 del plan de la nómina; aprobado por Lorena el 26/11/2026) ----------
@@ -217,7 +279,7 @@ if (typeof module !== "undefined") module.exports = NOMINA;
   function ponEn(col, n) {
     C.forEach(([k]) => { const inp = $(`nom-${col}-${k}`); if (inp) inp.value = n && n.valores[k] != null ? formato(n.valores[k]) : ""; });
     $(col === "a" ? "nom-n1" : "nom-n2").value = n ? etiqueta(n).slice(0, 20) : "";
-    baseCol[col] = n && n.valores.basecc != null ? n.valores.basecc : null;
+    fuente[col] = n || null;
   }
   // La columna sigue a su tarjeta: marcada = sus importes; leída sin marcar o quitada = vacía
   function sincroniza(s, antes) {
@@ -242,7 +304,8 @@ if (typeof module !== "undefined") module.exports = NOMINA;
       if (antes) sincroniza(s, true);
       const r = await L.leeArchivo(f);
       if (yo !== turno[s]) return;
-      slot[s] = r.error ? { error: r.error } : { id: Date.now().toString(36) + s, mes: r.mes || "", nombre: r.mes ? L.nombreMes(r.mes, T).slice(0, 20) : "", valores: limpia(r.valores), sinReconocer: r.sinReconocer, ok: false };
+      slot[s] = r.error ? { error: r.error } : { id: Date.now().toString(36) + s, mes: r.mes || "", nombre: r.mes ? L.nombreMes(r.mes, T).slice(0, 20) : "", valores: limpia(r.valores), sinReconocer: r.sinReconocer, detalle: r.detalle || [], ok: false };
+      if (slot[s].valores) slot[s].leido = Object.assign({}, slot[s].valores);
       pintaSlot(s); pintaGuardar();
       $slots.querySelector(`[data-slot="${s}"]`).scrollIntoView({ behavior: "smooth", block: "start" });
     });
@@ -251,6 +314,8 @@ if (typeof module !== "undefined") module.exports = NOMINA;
       if (t.dataset.rev != null) {
         const s = t.dataset.rev, n = slot[s], v = num(t.value);
         if (String(t.value).trim() === "") delete n.valores[t.dataset.k]; else n.valores[t.dataset.k] = v;
+        // si queda distinto de lo leído, las líneas con su nombre ya no cuadran: el informe usa los grupos
+        n.editada = !!n.leido && CLAVES.some(k => (n.valores[k] ?? null) !== (n.leido[k] ?? null));
         const caja = $slots.querySelector(`[data-avisos="${s}"]`); if (caja) caja.innerHTML = avisosHTML(n);
         if (n.ok) { n.ok = false; const ck = $slots.querySelector(`[data-slot-ok="${s}"]`); if (ck) ck.checked = false; $slots.querySelector(`[data-slot="${s}"]`).classList.remove("nl-ok"); pintaGuardar(); sincroniza(s, true); }
       } else if (t.dataset.revNombre != null) { const n = slot[t.dataset.revNombre]; n.nombre = t.value.trim().slice(0, 20); if (n.ok) sincroniza(t.dataset.revNombre); }

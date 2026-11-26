@@ -94,7 +94,9 @@ const LECTOR_NOMINA = (function () {
     return out;
   }
   function lee(ls) {
-    const valores = {}, sinReconocer = [], avisos = [];
+    const valores = {}, sinReconocer = [], avisos = [], detalle = [];
+    // v225: cada cobro y descuento con el nombre que trae la nómina, para el informe «concepto por concepto»
+    const nombreLinea = (e) => e.split(/\s+/).filter((w) => /[a-záéíóúüñ]{2}/i.test(w)).join(" ").replace(/^[^a-záéíóúüñ]+/i, "").slice(0, 50);
     // Columnas «DEVENGOS» y «DEDUCCIONES» (si las hay)
     let colD = null, colQ = null;
     for (const l of ls) { // la cabecera de la tabla: las dos palabras en la misma línea y sin «total»
@@ -157,23 +159,32 @@ const LECTOR_NOMINA = (function () {
         if (!/[a-z]{3}/i.test(sin(etiqueta))) continue; // solo cifras (cantidades, precios…)
         const tipo = col || null;
         sinReconocer.push({ texto: etiqueta.slice(0, 60), importe: v, tipo });
-        if (tipo) pon(tipo === "d" ? "otrosd" : "otrosq", v);
+        if (tipo) { pon(tipo === "d" ? "otrosd" : "otrosq", v); detalle.push({ texto: nombreLinea(etiqueta), importe: v, tipo }); }
         continue;
       }
       pon(k, v);
+      if (TIPO[k]) detalle.push({ texto: nombreLinea(etiqueta), importe: v, tipo: TIPO[k], k });
     }
     // El mes
     const todo = sin(ls.map((l) => l.texto).join(" \n "));
     const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-    let mes = null, m;
-    if ((m = todo.match(/\d{1,2}[/.-](\d{1,2})[/.-](\d{2,4})\s*(?:a|al|hasta|-)\s*\d{1,2}[/.-](\d{1,2})[/.-](\d{2,4})/))) mes = [m[4], m[3]];
-    else if ((m = todo.match(/\b(ene|feb|mar|abr|may|jun|jul|ago|sep|set|oct|nov|dic)[a-z]*\.?\s*(?:de\s*|')?(\d{2,4})/))) mes = [m[2], String(MESES.indexOf(m[1] === "set" ? "sep" : m[1]) + 1)];
-    if (mes) { let a = +mes[0]; if (a < 100) a += 2000; const n = +mes[1]; mes = n >= 1 && n <= 12 && a > 2000 && a < 2100 ? `${a}-${String(n).padStart(2, "0")}` : null; }
+    // v225: la nómina lleva más fechas (antigüedad, alta, nacimiento…) que el mes: se cogen todas y vale la más
+    // reciente que no esté en el futuro (la antigüedad «02 ABR 07» salía como «Abril 2007»)
+    const cands = [], ahora = new Date(), tope = ahora.getFullYear() * 12 + ahora.getMonth() + 2;
+    const anade = (a, n) => { a = +a; if (a < 100) a += 2000; n = +n; const v = a * 12 + n - 1; if (n >= 1 && n <= 12 && a > 2000 && a < 2100 && v <= tope) cands.push(v); };
+    let m;
+    const reRango = /\d{1,2}[/.-](\d{1,2})[/.-](\d{2,4})\s*(?:a|al|hasta|-)\s*\d{1,2}[/.-](\d{1,2})[/.-](\d{2,4})/g;
+    while ((m = reRango.exec(todo))) anade(m[4], m[3]);
+    const reMes = /\b(ene|feb|mar|abr|may|jun|jul|ago|sep|set|oct|nov|dic)[a-z]*\.?\s*(?:de\s*|')?(\d{2,4})\b/g;
+    while ((m = reMes.exec(todo))) anade(m[2], MESES.indexOf(m[1] === "set" ? "sep" : m[1]) + 1);
+    let mes = null;
+    if (cands.length) { const v = Math.max(...cands); mes = `${Math.floor(v / 12)}-${String(v % 12 + 1).padStart(2, "0")}`; }
     // Los descuentos a veces salen con un menos delante («-68,53»): todo en positivo
     for (const k in valores) valores[k] = Math.abs(valores[k]);
     for (const x of sinReconocer) x.importe = Math.abs(x.importe);
+    for (const x of detalle) x.importe = Math.abs(x.importe);
     avisos.push(...revisa(valores, mes));
-    return { valores, mes, sinReconocer, avisos, leidas, columnas: colD != null && colQ != null };
+    return { valores, mes, sinReconocer, detalle: detalle.filter((x) => x.texto), avisos, leidas, columnas: colD != null && colQ != null };
   }
 
   // PDF → trozos de texto con su sitio (pdf.js, solo en el navegador). Hasta 4 páginas.

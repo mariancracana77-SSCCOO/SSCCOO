@@ -97,7 +97,10 @@ const N2 = nomina("01/10/2026 a 31/10/2026", [["SALARIO BASE", "1.200,00"], ["PL
     ok(/Octubre 2026/.test(await p.textContent("[data-slot='b']")), `${tag}: lee un PDF sin extensión (como lo da Android)`);
     await p.check("[data-slot-ok='b']"); await p.waitForTimeout(300);
     const out = await p.textContent("#nom-out");
-    ok(await p.inputValue("#nom-b-hx") === "90,00" && /Resumen/.test(out) && /Seguridad Social/.test(out) && /Base de cotización/.test(out) && /Te llega al banco/.test(out), `${tag}: compara con el resumen (bruto, banco, IRPF, Seguridad Social, base)`);
+    ok(await p.inputValue("#nom-b-hx") === "90,00" && /Lo que te llega al banco/.test(out) && /Los totales/.test(out) && /Seguridad Social/.test(out) && /Base de cotización/.test(out) && /Por qué te llega/.test(out) && /Concepto por concepto/.test(out) && /nombres que trae tu nómina/.test(out) && /En resumen/.test(out), `${tag}: informe en 5 partes (banco, totales, por qué, concepto por concepto con sus nombres, en resumen)`);
+    ok(await p.$$eval(".nl-neto-dos b", bs => bs.length === 2 && bs.every(b => /€/.test(b.textContent))), `${tag}: las dos cifras del banco en grande`);
+    ok(await p.locator(".nl-barras li").count() >= 1 && await p.locator("#nom-compartir").count() === 1, `${tag}: barras de lo que sube y baja, y «Compartir el informe»`);
+    ok(/\d\.\d{3},\d{2}/.test(out) || !/\d{4},\d{2}\s?€/.test(out), `${tag}: importes con punto de miles`);
     if (CAP) { await p.evaluate(() => { document.getElementById("nom-out").scrollIntoView(); scrollBy(0, -(innerWidth < 1000 ? 200 : 240)); }); await p.waitForTimeout(300); await p.screenshot({ path: path.join(CAP, `informe-${ancho}${oscuro ? "-oscuro" : ""}.png`) }); }
     // al desmarcar, la columna se vacía; al volver a marcar, vuelve
     await p.uncheck("[data-slot-ok='b']"); await p.waitForTimeout(100);
@@ -148,7 +151,13 @@ const N2 = nomina("01/10/2026 a 31/10/2026", [["SALARIO BASE", "1.200,00"], ["PL
     // a mano: «Copiar los importes a mano» sigue funcionando
     await p.evaluate(() => { document.getElementById("nom-mano").open = true; });
     await p.fill("#nom-a-base", "1000"); await p.fill("#nom-b-base", "1100");
-    ok(/Resumen/.test(await p.textContent("#nom-out")) && !/Base de cotización/.test(await p.textContent("#nom-out")), `${tag}: a mano también compara`);
+    const om = await p.textContent("#nom-out");
+    ok(/Los totales/.test(om) && !/Base de cotización/.test(om) && !/nombres que trae tu nómina/.test(om), `${tag}: a mano también compara (por grupos)`);
+    // v225: si las dos se llaman igual, las columnas dicen «1.ª nómina» y «2.ª nómina» (nunca «Abril 2007 · Abril 2007»)
+    await p.fill("#nom-n1", "Abril 2007"); await p.fill("#nom-n2", "Abril 2007");
+    const cabs = await p.$$eval("#nom-out .nom-cab td", tds => tds.slice(0, 2).map(t => t.textContent));
+    ok(cabs[0] === "1.ª nómina" && cabs[1] === "2.ª nómina", `${tag}: mismo nombre en las dos → «1.ª nómina» / «2.ª nómina»: ` + cabs.join(" | "));
+    await p.fill("#nom-n1", ""); await p.fill("#nom-n2", "");
     await p.click("#nom-bt"); await p.click("#nom-bt-si");
     ok(await p.inputValue("#nom-a-base") === "", `${tag}: «Borrar todo» borra lo escrito a mano`);
     // archivos que no se leen: aviso y se puede elegir otro o quitar

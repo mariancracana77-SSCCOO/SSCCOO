@@ -89,5 +89,11 @@ ok(r3.avisos.some((a) => /Total devengado/.test(a.t)) && r3.avisos.some((a) => /
 const TXT = ["Nomina de Octubre 2026", "CONCEPTO                 DEVENGOS    DEDUCCIONES", "Salario base             1.200,00", "Plus convenio              150,00", "Contingencias comunes                   70,50", "Retencion IRPF                         100,00", "Total devengado          1.350,00", "Total a deducir                        170,50", "Liquido a percibir       1.179,50", "Base cont. comunes       1.350,00"].join("\n");
 const r4 = L.lee(L.lineas(L.trozosDeFilas(L.filasDeTexto(TXT))));
 ok(r4.valores.base === 1200 && r4.valores.cc === 70.5 && r4.valores.irpf === 100 && r4.valores.liquido === 1179.5 && r4.avisos.length === 0, "texto con espacios: " + JSON.stringify(r4.valores) + JSON.stringify(r4.avisos));
+
+// v225: la fecha de antigüedad («02 ABR 07») no es el mes de la nómina: vale la más reciente
+const r5 = L.lee(L.lineas(L.trozosDeFilas(L.filasDeTexto(["TRANSPORTES EJEMPLO", "Fecha antigüedad 02 ABR 07", "Periodo MENS 01 ENE 25 a 31 ENE 25", "Salario base 1.000,00", "Total devengado 1.000,00"].join("\n")))));
+ok(r5.mes === "2025-01", "mes con antigüedad delante: " + r5.mes);
+const r6 = L.lee(L.lineas(L.trozosDeFilas(L.filasDeTexto(["Antigüedad: 01/04/2007", "Del 01/03/2025 al 31/03/2025", "Salario base 1.000,00"].join("\n")))));
+ok(r6.mes === "2025-03", "mes con fechas en cifras: " + r6.mes);
 console.log(fallos ? `\n${fallos} FALLOS` : "\nTodo bien");
 process.exit(fallos ? 1 : 0);

@@ -3423,6 +3423,28 @@ label.cg-huecos { margin: 0 0 12px; }
 .nl-resumen li { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--linea); padding-bottom: 4px; }
 .nl-resumen li span { min-width: 0; overflow-wrap: anywhere; }
 .nl-resumen li b { white-space: nowrap; }
+/* v225: informe de la Comparadora (como el del padre): lo que llega al banco en grande */
+.nl-neto { display: flex; flex-direction: column; gap: 10px; }
+.nl-neto-dos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.nl-neto-dos > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.nl-neto-dos span, .nl-neto-dif span { font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; opacity: .8; overflow-wrap: anywhere; }
+.nl-neto-dos b { font-size: 1.5rem; line-height: 1.15; white-space: nowrap; }
+.nl-neto-dif { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; border-top: 1px solid var(--linea); padding-top: 8px; }
+.nl-neto-dif b { font-size: 1.5rem; white-space: nowrap; }
+.nl-neto-dif b.nom-mas { color: var(--nom-mas); } .nl-neto-dif b.nom-menos { color: var(--nom-menos); }
+.nl-neto p, .nl-frase { margin: 0; }
+.nl-frase { margin-bottom: 8px; }
+.nl-neto-dif small { font-size: .9rem; font-weight: 700; }
+.nl-barras ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.nl-barras li { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: baseline; }
+.nl-barra-n { min-width: 0; overflow-wrap: anywhere; font-weight: 700; }
+.nl-barra-v { font-weight: 800; white-space: nowrap; }
+.nl-barra-v.nom-mas { color: var(--nom-mas); } .nl-barra-v.nom-menos { color: var(--nom-menos); }
+.nl-barra { grid-column: 1 / -1; height: 10px; border-radius: 5px; background: var(--linea); overflow: hidden; }
+.nl-barra i { display: block; height: 100%; border-radius: 5px; }
+.nl-barra i.mas { background: var(--nom-mas); } .nl-barra i.menos { background: var(--nom-menos); }
+.nl-compartir { margin-top: 12px; }
+:root:is([data-letra="grande"], [data-letra="muy-grande"]) .nl-neto-dos { grid-template-columns: 1fr; }
 .nl-slot .nl-botones { align-items: stretch; }
 .nl-slot .nl-botones .btn { font-size: 1rem; margin: 0; padding: 12px 18px; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; line-height: 1.2; }
 .nl-fotos { margin: 0 0 14px; }
