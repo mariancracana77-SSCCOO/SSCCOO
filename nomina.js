@@ -62,7 +62,7 @@ if (typeof module !== "undefined") module.exports = NOMINA;
   if (!$("v-nomina") || typeof CONVENIO_GIRONA === "undefined") return;
   // v219 (permiso de Lorena, 26/11): textos traducibles con el selector «Idioma · Language» (zona-idioma.js, grupo «nomina» de la función «traducir»)
   const T0 = (x, v) => x.replace(/\{(\w+)\}/g, (m, k) => v && v[k] != null ? v[k] : m);
-  const Z = typeof ZonaIdioma === "function" ? ZonaIdioma("nomina", "v-nomina", () => { ponNombres(); calcDos(); calcConv(); pintaLista(); }) : { T: T0, TH: null };
+  const Z = typeof ZonaIdioma === "function" ? ZonaIdioma("nomina", "v-nomina", () => { ponNombres(); calcDos(); calcConv(); pintaLista(); pintaRev(); pintaGuardadas(); }) : { T: T0, TH: null };
   const T = Z.T, TH = Z.TH || ((x, v) => esc(T(x, v)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>"));
   const eur = (n) => n.toLocaleString("es-ES", { style: "currency", currency: "EUR" });
   // Lee números como los escribe la gente en España: «2100», «2.100», «2.100,50», «2100,5», «2100 €» (igual que baja.js)
@@ -131,6 +131,163 @@ if (typeof module !== "undefined") module.exports = NOMINA;
   ["nom-n1", "nom-n2"].forEach(i => $(i).addEventListener("input", () => { ponNombres(); calcDos(); }));
   $("nom-filas").addEventListener("input", calcDos);
   ponNombres(); calcDos();
+
+  // ---------- 1b. Leer nóminas en PDF (v221, paso 2 del plan de la nómina; aprobado por Lorena el 26/11/2026) ----------
+  // nomina-lector.js lee cada PDF en la memoria del móvil (pdf.js) y lo olvida. Antes de comparar sale «He leído esto»
+  // por cada nómina: se puede cambiar todo y avisa si las sumas no cuadran. Nunca se usa nada sin que se marque.
+  // GUARDAR (solo si se marca la casilla, por defecto no): en «ccoo-nominas» solo el mes y los importes, nunca nombre,
+  // DNI, cuenta ni el archivo. Para no perder nada (norma del 13/11): antes de escribir se copia lo que había en
+  // «ccoo-nominas-copia»; si «ccoo-nominas» no se puede leer, se usa la copia; otra ventana abierta se entera por el
+  // evento «storage» y vuelve a pintar la lista. «Borrar todo» quita las dos claves.
+  const L = typeof LECTOR_NOMINA !== "undefined" ? LECTOR_NOMINA : null;
+  const CLAVE = "ccoo-nominas", COPIA = "ccoo-nominas-copia", MAX_GUARDADAS = 24, MAX_PDF = 6;
+  const CLAVES = C.map(c => c[0]);
+  const limpia = (v) => { const o = {}; for (const k of CLAVES) { const n = +v?.[k]; if (Number.isFinite(n) && n >= 0 && n < 1e6) o[k] = Math.round(n * 100) / 100; } return o; };
+  const valida = (x) => x && x.v === 1 && Array.isArray(x.lista) ? x.lista.filter(n => n && typeof n.id === "string").map(n => ({ id: n.id.slice(0, 20), mes: /^\d{4}-\d{2}$/.test(n.mes) ? n.mes : "", nombre: String(n.nombre || "").slice(0, 20), valores: limpia(n.valores) })) : null;
+  function leeGuardadas() {
+    for (const k of [CLAVE, COPIA]) { try { const t = localStorage.getItem(k); if (t == null) { if (k === CLAVE) continue; return []; } const l = valida(JSON.parse(t)); if (l) return l; } catch (_) {} }
+    return [];
+  }
+  function guardaLista(lista) {
+    try {
+      const antes = localStorage.getItem(CLAVE);
+      if (antes != null) localStorage.setItem(COPIA, antes);
+      if (lista.length) localStorage.setItem(CLAVE, JSON.stringify({ v: 1, lista })); else { localStorage.removeItem(CLAVE); localStorage.removeItem(COPIA); }
+      return true;
+    } catch (_) { return false; }
+  }
+  const etiqueta = (n) => n.nombre || (L && n.mes ? L.nombreMes(n.mes, T) : T("Nómina"));
+  let leidas = []; // [{id, mes, nombre, valores, avisos, sinReconocer, ok}]
+  let turnoPdf = 0;
+  const $rev = $("nom-rev"), $guar = $("nom-guardadas");
+  const formato = (n) => n == null ? "" : String(n.toFixed(2)).replace(".", ",");
+  const AVISO_HTML = (a) => esc(T(a.t, a.v && { a: eur(a.v.a), b: eur(a.v.b) }));
+
+  function pintaRev() {
+    if (!leidas.length) { $rev.innerHTML = ""; return; }
+    let h = "";
+    leidas.forEach((n, i) => {
+      if (n.error) { h += `<div class="panel nl-tarjeta"><h3>${esc(T("Nómina {n}", { n: i + 1 }))}</h3><div class="zc-aviso">${esc(T(L.ERR[n.error]))}</div></div>`; return; }
+      const conValor = C.filter(c => n.valores[c[0]] != null), sinValor = C.filter(c => n.valores[c[0]] == null);
+      const campo = ([k, nom]) => `<label class="nl-campo"><span>${esc(T(nom))}</span><input type="text" inputmode="decimal" autocomplete="off" data-rev="${i}" data-k="${esc(k)}" value="${esc(formato(n.valores[k]))}"></label>`;
+      const avisos = L.revisa(n.valores, n.mes);
+      h += `<div class="panel nl-tarjeta${n.ok ? " nl-ok" : ""}" data-tarjeta="${i}">
+        <h3>${esc(T("Nómina {n}", { n: i + 1 }))}${n.mes ? " · " + esc(L.nombreMes(n.mes, T)) : ""}</h3>
+        <label class="nl-campo"><span>${esc(T("Nombre para compararla"))}</span><input type="text" maxlength="20" autocomplete="off" data-rev-nombre="${i}" value="${esc(n.nombre)}"></label>
+        <p class="zc-pista">${esc(T("Esto es lo que he leído. Míralo con tu nómina delante y cambia lo que no esté bien."))}</p>
+        <div class="nl-campos">${conValor.map(campo).join("")}</div>
+        ${sinValor.length ? `<details class="nl-faltan"><summary>${esc(T("Lo que no he encontrado ({n})", { n: sinValor.length }))}</summary><div class="nl-campos">${sinValor.map(campo).join("")}</div></details>` : ""}
+        ${n.sinReconocer.length ? `<div class="zc-aviso"><p>${esc(T("Líneas que no he reconocido:"))}</p><ul>${n.sinReconocer.map(x => `<li>${esc(x.texto)}: ${esc(eur(x.importe))} · ${esc(x.tipo === "d" ? T("la he sumado en «Otros cobros»") : x.tipo === "q" ? T("la he sumado en «Otros descuentos»") : T("no sé si es un cobro o un descuento: no la he contado"))}</li>`).join("")}</ul></div>` : ""}
+        <div class="nl-avisos" data-avisos="${i}">${avisos.length ? `<div class="zc-aviso"><ul>${avisos.map(a => `<li>${AVISO_HTML(a)}</li>`).join("")}</ul></div>` : `<div class="zc-ok">${esc(T("Las sumas cuadran con los totales de la nómina."))}</div>`}</div>
+        <label class="check nl-visto"><input type="checkbox" data-rev-ok="${i}"${n.ok ? " checked" : ""}><span>${esc(T("He leído esto y está bien"))}</span></label>
+      </div>`;
+    });
+    const buenas = leidas.map((n, i) => [n, i]).filter(([n]) => !n.error);
+    if (buenas.length) {
+      const opc = (sel) => buenas.map(([n, i]) => `<option value="${i}"${i === sel ? " selected" : ""}>${esc(T("Nómina {n}", { n: i + 1 }))} · ${esc(etiqueta(n))}</option>`).join("");
+      // Por defecto: la más antigua y la siguiente (por mes)
+      const orden = buenas.slice().sort(([a], [b]) => (a.mes || "").localeCompare(b.mes || ""));
+      const a0 = orden.length > 1 ? orden[orden.length - 2][1] : orden[0][1], b0 = orden.length > 1 ? orden[orden.length - 1][1] : -1;
+      h += `<div class="panel nl-usar">
+        ${buenas.length > 1 ? `<div class="zc-dos"><div><label for="nom-ua">${esc(T("1.ª nómina"))}</label><select id="nom-ua">${opc(a0)}</select></div><div><label for="nom-ub">${esc(T("2.ª nómina"))}</label><select id="nom-ub">${opc(b0)}</select></div></div>` : ""}
+        <label class="check"><input type="checkbox" id="nom-guardar"><span>${esc(T("Guardar en este móvil el mes y los importes de las nóminas marcadas, para compararlas otro día. Nunca se guarda tu nombre, DNI, cuenta del banco ni el archivo."))}</span></label>
+        <button type="button" class="btn" id="nom-usar">${esc(buenas.length > 1 ? T("Comparar estas dos") : T("Poner como 1.ª nómina"))}</button>
+        <p class="zc-pista" id="nom-usar-msg" aria-live="polite"></p>
+        <button type="button" class="btn sec" id="nom-rev-quitar">${esc(T("Quitar lo leído"))}</button>
+      </div>`;
+    }
+    $rev.innerHTML = h;
+  }
+  function pintaAvisos(i) {
+    const n = leidas[i], caja = $rev.querySelector(`[data-avisos="${i}"]`); if (!caja) return;
+    const avisos = L.revisa(n.valores, n.mes);
+    caja.innerHTML = avisos.length ? `<div class="zc-aviso"><ul>${avisos.map(a => `<li>${AVISO_HTML(a)}</li>`).join("")}</ul></div>` : `<div class="zc-ok">${esc(T("Las sumas cuadran con los totales de la nómina."))}</div>`;
+  }
+  // Pone una nómina en la columna a o b de la comparadora
+  function ponEn(col, n) {
+    C.forEach(([k]) => { const inp = $(`nom-${col}-${k}`); if (inp) inp.value = n.valores[k] != null ? formato(n.valores[k]) : ""; });
+    $(col === "a" ? "nom-n1" : "nom-n2").value = etiqueta(n).slice(0, 20);
+  }
+  function acaba() { ponNombres(); calcDos(); $("nom-out").scrollIntoView({ behavior: "smooth", block: "start" }); }
+
+  if (L && $("nom-pdf")) {
+    $("nom-pdf").addEventListener("change", async (e) => {
+      const fs = [...(e.target.files || [])].slice(0, MAX_PDF); e.target.value = "";
+      if (!fs.length) return;
+      const yo = ++turnoPdf;
+      $rev.innerHTML = `<p class="zc-pista">${esc(T("Leyendo {n} nóminas en tu móvil…", { n: fs.length }))}</p>`;
+      const out = [];
+      for (const f of fs) {
+        const r = await L.leeArchivo(f);
+        if (yo !== turnoPdf) return;
+        out.push(r.error ? { error: r.error } : { id: Date.now().toString(36) + out.length, mes: r.mes || "", nombre: r.mes ? L.nombreMes(r.mes, T).slice(0, 20) : "", valores: limpia(r.valores), sinReconocer: r.sinReconocer, ok: false });
+      }
+      leidas = out; pintaRev();
+      $rev.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    $rev.addEventListener("input", (e) => {
+      const t = e.target;
+      if (t.dataset.rev != null) {
+        const n = leidas[+t.dataset.rev], v = num(t.value);
+        if (String(t.value).trim() === "") delete n.valores[t.dataset.k]; else n.valores[t.dataset.k] = v;
+        n.ok = false; const ck = $rev.querySelector(`[data-rev-ok="${t.dataset.rev}"]`); if (ck) ck.checked = false;
+        $rev.querySelector(`[data-tarjeta="${t.dataset.rev}"]`)?.classList.remove("nl-ok");
+        pintaAvisos(+t.dataset.rev);
+      } else if (t.dataset.revNombre != null) leidas[+t.dataset.revNombre].nombre = t.value.trim().slice(0, 20);
+    });
+    $rev.addEventListener("change", (e) => {
+      const t = e.target;
+      if (t.dataset.revOk != null) { leidas[+t.dataset.revOk].ok = t.checked; $rev.querySelector(`[data-tarjeta="${t.dataset.revOk}"]`)?.classList.toggle("nl-ok", t.checked); }
+    });
+    $rev.addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      const msg = $("nom-usar-msg");
+      if (b.id === "nom-rev-quitar") { leidas = []; turnoPdf++; pintaRev(); return; }
+      if (b.id !== "nom-usar") return;
+      const ia = $("nom-ua") ? +$("nom-ua").value : leidas.findIndex(n => !n.error), ib = $("nom-ub") ? +$("nom-ub").value : -1;
+      if (ib >= 0 && ia === ib) { msg.textContent = T("Elige dos nóminas distintas."); return; }
+      const elegidas = [ia, ib].filter(i => i >= 0).map(i => leidas[i]);
+      if (elegidas.some(n => !n.ok)) { msg.textContent = T("Antes, marca «He leído esto y está bien» en las nóminas que vas a comparar."); return; }
+      ponEn("a", elegidas[0]);
+      if (elegidas[1]) ponEn("b", elegidas[1]);
+      if ($("nom-guardar")?.checked) {
+        const marcadas = leidas.filter(n => !n.error && n.ok);
+        let lista = leeGuardadas();
+        for (const n of marcadas) {
+          lista = lista.filter(x => !(x.mes && x.mes === n.mes && x.valores.liquido === n.valores.liquido));
+          lista.push({ id: n.id, mes: n.mes, nombre: n.nombre, valores: limpia(n.valores) });
+        }
+        lista.sort((a, b) => (a.mes || "").localeCompare(b.mes || "")); lista = lista.slice(-MAX_GUARDADAS);
+        if (!guardaLista(lista)) { msg.textContent = T("No se ha podido guardar en este móvil (puede que esté en modo privado). La comparación sí está hecha."); }
+        pintaGuardadas();
+      }
+      leidas = []; pintaRev(); acaba();
+    });
+  }
+
+  // Lo guardado en este móvil
+  function pintaGuardadas() {
+    const lista = leeGuardadas();
+    if (!lista.length) { $guar.innerHTML = ""; return; }
+    $guar.innerHTML = `<details class="panel nl-guardadas"><summary>${esc(T("Guardadas en este móvil ({n})", { n: lista.length }))}</summary>
+      <p class="zc-pista">${esc(T("Solo el mes y los importes. Nadie más las ve: están en este móvil y no se envían."))}</p>
+      <ul class="nl-lista">${lista.map(n => `<li><span><b>${esc(etiqueta(n))}</b>${n.valores.liquido != null ? " · " + esc(T("líquido {d}", { d: eur(n.valores.liquido) })) : ""}</span>
+        <span class="nl-botones"><button type="button" class="btn sec" data-g-a="${esc(n.id)}">${esc(T("Como 1.ª"))}</button><button type="button" class="btn sec" data-g-b="${esc(n.id)}">${esc(T("Como 2.ª"))}</button><button type="button" class="btn sec" data-g-quita="${esc(n.id)}" aria-label="${esc(T("Quitar {n}", { n: etiqueta(n) }))}">${esc(T("Quitar"))}</button></span></li>`).join("")}</ul>
+      <div class="nl-borrar"><button type="button" class="btn sec" id="nom-g-borrar">${esc(T("Borrar todo lo guardado"))}</button>
+      <div id="nom-g-confirma" hidden><p>${esc(T("¿Seguro? Se borran todas las nóminas guardadas en este móvil."))}</p><div class="nl-botones"><button type="button" class="btn" id="nom-g-si">${esc(T("Sí, borrar todo"))}</button><button type="button" class="btn sec" id="nom-g-no">${esc(T("No"))}</button></div></div></div>
+    </details>`;
+  }
+  $guar.addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    const lista = leeGuardadas(), id = b.dataset.gA || b.dataset.gB || b.dataset.gQuita;
+    if (b.dataset.gA || b.dataset.gB) { const n = lista.find(x => x.id === id); if (n) { ponEn(b.dataset.gA ? "a" : "b", n); acaba(); } return; }
+    if (b.dataset.gQuita) { guardaLista(lista.filter(x => x.id !== id)); pintaGuardadas(); const d = $guar.querySelector("details"); if (d) d.open = true; return; }
+    if (b.id === "nom-g-borrar") { $("nom-g-confirma").hidden = false; b.hidden = true; return; }
+    if (b.id === "nom-g-no") { $("nom-g-confirma").hidden = true; $("nom-g-borrar").hidden = false; return; }
+    if (b.id === "nom-g-si") { try { localStorage.removeItem(CLAVE); localStorage.removeItem(COPIA); } catch (_) {} pintaGuardadas(); }
+  });
+  addEventListener("storage", (e) => { if (e.key === CLAVE || e.key === null) pintaGuardadas(); });
+  pintaGuardadas();
 
   // ---------- 2. Con el convenio ----------
   const TAB = CONVENIO_GIRONA.TAB, sc = $("nc-cat");

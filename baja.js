@@ -81,6 +81,8 @@ if (typeof module !== "undefined") module.exports = BAJA;
     if (r.pierdes > 0.005) h += caja(esc(T("Sin la baja habrías cobrado unos {e} (el 100 % de tu base): dejas de cobrar {p}.", { e: eur(r.entero), p: eur(r.pierdes) })));
     out.innerHTML = h;
   }
+  // v221 (paso 2 del plan de la nómina): «Coger la base de una nómina»; accidente de trabajo o enfermedad profesional = base de AT y EP
+  if (typeof LECTOR_NOMINA !== "undefined") LECTOR_NOMINA.cogerBase({ input: $("ba-base"), clave: () => /^(at|ep)$/.test($("ba-tipo").value) ? "baseat" : "basecc", T: Z.T });
   ["ba-tipo", "ba-base", "ba-dias", "ba-hosp", "ba-veces"].forEach(i => { $(i).addEventListener("input", calc); $(i).addEventListener("change", calc); });
   calc();
 })();

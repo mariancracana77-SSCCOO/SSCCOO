@@ -1563,7 +1563,7 @@ html:is([data-letra="grande"], [data-letra="muy-grande"]) .subpestanas a { font-
 @media print { .recortado { max-height: none; -webkit-mask-image: none; mask-image: none; } .leer-mas { display: none; } }
 /* v62: buscador con secciones, archivos, «dónde está» y mapa de la web */
 .busca-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.mapa-web { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 10px; }
+.mapa-web { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 130px), 1fr)); gap: 10px; }
 .mapa-grupo { padding: 12px 14px; display: grid; gap: 6px; align-content: start; }
 .mapa-tit { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-family: var(--cond); font-size: 1.2rem; font-weight: 700; color: var(--tinta); text-decoration: none; text-transform: uppercase; letter-spacing: .02em; min-height: 36px; }
 .mapa-tit .icono { color: var(--rojo-ic); }
@@ -3382,3 +3382,33 @@ label.cg-huecos { margin: 0 0 12px; }
 .tap-paginas.a-mano .tap-lienzo { touch-action: none; cursor: crosshair; outline: 3px solid var(--cond-azul); outline-offset: 2px; }
 .tap-lista { margin: 6px 0 8px; padding-left: 20px; }
 #tap-otra { width: 100%; margin-top: 4px; }
+
+/* Leer nóminas en PDF (v221, nomina-lector.js): Comparadora, Mi jubilación y Mi baja médica */
+.nl-leer { border: 2px dashed var(--linea); border-radius: 12px; padding: 12px 14px; margin: 14px 0; }
+.nl-leer label { margin-top: 0; }
+.nl-tarjeta { margin: 14px 0; padding: 14px 16px; border-left: 5px solid var(--ambar-rotulo); }
+.nl-tarjeta.nl-ok { border-left-color: var(--verde, #2e7d32); }
+.nl-tarjeta h3 { margin: 0 0 8px; }
+.nl-campos { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 130px), 1fr)); gap: 8px 14px; }
+.nl-campo { display: flex; flex-direction: column; justify-content: space-between; gap: 4px; margin: 0; font-weight: 600; min-width: 0; }
+.nl-campo span { overflow-wrap: anywhere; }
+.nl-faltan { margin: 10px 0; }
+.nl-faltan summary { cursor: pointer; font-weight: 600; padding: 6px 0; }
+.nl-avisos { margin-top: 12px; }
+.nl-avisos ul, .nl-tarjeta .zc-aviso ul { margin: 0; padding-left: 1.2em; }
+.nl-tarjeta .zc-aviso p { margin: 0 0 6px; }
+.nl-visto { font-size: 1.05rem; }
+.nl-usar { margin: 14px 0; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.nl-usar .check { margin: 0; align-items: flex-start; font-weight: 400; }
+.nl-botones { display: flex; flex-wrap: wrap; gap: 8px; }
+.nl-guardadas { margin: 14px 0; }
+.nl-guardadas summary { cursor: pointer; font-weight: 700; }
+.nl-lista { list-style: none; padding: 0; margin: 10px 0; display: flex; flex-direction: column; gap: 10px; }
+.nl-lista li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; border-bottom: 1px solid var(--linea); padding-bottom: 10px; }
+.nl-lista li > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.nl-borrar { margin-top: 6px; }
+.nl-coger { margin: 4px 0 10px; }
+.nl-coger-out:empty { display: none; }
+.nl-coger-out { margin-top: 10px; }
+.nl-pregunta p { margin: 0 0 8px; }
+#v-nomina [hidden], #v-jubilacion [hidden], #v-baja [hidden] { display: none !important; }

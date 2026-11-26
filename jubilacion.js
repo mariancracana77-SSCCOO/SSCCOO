@@ -156,6 +156,8 @@ if (typeof module !== "undefined") module.exports = JUBILACION;
     if (r.minima) html += caja(esc(T("Si la pensión te sale más baja, la Seguridad Social puede completarla hasta la mínima de 2026: {a} al mes con 65 años o más ({b} si tienes menos de 65), si tus otros ingresos no pasan de un límite (el límite no lo calculamos).", { a: eur(r.minima[0]), b: eur(r.minima[1]) })));
     out.innerHTML = html;
   }
+  // v221 (paso 2 del plan de la nómina): «Coger la base de una nómina» (nomina-lector.js; el PDF se lee en el móvil y no se guarda)
+  if (typeof LECTOR_NOMINA !== "undefined") LECTOR_NOMINA.cogerBase({ input: $("ju-base"), clave: () => "basecc", T: Z.T });
   ["ju-nac", "ju-anios", "ju-meses", "ju-sigue", "ju-base", "ju-reg", "ju-fam", "ju-desp", "ju-adel"].forEach(i => { $(i).addEventListener("input", calc); $(i).addEventListener("change", calc); });
   calc();
 })();
