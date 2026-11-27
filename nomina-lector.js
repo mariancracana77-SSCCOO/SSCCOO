@@ -16,20 +16,23 @@ const LECTOR_NOMINA = (function () {
   const aNum = (t) => { const neg = /-/.test(t); const v = +t.replace(/-/g, "").replace(/\./g, "").replace(",", "."); return neg ? -v : v; };
   // [clave, forma de la etiqueta]. El orden importa: primero los totales y las bases, luego lo más concreto.
   const REGLAS = [
+    // v227: los de la fila de totales de Calsina («REM. TOTAL», «T. DEVENGADO», «T. A DEDUCIR», «BASE S.S.»)
+    ["remtotal", /^rem\.?\s*total|remuneracion total/],
     ["liquido", /liquido|a percibir/],
-    ["deducir", /total\s*(a\s*)?deduc|total deducciones|total descuentos/],
-    ["devengado", /total\s*devengad|total devengos|total bruto/],
-    ["basecc", /base.*(\bc\.?\s?c\.?(\b|$)|cont(ingencias|ing)?\.?\s*comunes|comunes|b\.?c\.?c\.?c)|b\.?\s?c\.?\s?c\.?\s?c/],
+    ["deducir", /total\s*(a\s*)?deduc|total deducciones|total descuentos|^t\.?\s*a\s*deduc/],
+    ["devengado", /total\s*devengad|total devengos|total bruto|^t\.?\s*devengad/],
+    ["basecc", /base.*(\bc\.?\s?c\.?(\b|$)|cont(ingencias|ing)?\.?\s*comu|comunes|b\.?c\.?c\.?c)|b\.?\s?c\.?\s?c\.?\s?c|^base\s*s\.?\s?s\.?(\s|$)/],
     ["baseat", /base.*(\ba\.?\s?t\.?(\b|$)|accidente|profesional|cont(ingencias)?\.?\s*prof|desempleo)/],
     ["baseirpf", /base.*(i\.?\s?r\.?\s?p\.?\s?f|retenc|sujeta)/],
-    ["empresa", /aportacion.*empresa|empresa.*aporta|coste.*empresa|total.*empresa/],
+    ["coste", /coste?.*empresa/],
+    ["empresa", /aportacion.*empresa|empresa.*aporta|total.*empresa/],
     ["mei", /\bm\.?\s?e\.?\s?i\.?\b|equidad/],
     ["hxcot", /(cotiz|cot\.).*(horas?|h\.)\s*extra|h(oras?|\.)?\s*extras?\s*(f\.?\s?m\.?|fuerza|estruct|resto|normales)/],
-    ["cc", /cont(ingencias|ing)?\.?\s*comunes|c\.\s?comunes|\bcc\b|comunes/],
+    ["cc", /cont(ingencias|ing)?\.?\s*comunes|c\.\s?comun|\bcc\b|comunes|cont\.?\s*comu\b/],
     ["desempleo", /desempleo/],
-    ["fp", /formacion\s*prof|form\.?\s*prof|\bf\.?\s?p\.?(\b|$)/],
+    ["fp", /formacion|form\.?\s*prof|\bf\.?\s?p\.?(\b|$)/],
     ["irpf", /i\.?\s?r\.?\s?p\.?\s?f|retencion|tributacion/],
-    ["anticipo", /anticipo/],
+    ["anticipo", /anticipo|bestreta|avancament/],
     ["prorrata", /prorrat|\bp\.?\s?p\.?\s*(pagas?|extra|p\.?\s?e)|parte proporcional/],
     ["paga", /paga\s*(extra|de\s*)?(verano|navidad|marzo|beneficios|julio|diciembre|junio)?|gratificacion extra/],
     ["antig", /antig|trienio|quinquenio|cuatrienio|bienio/],
@@ -37,9 +40,9 @@ const LECTOR_NOMINA = (function () {
     ["noct", /noctur/],
     ["plus", /plus\s*(de\s*)?convenio|p\.\s?convenio/],
     ["base", /salario base|sueldo base|^base$/],
-    ["dietas", /dieta/],
+    ["dietas", /dieta|dietes/],
     ["km", /kilomet|\bkms?\b/],
-    ["pluses", /\bplus\b|incentiv|complemento|disponibilidad|\badr\b|prima/],
+    ["pluses", /\bplus\b|incentiv|productiv|complemento|disponibilidad|\badr\b|prima/],
   ];
   const TIPO = { base: "d", plus: "d", antig: "d", hx: "d", noct: "d", pluses: "d", prorrata: "d", paga: "d", dietas: "d", km: "d", otrosd: "d", cc: "q", desempleo: "q", fp: "q", mei: "q", hxcot: "q", irpf: "q", anticipo: "q", otrosq: "q" };
   const reconoce = (t) => { const s = sin(t).replace(/\s+/g, " ").trim(); for (const [k, re] of REGLAS) if (re.test(s)) return k; return null; };
@@ -77,7 +80,9 @@ const LECTOR_NOMINA = (function () {
     noliq: "No he encontrado el «Líquido a percibir».",
     liq: "El total devengado menos el total a deducir no da el líquido a percibir.",
     nobase: "No he encontrado la base de cotización por contingencias comunes.",
-    nomes: "No he encontrado el mes de la nómina." /* fin textos */ };
+    nomes: "No he encontrado el mes de la nómina.",
+    cot: "«{n}»: {b} × {p} % da {c}, pero la nómina pone {v}.",
+    basess: "La base de cotización ({a}) no es la remuneración total más la parte de las pagas extra ({b})." /* fin textos */ };
   const r2 = (x) => Math.round(x * 100) / 100, cerca = (a, b) => Math.abs(a - b) < 0.02;
   // Comprobaciones: nunca calcular a ciegas. Sirve también para volver a mirar lo que la persona cambia a mano.
   // valores: {clave: número}; devuelve [{t, v}] (t es una clave de AV ya cambiada por su texto en español)
@@ -96,7 +101,7 @@ const LECTOR_NOMINA = (function () {
   function lee(ls) {
     const valores = {}, sinReconocer = [], avisos = [], detalle = [];
     // v225: cada cobro y descuento con el nombre que trae la nómina, para el informe «concepto por concepto»
-    const nombreLinea = (e) => e.split(/\s+/).filter((w) => /[a-záéíóúüñ]{2}/i.test(w)).join(" ").replace(/^[^a-záéíóúüñ]+/i, "").slice(0, 50);
+    const nombreLinea = (e) => e.split(/\s+/).filter((w) => /[a-záéíóúüñ]/i.test(w) && !/\d/.test(w)).join(" ").replace(/^[^a-záéíóúüñ]+/i, "").slice(0, 50);
     // Columnas «DEVENGOS» y «DEDUCCIONES» (si las hay)
     let colD = null, colQ = null;
     for (const l of ls) { // la cabecera de la tabla: las dos palabras en la misma línea y sin «total»
@@ -120,21 +125,47 @@ const LECTOR_NOMINA = (function () {
       const ps = palabras(l), trozos = [[]];
       ps.forEach((p, i) => {
         const prev = ps[i - 1];
-        if (prev && IMPORTE.test(prev.s) && !IMPORTE.test(p.s)) {
-          const resto = ps.slice(i); const hasta = resto.findIndex((x) => IMPORTE.test(x.s));
+        // v227: solo si lo de antes ya lleva nombre (la cuantía y el precio de delante, «12,00 1,50 31 *NOCTURNITAT»,
+        // van con su concepto), y también si detrás hay un nombre sin importe («COSTE EMPRESA 3.142,23 LÍQUIDO A PERCIBIR»)
+        if (prev && IMPORTE.test(prev.s) && !IMPORTE.test(p.s) && trozos[trozos.length - 1].some((x) => !IMPORTE.test(x.s) && /[a-z]{3}/i.test(sin(x.s)))) {
+          const resto = ps.slice(i), h0 = resto.findIndex((x) => IMPORTE.test(x.s)), hasta = h0 < 0 ? resto.length : h0;
           if (hasta > 0 && reconoce(resto.slice(0, hasta).map((x) => x.s).join(" "))) trozos.push([]);
         }
         trozos[trozos.length - 1].push(p);
       });
       if (trozos.length === 1) partes.push({ l, ps }); else for (const t of trozos) partes.push({ l: { trozos: t.map((p) => ({ str: p.s, x1: p.x1, x2: p.x2 })) }, ps: t });
     }
+    // v227: el bloque de abajo «DETERMINACIÓN DE LAS BASES DE COTIZACIÓN… APORTACIÓN DE LA EMPRESA» (Calsina y otros)
+    // se lee aparte: es lo que paga la empresa por ti, nunca un cobro ni un descuento tuyo
+    let enBloque = false;
+    const bloque = [], NUM = /^-?\d{1,3}(?:\.\d{3})*,\d+$|^-?\d+,\d+$/;
+    const QUE_EMPRESA = [["cc", /comun/], ["mei", /\bm\.?\s?e\.?\s?i\b|equidad/], ["at", /\ba\.?\s?t\.?\b|accident|profesional|\bat y ep\b/], ["desempleo", /desempleo|atur/], ["fp", /formacion|\bf\.?\s?p\b/], ["fogasa", /fogasa|garantia/]];
     for (const { l, ps } of partes) {
       const imps = ps.filter((p) => IMPORTE.test(p.s));
       const etiqueta = ps.filter((p) => !IMPORTE.test(p.s)).map((p) => p.s).join(" ");
+      const llana = sin(ps.map((p) => p.s).join(" "));
+      if (!enBloque && /determinacion|aportacion de la empresa|aportacion empresa/.test(llana)) { enBloque = true; cabecera = null; continue; }
+      if (enBloque) {
+        if (!imps.length) continue;
+        const k0 = reconoce(etiqueta);
+        if (k0 === "coste" || k0 === "liquido") { if (valores[k0] == null) valores[k0] = aNum(imps[imps.length - 1].s); continue; }
+        if (/total/.test(llana) || !/[a-z]{2}/.test(sin(etiqueta))) continue;
+        const n = imps.map((p) => Math.abs(aNum(p.s))), que = QUE_EMPRESA.find(([, re]) => re.test(sin(etiqueta)));
+        bloque.push({ k: que ? que[0] : "otra", texto: nombreLinea(etiqueta), importe: n[n.length - 1], tipo: n.length >= 2 && n[n.length - 2] <= 40 ? n[n.length - 2] : null, base: n.length >= 3 ? n[0] : null });
+        continue;
+      }
       if (!imps.length) {
-        // ¿Una fila de nombres de tabla (dos o más bases o totales en la misma línea)?
-        const trozos = l.trozos.map((t) => ({ k: reconoce(t.str), x: (t.x1 + t.x2) / 2 })).filter((t) => t.k && !TIPO[t.k]);
-        cabecera = trozos.length >= 2 ? trozos : null;
+        // ¿Una fila de nombres de tabla (bases o totales en la misma línea, con los importes en la de abajo)?
+        // v227: también un solo nombre con el importe debajo («LÍQUIDO A PERCIBIR» en un recuadro) y los trozos que
+        // pdf.js da partidos («BASE» «S.S.») se juntan si están pegados. «P.P.EXTRAS» de la fila de totales no es una
+        // línea de cobro: es la parte de las pagas extra que entra en la base («ppextras», solo informativo).
+        const tz = [];
+        for (const t of [...l.trozos].sort((a, b) => a.x1 - b.x1)) {
+          const u = tz[tz.length - 1], ancho = (t.x2 - t.x1) / Math.max(1, t.str.length);
+          if (u && t.x1 - u.x2 < ancho * 1.6) { u.str += " " + t.str; u.x2 = t.x2; } else tz.push({ str: t.str, x1: t.x1, x2: t.x2 });
+        }
+        const trozos = tz.map((t) => { let k = reconoce(t.str); if (k === "prorrata") k = "ppextras"; return { k, x: (t.x1 + t.x2) / 2 }; }).filter((t) => t.k && !TIPO[t.k]);
+        cabecera = trozos.length >= 2 || (trozos.length === 1 && tz.length === 1) ? trozos : null;
         continue;
       }
       if (cabecera && !reconoce(etiqueta)) { // los importes de debajo de la fila de nombres
@@ -163,11 +194,17 @@ const LECTOR_NOMINA = (function () {
         continue;
       }
       pon(k, v);
-      if (TIPO[k]) detalle.push({ texto: nombreLinea(etiqueta), importe: v, tipo: TIPO[k], k });
+      if (TIPO[k]) {
+        // v227: la cuantía (días, horas, km, %) y el precio de la izquierda, y el código de la línea, si los hay
+        const izq = ps.filter((p) => p !== imp && p.x2 <= imp.x1 && NUM.test(p.s)).map((p) => Math.abs(aNum(p.s)));
+        const cod = ps.find((p) => /^\d{1,4}$/.test(p.s));
+        detalle.push({ texto: nombreLinea(etiqueta), importe: v, tipo: TIPO[k], k, cuantia: izq.length ? izq[0] : null, precio: izq.length > 1 ? izq[1] : null, codigo: cod ? cod.s : null });
+      }
     }
     // El mes
     const todo = sin(ls.map((l) => l.texto).join(" \n "));
     const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+    const MESES_LARGOS = [/^(enero|gener)$/, /^febrer/, /^(marzo|marc)$/, /^abril$/, /^(mayo|maig)$/, /^(junio|juny)$/, /^(julio|juliol)$/, /^(agosto|agost)$/, /^(septiembre|setiembre|setembre)$/, /^octubre$/, /^(noviembre|novembre)$/, /^(diciembre|desembre)$/];
     // v225: la nómina lleva más fechas (antigüedad, alta, nacimiento…) que el mes: se cogen todas y vale la más
     // reciente que no esté en el futuro (la antigüedad «02 ABR 07» salía como «Abril 2007»)
     const cands = [], ahora = new Date(), tope = ahora.getFullYear() * 12 + ahora.getMonth() + 2;
@@ -176,15 +213,33 @@ const LECTOR_NOMINA = (function () {
     const reRango = /\d{1,2}[/.-](\d{1,2})[/.-](\d{2,4})\s*(?:a|al|hasta|-)\s*\d{1,2}[/.-](\d{1,2})[/.-](\d{2,4})/g;
     while ((m = reRango.exec(todo))) anade(m[4], m[3]);
     const reMes = /\b(ene|feb|mar|abr|may|jun|jul|ago|sep|set|oct|nov|dic)[a-z]*\.?\s*(?:de\s*|')?(\d{2,4})\b/g;
-    while ((m = reMes.exec(todo))) anade(m[2], MESES.indexOf(m[1] === "set" ? "sep" : m[1]) + 1);
+    while ((m = reMes.exec(todo))) if (!/(antig|alta|nacim|naix)[^\n]{0,15}$/.test(todo.slice(Math.max(0, m.index - 25), m.index))) anade(m[2], MESES.indexOf(m[1] === "set" ? "sep" : m[1]) + 1);
     let mes = null;
     if (cands.length) { const v = Math.max(...cands); mes = `${Math.floor(v / 12)}-${String(v % 12 + 1).padStart(2, "0")}`; }
+    // v227: «FECHA 30 SEPTIEMBRE 2026» (Calsina; también en catalán, «DATA 30 SETEMBRE 2026») manda sobre lo demás
+    // (nunca la antigüedad); si no, «TOTAL C/D SEPTIEMBRE» con el año de ahora (o el pasado, si aún no ha llegado)
+    const numMes = (w) => { const i = MESES_LARGOS.findIndex((re) => re.test(w)); return i < 0 ? 0 : i + 1; };
+    const fe = /\b(?:fecha|data)\b\W*\d{1,2}\W+(?:de\s+)?([a-z]{3,})\W+(?:de\s+)?(\d{4})\b/.exec(todo);
+    if (fe && numMes(fe[1])) { const c0 = cands.length; anade(fe[2], numMes(fe[1])); if (cands.length > c0) { const v = cands[cands.length - 1]; mes = `${Math.floor(v / 12)}-${String(v % 12 + 1).padStart(2, "0")}`; } }
+    const cd = !(fe && numMes(fe[1])) && /c\s*\/\s*d\s+([a-z]{3,})/.exec(todo);
+    if (cd && numMes(cd[1])) { const n = numMes(cd[1]); const a = ahora.getFullYear() - (n > ahora.getMonth() + 1 ? 1 : 0); mes = `${a}-${String(n).padStart(2, "0")}`; }
     // Los descuentos a veces salen con un menos delante («-68,53»): todo en positivo
     for (const k in valores) valores[k] = Math.abs(valores[k]);
     for (const x of sinReconocer) x.importe = Math.abs(x.importe);
     for (const x of detalle) x.importe = Math.abs(x.importe);
+    if (bloque.length) valores.empresa = r2(bloque.reduce((t, x) => t + x.importe, 0));
     avisos.push(...revisa(valores, mes));
-    return { valores, mes, sinReconocer, detalle: detalle.filter((x) => x.texto), avisos, leidas, columnas: colD != null && colQ != null };
+    // v227: comprobaciones de lo que se ha leído (solo avisan): cada cotización y el IRPF = base × su % (el % que
+    // trae la línea), y la base de cotización = remuneración total + la parte de las pagas extra
+    const lectura = [];
+    for (const x of detalle) {
+      const base = x.k === "irpf" ? valores.baseirpf : ["cc", "mei", "fp", "desempleo"].includes(x.k) ? valores.basecc : null;
+      if (base == null || x.cuantia == null || !(x.cuantia > 0 && x.cuantia <= 50)) continue;
+      const c = r2(base * x.cuantia / 100);
+      if (Math.abs(c - x.importe) > 0.05) lectura.push({ t: AV.cot, v: { n: x.texto, b: base, p: x.cuantia, c, v: x.importe } });
+    }
+    if (valores.basecc != null && valores.remtotal != null && valores.ppextras != null && Math.abs(valores.remtotal + valores.ppextras - valores.basecc) > 1) lectura.push({ t: AV.basess, v: { a: valores.basecc, b: r2(valores.remtotal + valores.ppextras) } });
+    return { valores, mes, sinReconocer, detalle: detalle.filter((x) => x.texto), avisos, lectura, bloque, leidas, columnas: colD != null && colQ != null };
   }
 
   // PDF → trozos de texto con su sitio (pdf.js, solo en el navegador). Hasta 4 páginas.

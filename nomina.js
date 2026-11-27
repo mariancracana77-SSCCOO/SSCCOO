@@ -101,6 +101,8 @@ if (typeof module !== "undefined") module.exports = NOMINA;
   // 4) concepto por concepto (con los nombres de la nómina si se leyeron las dos y no se corrigieron a mano)
   // y 5) en resumen. Las cabeceras: el nombre de cada nómina; si son iguales o faltan, «1.ª nómina» / «2.ª nómina».
   const llano = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z]+/g, " ").trim();
+  // Número con punto de miles también en 4 cifras («3.000», que toLocaleString deja «3000») y sin ceros de más
+  const numero = (x, d = 2) => { const v = Math.abs(+x || 0), [e, dec] = v.toFixed(d).split("."); const fr = (dec || "").replace(/0+$/, ""); return (+x < 0 ? "-" : "") + e.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + (fr ? "," + fr : ""); };
   const lista = (xs) => xs.length < 2 ? xs.join("") : xs.slice(0, -1).join(", ") + " " + T("y") + " " + xs[xs.length - 1];
   function calcDos() {
     const a = {}, b = {};
@@ -128,6 +130,10 @@ if (typeof module !== "undefined") module.exports = NOMINA;
     const base = (k) => fuente.a && fuente.b && fuente.a.valores[k] != null && fuente.b.valores[k] != null ? [fuente.a.valores[k], fuente.b.valores[k]] : null;
     if (base("basecc")) tot.push([T("Base de cotización"), ...base("basecc"), null]);
     if (base("baseirpf")) tot.push([T("Base del IRPF"), ...base("baseirpf"), null]);
+    // v227: lo que paga la empresa por ti y lo que le cuestas (si las dos nóminas lo traen)
+    const ex = (k) => fuente.a && fuente.b && fuente.a.extra && fuente.b.extra && fuente.a.extra[k] != null && fuente.b.extra[k] != null ? [fuente.a.extra[k], fuente.b.extra[k]] : null;
+    if (base("empresa")) tot.push([T("Lo que paga la empresa a la Seguridad Social"), ...base("empresa"), null]);
+    if (ex("coste")) tot.push([T("Coste empresa"), ...ex("coste"), null]);
     h += `<h3 class="nom-sec">${esc(T("2. Los totales"))}</h3>` + tabla(tot.map(([n, x, y, q]) => fila(n, x, y, y - x, "", q)).join(""));
     // Las líneas: con su nombre de la nómina (si se leyeron las dos sin corregir) o por grupos
     const conNombre = !!(fuente.a && fuente.b && !fuente.a.editada && !fuente.b.editada && fuente.a.detalle && fuente.a.detalle.length && fuente.b.detalle && fuente.b.detalle.length);
@@ -144,7 +150,7 @@ if (typeof module !== "undefined") module.exports = NOMINA;
     lin.forEach(x => { x.dif = x.b - x.a; x.efecto = x.t === "d" ? x.dif : -x.dif; });
     // 3. Por qué cambia
     if (Math.abs(dl) >= 0.005) {
-      const ant = lin.filter(x => x.t === "q" && /anticip/.test(llano(x.n)) && (x.a || x.b));
+      const ant = lin.filter(x => x.t === "q" && /anticip|bestreta/.test(llano(x.n)) && (x.a || x.b));
       const top = lin.filter(x => Math.abs(x.efecto) >= 0.005).sort((x, y) => Math.abs(y.efecto) - Math.abs(x.efecto)).slice(0, 4);
       let filas = top.map(x => fila(x.n, x.a, x.b, x.dif, "", x.t === "q")).join("");
       let frase;
@@ -183,11 +189,25 @@ if (typeof module !== "undefined") module.exports = NOMINA;
     const soloA = con.filter(x => x.a && !x.b).map(x => `${x.n} (${eur(x.a)})`), soloB = con.filter(x => !x.a && x.b).map(x => `${x.n} (${eur(x.b)})`);
     if (soloA.length) frases.push(esc(T("Solo en «{a}»: {l}.", { a: n1, l: lista(soloA.slice(0, 4)) })));
     if (soloB.length) frases.push(esc(T("Solo en «{b}»: {l}.", { b: n2, l: lista(soloB.slice(0, 4)) })));
-    con.filter(x => x.a && x.b && Math.abs(x.dif) >= 0.005 && !(x.t === "q" && /anticip/.test(llano(x.n)))).sort((x, y) => Math.abs(y.dif) - Math.abs(x.dif)).slice(0, 3)
+    con.filter(x => x.a && x.b && Math.abs(x.dif) >= 0.005 && !(x.t === "q" && /anticip|bestreta/.test(llano(x.n)))).sort((x, y) => Math.abs(y.dif) - Math.abs(x.dif)).slice(0, 3)
       .forEach(x => frases.push(TH("**{n}** pasa de {x} a {y}.", { n: x.n, x: eur(x.a), y: eur(x.b) })));
-    const antB = con.filter(x => x.t === "q" && /anticip/.test(llano(x.n)) && x.b).map(x => eur(x.b));
+    const antB = con.filter(x => x.t === "q" && /anticip|bestreta/.test(llano(x.n)) && x.b).map(x => eur(x.b));
     if (antB.length) frases.push(esc(T("Comprueba que los anticipos que te descuentan en «{b}» ({l}) te los dieron de verdad.", { b: n2, l: lista(antB) })));
     if (Math.abs((b.irpf || 0) - (a.irpf || 0)) >= 0.005 && Math.abs(r.tb.d - r.ta.d) < 0.005) frases.push(esc(T("Si el IRPF ha cambiado sin que cambie tu sueldo, puede que la empresa haya ajustado el porcentaje. Lo de más o de menos se arregla en la renta.")));
+    // v227: datos que ayudan a entender la nómina de Calsina (y cualquier otra que los traiga)
+    const ss = (o) => sum(o, SS) + (o.irpf || 0);
+    if (r.tb.d) frases.push(TH("En «{b}», de cada 100 € que cobras en bruto, **{p} €** se van en Seguridad Social e IRPF.", { b: n2, p: numero(ss(b) / r.tb.d * 100, 1) }));
+    if (base("baseirpf") && base("baseirpf")[0] && base("baseirpf")[1]) {
+      const [pa, pb] = base("baseirpf").map((x, i) => ((i ? b : a).irpf || 0) / x * 100);
+      frases.push(Math.abs(pa - pb) >= 0.05 ? esc(T("El IRPF pasa del {x} % al {y} %.", { x: numero(pa, 2), y: numero(pb, 2) })) : esc(T("El IRPF es del {x} % en las dos.", { x: numero(pb, 2) })));
+    }
+    if (fuente.b && fuente.b.extra && fuente.b.extra.coste) frases.push(esc(T("En «{b}» le cuestas a la empresa {c} y a ti te llegan {l}.", { b: n2, c: eur(fuente.b.extra.coste), l: eur(r.tb.l) })));
+    const linea = (n, re) => n && n.detalle ? n.detalle.find(x => re.test(llano(x.texto)) && x.cuantia) : null;
+    const [kmA, kmB] = [fuente.a, fuente.b].map(n => linea(n, /incentiv/));
+    if (kmA && kmB && kmA.precio && kmB.precio) frases.push(esc(T("Incentivo a la conducción: {k1} km a {p1} €/km en «{a}» y {k2} km a {p2} €/km en «{b}».", { a: n1, b: n2, k1: numero(kmA.cuantia), p1: numero(kmA.precio, 4), k2: numero(kmB.cuantia), p2: numero(kmB.precio, 4) })));
+    const [nA, nB] = [fuente.a, fuente.b].map(n => linea(n, /noct/));
+    if (nA && nB) frases.push(esc(T("Nocturnidad: {h1} horas en «{a}» y {h2} horas en «{b}».", { a: n1, b: n2, h1: numero(nA.cuantia), h2: numero(nB.cuantia) })));
+    else if (fuente.a && fuente.b && (a.noct || b.noct) && !(a.noct && b.noct)) frases.push(esc(T("«{x}» no lleva nocturnidad.", { x: a.noct ? n2 : n1 })));
     const bruto = r.tb.d - r.ta.d;
     if (Math.abs(bruto) >= 0.005 && Math.sign(bruto) !== Math.sign(dl) && Math.abs(dl) >= 0.005) frases.push(bruto > 0 ? TH("Ojo: en «{b}» cobras **más en bruto** pero te llega **menos al banco**. Mira lo que te quitan.", { b: n2 }) : TH("En «{b}» cobras menos en bruto pero te llega más al banco: te quitan menos.", { b: n2 }));
     if (frases.length) h += `<h3 class="nom-sec">${esc(T("5. En resumen"))}</h3><div class="zc-aviso nom-resumen"><ul>${frases.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
@@ -238,7 +258,10 @@ if (typeof module !== "undefined") module.exports = NOMINA;
   const formato = (n) => n == null ? "" : String(n.toFixed(2)).replace(".", ",");
   const AVISO_HTML = (a) => esc(T(a.t, a.v && { a: eur(a.v.a), b: eur(a.v.b) }));
   const RESUMEN = ["devengado", "deducir", "liquido", "irpf", "basecc"];
-  const avisosHTML = (n) => { const av = L.revisa(n.valores, n.mes); return av.length ? `<div class="zc-aviso"><ul>${av.map(a => `<li>${AVISO_HTML(a)}</li>`).join("")}</ul></div>` : `<div class="zc-ok">${esc(T("Las sumas cuadran con los totales de la nómina."))}</div>`; };
+  // v227: además, lo que el lector comprobó al leer (cada cotización = base × %, base = remuneración + pagas extra),
+  // mientras no se haya cambiado nada a mano
+  const LECTURA_HTML = (a) => esc(a.v.n != null ? T(a.t, { n: a.v.n, b: eur(a.v.b), p: numero(a.v.p), c: eur(a.v.c), v: eur(a.v.v) }) : T(a.t, { a: eur(a.v.a), b: eur(a.v.b) }));
+  const avisosHTML = (n) => { const av = L.revisa(n.valores, n.mes).map(AVISO_HTML).concat(!n.editada && n.lectura ? n.lectura.map(LECTURA_HTML) : []); return av.length ? `<div class="zc-aviso"><ul>${av.map(a => `<li>${a}</li>`).join("")}</ul></div>` : `<div class="zc-ok">${esc(T("Las sumas cuadran con los totales de la nómina."))}</div>`; };
   const elegir = (s, txt, prin) => `<label class="btn${prin ? "" : " sec"} nl-elegir"><input type="file" class="nl-file" data-file="${s}">${esc(txt)}</label>`;
 
   function pintaSlot(s) {
@@ -252,7 +275,16 @@ if (typeof module !== "undefined") module.exports = NOMINA;
       const campo = ([k, nom]) => `<label class="nl-campo"><span>${esc(T(nom))}</span><input type="text" inputmode="decimal" autocomplete="off" data-rev="${s}" data-k="${esc(k)}" value="${esc(formato(n.valores[k]))}"></label>`;
       const conValor = C.filter(c => n.valores[c[0]] != null), sinValor = C.filter(c => n.valores[c[0]] == null);
       const res = RESUMEN.filter(k => n.valores[k] != null).map(k => `<li><span>${esc(k === "basecc" ? T("Base de cotización") : T(C.find(c => c[0] === k)[1]))}</span><b>${esc(eur(n.valores[k]))}</b></li>`).join("");
-      h += `${res ? `<ul class="nl-resumen">${res}</ul>` : ""}
+      // v227: línea por línea (código, cuantía × precio), lo que paga la empresa y el coste empresa
+      const tipoTxt = (t) => t === "d" ? T("cobro") : T("descuento");
+      const det = (n.detalle || []).map(x => `<li><span>${x.codigo ? esc(x.codigo) + " · " : ""}${esc(x.texto)}${x.cuantia != null && x.precio != null ? ` <small>${["cc", "mei", "fp", "desempleo", "irpf"].includes(x.k) ? esc(numero(x.cuantia)) + " % × " + esc(eur(x.precio)) : esc(numero(x.cuantia)) + " × " + esc(numero(x.precio, 4))}</small>` : x.cuantia != null ? ` <small>${esc(numero(x.cuantia))}</small>` : ""}</span><b class="${x.tipo === "d" ? "nom-mas" : "nom-menos"}">${esc(eur(x.importe))} <small>${esc(tipoTxt(x.tipo))}</small></b></li>`).join("");
+      const blq = (n.bloque || []).map(x => `<li><span>${esc(x.texto)}${x.base != null && x.tipo != null ? ` <small>${esc(eur(x.base))} × ${esc(numero(x.tipo))} %</small>` : ""}</span><b>${esc(eur(x.importe))}</b></li>`).join("");
+      const ext = n.extra || {}, hayAnt = (n.detalle || []).some(x => x.k === "anticipo");
+      const extras = [[T("Coste empresa"), ext.coste], [T("Remuneración total"), ext.remtotal], [T("Parte de las pagas extra"), ext.ppextras]].filter(([, v]) => v != null).map(([t, v]) => `<li><span>${esc(t)}</span><b>${esc(eur(v))}</b></li>`).join("");
+      h += `${res ? `<ul class="nl-resumen">${res}${extras}</ul>` : ""}
+        ${hayAnt ? `<p class="zc-pista">${esc(T("Las bestretas (anticipos) son lo que ya te pagaron a cuenta este mes: arriba sale el importe entero y abajo se descuenta lo que ya cobraste."))}</p>` : ""}
+        ${det ? `<details class="nl-faltan nl-lineas"><summary>${esc(T("Línea por línea ({n})", { n: n.detalle.length }))}</summary><ul class="nl-resumen">${det}</ul></details>` : ""}
+        ${blq ? `<details class="nl-faltan nl-lineas"><summary>${esc(T("Lo que paga la empresa por ti: {x}", { x: eur(n.bloque.reduce((t, x) => t + x.importe, 0)) }))}</summary><p class="zc-pista">${esc(T("No te lo quitan a ti: es lo que la empresa paga a la Seguridad Social por tu trabajo."))}</p><ul class="nl-resumen">${blq}</ul></details>` : ""}
         <div class="nl-avisos" data-avisos="${s}">${avisosHTML(n)}</div>
         <details class="nl-faltan"${n.ok ? "" : " open"}><summary>${esc(T("Ver y corregir lo leído"))}</summary>
           <p class="zc-pista">${esc(T("Esto es lo que he leído. Míralo con tu nómina delante y cambia lo que no esté bien."))}</p>
@@ -304,7 +336,8 @@ if (typeof module !== "undefined") module.exports = NOMINA;
       if (antes) sincroniza(s, true);
       const r = await L.leeArchivo(f);
       if (yo !== turno[s]) return;
-      slot[s] = r.error ? { error: r.error } : { id: Date.now().toString(36) + s, mes: r.mes || "", nombre: r.mes ? L.nombreMes(r.mes, T).slice(0, 20) : "", valores: limpia(r.valores), sinReconocer: r.sinReconocer, detalle: r.detalle || [], ok: false };
+      slot[s] = r.error ? { error: r.error } : { id: Date.now().toString(36) + s, mes: r.mes || "", nombre: r.mes ? L.nombreMes(r.mes, T).slice(0, 20) : "", valores: limpia(r.valores), sinReconocer: r.sinReconocer, detalle: r.detalle || [], bloque: r.bloque || [], lectura: r.lectura || [],
+        extra: { remtotal: r.valores.remtotal ?? null, ppextras: r.valores.ppextras ?? null, coste: r.valores.coste ?? null }, ok: false };
       if (slot[s].valores) slot[s].leido = Object.assign({}, slot[s].valores);
       pintaSlot(s); pintaGuardar();
       $slots.querySelector(`[data-slot="${s}"]`).scrollIntoView({ behavior: "smooth", block: "start" });

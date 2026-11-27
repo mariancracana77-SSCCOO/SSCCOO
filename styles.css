@@ -3466,3 +3466,6 @@ label.cg-huecos { margin: 0 0 12px; }
 .nom-concepto .nom-en i { font-style: normal; font-weight: 600; letter-spacing: .02em; }
 .nom-concepto .nom-fuente, .nom-concepto .nom-sin { font-size: .9rem; color: var(--suave); }
 .nom-concepto .nom-sin { border-left: 3px solid var(--rojo, #AB1012); padding-left: 8px; }
+/* v227: «Línea por línea» y lo que paga la empresa en «He leído esto» */
+.nl-resumen small { color: var(--suave); font-weight: 400; font-size: .85em; }
+.nl-lineas .nl-resumen { margin-top: 8px; }
