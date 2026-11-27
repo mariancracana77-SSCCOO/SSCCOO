@@ -345,6 +345,94 @@
     const a = document.createElement("a"); a.href = URL.createObjectURL(pdf); a.download = nombre;
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }
+  // v228 (petición del padre, por Lorena): ver la foto de la hoja en grande sin descargar ni abrir otra aplicación.
+  // Visor encima de la página: zoom con dos dedos, doble toque, botones + / −, girar, página anterior/siguiente y «Cerrar»
+  // (también con Esc y con el botón Atrás del móvil: se apunta un paso en el historial con la MISMA dirección, así no salta «hashchange»).
+  // Con modo "pdf" enseña cómo queda el PDF (cada foto en su hoja A4) con «Descargar» y «Enviar». Solo lee las fotos: no cambia nada guardado.
+  let VISOR = null;
+  function cierraVisor(desdeAtras) {
+    if (!VISOR) return;
+    const v = VISOR; VISOR = null;
+    removeEventListener("popstate", v.alAtras); removeEventListener("keydown", v.alTecla); removeEventListener("hashchange", v.alAtras);
+    v.caja.remove(); document.body.classList.remove("gan-visor-abierto");
+    if (!desdeAtras && history.state && history.state.ganVisor) history.back();
+    if (v.antes && v.antes.focus) try { v.antes.focus(); } catch (_) {}
+  }
+  function abreVisor(urls, inicio, modo, acciones) {
+    cierraVisor(true);
+    const caja = document.createElement("div");
+    caja.className = "gan-visor" + (modo === "pdf" ? " pdf" : "");
+    caja.setAttribute("role", "dialog"); caja.setAttribute("aria-modal", "true");
+    caja.setAttribute("aria-label", modo === "pdf" ? T("Así queda la hoja en PDF") : T("Foto de la hoja"));
+    const v = { caja, i: inicio || 0, z: 1, x: 0, y: 0, giro: 0, antes: document.activeElement, dedos: new Map() };
+    const barra = `<div class="gan-visor-barra">
+        <b class="gan-visor-tit" id="gan-visor-tit"></b>
+        <button type="button" class="btn sec" data-v="cerrar">${icono("cerrar", "p")}${esc(T("Cerrar"))}</button></div>`;
+    if (modo === "pdf") {
+      caja.innerHTML = barra + `<div class="gan-visor-hojas">${urls.map((u, i) => `<figure class="gan-a4${urls.length && acciones.horizontal && acciones.horizontal[i] ? " apaisada" : ""}"><img src="${u}" alt="${esc(T("Página {n} de la hoja", { n: i + 1 }))}"><figcaption>${esc(T("Página {n} de {t}", { n: i + 1, t: urls.length }))}</figcaption></figure>`).join("")}</div>
+        <div class="gan-visor-pie botones"><button type="button" class="btn" data-v="descargar">${icono("descargar", "p")}${esc(T("Descargar la hoja en PDF"))}</button>${acciones.enviar ? `<button type="button" class="btn sec" data-v="enviar">${icono("compartir", "p")}${esc(T("Enviar"))}</button>` : ""}</div>`;
+    } else {
+      caja.innerHTML = barra + `<div class="gan-visor-zona" id="gan-visor-zona"><img id="gan-visor-img" alt="" draggable="false"></div>
+        <div class="gan-visor-pie">
+          ${urls.length > 1 ? `<button type="button" class="btn-ic" data-v="ant" aria-label="${esc(T("Página anterior"))}">${icono("izq")}</button>` : ""}
+          <button type="button" class="btn-ic" data-v="menos" aria-label="${esc(T("Alejar"))}"><b aria-hidden="true">−</b></button>
+          <button type="button" class="btn-ic" data-v="mas" aria-label="${esc(T("Acercar"))}">${icono("mas")}</button>
+          <button type="button" class="btn sec" data-v="girar">${esc(T("Girar"))}</button>
+          ${urls.length > 1 ? `<button type="button" class="btn-ic" data-v="sig" aria-label="${esc(T("Página siguiente"))}">${icono("der")}</button>` : ""}
+        </div>
+        <p class="gan-visor-ayuda">${esc(T("Abre o cierra los dedos para acercar. Toca dos veces para ampliar."))}</p>`;
+    }
+    document.body.appendChild(caja); document.body.classList.add("gan-visor-abierto");
+    const tit = caja.querySelector("#gan-visor-tit"), img = caja.querySelector("#gan-visor-img"), zona = caja.querySelector("#gan-visor-zona");
+    const aplica = () => { if (img) img.style.transform = `translate(${v.x}px, ${v.y}px) scale(${v.z}) rotate(${v.giro}deg)`; };
+    const limita = () => { v.z = Math.min(5, Math.max(1, v.z)); if (v.z === 1) { v.x = 0; v.y = 0; } aplica(); };
+    const pagina = (i) => {
+      v.i = (i + urls.length) % urls.length; v.z = 1; v.x = 0; v.y = 0; v.giro = 0;
+      if (img) { img.src = urls[v.i]; img.alt = T("Página {n} de la hoja", { n: v.i + 1 }); aplica(); }
+      tit.textContent = modo === "pdf" ? T("Así queda la hoja en PDF") : (urls.length > 1 ? T("Página {n} de {t}", { n: v.i + 1, t: urls.length }) : T("Foto de la hoja"));
+    };
+    pagina(v.i);
+    caja.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-v]"); if (!b) return;
+      const q = b.dataset.v;
+      if (q === "cerrar") cierraVisor(false);
+      else if (q === "mas") { v.z *= 1.5; limita(); }
+      else if (q === "menos") { v.z /= 1.5; limita(); }
+      else if (q === "girar") { v.giro = (v.giro + 90) % 360; aplica(); }
+      else if (q === "ant") pagina(v.i - 1);
+      else if (q === "sig") pagina(v.i + 1);
+      else if (q === "descargar" && acciones.descargar) acciones.descargar();
+      else if (q === "enviar" && acciones.enviar) acciones.enviar();
+    });
+    if (zona) {
+      let toque = 0, pellizco = null, arrastre = null;
+      const dist = () => { const p = [...v.dedos.values()]; return Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y); };
+      zona.addEventListener("pointerdown", (e) => {
+        v.dedos.set(e.pointerId, { x: e.clientX, y: e.clientY }); try { zona.setPointerCapture(e.pointerId); } catch (_) {}
+        if (v.dedos.size === 2) { pellizco = { d: dist(), z: v.z }; arrastre = null; }
+        else if (v.dedos.size === 1) {
+          const ahora = Date.now();
+          if (ahora - toque < 300) { v.z = v.z > 1 ? 1 : 2.5; limita(); toque = 0; } else toque = ahora;
+          arrastre = { x: e.clientX - v.x, y: e.clientY - v.y };
+        }
+      });
+      zona.addEventListener("pointermove", (e) => {
+        if (!v.dedos.has(e.pointerId)) return;
+        v.dedos.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pellizco && v.dedos.size === 2) { v.z = pellizco.z * dist() / (pellizco.d || 1); limita(); }
+        else if (arrastre && v.z > 1) { v.x = e.clientX - arrastre.x; v.y = e.clientY - arrastre.y; aplica(); }
+      });
+      const suelta = (e) => { v.dedos.delete(e.pointerId); if (v.dedos.size < 2) pellizco = null; if (!v.dedos.size) arrastre = null; };
+      zona.addEventListener("pointerup", suelta); zona.addEventListener("pointercancel", suelta);
+      zona.addEventListener("wheel", (e) => { e.preventDefault(); v.z *= e.deltaY < 0 ? 1.2 : 1 / 1.2; limita(); }, { passive: false });
+    }
+    v.alAtras = () => cierraVisor(true);
+    v.alTecla = (e) => { if (e.key === "Escape") cierraVisor(false); else if (urls.length > 1 && modo !== "pdf" && e.key === "ArrowLeft") pagina(v.i - 1); else if (urls.length > 1 && modo !== "pdf" && e.key === "ArrowRight") pagina(v.i + 1); };
+    try { history.pushState({ ganVisor: 1 }, "", location.href); } catch (_) {}
+    addEventListener("popstate", v.alAtras); addEventListener("keydown", v.alTecla); addEventListener("hashchange", v.alAtras);
+    VISOR = v;
+    caja.querySelector('[data-v="cerrar"]').focus();
+  }
   async function pintaHoja(w) {
     const caja = $("gan-hoja"); if (!caja) return;
     const pag = await hojaLee(w); if (!$("gan-hoja") || $("gan-hoja") !== caja) return;
@@ -352,13 +440,13 @@
     { const bs = $("gan-pdf-semana"); if (bs && bs.lastChild) bs.lastChild.textContent = pag.length ? T("Descargar la semana y la hoja (PDF)") : T("Descargar esta semana (PDF)"); }
     caja.innerHTML = `<h3 class="gan-sub">${esc(T("Hoja de trabajo de la semana {n}", { n: w.n }))}</h3>
       <p class="ayuda">${esc(T("Haz una foto a la hoja de la semana: se guarda aquí y la puedes bajar en PDF para imprimirla. Se queda solo en este móvil."))}</p>
-      ${pag.length ? `<ul class="gan-hoja-lista">${pag.map((p, i) => `<li><img src="${urls[i]}" alt="${esc(T("Página {n} de la hoja", { n: i + 1 }))}" loading="lazy"><button type="button" class="btn sec" data-hoja-quita="${i}">${esc(T("Quitar"))}</button></li>`).join("")}</ul>` : ""}
+      ${pag.length ? `<ul class="gan-hoja-lista">${pag.map((p, i) => `<li><button type="button" class="gan-hoja-ver" data-hoja-ver="${i}" aria-label="${esc(T("Ver en grande la página {n}", { n: i + 1 }))}"><img src="${urls[i]}" alt="${esc(T("Página {n} de la hoja", { n: i + 1 }))}" loading="lazy"><span class="gan-hoja-lupa">${icono("grande", "p")}${esc(T("Ver en grande"))}</span></button><button type="button" class="btn sec" data-hoja-quita="${i}">${esc(T("Quitar"))}</button></li>`).join("")}</ul>` : ""}
       <div class="botones">
         <label class="btn ${pag.length ? "sec" : ""} ${llena ? "desact" : ""}" for="gan-hoja-cam">${icono("camara", "p")}${esc(pag.length ? T("Otra foto") : T("Hacer foto a la hoja"))}</label>
         <label class="btn sec ${llena ? "desact" : ""}" for="gan-hoja-gal">${icono("subir", "p")}${esc(T("Elegir de la galería"))}</label>
         <input type="file" id="gan-hoja-cam" accept="image/*" capture="environment" hidden><input type="file" id="gan-hoja-gal" accept="image/*" multiple hidden>
       </div>
-      ${pag.length ? `<div class="botones"><button class="btn" id="gan-hoja-pdf">${icono("descargar", "p")}${esc(T("Descargar la hoja en PDF"))}</button>${puedeCompartir() ? `<button class="btn sec" id="gan-hoja-env">${icono("compartir", "p")}${esc(T("Enviar"))}</button>` : ""}</div>` : ""}
+      ${pag.length ? `<div class="botones"><button class="btn sec" id="gan-hoja-verpdf">${icono("ver", "p")}${esc(T("Ver la hoja en PDF"))}</button><button class="btn" id="gan-hoja-pdf">${icono("descargar", "p")}${esc(T("Descargar la hoja en PDF"))}</button>${puedeCompartir() ? `<button class="btn sec" id="gan-hoja-env">${icono("compartir", "p")}${esc(T("Enviar"))}</button>` : ""}</div>` : ""}
       <p class="msg" id="gan-hoja-msg" role="status"></p>`;
     const m = (t, mal) => { const e = $("gan-hoja-msg"); if (e) { e.textContent = t; e.className = "msg " + (mal ? "err" : "ok"); } };
     const anade = async (ficheros) => {
@@ -372,6 +460,11 @@
     $("gan-hoja-cam").onchange = (e) => { const f = [...e.target.files]; e.target.value = ""; anade(f); };
     $("gan-hoja-gal").onchange = (e) => { const f = [...e.target.files]; e.target.value = ""; anade(f); };
     caja.querySelectorAll("[data-hoja-quita]").forEach(b => b.onclick = async () => { if (!confirm(T("¿Quitar esta página de la hoja?"))) return; await hojaGuarda(w, pag.filter((_, i) => i !== +b.dataset.hojaQuita)).catch(() => {}); urls.forEach(u => URL.revokeObjectURL(u)); pintaHoja(w); });
+    caja.querySelectorAll("[data-hoja-ver]").forEach(b => b.onclick = () => abreVisor(urls, +b.dataset.hojaVer, "foto", {}));
+    if ($("gan-hoja-verpdf")) $("gan-hoja-verpdf").onclick = () => abreVisor(urls, 0, "pdf", {
+      horizontal: pag.map(p => p.w > p.h),
+      descargar: () => hojaPDF(w, "descarga").catch(() => m(T("No he podido hacer el PDF."), true)),
+      enviar: puedeCompartir() ? () => hojaPDF(w, "enviar").catch(() => m(T("No he podido hacer el PDF."), true)) : null });
     if ($("gan-hoja-pdf")) $("gan-hoja-pdf").onclick = () => hojaPDF(w, "descarga").catch(() => m(T("No he podido hacer el PDF."), true));
     if ($("gan-hoja-env")) $("gan-hoja-env").onclick = () => hojaPDF(w, "enviar").catch(() => m(T("No he podido hacer el PDF."), true));
   }
