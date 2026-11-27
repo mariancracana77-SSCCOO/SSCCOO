@@ -13,20 +13,20 @@ const NOMINA = (function () {
     ["plus", "Plus convenio", "d", "Complemento fijo que el convenio marca para cada categoría. Se cobra todos los meses y entra también en las pagas extra."],
     ["antig", "Antigüedad", "d", "Lo que cobras por los años en la empresa: un porcentaje del salario base que sube a los 4, 9, 14, 19 y 24 años (10, 20, 30, 40 y 50 %)."],
     ["hx", "Horas extra", "d", "Horas trabajadas por encima de tu jornada. El convenio marca el precio mínimo de cada hora para tu categoría: compruébalo en «Con el convenio» o en «Mi hora ordinaria»."],
-    ["noct", "Nocturnidad", "d", "Plus por las horas trabajadas de noche. Va con la nómina de fin de mes, no con el cobro semanal."],
+    ["noct", "Nocturnidad", "d", "Plus por las horas trabajadas de noche. En la nómina sale cuántas horas (cuantía) y lo que se paga cada hora (precio). Va con la nómina de fin de mes, no con el cobro semanal. Si un mes no sale, ese mes no te han pagado horas de noche."],
     ["pluses", "Otros pluses", "d", "Pluses de puesto, de ADR, de disponibilidad, incentivos… El nombre exacto sale en tu nómina. Si cobras uno todos los meses por lo mismo, es un plus fijo."],
     ["prorrata", "Prorrata de pagas extra", "d", "Si no te pagan las pagas extra aparte, te pagan un trozo cada mes: es la prorrata. Por el convenio son 3 pagas al año de 30 días de salario base, plus convenio y antigüedad; prorrateadas, una cuarta parte de eso cada mes."],
     ["paga", "Paga extra", "d", "Si te pagan las pagas extra aparte, el mes que toca sale aquí. Por el convenio son 3 al año, cada una de 30 días de salario base, plus convenio y antigüedad."],
-    ["dietas", "Dietas", "d", "Dinero para comer y dormir fuera cuando viajas por trabajo. Es una compensación de gastos, no sueldo: dentro de unos límites que marca la ley, no cotiza ni paga IRPF."],
+    ["dietas", "Dietas", "d", "Dinero para comer y dormir fuera cuando viajas por trabajo. Es una compensación de gastos, no sueldo: lleva un «-» delante (no salarial) y, dentro de unos límites que marca la ley, no cotiza ni paga IRPF. Si te las adelantan durante el mes, abajo sale el descuento del anticipo de dietas."],
     ["km", "Kilómetros", "d", "Lo que te pagan por los kilómetros recorridos, si tu empresa los paga así. Como las dietas, suele ir como compensación de gastos."],
     ["otrosd", "Otros cobros", "d", "Cualquier otra línea de lo que cobras que no esté arriba: festivos trabajados, cargas y descargas, atrasos…"],
-    ["cc", "Contingencias comunes", "q", "Lo que pagas a la Seguridad Social para la jubilación, las bajas por enfermedad y otras prestaciones. Es un porcentaje de tu base de cotización: el porcentaje sale al lado en la nómina."],
-    ["desempleo", "Desempleo", "q", "Lo que pagas para el paro. También es un porcentaje de tu base de cotización (un poco más alto si el contrato es temporal)."],
-    ["fp", "Formación profesional", "q", "Una parte muy pequeña de tu base de cotización para los cursos de formación de los trabajadores."],
-    ["mei", "MEI", "q", "Mecanismo de Equidad Intergeneracional: un pequeño porcentaje extra que va a la hucha de las pensiones. Sale en las nóminas desde 2023 y sube un poco cada año."],
+    ["cc", "Contingencias comunes", "q", "Lo que pagas a la Seguridad Social para la jubilación, las bajas por enfermedad y otras prestaciones. Es el 4,70 % de tu base de cotización (el porcentaje sale al lado en la nómina)."],
+    ["desempleo", "Desempleo", "q", "Lo que pagas para el paro: el 1,55 % de tu base de cotización si el contrato es indefinido (un poco más si es temporal)."],
+    ["fp", "Formación profesional", "q", "El 0,10 % de tu base de cotización, para los cursos de formación de los trabajadores."],
+    ["mei", "MEI", "q", "Mecanismo de Equidad Intergeneracional: un pequeño porcentaje extra que va a la hucha de las pensiones (en 2026, el 0,15 % de tu base de cotización). Sale en las nóminas desde 2023 y sube un poco cada año."],
     ["hxcot", "Cotización de horas extra", "q", "Las horas extra cotizan aparte a la Seguridad Social. Si este mes hiciste horas extra, puede salir esta línea."],
     ["irpf", "IRPF", "q", "Lo que la empresa retiene para Hacienda a cuenta de tu declaración de la renta. El porcentaje depende de lo que vas a cobrar en el año y de tu familia. Si cambia de un mes a otro, puede ser porque la empresa lo ha ajustado. Lo de más o de menos se arregla en la renta."],
-    ["anticipo", "Anticipos", "q", "Dinero que la empresa te adelantó y ahora te descuenta."],
+    ["anticipo", "Anticipos", "q", "Dinero que la empresa te adelantó y ahora te descuenta. Si durante el mes te han ido pagando a cuenta el incentivo, la productividad o las dietas, la nómina pone arriba el importe entero del mes y abajo descuenta lo que ya te pagaron: así no lo cobras dos veces. Comprueba que lo que te descuentan es lo que te dieron."],
     ["otrosq", "Otros descuentos", "q", "Cualquier otra línea de lo que te quitan: cuota sindical, embargos, préstamos de la empresa…"],
     ["devengado", "Total devengado", "i", "Todo lo que cobras ese mes antes de descuentos (el bruto): la suma de las líneas de arriba de la nómina."],
     ["deducir", "Total a deducir", "i", "La suma de todo lo que te quitan: Seguridad Social, IRPF, anticipos y otros."],
@@ -34,7 +34,7 @@ const NOMINA = (function () {
     ["basecc", "Base de cotización por contingencias comunes", "i", "La cantidad sobre la que se calculan tus descuentos de Seguridad Social. Suele ser tu sueldo del mes con la parte de las pagas extra, sin dietas ni kilómetros (dentro de los límites de la ley). Es la que sirve para calcular la baja por enfermedad y la jubilación."],
     ["baseat", "Base de accidentes de trabajo y enfermedades profesionales", "i", "Como la anterior, pero sumando las horas extra. La paga la empresa y sirve para calcular lo que cobras si tienes un accidente de trabajo."],
     ["baseirpf", "Base sujeta a retención del IRPF", "i", "La parte de lo que cobras sobre la que se aplica el porcentaje del IRPF."],
-    ["empresa", "Aportación de la empresa", "i", "Abajo de la nómina sale lo que la empresa paga a la Seguridad Social por ti. No te lo quitan a ti: es informativo."]
+    ["empresa", "Aportación de la empresa", "i", "Abajo de la nómina sale lo que la empresa paga a la Seguridad Social por ti, sobre tu base de cotización: contingencias comunes 23,60 %, MEI 0,75 %, accidentes de trabajo y enfermedades profesionales 6,70 %, desempleo 5,50 %, formación 0,60 % y FOGASA 0,20 %. No te lo quitan a ti: es informativo."]
   ];
   /* fin textos */
   const de = (tipo) => CONCEPTOS.filter(c => c[2] === tipo);
@@ -403,12 +403,27 @@ if (typeof module !== "undefined") module.exports = NOMINA;
   // ---------- 3. Qué es cada concepto ----------
   const sin = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   const GRUPO = { /* textos */ d: "Lo que cobras", q: "Lo que te quitan", i: "Totales, bases y otras líneas" /* fin textos */ };
+  // v226 (lo pidió el padre por el Coordinador, 27/11/2026): tarjetas que solo explican (no son casillas de la
+  // comparadora) y, en cada tarjeta, cómo sale en la nómina de Calsina, de dónde sale y lo que falta comprobar.
+  // [detrás de qué clave va, clave, nombre, grupo, explicación, fuente o "", sin comprobar o ""]
+  const SOLO_EXPLICA = [ /* textos */
+    ["noct", "incentivo", "Incentivo a la conducción", "d", "Paga el tiempo de más que trabajas conduciendo: lo que pasa o puede pasar de la jornada anual máxima del convenio de Girona. Se calcula con una cantidad por cada kilómetro recorrido, pero eso es solo la forma de calcularlo. En la nómina sale como «Incentivo a la conducción», con los kilómetros (cuantía) y lo que vale cada kilómetro (precio). Lleva un «*» delante: es salarial.", "Acuerdo firmado aportado por el delegado (documento de la sección), punto segundo.", "Cuánto vale cada kilómetro no lo dice el texto del acuerdo: mira el precio en tu nómina."],
+    ["incentivo", "productividad", "Productividad", "d", "Paga las operaciones de carga y descarga, los tiempos de espera y de estar a disposición en ellas, y lo que se alarguen esos tiempos. Se calcula con una cantidad por cada operación de carga y descarga. En la nómina sale como «Productividad». Lleva un «*» delante: es salarial.", "Acuerdo firmado aportado por el delegado (documento de la sección), punto tercero.", "Cuánto vale cada operación no lo dice el texto del acuerdo: mira el precio en tu nómina."],
+    ["liquido", "remtotal", "Remuneración total", "i", "La suma de lo que cobras este mes que cuenta como sueldo (sin las dietas). Sumándole la parte de las pagas extra (P.P.EXTRAS) suele salir la base de cotización.", "", ""],
+    ["empresa", "coste", "Coste empresa", "i", "Lo que le cuestas a la empresa ese mes: lo que cobras en bruto más lo que la empresa paga por ti a la Seguridad Social. No te lo quitan a ti: es informativo.", "", ""],
+    ["coste", "leyenda", "Qué quieren decir «*» y «-»", "i", "Delante del nombre de cada concepto: «*» es un concepto salarial (es sueldo: cotiza y paga IRPF) y «-» es no salarial (como las dietas: compensa gastos y, dentro de los límites de la ley, no cotiza).", "", ""]
+  /* fin textos */ ];
+  // Cómo sale cada concepto en la nómina de Calsina (sin traducir: son las palabras de la nómina). También sirven para buscar.
+  const EN_NOMINA = { base: "SALARIO BASE", plus: "PLUS CONVENIO", antig: "ANTIGÜEDAD", noct: "PLUS NOCTURNIDAD · NOCTURNITAT", incentivo: "INCENTIVO A LA CONDUCCION", productividad: "PRODUCTIVIDAD", dietas: "DIETES · DIETAS", prorrata: "P.P.EXTRAS", anticipo: "BESTRETA (INCENTIVO, PRODUCTIVIDAD, DIETES)", cc: "COTIZACION CONT.COMU", mei: "MEI", fp: "COTIZACION FORMACION", desempleo: "COTIZACION DESEMPLEO", irpf: "I.R.P.F.", devengado: "T. DEVENGADO", deducir: "T. A DEDUCIR", liquido: "LIQUIDO A PERCIBIR", basecc: "BASE S.S.", baseat: "BASE A.T. Y DES.", baseirpf: "BASE I.R.P.F.", remtotal: "REM. TOTAL", coste: "COSTE EMPRESA", empresa: "DETERMINACION DE LAS B. DE COTIZACION", leyenda: "* -" };
+  const TODOS = (() => { const l = C.map(([k, n, t, ex]) => ({ k, n, t, ex, f: "", s: "" })); for (const [tras, k, n, t, ex, f, s] of SOLO_EXPLICA) { const i = l.findIndex(x => x.k === tras); l.splice(i < 0 ? l.length : i + 1, 0, { k, n, t, ex, f, s }); } return l; })();
   function pintaLista() {
     const q = sin($("nom-q").value.trim());
     let h = "";
     for (const t of ["d", "q", "i"]) {
-      const l = C.filter(c => c[2] === t && (!q || sin(T(c[1]) + " " + T(c[3])).includes(q)));
-      if (l.length) h += `<h3 class="nom-sec">${esc(T(GRUPO[t]))}</h3>` + l.map(([, n, , ex]) => `<div class="panel zc-caja nom-concepto"><b>${esc(T(n))}</b><p>${esc(T(ex))}</p></div>`).join("");
+      const l = TODOS.filter(c => c.t === t && (!q || sin(T(c.n) + " " + T(c.ex) + " " + (EN_NOMINA[c.k] || "")).includes(q)));
+      if (l.length) h += `<h3 class="nom-sec">${esc(T(GRUPO[t]))}</h3>` + l.map(c => `<div class="panel zc-caja nom-concepto" data-k="${esc(c.k)}"><b>${esc(T(c.n))}</b>`
+        + (EN_NOMINA[c.k] ? `<span class="nom-en">${esc(T("En tu nómina:"))} <i>${esc(EN_NOMINA[c.k])}</i></span>` : "") + `<p>${esc(T(c.ex))}</p>`
+        + (c.f ? `<p class="nom-fuente">${esc(T("Fuente:"))} ${esc(T(c.f))}</p>` : "") + (c.s ? `<p class="nom-sin">${esc(T("Sin comprobar:"))} ${esc(T(c.s))}</p>` : "") + `</div>`).join("");
     }
     $("nom-lista").innerHTML = h || `<div class="zc-aviso">${esc(T("No hay ningún concepto con esa palabra. Prueba con otra o pregunta a un delegado."))}</div>`;
   }

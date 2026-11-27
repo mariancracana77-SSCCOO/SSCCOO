@@ -127,7 +127,17 @@ const N2 = nomina("01/10/2026 a 31/10/2026", [["SALARIO BASE", "1.200,00"], ["PL
     // v222: «Borrar todo» de arriba deja la herramienta como recién abierta (y otra ventana se entera)
     await p.click("#nom-guardar"); await p.waitForTimeout(100);
     await p.click("[data-nom-tab='convenio']"); await p.fill("#nc-base", "1000"); await p.check("#nc-pro"); await p.fill("#nc-prorrata", "50");
-    await p.click("[data-nom-tab='conceptos']"); await p.fill("#nom-q", "irpf");
+    await p.click("[data-nom-tab='conceptos']");
+    // v226: los conceptos de la nómina de Calsina, con buscador por sus palabras
+    for (const [q, k] of [["incentivo", "incentivo"], ["productividad", "productividad"], ["bestreta", "anticipo"], ["dietas", "dietas"], ["nocturnitat", "noct"], ["P.P.EXTRAS", "prorrata"], ["coste empresa", "coste"], ["fogasa", "empresa"]]) {
+      await p.fill("#nom-q", q); await p.waitForTimeout(30);
+      ok(await p.locator(`#nom-lista .nom-concepto[data-k='${k}']`).count() === 1, `${tag}: el buscador encuentra «${q}»`);
+    }
+    await p.fill("#nom-q", "incentivo a la conduccion");
+    ok(/punto segundo/.test(await p.textContent("#nom-lista [data-k='incentivo'] .nom-fuente")) && await p.locator("#nom-lista [data-k='incentivo'] .nom-sin").count() === 1, `${tag}: el incentivo lleva su fuente y lo que falta comprobar`);
+    await p.fill("#nom-q", "");
+    ok(await p.locator("#nom-lista .nom-concepto").count() >= 30, `${tag}: están todas las tarjetas`);
+    await p.fill("#nom-q", "irpf");
     const p3 = await ctx.newPage(); await p3.goto(BASE + "#nomina"); await p3.waitForTimeout(500);
     ok(/\(1\)/.test(await p3.textContent("#nom-guardadas")), `${tag}: hay guardadas antes de borrar`);
     await p.click("#nom-bt");

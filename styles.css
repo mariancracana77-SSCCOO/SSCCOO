@@ -3461,3 +3461,8 @@ label.cg-huecos { margin: 0 0 12px; }
 .nl-coger-out { margin-top: 10px; }
 .nl-pregunta p { margin: 0 0 8px; }
 #v-nomina [hidden], #v-jubilacion [hidden], #v-baja [hidden] { display: none !important; }
+/* v226: tarjetas de «Qué es cada concepto» con cómo sale en la nómina, la fuente y lo que falta comprobar */
+.nom-concepto .nom-en { display: block; color: var(--suave); font-size: .9rem; margin-top: 2px; }
+.nom-concepto .nom-en i { font-style: normal; font-weight: 600; letter-spacing: .02em; }
+.nom-concepto .nom-fuente, .nom-concepto .nom-sin { font-size: .9rem; color: var(--suave); }
+.nom-concepto .nom-sin { border-left: 3px solid var(--rojo, #AB1012); padding-left: 8px; }
